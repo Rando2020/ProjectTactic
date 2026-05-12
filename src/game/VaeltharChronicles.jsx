@@ -21,6 +21,11 @@ import ControlsHelp from './components/ControlsHelp.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
 import OnboardingOverlay from './components/OnboardingOverlay.jsx'
 import Toast from './components/Toast.jsx'
+import PartyScreen from './components/PartyScreen.jsx'
+import InventoryScreen from './components/InventoryScreen.jsx'
+import JobBoard from './components/JobBoard.jsx'
+import SummonArchive from './components/SummonArchive.jsx'
+import InnScreen from './components/InnScreen.jsx'
 
 export default function VaeltharChronicles() {
   const [save, setSave] = useState(() => loadSave() || createNewSave())
@@ -112,6 +117,19 @@ export default function VaeltharChronicles() {
   const openMission = (missionId) => {
     setSelectedMissionId(missionId)
     goLoading('mission', 'Preparing mission briefing')
+  }
+
+  const openService = (serviceMode) => {
+    setPreviousMode('town')
+    setMode(serviceMode)
+  }
+
+  const restAtInn = (cost) => {
+    updateSave((current) => ({
+      ...current,
+      gold: Math.max(0, current.gold - cost),
+      restCount: (current.restCount || 0) + 1
+    }), 'Party rested and resources restored')
   }
 
   const buildBattleResult = (missionId, victory = true) => {
@@ -227,7 +245,7 @@ export default function VaeltharChronicles() {
   else if (mode === 'loading') content = <LoadingScreen label={loadingTarget?.label} onComplete={completeLoading} />
   else if (mode === 'story') content = <StoryScene chapter={currentStory} beatIndex={storyBeatIndex} onNext={advanceStory} />
   else if (mode === 'world') content = <WorldMap unlockedTownIds={save.unlockedTownIds} currentTownId={save.currentTownId} onSelectTown={selectTown} onOpenQuestLog={() => setMode('quests')} />
-  else if (mode === 'town') content = <TownScreen town={currentTown} activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBackToWorld={() => setMode('world')} onStartMission={openMission} onOpenQuestLog={() => setMode('quests')} onOpenCodex={() => setMode('codex')} onOpenSettings={() => setMode('settings')} />
+  else if (mode === 'town') content = <TownScreen town={currentTown} activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBackToWorld={() => setMode('world')} onStartMission={openMission} onOpenQuestLog={() => setMode('quests')} onOpenCodex={() => setMode('codex')} onOpenSettings={() => setMode('settings')} onOpenService={openService} />
   else if (mode === 'mission') content = <MissionBriefing missionId={selectedMissionId} onBack={() => setMode('town')} onLaunch={launchMission} />
   else if (mode === 'battle') content = renderBattlePlaceholder()
   else if (mode === 'result') content = <BattleResultScreen result={battleResult} onContinue={applyBattleResult} onRetry={retryMission} onReturnToTown={returnToTownFromResult} />
@@ -235,6 +253,11 @@ export default function VaeltharChronicles() {
   else if (mode === 'codex') content = <CodexScreen storyFlags={save.storyFlags} onBack={() => setMode('town')} />
   else if (mode === 'settings') content = <SettingsPanel settings={settings} onChange={setSettings} onBack={() => setMode(previousMode || 'title')} />
   else if (mode === 'controls') content = <ControlsHelp onBack={() => setMode('title')} />
+  else if (mode === 'party') content = <PartyScreen partyIds={save.partyIds} onBack={() => setMode('town')} />
+  else if (mode === 'inventory') content = <InventoryScreen inventory={save.inventory} gold={save.gold} onBack={() => setMode('town')} />
+  else if (mode === 'jobs') content = <JobBoard onBack={() => setMode('town')} />
+  else if (mode === 'summons') content = <SummonArchive storyFlags={save.storyFlags} onBack={() => setMode('town')} />
+  else if (mode === 'inn') content = <InnScreen town={currentTown} gold={save.gold} onRest={restAtInn} onBack={() => setMode('town')} />
   else content = renderTitle()
 
   return (
