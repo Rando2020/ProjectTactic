@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   vite-build:
@@ -17,6 +18,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Verify game shell stylesheet exists
+        run: test -f src/game/styles/gameShell.css
 
       - name: Install dependencies
         run: npm install
