@@ -30,7 +30,10 @@ src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
 src/game/components/CommandMenu.jsx
+src/game/components/DeploymentScreen.jsx
 src/game/systems/objectives.js
+src/game/systems/pathfinding.js
+src/game/systems/deployment.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
 src/game/state/saveSystem.js
@@ -54,17 +57,19 @@ src/game/data/progression.js
 - Boots to the new Game Shell tab by default.
 - Keeps the previous Battle Prototype available as a separate tab.
 - Shows unlocked missions from map data.
-- Renders battle maps with terrain, height, units, and adjacency movement.
+- Renders battle maps with pseudo-isometric CSS tiles, terrain, height, and unit tokens.
+- Supports movement range using unit move, jump, terrain movement cost, blocked tiles, and occupied tiles.
 - Supports command-driven battle actions: Move, Attack, Ability, Item, and Wait.
 - Resolves `defeat_all` mission objectives from living enemy units.
 - Enables Claim Victory only after the objective is complete.
 - Applies XP, JP, gold, item, mission, and story flag rewards.
+- Supports pre-battle deployment helpers with roster-constrained validation.
 - Shows basic character sheets and job tree lock requirements.
 - Saves and loads local game state through localStorage.
 
 ## Known Placeholders
 
-- Tactical movement is currently adjacent-tile only.
+- Movement range now exists, but path preview and final movement animation are not implemented yet.
 - Enemy units use lightweight temporary stats.
 - Attack damage is simple placeholder pressure, not final combat math.
 - Ability targeting currently logs a placeholder action.
@@ -74,8 +79,8 @@ src/game/data/progression.js
 
 ## Next Evolution
 
-1. Add movement range pathfinding.
-2. Add CT turn order and timeline UI.
+1. Add CT turn order and timeline UI.
+2. Add path preview and movement animation.
 3. Add damage preview and hit confirmation.
 4. Add enemy AI intent preview.
 5. Consume inventory items during battle.
