@@ -47,6 +47,7 @@ The repo now includes the first campaign shell:
 Main Menu
 → World Map
 → Town Hub
+→ Pre-Battle Deployment
 → Tactical Battle
 → Results Screen
 → Character Sheets
@@ -65,6 +66,44 @@ Select player unit
 → Apply rewards
 ```
 
+## Battle Loop Update Track
+
+The active implementation direction is moving the battle screen from adjacent-tile MVP toward a fuller CT-based tactics loop.
+
+Target modules:
+
+```txt
+src/game/systems/grid.js
+src/game/systems/pathfinding.js
+src/game/systems/turnOrder.js
+src/game/systems/damageFormula.js
+src/game/screens/BattleScreen.jsx
+src/game/components/TacticalGrid.jsx
+src/game/components/CommandMenu.jsx
+```
+
+Planned battle flow:
+
+```txt
+Initialize units
+→ Accumulate CT by effective speed
+→ Select ready unit
+→ Enter player or enemy phase
+→ Resolve Move / Attack / Ability / Item / Wait
+→ Check objective state
+→ Repeat until victory or defeat
+```
+
+Known placeholders:
+
+- Enemy AI needs a true decision system.
+- Ability targeting should read from job and ability data.
+- Items should consume real inventory quantities.
+- Damage preview should appear before confirmation.
+- CT timeline UI should show projected turns.
+- Line of sight and height advantage need player-facing indicators.
+- Surface reactions need full battle integration.
+
 ## Key Runtime Files
 
 ```txt
@@ -78,7 +117,13 @@ src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
 src/game/components/CommandMenu.jsx
+src/game/components/DeploymentScreen.jsx
+src/game/systems/deployment.js
 src/game/systems/objectives.js
+src/game/systems/grid.js
+src/game/systems/pathfinding.js
+src/game/systems/turnOrder.js
+src/game/systems/damageFormula.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
 src/game/state/saveSystem.js
@@ -91,6 +136,7 @@ src/game/styles/gameShell.css
 src/game/data/maps.js
 src/game/data/towns.js
 src/game/data/units.js
+src/game/data/enemies.js
 src/game/data/terrain.js
 src/game/data/progression.js
 src/game/data/story.js
@@ -106,6 +152,7 @@ docs/architecture/game-shell.md
 docs/design/art-direction.md
 docs/design/tile-manifest.md
 docs/design/sprite-manifest.md
+docs/PRE_BATTLE_DEPLOYMENT_SPEC.md
 ```
 
 ---
@@ -192,12 +239,18 @@ Do not add major new systems directly to the root prototype unless it is explici
 - Height and terrain are visible on the board.
 - Move and Attack commands highlight valid tactical selections.
 
+### Pre-Battle Deployment MVP
+
+- Missions can define max party size, required units, recommended units, deployment zones, and default facing.
+- The deployment screen validates required units, occupied tiles, facing, and max party size before battle start.
+- Future deployment work should add equipment, job changes, enemy preview, and saved formations.
+
 ### Command Menu MVP
 
 Current commands:
 
-- **Move**: reposition selected player unit to an adjacent open tile.
-- **Attack**: damage an adjacent enemy using placeholder physical pressure.
+- **Move**: reposition selected player unit to an open tile.
+- **Attack**: damage an enemy using physical pressure.
 - **Ability**: placeholder action for future job ability targeting.
 - **Item**: placeholder Vitae Draught heal.
 - **Wait**: marks the selected unit as acted.
