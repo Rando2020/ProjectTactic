@@ -1,7 +1,9 @@
 import { TOWNS } from '../data/towns.js'
 
 export default function TownScreen({ gameState, setScreen }) {
-  const towns = Object.values(TOWNS ?? {}).filter((town) => gameState.unlockedTowns.includes(town.id))
+  const unlockedTownIds = new Set(gameState.unlockedTowns ?? [])
+  if (unlockedTownIds.has('ashvale_crossing')) unlockedTownIds.add('ashvale')
+  const towns = Object.values(TOWNS ?? {}).filter((town) => unlockedTownIds.has(town.id))
 
   return (
     <main className="game-panel">
