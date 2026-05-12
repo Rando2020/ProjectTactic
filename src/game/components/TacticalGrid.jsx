@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { buildGrid, getTile, getAdjacentTiles, getUnitAt, isTileBlocked } from '../systems/grid.js'
+import { buildGrid, getUnitAt, manhattan } from '../systems/grid.js'
 
 const TERRAIN_COLORS = {
   grass: '#244733',
@@ -14,20 +14,24 @@ const TERRAIN_COLORS = {
   high_ground: '#374151',
 }
 
-function getTileStyle(tile, selected, highlighted, targetable) {
+function getTileStyle(tile, selected, highlighted, targetable, active) {
   return {
     position: 'relative',
     minHeight: 58,
-    border: selected
-      ? '2px solid #facc15'
-      : targetable
-        ? '2px solid #f97316'
-        : highlighted
-          ? '2px solid #67e8f9'
-          : '1px solid rgba(255,255,255,.12)',
+    border: active
+      ? '2px solid #fef08a'
+      : selected
+        ? '2px solid #facc15'
+        : targetable
+          ? '2px solid #f97316'
+          : highlighted
+            ? '2px solid #67e8f9'
+            : '1px solid rgba(255,255,255,.12)',
     background: TERRAIN_COLORS[tile.terrain] || '#243447',
     borderRadius: 10,
-    boxShadow: `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
+    boxShadow: highlighted
+      ? `0 0 0 2px rgba(103,232,249,.15), inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`
+      : `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
     color: '#fff',
     overflow: 'hidden',
   }
@@ -37,35 +41,29 @@ export default function TacticalGrid({
   map,
   units,
   selectedUnitId,
+  activeUnitId,
   activeCommand,
+  movementRange = [],
+  damagePreview,
   onSelectUnit,
   onSelectMoveTile,
   onSelectAttackTarget,
   showCoordinates = true,
 }) {
   const grid = useMemo(() => buildGrid(map), [map])
-  const selectedUnit = units.find((unit) => unit.id === selectedUnitId)
-
-  const adjacentTiles = useMemo(() => {
-    if (!selectedUnit) return []
-    const origin = getTile(grid, selectedUnit.x, selectedUnit.y)
-    if (!origin) return []
-    return getAdjacentTiles(map, grid, origin)
-  }, [grid, map, selectedUnit])
+  const activeUnit = units.find((unit) => unit.id === activeUnitId)
 
   const moveKeys = new Set(
     activeCommand === 'move'
-      ? adjacentTiles
-          .filter((tile) => !isTileBlocked(tile, units, selectedUnitId))
-          .map((tile) => `${tile.x},${tile.y}`)
+      ? movementRange.map((tile) => `${tile.x},${tile.y}`)
       : []
   )
 
   const attackTargetIds = new Set(
-    activeCommand === 'attack'
-      ? adjacentTiles
-          .map((tile) => getUnitAt(units, tile.x, tile.y))
-          .filter((unit) => unit && unit.team === 'enemy')
+    activeCommand === 'attack' && activeUnit
+      ? units
+          .filter((unit) => unit.team !== activeUnit.team && unit.hp > 0)
+          .filter((unit) => manhattan(activeUnit, unit) <= 1)
           .map((unit) => unit.id)
       : []
   )
@@ -99,14 +97,16 @@ export default function TacticalGrid({
           const unit = getUnitAt(units, tile.x, tile.y)
           const key = `${tile.x},${tile.y}`
           const selected = unit?.id === selectedUnitId
+          const active = unit?.id === activeUnitId
           const highlighted = moveKeys.has(key)
           const targetable = unit && attackTargetIds.has(unit.id)
+          const previewedTarget = damagePreview?.targetId === unit?.id
 
           return (
             <button
               key={key}
               onClick={() => handleTileClick(tile)}
-              style={getTileStyle(tile, selected, highlighted, targetable)}
+              style={getTileStyle(tile, selected, highlighted, targetable || previewedTarget, active)}
               title={`${tile.terrainDef.name} h${tile.height}`}
             >
               {showCoordinates && (
@@ -117,15 +117,17 @@ export default function TacticalGrid({
                 <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontWeight: 800 }}>
                   <span>{unit.team === 'player' ? '◆' : '◇'}</span>
                   <small>{unit.name.split(' ')[0]}</small>
+                  <small>CT {Math.round(unit.ct ?? 0)}</small>
                 </span>
               )}
               {!unit && highlighted && <span style={{ fontSize: 22 }}>·</span>}
+              {targetable && <span style={{ position: 'absolute', bottom: 4, left: 6, fontSize: 10, color: '#fed7aa' }}>TARGET</span>}
             </button>
           )
         })}
       </div>
       <p style={{ opacity: .72, fontSize: 13 }}>
-        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target.
+        Active units act when CT reaches 100. Move uses range and Jump rules; Attack previews damage before confirmation.
       </p>
     </div>
   )
