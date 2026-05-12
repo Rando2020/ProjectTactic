@@ -2,7 +2,7 @@
 
 A browser-first tactical RPG prototype built in React + Vite.
 
-Design influences: classic tactical RPG readability, character-job progression, elemental combo combat, Guardian summons, and a darker grounded fantasy tone. This repo should stay browser-playable while the prototype is refactored into clean data, systems, state, screens, and UI layers.
+Design influences: classic tactical RPG readability, character-job progression, elemental combo combat, Guardian summons, and a darker grounded fantasy tone. The project should stay browser-playable while the prototype evolves into clean data, systems, state, screens, and UI layers.
 
 ## Play It Locally
 
@@ -39,7 +39,7 @@ The previous root-level `VaeltharChronicles.jsx` remains available as the Battle
 
 ---
 
-## New Vertical Slice Foundation
+## Current Vertical Slice Loop
 
 The repo now includes the first campaign shell:
 
@@ -54,7 +54,16 @@ Main Menu
 → Save / Load
 ```
 
-This is the path from combat demo to actual tactics RPG.
+The battle screen now supports a first playable command loop:
+
+```txt
+Select player unit
+→ Choose Move / Attack / Ability / Item / Wait
+→ Resolve action
+→ Defeat all enemies
+→ Claim Victory
+→ Apply rewards
+```
 
 ## Key Runtime Files
 
@@ -68,6 +77,8 @@ src/game/screens/ResultsScreen.jsx
 src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
+src/game/components/CommandMenu.jsx
+src/game/systems/objectives.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
 src/game/state/saveSystem.js
@@ -88,7 +99,7 @@ src/game/data/missions.js
 src/game/data/loadingTips.js
 ```
 
-## Documentation Added
+## Documentation
 
 ```txt
 docs/architecture/game-shell.md
@@ -146,7 +157,7 @@ ProjectTactic/
 | Path | Purpose |
 |---|---|
 | `src/game/data/` | Static game content: jobs, units, enemies, maps, terrain, story, towns, missions |
-| `src/game/systems/` | Pure gameplay logic: grid math, combat math, timing, status, combo, AI, progression |
+| `src/game/systems/` | Pure gameplay logic: grid math, combat math, timing, status, combo, AI, progression, objectives |
 | `src/game/state/` | Initial state, save/load, reducers, campaign progression |
 | `src/game/screens/` | Full screen flows: menu, world, town, battle, results, character, jobs |
 | `src/game/components/` | Reusable React UI and battle components |
@@ -179,6 +190,23 @@ Do not add major new systems directly to the root prototype unless it is explici
 - Units spawn from map data.
 - Adjacent-tile movement is supported as the first movement layer.
 - Height and terrain are visible on the board.
+- Move and Attack commands highlight valid tactical selections.
+
+### Command Menu MVP
+
+Current commands:
+
+- **Move**: reposition selected player unit to an adjacent open tile.
+- **Attack**: damage an adjacent enemy using placeholder physical pressure.
+- **Ability**: placeholder action for future job ability targeting.
+- **Item**: placeholder Vitae Draught heal.
+- **Wait**: marks the selected unit as acted.
+
+### Objective Resolution MVP
+
+- `defeat_all` objectives resolve when all enemy units reach `0 HP`.
+- `Claim Victory` is disabled until the objective is complete.
+- Completed missions apply XP, JP, gold, items, mission flags, and story flags.
 
 ### Elemental Surface Reactions
 
@@ -204,14 +232,14 @@ The combat prototype includes 32 Guardians across 8 elements and 4 tiers, includ
 ## Current Production Priorities
 
 1. Keep the browser prototype running.
-2. Convert the Game Shell from MVP screens into the default production path.
-3. Add movement range pathfinding.
-4. Add command menu actions: Move, Attack, Ability, Item, Wait.
-5. Add CT turn order and timeline UI.
-6. Add damage preview and hit confirmation.
-7. Add enemy AI intent preview.
-8. Replace debug battle completion with objective resolution.
+2. Stabilize the Game Shell as the default production path.
+3. Add movement range pathfinding beyond adjacent tiles.
+4. Add CT turn order and timeline UI.
+5. Add damage preview and hit confirmation.
+6. Add enemy AI and enemy intent preview.
+7. Consume inventory items during battle actions.
+8. Connect real job abilities to command targeting.
 9. Connect mission rewards to new mission and town unlocks.
-10. Add asset registry mapping terrain, jobs, units, and enemies to placeholder art.
+10. Add an asset registry mapping terrain, jobs, units, and enemies to placeholder art.
 
 See `docs/architecture/game-shell.md`, `docs/design/art-direction.md`, `docs/design/tile-manifest.md`, and `docs/design/sprite-manifest.md` for implementation direction.
