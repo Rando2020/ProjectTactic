@@ -6,6 +6,17 @@ export const BATTLE_MAPS = {
     objective: { type: 'defeat_all', label: 'Defeat all enemies' },
     size: { width: 10, height: 8 },
     defaultTerrain: 'grass',
+    maxPartySize: 2,
+    requiredUnitIds: ['zane'],
+    recommendedUnitIds: ['zane', 'mira'],
+    deployment: {
+      label: 'Ashvale Road Approach',
+      briefing: 'Place your units along the southern road before pushing toward the shrine ridge.',
+      defaultFacing: 'N',
+      zones: [
+        { id: 'south_road', name: 'Southern Road', tiles: [{ x: 1, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 5 }, { x: 2, y: 5 }] }
+      ]
+    },
     tiles: [
       ...Array.from({ length: 10 }, (_, x) => ({ x, y: 3, terrain: 'road', height: 0 })),
       ...Array.from({ length: 10 }, (_, x) => ({ x, y: 4, terrain: 'road', height: 0 })),
@@ -36,6 +47,18 @@ export const BATTLE_MAPS = {
     objective: { type: 'defeat_all', label: 'Defeat all enemies using terrain reactions' },
     size: { width: 10, height: 8 },
     defaultTerrain: 'grass',
+    maxPartySize: 3,
+    requiredUnitIds: ['zane'],
+    recommendedUnitIds: ['zane', 'mira', 'kael'],
+    deployment: {
+      label: 'Mirefen Marsh Entry',
+      briefing: 'Choose whether to cluster near the dry path or split across the reeds before the water turns against you.',
+      defaultFacing: 'N',
+      zones: [
+        { id: 'dry_bank', name: 'Dry Bank', tiles: [{ x: 1, y: 6 }, { x: 2, y: 6 }, { x: 1, y: 5 }] },
+        { id: 'reed_edge', name: 'Reed Edge', tiles: [{ x: 3, y: 6 }, { x: 2, y: 5 }, { x: 3, y: 5 }] }
+      ]
+    },
     tiles: [
       ...Array.from({ length: 6 }, (_, i) => ({ x: 2 + i, y: 3, terrain: 'shallow_water', height: 0 })),
       ...Array.from({ length: 6 }, (_, i) => ({ x: 2 + i, y: 4, terrain: 'shallow_water', height: 0 })),
