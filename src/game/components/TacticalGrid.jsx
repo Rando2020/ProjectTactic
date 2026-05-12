@@ -14,7 +14,7 @@ const TERRAIN_COLORS = {
   high_ground: '#374151',
 }
 
-function getTileStyle(tile, selected, highlighted, targetable) {
+function getTileStyle(tile, selected, highlighted, targetable, abilityTargetable) {
   return {
     position: 'relative',
     minHeight: 58,
@@ -22,9 +22,11 @@ function getTileStyle(tile, selected, highlighted, targetable) {
       ? '2px solid #facc15'
       : targetable
         ? '2px solid #f97316'
-        : highlighted
-          ? '2px solid #67e8f9'
-          : '1px solid rgba(255,255,255,.12)',
+        : abilityTargetable
+          ? '2px solid #a78bfa'
+          : highlighted
+            ? '2px solid #67e8f9'
+            : '1px solid rgba(255,255,255,.12)',
     background: TERRAIN_COLORS[tile.terrain] || '#243447',
     borderRadius: 10,
     boxShadow: `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
@@ -38,9 +40,11 @@ export default function TacticalGrid({
   units,
   selectedUnitId,
   activeCommand,
+  selectedAbility,
   onSelectUnit,
   onSelectMoveTile,
   onSelectAttackTarget,
+  onSelectAbilityTarget,
   showCoordinates = true,
 }) {
   const grid = useMemo(() => buildGrid(map), [map])
@@ -70,20 +74,33 @@ export default function TacticalGrid({
       : []
   )
 
+  const abilityTargetIds = useMemo(() => {
+    if (activeCommand !== 'ability-target' || !selectedUnit || !selectedAbility) return new Set()
+    const maxRange = selectedAbility.range?.max ?? selectedAbility.range ?? 1
+    const minRange = selectedAbility.range?.min ?? 0
+    const targetType = selectedAbility.target
+    return new Set(
+      units
+        .filter((u) => {
+          if (u.hp <= 0) return false
+          const dist = Math.abs(u.x - selectedUnit.x) + Math.abs(u.y - selectedUnit.y)
+          if (dist > maxRange || dist < minRange) return false
+          if (targetType === 'ally') return u.team === 'player'
+          return u.team === 'enemy'
+        })
+        .map((u) => u.id)
+    )
+  }, [activeCommand, selectedUnit, selectedAbility, units])
+
   function handleTileClick(tile) {
     const unit = getUnitAt(units, tile.x, tile.y)
     if (unit) {
-      if (attackTargetIds.has(unit.id)) {
-        onSelectAttackTarget?.(unit.id)
-        return
-      }
+      if (attackTargetIds.has(unit.id)) { onSelectAttackTarget?.(unit.id); return }
+      if (abilityTargetIds.has(unit.id)) { onSelectAbilityTarget?.(unit.id); return }
       onSelectUnit?.(unit.id)
       return
     }
-
-    if (moveKeys.has(`${tile.x},${tile.y}`)) {
-      onSelectMoveTile?.(tile)
-    }
+    if (moveKeys.has(`${tile.x},${tile.y}`)) onSelectMoveTile?.(tile)
   }
 
   return (
@@ -101,12 +118,13 @@ export default function TacticalGrid({
           const selected = unit?.id === selectedUnitId
           const highlighted = moveKeys.has(key)
           const targetable = unit && attackTargetIds.has(unit.id)
+          const abilityTargetable = unit && abilityTargetIds.has(unit.id)
 
           return (
             <button
               key={key}
               onClick={() => handleTileClick(tile)}
-              style={getTileStyle(tile, selected, highlighted, targetable)}
+              style={getTileStyle(tile, selected, highlighted, targetable, abilityTargetable)}
               title={`${tile.terrainDef.name} h${tile.height}`}
             >
               {showCoordinates && (

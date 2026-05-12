@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import TacticalGrid from '../components/TacticalGrid.jsx'
 import CommandMenu from '../components/CommandMenu.jsx'
 import { instantiatePlayerUnit } from '../data/units.js'
-import { getAbility } from '../data/abilities.js'
+import { getAbility, getUnitAbilities } from '../data/abilities.js'
 import { buildGrid, getFacingAfterMove } from '../systems/grid.js'
 import { chooseEnemyAction } from '../systems/aiController.js'
+import { resolveAbilityUse } from '../systems/combatResolver.js'
 import { getObjectiveProgress, isObjectiveComplete, isPartyDefeated } from '../systems/objectives.js'
 
 const ENEMY_NAMES = {
@@ -62,6 +63,7 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
   const [activeCommand, setActiveCommand] = useState(null)
   const [battleLog, setBattleLog] = useState(['Battle started. Select a unit and choose a command.'])
   const [enemyPhase, setEnemyPhase] = useState(false)
+  const [selectedAbilityId, setSelectedAbilityId] = useState(null)
 
   const selectedUnit = units.find((unit) => unit.id === selectedUnitId && unit.hp > 0)
   const objectiveComplete = isObjectiveComplete(activeMission.objective, units)
@@ -74,6 +76,7 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
     setUnits(initialUnits)
     setSelectedUnitId(null)
     setActiveCommand(null)
+    setSelectedAbilityId(null)
     setBattleLog(['Battle started. Select a unit and choose a command.'])
   }, [initialUnits])
 
@@ -202,10 +205,36 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
     setActiveCommand(null)
   }
 
-  function useAbility() {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-    addLog(`${selectedUnit.name} readies a job ability. Ability targeting is the next implementation layer.`)
-    markActed(selectedUnit.id)
+  function pickAbility(abilityId) {
+    setSelectedAbilityId(abilityId)
+    setActiveCommand('ability-target')
+  }
+
+  function cancelAbility() {
+    setSelectedAbilityId(null)
+    setActiveCommand(null)
+  }
+
+  function useAbilityOnTarget(targetId) {
+    if (!selectedUnit || !selectedAbilityId) return
+    const ability = getAbility(selectedAbilityId)
+    const { units: nextUnits, events } = resolveAbilityUse({
+      units, grid, attackerId: selectedUnit.id, abilityId: selectedAbilityId, targetUnitId: targetId,
+    })
+    setUnits(nextUnits.map((u) => u.id === selectedUnit.id ? { ...u, acted: true } : u))
+
+    const preview = events.find((e) => e.type === 'ability_used')?.preview
+    const targetName = units.find((u) => u.id === targetId)?.name ?? 'target'
+    if (preview?.type === 'heal') {
+      addLog(`${selectedUnit.name} cast ${ability.name} — restored ${preview.amount} HP to ${targetName}.`)
+    } else if (preview?.type === 'damage') {
+      addLog(`${selectedUnit.name} used ${ability.name} on ${targetName} for ${preview.amount} damage (${preview.facing}).`)
+    } else {
+      addLog(`${selectedUnit.name} used ${ability.name} on ${targetName}.`)
+    }
+
+    setSelectedAbilityId(null)
+    setActiveCommand(null)
   }
 
   function waitUnit() {
@@ -215,14 +244,8 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
   }
 
   function handleCommand(commandId) {
-    if (commandId === 'item') {
-      useItem()
-      return
-    }
-    if (commandId === 'ability') {
-      useAbility()
-      return
-    }
+    if (commandId === 'item') { useItem(); return }
+    if (commandId === 'ability') { setActiveCommand('ability-pick'); return }
     setActiveCommand(commandId)
   }
 
@@ -249,9 +272,11 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
             units={units}
             selectedUnitId={selectedUnitId}
             activeCommand={activeCommand}
+            selectedAbility={selectedAbilityId ? getAbility(selectedAbilityId) : null}
             onSelectUnit={selectUnit}
             onSelectMoveTile={moveUnit}
             onSelectAttackTarget={attackTarget}
+            onSelectAbilityTarget={useAbilityOnTarget}
             showCoordinates={gameState.settings.showTileCoordinates}
           />
         </section>
@@ -259,11 +284,41 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
         <aside className="battle-sidebar">
           <CommandMenu
             selectedUnit={selectedUnit}
-            activeCommand={activeCommand}
+            activeCommand={activeCommand === 'ability-pick' || activeCommand === 'ability-target' ? 'ability' : activeCommand}
             disabledCommands={disabledCommands}
             onSelectCommand={handleCommand}
             onWait={waitUnit}
           />
+
+          {(activeCommand === 'ability-pick' || activeCommand === 'ability-target') && selectedUnit && (
+            <section className="content-card">
+              <h3>Choose Ability</h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0' }}>
+                {getUnitAbilities(selectedUnit).map((ability) => {
+                  const affordable = (selectedUnit.mp ?? 0) >= (ability.mpCost ?? 0)
+                  const isSelected = ability.id === selectedAbilityId
+                  return (
+                    <li key={ability.id} style={{ marginBottom: 6 }}>
+                      <button
+                        onClick={() => pickAbility(ability.id)}
+                        disabled={!affordable}
+                        style={{ width: '100%', textAlign: 'left', opacity: affordable ? 1 : 0.45, outline: isSelected ? '2px solid #a78bfa' : 'none' }}
+                      >
+                        <strong>{ability.name}</strong>
+                        <span style={{ float: 'right', opacity: 0.7 }}>{ability.mpCost} MP</span>
+                        <br />
+                        <small>{ability.type} · rng {ability.range?.max ?? ability.range ?? 1} · {ability.target}</small>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              {activeCommand === 'ability-target' && (
+                <p style={{ fontSize: 13, opacity: 0.75, margin: '4px 0' }}>Click a purple-highlighted target.</p>
+              )}
+              <button onClick={cancelAbility} style={{ marginTop: 4, width: '100%' }}>Cancel</button>
+            </section>
+          )}
 
           <section className="content-card">
             <h3>Deployment</h3>
