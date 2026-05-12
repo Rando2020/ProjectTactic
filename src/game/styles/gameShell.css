@@ -73,6 +73,11 @@ h2, h3, h4, p {
   color: rgba(247,240,223,.66);
 }
 
+.danger-text {
+  color: #fca5a5;
+  font-weight: 800;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -107,8 +112,43 @@ h2, h3, h4, p {
 
 .battle-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 16px;
+}
+
+.battle-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.command-list {
+  display: grid;
+  gap: 8px;
+}
+
+.command-button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.command-button span {
+  color: rgba(247,240,223,.68);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.command-button.is-active {
+  border-color: rgba(250, 204, 21, .85);
+  background: rgba(250, 204, 21, .16);
+}
+
+.defeated-unit {
+  color: rgba(247,240,223,.42);
+  text-decoration: line-through;
 }
 
 .wide-card {
