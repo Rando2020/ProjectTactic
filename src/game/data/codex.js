@@ -20,6 +20,36 @@ export const CODEX_ENTRIES = [
       'Void Anchors create Resonance Windows. Breaking them saves Guardians and improves rewards.'
   },
   {
+    id: 'the_concord',
+    category: 'Lore',
+    title: 'The Concord',
+    unlockFlags: ['heard_first_guardian'],
+    summary:
+      'The official treaty said the First Breach ended when noble houses, shrine orders, and military academies united. Older echoes suggest the Concord also erased the common soldiers and Resonants who refused to let the victors rewrite the cost.',
+    gameplayNote:
+      'The Concord is the campaign’s history-cycle spine: each region should reveal another institution built on survival, erasure, and controlled memory.'
+  },
+  {
+    id: 'ashen_companies',
+    category: 'Factions',
+    title: 'The Ashen Companies',
+    unlockFlags: ['completed_intro_battle'],
+    summary:
+      'Erased wartime companies of common soldiers, medics, scouts, and warders who held the First Breach line before official records credited the Concord houses.',
+    gameplayNote:
+      'The Ashen Companies support Elian’s route, sabotage objectives, anti-armor abilities, and liberation missions that challenge clean heroic reputation systems.'
+  },
+  {
+    id: 'concord_bloodlines',
+    category: 'Factions',
+    title: 'Concord Bloodlines',
+    unlockFlags: ['stormglass_unlocked'],
+    summary:
+      'Families rewarded after the First Breach with land, command rights, and archive access. Some inherited duty. Others inherited stolen victory.',
+    gameplayNote:
+      'Concord heirs like Serra can unlock command advantages, restricted archives, noble deployment options, and story choices that make privilege mechanically useful but morally expensive.'
+  },
+  {
     id: 'surface_reactions',
     category: 'Combat',
     title: 'Elemental Surface Reactions',
