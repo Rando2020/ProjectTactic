@@ -1,7 +1,31 @@
 import { getQuestsForTown } from '../data/quests.js'
 import { getMissionsForTown } from '../data/missions.js'
 
-export default function TownScreen({ town, activeQuestIds, completedQuestIds, onBackToWorld, onStartMission, onOpenQuestLog, onOpenCodex, onOpenSettings }) {
+const serviceModeMap = {
+  Inn: 'inn',
+  Market: 'inventory',
+  'Reed Market': 'inventory',
+  Barracks: 'party',
+  Glasswright: 'jobs',
+  'Training Yard': 'jobs',
+  'Timing Trials': 'jobs',
+  'Mission Board': 'missionBoard',
+  Shrine: 'summons'
+}
+
+const getServiceTarget = (service) => serviceModeMap[service] || 'party'
+
+export default function TownScreen({
+  town,
+  activeQuestIds,
+  completedQuestIds,
+  onBackToWorld,
+  onStartMission,
+  onOpenQuestLog,
+  onOpenCodex,
+  onOpenSettings,
+  onOpenService
+}) {
   const quests = getQuestsForTown(town.id)
   const missions = getMissionsForTown(town.id)
   const activeSet = new Set(activeQuestIds)
@@ -44,8 +68,14 @@ export default function TownScreen({ town, activeQuestIds, completedQuestIds, on
           <section className="v-panel">
             <h2>Services</h2>
             <div className="v-grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+              <button className="v-btn" onClick={() => onOpenService('party')}>Party</button>
+              <button className="v-btn" onClick={() => onOpenService('inventory')}>Inventory</button>
+              <button className="v-btn" onClick={() => onOpenService('jobs')}>Job Board</button>
+              <button className="v-btn" onClick={() => onOpenService('summons')}>Shrine Archive</button>
               {town.services.map((service) => (
-                <button key={service} className="v-btn">{service}</button>
+                <button key={service} className="v-btn" onClick={() => onOpenService(getServiceTarget(service))}>
+                  {service}
+                </button>
               ))}
             </div>
 
