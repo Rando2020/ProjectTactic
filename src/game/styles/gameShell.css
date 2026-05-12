@@ -169,6 +169,163 @@ h2, h3, h4, p {
   background: rgba(0,0,0,.18);
 }
 
+.tactics-board-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.tactics-board-scroll {
+  min-height: 520px;
+  overflow: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.1);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(201,167,86,.15), transparent 28%),
+    linear-gradient(180deg, rgba(3,7,18,.9), rgba(2,4,10,.98));
+}
+
+.iso-board {
+  position: relative;
+  width: calc((var(--map-width) + var(--map-height)) * 40px + 180px);
+  height: calc((var(--map-width) + var(--map-height)) * 23px + 230px);
+  margin: 28px auto 56px;
+}
+
+.iso-tile {
+  --iso-x: calc((var(--tile-x) - var(--tile-y)) * 40px + ((var(--map-height) - 1) * 40px) + 56px);
+  --iso-y: calc((var(--tile-x) + var(--tile-y)) * 22px + 42px - (var(--tile-height) * 7px));
+  position: absolute;
+  left: var(--iso-x);
+  top: var(--iso-y);
+  width: 82px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  transform: translateZ(0);
+}
+
+.iso-tile:hover:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.iso-tile-face {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  border: 1px solid rgba(255,255,255,.24);
+  box-shadow:
+    0 calc(8px + var(--tile-height) * 2px) 0 rgba(0,0,0,.34),
+    0 18px 24px rgba(0,0,0,.26),
+    inset 0 0 18px rgba(255,255,255,.08);
+}
+
+.iso-tile.is-selected .iso-tile-face {
+  outline: 3px solid rgba(250,204,21,.9);
+  outline-offset: 2px;
+}
+
+.iso-tile.is-move-target .iso-tile-face {
+  border-color: rgba(103,232,249,.9);
+  box-shadow:
+    0 calc(8px + var(--tile-height) * 2px) 0 rgba(8,47,73,.85),
+    0 0 22px rgba(103,232,249,.28),
+    inset 0 0 20px rgba(103,232,249,.22);
+}
+
+.iso-tile.is-attack-target .iso-tile-face {
+  border-color: rgba(249,115,22,.95);
+  box-shadow:
+    0 calc(8px + var(--tile-height) * 2px) 0 rgba(88,28,12,.86),
+    0 0 26px rgba(249,115,22,.34),
+    inset 0 0 22px rgba(249,115,22,.24);
+}
+
+.terrain-grass .iso-tile-face { background: linear-gradient(135deg, #315a36, #173322); }
+.terrain-road .iso-tile-face { background: linear-gradient(135deg, #7b5c35, #3d2e1e); }
+.terrain-stone .iso-tile-face { background: linear-gradient(135deg, #697181, #383d49); }
+.terrain-shrine .iso-tile-face { background: linear-gradient(135deg, #715c2d, #2c2145); }
+.terrain-shallow-water .iso-tile-face { background: linear-gradient(135deg, #1584a3, #0c415a); }
+.terrain-deep-water .iso-tile-face { background: linear-gradient(135deg, #0b3b5e, #05182b); }
+.terrain-ice .iso-tile-face { background: linear-gradient(135deg, #b4e7ff, #4788bb); }
+.terrain-burning .iso-tile-face { background: linear-gradient(135deg, #b45309, #5f1206); }
+.terrain-wall .iso-tile-face { background: linear-gradient(135deg, #2b3140, #090b12); }
+.terrain-high-ground .iso-tile-face { background: linear-gradient(135deg, #746b4b, #3b3729); }
+
+.iso-coords,
+.iso-tile-height,
+.iso-move-cost {
+  position: absolute;
+  z-index: 2;
+  font-size: 9px;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9);
+}
+
+.iso-coords {
+  left: 30px;
+  top: 17px;
+  opacity: .55;
+}
+
+.iso-tile-height {
+  right: 11px;
+  top: 17px;
+  opacity: .7;
+}
+
+.iso-move-cost {
+  left: 34px;
+  bottom: 6px;
+  color: #67e8f9;
+  font-weight: 900;
+}
+
+.iso-unit-token {
+  position: absolute;
+  z-index: 4;
+  left: 16px;
+  top: -14px;
+  display: grid;
+  place-items: center;
+  min-width: 50px;
+  padding: 5px 7px;
+  border-radius: 14px;
+  border: 2px solid rgba(201,167,86,.75);
+  background: rgba(5,7,18,.92);
+  box-shadow: 0 10px 22px rgba(0,0,0,.45);
+  font-size: 11px;
+}
+
+.iso-unit-token strong {
+  font-size: 10px;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iso-unit-token em {
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(201,167,86,.95);
+  color: #120f08;
+  font-style: normal;
+  font-size: 11px;
+}
+
+.has-enemy .iso-unit-token {
+  border-color: rgba(249,115,22,.85);
+}
+
 @media (max-width: 900px) {
   .screen-header,
   .battle-layout {
@@ -178,5 +335,9 @@ h2, h3, h4, p {
 
   .app-toolbar {
     overflow-x: auto;
+  }
+
+  .tactics-board-scroll {
+    min-height: 420px;
   }
 }
