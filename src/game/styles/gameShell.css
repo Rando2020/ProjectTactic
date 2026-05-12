@@ -146,6 +146,86 @@ h2, h3, h4, p {
   background: rgba(250, 204, 21, .16);
 }
 
+.turn-timeline {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.turn-timeline li {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(0,0,0,.16);
+}
+
+.turn-timeline li.is-active-turn {
+  border-color: rgba(250,204,21,.72);
+  background: rgba(250,204,21,.12);
+}
+
+.turn-timeline small {
+  display: block;
+  color: rgba(247,240,223,.62);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.timeline-token {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.1);
+}
+
+.timeline-token.player {
+  color: #67e8f9;
+}
+
+.timeline-token.enemy {
+  color: #f97316;
+}
+
+.damage-preview-card.is-armed {
+  border-color: rgba(249,115,22,.45);
+  background: linear-gradient(145deg, rgba(249,115,22,.12), rgba(255,255,255,.05));
+}
+
+.preview-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.preview-stat-grid span {
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,.16);
+}
+
+.preview-stat-grid strong {
+  font-size: 18px;
+}
+
+.preview-stat-grid small {
+  color: rgba(247,240,223,.62);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
 .defeated-unit {
   color: rgba(247,240,223,.42);
   text-decoration: line-through;
