@@ -29,6 +29,8 @@ src/game/screens/ResultsScreen.jsx
 src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
+src/game/components/CommandMenu.jsx
+src/game/systems/objectives.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
 src/game/state/saveSystem.js
@@ -53,7 +55,9 @@ src/game/data/progression.js
 - Keeps the previous Battle Prototype available as a separate tab.
 - Shows unlocked missions from map data.
 - Renders battle maps with terrain, height, units, and adjacency movement.
-- Provides a debug battle completion path to test rewards.
+- Supports command-driven battle actions: Move, Attack, Ability, Item, and Wait.
+- Resolves `defeat_all` mission objectives from living enemy units.
+- Enables Claim Victory only after the objective is complete.
 - Applies XP, JP, gold, item, mission, and story flag rewards.
 - Shows basic character sheets and job tree lock requirements.
 - Saves and loads local game state through localStorage.
@@ -62,17 +66,19 @@ src/game/data/progression.js
 
 - Tactical movement is currently adjacent-tile only.
 - Enemy units use lightweight temporary stats.
-- Battle completion is a debug button, not a real win condition yet.
-- Attacks, CT turn order, enemy AI, ability targeting, and damage preview are still pending.
+- Attack damage is simple placeholder pressure, not final combat math.
+- Ability targeting currently logs a placeholder action.
+- Item use currently applies a placeholder Vitae Draught heal without consuming inventory.
+- CT turn order, enemy AI, ability targeting, and damage preview are still pending.
 - Visuals are CSS placeholders, not final pixel assets.
 
 ## Next Evolution
 
 1. Add movement range pathfinding.
-2. Add command menu actions: Move, Attack, Ability, Item, Wait.
-3. Add CT turn order and timeline UI.
-4. Add damage preview and hit confirmation.
-5. Add enemy AI intent preview.
-6. Replace debug win with objective resolution.
+2. Add CT turn order and timeline UI.
+3. Add damage preview and hit confirmation.
+4. Add enemy AI intent preview.
+5. Consume inventory items during battle.
+6. Add real ability targeting by job and ability data.
 7. Connect post-battle rewards to mission unlocks and town unlocks.
 8. Add save slots and autosave checkpoints.
