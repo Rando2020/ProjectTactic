@@ -1,5 +1,20 @@
 import { getMission } from '../data/missions.js'
 
+const itemNameToId = (itemName) =>
+  String(itemName)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+
+const addItemsToInventory = (inventory = {}, items = []) => {
+  const nextInventory = { ...inventory }
+  items.forEach((itemName) => {
+    const itemId = itemNameToId(itemName)
+    nextInventory[itemId] = (nextInventory[itemId] || 0) + 1
+  })
+  return nextInventory
+}
+
 export const buildMissionResult = (missionId, outcome = {}) => {
   const mission = getMission(missionId)
   if (!mission) {
@@ -78,6 +93,6 @@ export const applyMissionResult = (save, result) => {
     completedMissionIds: [...new Set([...save.completedMissionIds, result.missionId])],
     jp: save.jp + result.rewards.jp,
     gold: save.gold + result.rewards.gold,
-    inventory: [...save.inventory, ...result.rewards.items]
+    inventory: addItemsToInventory(save.inventory, result.rewards.items)
   }
 }
