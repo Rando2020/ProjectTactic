@@ -229,6 +229,8 @@ function runEnemyTurn(state) {
 
 export function battleReducer(state, action) {
   switch (action.type) {
+    case 'reset':
+      return action.state
     case 'selectUnit':
       return { ...state, selectedUnitId: action.unitId }
     case 'selectCommand':
