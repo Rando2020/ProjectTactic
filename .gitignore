@@ -27,3 +27,9 @@ Thumbs.db
 exports/builds/
 *.tmp
 *.bak
+
+# Godot generated files
+godot/.godot/
+godot/android/
+godot/export_presets.cfg
+godot/*.import
