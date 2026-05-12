@@ -1,4 +1,228 @@
-// Temporary bridge while the generated prototype is refactored into /src/game.
-// Keep this file small. Move systems/data/components here incrementally instead of editing imports across the app.
-export { default } from '../../VaeltharChronicles.jsx'
-export * from '../../VaeltharChronicles.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import CombatPrototype from '../../VaeltharChronicles.jsx'
+import './styles/vaelthar.css'
+
+import { TOWNS, getTown } from './data/towns.js'
+import { getMission } from './data/missions.js'
+import { DEFAULT_SETTINGS } from './data/settings.js'
+import { STORY_CHAPTERS, getStoryChapter, getNextAvailableChapter } from './data/story.js'
+import { createNewSave, loadSave, writeSave, clearSave } from './systems/saveSystem.js'
+
+import StoryScene from './components/StoryScene.jsx'
+import WorldMap from './components/WorldMap.jsx'
+import TownScreen from './components/TownScreen.jsx'
+import QuestLog from './components/QuestLog.jsx'
+import CodexScreen from './components/CodexScreen.jsx'
+import MissionBriefing from './components/MissionBriefing.jsx'
+import SettingsPanel from './components/SettingsPanel.jsx'
+import ControlsHelp from './components/ControlsHelp.jsx'
+import LoadingScreen from './components/LoadingScreen.jsx'
+import OnboardingOverlay from './components/OnboardingOverlay.jsx'
+import Toast from './components/Toast.jsx'
+
+export default function VaeltharChronicles() {
+  const [save, setSave] = useState(() => loadSave() || createNewSave())
+  const [settings, setSettings] = useState(() => DEFAULT_SETTINGS)
+  const [mode, setMode] = useState(save.currentMode || 'title')
+  const [previousMode, setPreviousMode] = useState('town')
+  const [storyBeatIndex, setStoryBeatIndex] = useState(0)
+  const [selectedMissionId, setSelectedMissionId] = useState(null)
+  const [toast, setToast] = useState('')
+  const [loadingTarget, setLoadingTarget] = useState(null)
+  const [onboardingStep, setOnboardingStep] = useState(0)
+
+  const currentTown = getTown(save.currentTownId) || TOWNS.ashvale
+  const currentStory = getStoryChapter(save.currentStoryId) || getNextAvailableChapter(save.storyFlags, save.completedStoryIds) || STORY_CHAPTERS[0]
+
+  const appClassName = useMemo(() => {
+    const classes = ['vaelthar-app']
+    if (settings.highContrast) classes.push('is-high-contrast')
+    if (settings.largeText) classes.push('is-large-text')
+    if (settings.reducedMotion) classes.push('is-reduced-motion')
+    return classes.join(' ')
+  }, [settings])
+
+  useEffect(() => {
+    if (settings.autoSave) writeSave({ ...save, currentMode: mode })
+  }, [save, mode, settings.autoSave])
+
+  useEffect(() => {
+    if (!toast) return undefined
+    const timeout = window.setTimeout(() => setToast(''), 2600)
+    return () => window.clearTimeout(timeout)
+  }, [toast])
+
+  const updateSave = (updater, message) => {
+    setSave((current) => {
+      const next = typeof updater === 'function' ? updater(current) : updater
+      return settings.autoSave ? writeSave(next) : next
+    })
+    if (message) setToast(message)
+  }
+
+  const goLoading = (targetMode, label = 'Loading') => {
+    setPreviousMode(mode)
+    setLoadingTarget({ mode: targetMode, label })
+    setMode('loading')
+  }
+
+  const completeLoading = () => {
+    setMode(loadingTarget?.mode || 'town')
+    setLoadingTarget(null)
+  }
+
+  const finishStoryChapter = () => {
+    const chapter = currentStory
+    const completedStoryIds = [...new Set([...save.completedStoryIds, chapter.id])]
+    const reward = chapter.rewards || {}
+    const nextFlags = [...new Set([...save.storyFlags, ...(reward.flags || [])])]
+    const nextStory = getNextAvailableChapter(nextFlags, completedStoryIds)
+
+    updateSave((current) => ({
+      ...current,
+      storyFlags: nextFlags,
+      unlockedTownIds: [...new Set([...current.unlockedTownIds, ...(reward.unlockTownIds || [])])],
+      activeQuestIds: [...new Set([...current.activeQuestIds, ...(reward.activateQuestIds || [])])],
+      completedStoryIds,
+      currentTownId: chapter.nextTownId || current.currentTownId,
+      currentStoryId: nextStory?.id || chapter.id,
+      currentMode: chapter.nextMode || 'town'
+    }), `Story updated: ${chapter.title}`)
+
+    setStoryBeatIndex(0)
+    goLoading(chapter.nextMode || 'town', 'Advancing story')
+  }
+
+  const advanceStory = () => {
+    if (storyBeatIndex < currentStory.beats.length - 1) {
+      setStoryBeatIndex((index) => index + 1)
+      return
+    }
+    finishStoryChapter()
+  }
+
+  const selectTown = (townId) => {
+    updateSave((current) => ({ ...current, currentTownId: townId, currentMode: 'town' }), `${getTown(townId)?.name || 'Town'} selected`)
+    goLoading('town', 'Traveling')
+  }
+
+  const openMission = (missionId) => {
+    setSelectedMissionId(missionId)
+    goLoading('mission', 'Preparing mission briefing')
+  }
+
+  const completeMissionPlaceholder = (missionId) => {
+    const mission = getMission(missionId)
+    if (!mission) return
+
+    const nextFlags = [...new Set([...save.storyFlags, ...(mission.unlockFlagsOnComplete || [])])]
+    const nextStory = getNextAvailableChapter(nextFlags, save.completedStoryIds)
+
+    updateSave((current) => ({
+      ...current,
+      storyFlags: nextFlags,
+      unlockedTownIds: [...new Set([...current.unlockedTownIds, ...(mission.unlockTownIdsOnComplete || [])])],
+      activeQuestIds: [...new Set([...current.activeQuestIds, ...(mission.unlockQuestIdsOnComplete || [])])],
+      completedQuestIds: [...new Set([...current.completedQuestIds, mission.questId])],
+      completedMissionIds: [...new Set([...current.completedMissionIds, mission.id])],
+      jp: current.jp + mission.rewards.jp,
+      gold: current.gold + mission.rewards.gold,
+      inventory: [...current.inventory, ...mission.rewards.items],
+      currentStoryId: nextStory?.id || current.currentStoryId,
+      currentMode: nextStory ? 'story' : 'town'
+    }), `Mission complete: ${mission.title}`)
+
+    goLoading(nextStory ? 'story' : 'town', 'Resolving mission')
+  }
+
+  const launchMission = (missionId) => {
+    setSelectedMissionId(missionId)
+    goLoading('battle', 'Entering battle')
+  }
+
+  const newGame = () => {
+    clearSave()
+    const fresh = createNewSave()
+    setSave(fresh)
+    setStoryBeatIndex(0)
+    setSelectedMissionId(null)
+    setToast('New game started')
+    goLoading('story', 'Starting prologue')
+  }
+
+  const renderTitle = () => (
+    <main className="v-shell">
+      <section className="v-card">
+        <p className="v-eyebrow">Vaelthar</p>
+        <h1 className="v-title">Eidolon Chronicles</h1>
+        <p className="v-copy" style={{ fontSize: 20 }}>
+          A modern browser tactical RPG shell with story hubs, world map progression, mission briefings, accessibility options, codex unlocks, onboarding, loading tips, and a connected combat prototype.
+        </p>
+        <div className="v-grid-3" style={{ margin: '24px 0' }}>
+          <div className="v-panel"><span className="v-pill">Story</span><h2>Guardian corruption</h2><p className="v-copy">Reach corrupted Guardians instead of only destroying them.</p></div>
+          <div className="v-panel"><span className="v-pill">Tactics</span><h2>Mission board</h2><p className="v-copy">Preview enemies, objectives, rewards, terrain, and bonus challenges.</p></div>
+          <div className="v-panel"><span className="v-pill">Modern UX</span><h2>Player-first shell</h2><p className="v-copy">Auto-save, settings, codex, onboarding, loading tips, and readable menus.</p></div>
+        </div>
+        <div className="v-btn-row">
+          <button className="v-btn v-btn-primary" onClick={newGame}>New Game</button>
+          <button className="v-btn v-btn-blue" onClick={() => goLoading(save.currentMode || 'town', 'Continuing')}>Continue</button>
+          <button className="v-btn" onClick={() => setMode('settings')}>Settings</button>
+          <button className="v-btn" onClick={() => setMode('controls')}>Controls</button>
+        </div>
+      </section>
+    </main>
+  )
+
+  const renderBattlePlaceholder = () => (
+    <main className="v-shell">
+      <section className="v-card">
+        <header className="v-header">
+          <div>
+            <p className="v-eyebrow">Battle Prototype</p>
+            <h1 className="v-title">{getMission(selectedMissionId)?.title || 'Combat Simulation'}</h1>
+            <p className="v-copy">The existing combat prototype is mounted below. Use the placeholder complete button to test story progression until missions are fully integrated into battle results.</p>
+          </div>
+          <div className="v-btn-row">
+            <button className="v-btn" onClick={() => setMode('mission')}>Briefing</button>
+            <button className="v-btn v-btn-primary" onClick={() => completeMissionPlaceholder(selectedMissionId)}>Complete Mission Placeholder</button>
+          </div>
+        </header>
+      </section>
+      <CombatPrototype />
+    </main>
+  )
+
+  let content
+  if (mode === 'title') content = renderTitle()
+  else if (mode === 'loading') content = <LoadingScreen label={loadingTarget?.label} onComplete={completeLoading} />
+  else if (mode === 'story') content = <StoryScene chapter={currentStory} beatIndex={storyBeatIndex} onNext={advanceStory} />
+  else if (mode === 'world') content = <WorldMap unlockedTownIds={save.unlockedTownIds} currentTownId={save.currentTownId} onSelectTown={selectTown} onOpenQuestLog={() => setMode('quests')} />
+  else if (mode === 'town') content = <TownScreen town={currentTown} activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBackToWorld={() => setMode('world')} onStartMission={openMission} onOpenQuestLog={() => setMode('quests')} onOpenCodex={() => setMode('codex')} onOpenSettings={() => setMode('settings')} />
+  else if (mode === 'mission') content = <MissionBriefing missionId={selectedMissionId} onBack={() => setMode('town')} onLaunch={launchMission} />
+  else if (mode === 'battle') content = renderBattlePlaceholder()
+  else if (mode === 'quests') content = <QuestLog activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBack={() => setMode(previousMode || 'town')} />
+  else if (mode === 'codex') content = <CodexScreen storyFlags={save.storyFlags} onBack={() => setMode('town')} />
+  else if (mode === 'settings') content = <SettingsPanel settings={settings} onChange={setSettings} onBack={() => setMode(previousMode || 'title')} />
+  else if (mode === 'controls') content = <ControlsHelp onBack={() => setMode('title')} />
+  else content = renderTitle()
+
+  return (
+    <div className={appClassName}>
+      {content}
+      {!save.onboardingComplete && mode !== 'title' && mode !== 'loading' && (
+        <OnboardingOverlay
+          stepIndex={onboardingStep}
+          onNext={() => {
+            if (onboardingStep >= 4) {
+              updateSave((current) => ({ ...current, onboardingComplete: true }), 'Guide complete')
+            } else {
+              setOnboardingStep((index) => index + 1)
+            }
+          }}
+          onSkip={() => updateSave((current) => ({ ...current, onboardingComplete: true }), 'Guide skipped')}
+        />
+      )}
+      <Toast message={toast} />
+    </div>
+  )
+}
