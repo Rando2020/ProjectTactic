@@ -2,7 +2,7 @@
 
 A browser-first tactical RPG prototype built in React + Vite.
 
-Design influences: classic tactical RPGs, character-job progression, elemental combo combat, Guardian summons, and a darker fantasy tone. This repo should stay browser-playable while the prototype is gradually refactored into clean data, systems, and UI layers.
+Design influences: classic tactical RPG readability, character-job progression, elemental combo combat, Guardian summons, and a darker grounded fantasy tone. This repo should stay browser-playable while the prototype is refactored into clean data, systems, state, screens, and UI layers.
 
 ## Play It Locally
 
@@ -24,17 +24,78 @@ Build output goes to `/dist` and can be deployed as a static site.
 
 ---
 
-## Current Boot Path
+## Current App Navigation
 
 ```txt
 index.html
 └─ src/main.jsx
    └─ src/App.jsx
-      └─ src/game/VaeltharChronicles.jsx
-         └─ ../../VaeltharChronicles.jsx temporary prototype bridge
+      ├─ Game Shell           ← default vertical-slice shell
+      ├─ Character Compendium ← character/job reference area
+      └─ Battle Prototype     ← previous generated combat prototype
 ```
 
-The root `VaeltharChronicles.jsx` is the current generated prototype. It should be treated as temporary until systems are extracted into `/src/game`.
+The previous root-level `VaeltharChronicles.jsx` remains available as the Battle Prototype. New campaign-facing work should move into `src/game/`.
+
+---
+
+## New Vertical Slice Foundation
+
+The repo now includes the first campaign shell:
+
+```txt
+Main Menu
+→ World Map
+→ Town Hub
+→ Tactical Battle
+→ Results Screen
+→ Character Sheets
+→ Job Tree
+→ Save / Load
+```
+
+This is the path from combat demo to actual tactics RPG.
+
+## Key Runtime Files
+
+```txt
+src/game/GameShell.jsx
+src/game/screens/MainMenu.jsx
+src/game/screens/WorldMapScreen.jsx
+src/game/screens/TownScreen.jsx
+src/game/screens/BattleScreen.jsx
+src/game/screens/ResultsScreen.jsx
+src/game/screens/CharacterSheetScreen.jsx
+src/game/screens/JobTreeScreen.jsx
+src/game/components/TacticalGrid.jsx
+src/game/state/initialGameState.js
+src/game/state/progressionReducer.js
+src/game/state/saveSystem.js
+src/game/styles/gameShell.css
+```
+
+## Data Modules
+
+```txt
+src/game/data/maps.js
+src/game/data/towns.js
+src/game/data/units.js
+src/game/data/terrain.js
+src/game/data/progression.js
+src/game/data/story.js
+src/game/data/quests.js
+src/game/data/missions.js
+src/game/data/loadingTips.js
+```
+
+## Documentation Added
+
+```txt
+docs/architecture/game-shell.md
+docs/design/art-direction.md
+docs/design/tile-manifest.md
+docs/design/sprite-manifest.md
+```
 
 ---
 
@@ -45,8 +106,6 @@ ProjectTactic/
 ├─ README.md
 ├─ ARCHITECTURE.md
 ├─ ASSET_PIPELINE.md
-├─ .gitignore
-├─ .gitattributes
 ├─ index.html
 ├─ package.json
 ├─ vite.config.js
@@ -54,11 +113,17 @@ ProjectTactic/
 │  ├─ main.jsx
 │  ├─ App.jsx
 │  └─ game/
+│     ├─ GameShell.jsx
 │     ├─ VaeltharChronicles.jsx
+│     ├─ components/
 │     ├─ data/
-│     ├─ systems/
-│     └─ components/
+│     ├─ screens/
+│     ├─ state/
+│     ├─ styles/
+│     └─ systems/
 ├─ docs/
+│  ├─ architecture/
+│  ├─ design/
 │  ├─ lore/
 │  ├─ mechanics/
 │  ├─ characters/
@@ -80,14 +145,16 @@ ProjectTactic/
 
 | Path | Purpose |
 |---|---|
-| `src/game/data/` | Static game content: elements, statuses, jobs, enemies, items, maps, story data |
-| `src/game/systems/` | Pure gameplay logic: combat math, timing, status, combo, progression, AI |
-| `src/game/components/` | React rendering: battle panels, HUD, skill menu, prompts, logs |
-| `docs/` | Design, production, lore, mechanics, QA, roadmap |
+| `src/game/data/` | Static game content: jobs, units, enemies, maps, terrain, story, towns, missions |
+| `src/game/systems/` | Pure gameplay logic: grid math, combat math, timing, status, combo, AI, progression |
+| `src/game/state/` | Initial state, save/load, reducers, campaign progression |
+| `src/game/screens/` | Full screen flows: menu, world, town, battle, results, character, jobs |
+| `src/game/components/` | Reusable React UI and battle components |
+| `docs/` | Architecture, production, lore, mechanics, QA, roadmap, art direction |
 | `prompts/` | AI prompt recipes for visual/audio generation |
 | `assets/` | Placeholder and final game assets |
 
-Do not add major new systems directly to the root prototype unless it is a temporary spike.
+Do not add major new systems directly to the root prototype unless it is explicitly a temporary spike.
 
 ---
 
@@ -105,6 +172,14 @@ Do not add major new systems directly to the root prototype unless it is a tempo
 - **Ether**: magical defense layer.
 - Armor affects status pressure and damage breakpoints.
 
+### Tactical Grid MVP
+
+- Battle maps render from `BATTLE_MAPS`.
+- Terrain definitions come from `terrain.js`.
+- Units spawn from map data.
+- Adjacent-tile movement is supported as the first movement layer.
+- Height and terrain are visible on the board.
+
 ### Elemental Surface Reactions
 
 Examples:
@@ -118,23 +193,25 @@ Examples:
 
 ### Job and Character Progression
 
-The prototype tracks character levels, JP, job levels, ascended jobs, unlock requirements, and character armor values.
+The repo tracks character levels, XP, JP, job levels, ascended jobs, unlock requirements, and character armor values.
 
 ### Guardians
 
-The prototype includes 32 Guardians across 8 elements and 4 tiers, including corrupted Guardian resonance windows.
+The combat prototype includes 32 Guardians across 8 elements and 4 tiers, including corrupted Guardian resonance windows.
 
 ---
 
 ## Current Production Priorities
 
 1. Keep the browser prototype running.
-2. Extract constants into `src/game/data`.
-3. Extract combat/status/combo logic into `src/game/systems`.
-4. Extract UI regions into `src/game/components`.
-5. Add tactical grid movement and map data.
-6. Add story/town data.
-7. Add save/load.
-8. Add deployment workflow.
+2. Convert the Game Shell from MVP screens into the default production path.
+3. Add movement range pathfinding.
+4. Add command menu actions: Move, Attack, Ability, Item, Wait.
+5. Add CT turn order and timeline UI.
+6. Add damage preview and hit confirmation.
+7. Add enemy AI intent preview.
+8. Replace debug battle completion with objective resolution.
+9. Connect mission rewards to new mission and town unlocks.
+10. Add asset registry mapping terrain, jobs, units, and enemies to placeholder art.
 
-See `ARCHITECTURE.md`, `ASSET_PIPELINE.md`, and `docs/production/roadmap.md` for the working plan.
+See `docs/architecture/game-shell.md`, `docs/design/art-direction.md`, `docs/design/tile-manifest.md`, and `docs/design/sprite-manifest.md` for implementation direction.
