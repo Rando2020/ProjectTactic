@@ -1,36 +1,22 @@
 import { useMemo } from 'react'
-import { buildGrid, getTile, getAdjacentTiles, getUnitAt, isTileBlocked } from '../systems/grid.js'
+import { buildGrid, getTile, getAdjacentTiles, getUnitAt, keyOf } from '../systems/grid.js'
+import { getReachableTiles } from '../systems/pathfinding.js'
 
-const TERRAIN_COLORS = {
-  grass: '#244733',
-  road: '#6b5131',
-  stone: '#4b5563',
-  shrine: '#68512a',
-  shallow_water: '#155e75',
-  deep_water: '#0f2942',
-  ice: '#8ecae6',
-  burning: '#7f1d1d',
-  wall: '#111827',
-  high_ground: '#374151',
+const TERRAIN_CLASSES = {
+  grass: 'terrain-grass',
+  road: 'terrain-road',
+  stone: 'terrain-stone',
+  shrine: 'terrain-shrine',
+  shallow_water: 'terrain-shallow-water',
+  deep_water: 'terrain-deep-water',
+  ice: 'terrain-ice',
+  burning: 'terrain-burning',
+  wall: 'terrain-wall',
+  high_ground: 'terrain-high-ground',
 }
 
-function getTileStyle(tile, selected, highlighted, targetable) {
-  return {
-    position: 'relative',
-    minHeight: 58,
-    border: selected
-      ? '2px solid #facc15'
-      : targetable
-        ? '2px solid #f97316'
-        : highlighted
-          ? '2px solid #67e8f9'
-          : '1px solid rgba(255,255,255,.12)',
-    background: TERRAIN_COLORS[tile.terrain] || '#243447',
-    borderRadius: 10,
-    boxShadow: `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
-    color: '#fff',
-    overflow: 'hidden',
-  }
+function getFacingGlyph(facing) {
+  return { N: '↑', E: '→', S: '↓', W: '←' }[facing] ?? '•'
 }
 
 export default function TacticalGrid({
@@ -53,14 +39,12 @@ export default function TacticalGrid({
     return getAdjacentTiles(map, grid, origin)
   }, [grid, map, selectedUnit])
 
-  const moveKeys = new Set(
-    activeCommand === 'move'
-      ? adjacentTiles
-          .filter((tile) => !isTileBlocked(tile, units, selectedUnitId))
-          .map((tile) => `${tile.x},${tile.y}`)
-      : []
-  )
+  const movementEntries = useMemo(() => {
+    if (activeCommand !== 'move' || !selectedUnit) return []
+    return getReachableTiles({ map, grid, units, unit: selectedUnit })
+  }, [activeCommand, grid, map, selectedUnit, units])
 
+  const moveEntriesByKey = new Map(movementEntries.map((entry) => [keyOf(entry.tile.x, entry.tile.y), entry]))
   const attackTargetIds = new Set(
     activeCommand === 'attack'
       ? adjacentTiles
@@ -81,51 +65,69 @@ export default function TacticalGrid({
       return
     }
 
-    if (moveKeys.has(`${tile.x},${tile.y}`)) {
-      onSelectMoveTile?.(tile)
+    const moveEntry = moveEntriesByKey.get(keyOf(tile.x, tile.y))
+    if (moveEntry) {
+      onSelectMoveTile?.(tile, moveEntry)
     }
   }
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${map.size.width}, minmax(44px, 1fr))`,
-          gap: 6,
-        }}
-      >
-        {grid.map((tile) => {
-          const unit = getUnitAt(units, tile.x, tile.y)
-          const key = `${tile.x},${tile.y}`
-          const selected = unit?.id === selectedUnitId
-          const highlighted = moveKeys.has(key)
-          const targetable = unit && attackTargetIds.has(unit.id)
+    <div className="tactics-board-shell">
+      <div className="tactics-board-scroll">
+        <div
+          className="iso-board"
+          style={{
+            '--map-width': map.size.width,
+            '--map-height': map.size.height,
+          }}
+        >
+          {grid.map((tile) => {
+            const unit = getUnitAt(units, tile.x, tile.y)
+            const tileKey = keyOf(tile.x, tile.y)
+            const selected = unit?.id === selectedUnitId
+            const moveEntry = moveEntriesByKey.get(tileKey)
+            const highlighted = Boolean(moveEntry)
+            const targetable = unit && attackTargetIds.has(unit.id)
+            const terrainClass = TERRAIN_CLASSES[tile.terrain] ?? 'terrain-grass'
 
-          return (
-            <button
-              key={key}
-              onClick={() => handleTileClick(tile)}
-              style={getTileStyle(tile, selected, highlighted, targetable)}
-              title={`${tile.terrainDef.name} h${tile.height}`}
-            >
-              {showCoordinates && (
-                <span style={{ position: 'absolute', top: 4, left: 6, fontSize: 10, opacity: .65 }}>{tile.x},{tile.y}</span>
-              )}
-              <span style={{ position: 'absolute', right: 6, top: 4, fontSize: 10, opacity: .75 }}>h{tile.height}</span>
-              {unit && (
-                <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontWeight: 800 }}>
-                  <span>{unit.team === 'player' ? '◆' : '◇'}</span>
-                  <small>{unit.name.split(' ')[0]}</small>
-                </span>
-              )}
-              {!unit && highlighted && <span style={{ fontSize: 22 }}>·</span>}
-            </button>
-          )
-        })}
+            return (
+              <button
+                key={tileKey}
+                type="button"
+                className={[
+                  'iso-tile',
+                  terrainClass,
+                  selected ? 'is-selected' : '',
+                  highlighted ? 'is-move-target' : '',
+                  targetable ? 'is-attack-target' : '',
+                  unit ? `has-${unit.team}` : '',
+                ].filter(Boolean).join(' ')}
+                style={{
+                  '--tile-x': tile.x,
+                  '--tile-y': tile.y,
+                  '--tile-height': tile.height ?? 0,
+                }}
+                onClick={() => handleTileClick(tile)}
+                title={`${tile.terrainDef.name} h${tile.height}`}
+              >
+                <span className="iso-tile-face" />
+                <span className="iso-tile-height">h{tile.height}</span>
+                {showCoordinates && <span className="iso-coords">{tile.x},{tile.y}</span>}
+                {highlighted && <span className="iso-move-cost">{moveEntry.remaining}</span>}
+                {unit && (
+                  <span className="iso-unit-token">
+                    <span>{unit.team === 'player' ? '◆' : '◇'}</span>
+                    <strong>{unit.name.split(' ')[0]}</strong>
+                    <em>{getFacingGlyph(unit.facing)}</em>
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
-      <p style={{ opacity: .72, fontSize: 13 }}>
-        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target.
+      <p className="muted">
+        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target. Move highlights now use unit move, terrain cost, blocking, and jump limits.
       </p>
     </div>
   )
