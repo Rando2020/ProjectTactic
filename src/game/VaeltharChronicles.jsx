@@ -7,6 +7,7 @@ import { getMission } from './data/missions.js'
 import { DEFAULT_SETTINGS } from './data/settings.js'
 import { STORY_CHAPTERS, getStoryChapter, getNextAvailableChapter } from './data/story.js'
 import { createNewSave, loadSave, writeSave, clearSave } from './systems/saveSystem.js'
+import { applyMissionResult, buildMissionResult } from './systems/missionResultSystem.js'
 
 import StoryScene from './components/StoryScene.jsx'
 import WorldMap from './components/WorldMap.jsx'
@@ -14,6 +15,7 @@ import TownScreen from './components/TownScreen.jsx'
 import QuestLog from './components/QuestLog.jsx'
 import CodexScreen from './components/CodexScreen.jsx'
 import MissionBriefing from './components/MissionBriefing.jsx'
+import BattleResultScreen from './components/BattleResultScreen.jsx'
 import SettingsPanel from './components/SettingsPanel.jsx'
 import ControlsHelp from './components/ControlsHelp.jsx'
 import LoadingScreen from './components/LoadingScreen.jsx'
@@ -27,6 +29,7 @@ export default function VaeltharChronicles() {
   const [previousMode, setPreviousMode] = useState('town')
   const [storyBeatIndex, setStoryBeatIndex] = useState(0)
   const [selectedMissionId, setSelectedMissionId] = useState(null)
+  const [battleResult, setBattleResult] = useState(null)
   const [toast, setToast] = useState('')
   const [loadingTarget, setLoadingTarget] = useState(null)
   const [onboardingStep, setOnboardingStep] = useState(0)
@@ -111,33 +114,58 @@ export default function VaeltharChronicles() {
     goLoading('mission', 'Preparing mission briefing')
   }
 
-  const completeMissionPlaceholder = (missionId) => {
+  const buildBattleResult = (missionId, victory = true) => {
     const mission = getMission(missionId)
     if (!mission) return
 
-    const nextFlags = [...new Set([...save.storyFlags, ...(mission.unlockFlagsOnComplete || [])])]
-    const nextStory = getNextAvailableChapter(nextFlags, save.completedStoryIds)
+    const result = buildMissionResult(missionId, {
+      victory,
+      completedBonusObjectives: victory ? mission.bonusObjectives.slice(0, 2) : []
+    })
 
-    updateSave((current) => ({
-      ...current,
-      storyFlags: nextFlags,
-      unlockedTownIds: [...new Set([...current.unlockedTownIds, ...(mission.unlockTownIdsOnComplete || [])])],
-      activeQuestIds: [...new Set([...current.activeQuestIds, ...(mission.unlockQuestIdsOnComplete || [])])],
-      completedQuestIds: [...new Set([...current.completedQuestIds, mission.questId])],
-      completedMissionIds: [...new Set([...current.completedMissionIds, mission.id])],
-      jp: current.jp + mission.rewards.jp,
-      gold: current.gold + mission.rewards.gold,
-      inventory: [...current.inventory, ...mission.rewards.items],
-      currentStoryId: nextStory?.id || current.currentStoryId,
+    setBattleResult(result)
+    setMode('result')
+  }
+
+  const applyBattleResult = () => {
+    if (!battleResult) {
+      setMode('town')
+      return
+    }
+
+    if (!battleResult.victory) {
+      setToast('No rewards applied after defeat')
+      setMode('town')
+      return
+    }
+
+    const nextSave = applyMissionResult(save, battleResult)
+    const nextStory = getNextAvailableChapter(nextSave.storyFlags, nextSave.completedStoryIds)
+    const resolvedSave = {
+      ...nextSave,
+      currentStoryId: nextStory?.id || nextSave.currentStoryId,
       currentMode: nextStory ? 'story' : 'town'
-    }), `Mission complete: ${mission.title}`)
+    }
 
-    goLoading(nextStory ? 'story' : 'town', 'Resolving mission')
+    updateSave(resolvedSave, `Rewards applied: ${battleResult.title}`)
+    setBattleResult(null)
+    goLoading(nextStory ? 'story' : 'town', 'Applying battle results')
   }
 
   const launchMission = (missionId) => {
     setSelectedMissionId(missionId)
+    setBattleResult(null)
     goLoading('battle', 'Entering battle')
+  }
+
+  const retryMission = () => {
+    setBattleResult(null)
+    goLoading('battle', 'Retrying mission')
+  }
+
+  const returnToTownFromResult = () => {
+    setBattleResult(null)
+    setMode('town')
   }
 
   const newGame = () => {
@@ -146,6 +174,7 @@ export default function VaeltharChronicles() {
     setSave(fresh)
     setStoryBeatIndex(0)
     setSelectedMissionId(null)
+    setBattleResult(null)
     setToast('New game started')
     goLoading('story', 'Starting prologue')
   }
@@ -180,11 +209,12 @@ export default function VaeltharChronicles() {
           <div>
             <p className="v-eyebrow">Battle Prototype</p>
             <h1 className="v-title">{getMission(selectedMissionId)?.title || 'Combat Simulation'}</h1>
-            <p className="v-copy">The existing combat prototype is mounted below. Use the placeholder complete button to test story progression until missions are fully integrated into battle results.</p>
+            <p className="v-copy">The existing combat prototype is mounted below. Use the result buttons to test victory/defeat, rewards, and story progression until the combat engine returns real results.</p>
           </div>
           <div className="v-btn-row">
             <button className="v-btn" onClick={() => setMode('mission')}>Briefing</button>
-            <button className="v-btn v-btn-primary" onClick={() => completeMissionPlaceholder(selectedMissionId)}>Complete Mission Placeholder</button>
+            <button className="v-btn v-btn-primary" onClick={() => buildBattleResult(selectedMissionId, true)}>Simulate Victory</button>
+            <button className="v-btn" onClick={() => buildBattleResult(selectedMissionId, false)}>Simulate Defeat</button>
           </div>
         </header>
       </section>
@@ -200,6 +230,7 @@ export default function VaeltharChronicles() {
   else if (mode === 'town') content = <TownScreen town={currentTown} activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBackToWorld={() => setMode('world')} onStartMission={openMission} onOpenQuestLog={() => setMode('quests')} onOpenCodex={() => setMode('codex')} onOpenSettings={() => setMode('settings')} />
   else if (mode === 'mission') content = <MissionBriefing missionId={selectedMissionId} onBack={() => setMode('town')} onLaunch={launchMission} />
   else if (mode === 'battle') content = renderBattlePlaceholder()
+  else if (mode === 'result') content = <BattleResultScreen result={battleResult} onContinue={applyBattleResult} onRetry={retryMission} onReturnToTown={returnToTownFromResult} />
   else if (mode === 'quests') content = <QuestLog activeQuestIds={save.activeQuestIds} completedQuestIds={save.completedQuestIds} onBack={() => setMode(previousMode || 'town')} />
   else if (mode === 'codex') content = <CodexScreen storyFlags={save.storyFlags} onBack={() => setMode('town')} />
   else if (mode === 'settings') content = <SettingsPanel settings={settings} onChange={setSettings} onBack={() => setMode(previousMode || 'title')} />
@@ -209,7 +240,7 @@ export default function VaeltharChronicles() {
   return (
     <div className={appClassName}>
       {content}
-      {!save.onboardingComplete && mode !== 'title' && mode !== 'loading' && (
+      {!save.onboardingComplete && mode !== 'title' && mode !== 'loading' && mode !== 'battle' && (
         <OnboardingOverlay
           stepIndex={onboardingStep}
           onNext={() => {
