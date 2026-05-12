@@ -148,7 +148,9 @@ export const JOBS = {
 export const STARTING_JOB_LEVELS = {
   zane: { resonant: 1, warder: 1 },
   mira: { luminary: 1 },
-  rusk: { warder: 2 }
+  rusk: { warder: 2 },
+  elian: { warder: 2 },
+  serra: { warder: 3, skywarden: 1 }
 }
 
 export const getJob = (jobId) => JOBS[jobId]
