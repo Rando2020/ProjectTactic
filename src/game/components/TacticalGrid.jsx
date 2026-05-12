@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { buildGrid, getTile, getAdjacentTiles, getUnitAt, isTileBlocked } from '../systems/grid.js'
 
 const TERRAIN_COLORS = {
@@ -14,11 +14,17 @@ const TERRAIN_COLORS = {
   high_ground: '#374151',
 }
 
-function getTileStyle(tile, selected, reachable) {
+function getTileStyle(tile, selected, highlighted, targetable) {
   return {
     position: 'relative',
     minHeight: 58,
-    border: selected ? '2px solid #facc15' : reachable ? '2px solid #67e8f9' : '1px solid rgba(255,255,255,.12)',
+    border: selected
+      ? '2px solid #facc15'
+      : targetable
+        ? '2px solid #f97316'
+        : highlighted
+          ? '2px solid #67e8f9'
+          : '1px solid rgba(255,255,255,.12)',
     background: TERRAIN_COLORS[tile.terrain] || '#243447',
     borderRadius: 10,
     boxShadow: `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
@@ -27,33 +33,56 @@ function getTileStyle(tile, selected, reachable) {
   }
 }
 
-export default function TacticalGrid({ map, units, onMoveUnit, showCoordinates = true }) {
-  const [selectedUnitId, setSelectedUnitId] = useState(null)
+export default function TacticalGrid({
+  map,
+  units,
+  selectedUnitId,
+  activeCommand,
+  onSelectUnit,
+  onSelectMoveTile,
+  onSelectAttackTarget,
+  showCoordinates = true,
+}) {
   const grid = useMemo(() => buildGrid(map), [map])
   const selectedUnit = units.find((unit) => unit.id === selectedUnitId)
 
-  const reachableKeys = useMemo(() => {
-    if (!selectedUnit) return new Set()
+  const adjacentTiles = useMemo(() => {
+    if (!selectedUnit) return []
     const origin = getTile(grid, selectedUnit.x, selectedUnit.y)
-    if (!origin) return new Set()
+    if (!origin) return []
+    return getAdjacentTiles(map, grid, origin)
+  }, [grid, map, selectedUnit])
 
-    return new Set(
-      getAdjacentTiles(map, grid, origin)
-        .filter((tile) => !isTileBlocked(tile, units, selectedUnit.id))
-        .map((tile) => `${tile.x},${tile.y}`)
-    )
-  }, [grid, map, selectedUnit, units])
+  const moveKeys = new Set(
+    activeCommand === 'move'
+      ? adjacentTiles
+          .filter((tile) => !isTileBlocked(tile, units, selectedUnitId))
+          .map((tile) => `${tile.x},${tile.y}`)
+      : []
+  )
+
+  const attackTargetIds = new Set(
+    activeCommand === 'attack'
+      ? adjacentTiles
+          .map((tile) => getUnitAt(units, tile.x, tile.y))
+          .filter((unit) => unit && unit.team === 'enemy')
+          .map((unit) => unit.id)
+      : []
+  )
 
   function handleTileClick(tile) {
     const unit = getUnitAt(units, tile.x, tile.y)
     if (unit) {
-      setSelectedUnitId(unit.id)
+      if (attackTargetIds.has(unit.id)) {
+        onSelectAttackTarget?.(unit.id)
+        return
+      }
+      onSelectUnit?.(unit.id)
       return
     }
 
-    if (selectedUnit && reachableKeys.has(`${tile.x},${tile.y}`)) {
-      onMoveUnit?.(selectedUnit.id, tile)
-      setSelectedUnitId(null)
+    if (moveKeys.has(`${tile.x},${tile.y}`)) {
+      onSelectMoveTile?.(tile)
     }
   }
 
@@ -70,13 +99,14 @@ export default function TacticalGrid({ map, units, onMoveUnit, showCoordinates =
           const unit = getUnitAt(units, tile.x, tile.y)
           const key = `${tile.x},${tile.y}`
           const selected = unit?.id === selectedUnitId
-          const reachable = reachableKeys.has(key)
+          const highlighted = moveKeys.has(key)
+          const targetable = unit && attackTargetIds.has(unit.id)
 
           return (
             <button
               key={key}
               onClick={() => handleTileClick(tile)}
-              style={getTileStyle(tile, selected, reachable)}
+              style={getTileStyle(tile, selected, highlighted, targetable)}
               title={`${tile.terrainDef.name} h${tile.height}`}
             >
               {showCoordinates && (
@@ -89,12 +119,14 @@ export default function TacticalGrid({ map, units, onMoveUnit, showCoordinates =
                   <small>{unit.name.split(' ')[0]}</small>
                 </span>
               )}
-              {!unit && reachable && <span style={{ fontSize: 22 }}>·</span>}
+              {!unit && highlighted && <span style={{ fontSize: 22 }}>·</span>}
             </button>
           )
         })}
       </div>
-      <p style={{ opacity: .72, fontSize: 13 }}>Click a unit, then click an adjacent highlighted tile to move. This is the first tactical-grid MVP layer.</p>
+      <p style={{ opacity: .72, fontSize: 13 }}>
+        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target.
+      </p>
     </div>
   )
 }
