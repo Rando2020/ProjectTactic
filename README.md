@@ -84,6 +84,70 @@ Each has an **Ascended** version (800-1200 JP) with 6 skills, an always-active p
 
 ---
 
+
+## Road to “Best Tactics RPG”
+
+If your goal is to make this feel like a true tactics GOTY contender, focus your next iterations in this order:
+
+1. **Battlefield Layer (Highest impact)**
+   - Add grid positioning, height, and facing bonuses (front/side/back modifiers).
+   - Keep current timing combat as the action-resolution layer after positional decisions.
+
+2. **Role Identity + Party Builds**
+   - Expand jobs into clear tactical archetypes (initiator, disruptor, anchor, finisher).
+   - Add 2–3 cross-job passive slots to create buildcraft depth.
+
+3. **Encounter Design**
+   - Build map objectives beyond “defeat all” (protect target, survive turns, seize points).
+   - Introduce enemy squads with synergies that force counter-play.
+
+4. **Progression Loops**
+   - Add town/prep phase: contracts, equipment upgrades, Guardian attunement.
+   - Let players scout enemy elements before battle and reconfigure party.
+
+5. **Presentation & UX Polish**
+   - Improve timeline readability (turn order + status expiry markers).
+   - Add clearer telegraphs for reaction setups and combo windows.
+
+This game already has a strong identity through elemental timing + reactions. The biggest unlock is layering **positioning and objectives** on top of it.
+
+---
+
+
+## FFT/WotL-Inspired Tactical Layer (implemented prototype)
+
+A new in-app **Tactics Prototype** mode is now available from the top-right toggle. It introduces core board concepts from FFT-style combat:
+
+- Grid-based movement (8×8 tiles)
+- Terrain types (plain/forest/water)
+- Height values per tile
+- Movement range using Manhattan distance
+- Jump constraint (cannot traverse height deltas above Jump stat)
+- Facing updates based on move direction
+
+This is a foundation pass to start blending your existing timing/reaction combat with tactical positioning gameplay.
+
+
+## VFX Asset Strategy (Do this now, but lightweight)
+
+Short answer: **don't wait** for all custom effects. Use free licensed placeholders now, then replace later.
+
+Recommended approach:
+- Use **CC0 / permissive** packs for temporary spell FX while gameplay/UX is still moving.
+- Track every asset in a simple credits sheet (`ASSET_CREDITS.md`) with source URL + license.
+- Keep a consistent art direction pass later (same palette, frame rate, and blend style) before release.
+
+Suggested free sources:
+- Kenney (broad CC0 game assets)
+- OpenGameArt (filter by CC0 / CC-BY and verify per-asset terms)
+- itch.io free VFX packs (verify each creator's license text before import)
+
+Priority order for your project right now:
+1. Title screen / onboarding flow
+2. Tactical controls + board readability
+3. Placeholder VFX/SFX for player feedback
+4. Final art pass and custom FX
+
 ## File Structure
 
 ```
@@ -91,11 +155,9 @@ vaelthar-chronicles/
 ├── index.html
 ├── package.json
 ├── vite.config.js
-└── src/
-    ├── main.jsx
-    ├── App.jsx
-    └── game/
-        └── VaeltharChronicles.jsx   ← entire game (single file)
+├── main.jsx
+├── App.jsx
+└── VaeltharChronicles.jsx   ← entire game (single file)
 ```
 
 The entire game is one self-contained React component. No external game libraries.
