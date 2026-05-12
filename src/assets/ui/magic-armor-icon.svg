@@ -1,0 +1,11 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="magicArmorGrad" x1="24" y1="18" x2="104" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B69BFF" />
+      <stop offset="1" stop-color="#5A3AB5" />
+    </linearGradient>
+  </defs>
+  <path d="M64 10L104 26V58C104 84 87 104 64 118C41 104 24 84 24 58V26L64 10Z" fill="url(#magicArmorGrad)" stroke="#E1D7FF" stroke-width="4" />
+  <circle cx="64" cy="64" r="24" fill="#F2EEFF" />
+  <circle cx="64" cy="64" r="10" fill="#7A5ADB" />
+</svg>
