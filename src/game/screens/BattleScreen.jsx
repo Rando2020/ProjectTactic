@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import TacticalGrid from '../components/TacticalGrid.jsx'
 import CommandMenu from '../components/CommandMenu.jsx'
 import { instantiatePlayerUnit } from '../data/units.js'
-import { getFacingAfterMove } from '../systems/grid.js'
+import { getAbility } from '../data/abilities.js'
+import { buildGrid, getFacingAfterMove } from '../systems/grid.js'
+import { chooseEnemyAction } from '../systems/aiController.js'
 import { getObjectiveProgress, isObjectiveComplete, isPartyDefeated } from '../systems/objectives.js'
 
 const ENEMY_NAMES = {
@@ -21,6 +23,9 @@ function instantiateEnemy(spawn) {
     mp: 35,
     temper: 80,
     ether: 60,
+    move: 3,
+    jump: 1,
+    abilities: ['basic_attack'],
     x: spawn.x,
     y: spawn.y,
     facing: spawn.facing || 'S',
@@ -50,15 +55,20 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
     return [...players, ...enemies]
   }, [activeMission])
 
+  const grid = useMemo(() => buildGrid(activeMission), [activeMission])
+
   const [units, setUnits] = useState(initialUnits)
   const [selectedUnitId, setSelectedUnitId] = useState(null)
   const [activeCommand, setActiveCommand] = useState(null)
   const [battleLog, setBattleLog] = useState(['Battle started. Select a unit and choose a command.'])
+  const [enemyPhase, setEnemyPhase] = useState(false)
 
   const selectedUnit = units.find((unit) => unit.id === selectedUnitId && unit.hp > 0)
   const objectiveComplete = isObjectiveComplete(activeMission.objective, units)
   const partyDefeated = isPartyDefeated(units)
-  const disabledCommands = selectedUnit?.team !== 'player' || selectedUnit?.acted ? ['move', 'attack', 'ability', 'item', 'wait'] : []
+  const disabledCommands = enemyPhase || selectedUnit?.team !== 'player' || selectedUnit?.acted
+    ? ['move', 'attack', 'ability', 'item', 'wait']
+    : []
 
   useEffect(() => {
     setUnits(initialUnits)
@@ -72,6 +82,63 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
       setBattleLog((current) => ['Objective complete. Rewards ready.', ...current])
     }
   }, [objectiveComplete])
+
+  // Transition to enemy phase when all living players have acted
+  useEffect(() => {
+    if (enemyPhase || objectiveComplete || partyDefeated) return
+    const livingPlayers = units.filter((u) => u.team === 'player' && u.hp > 0)
+    const livingEnemies = units.filter((u) => u.team === 'enemy' && u.hp > 0)
+    if (livingPlayers.length > 0 && livingPlayers.every((u) => u.acted) && livingEnemies.length > 0) {
+      setEnemyPhase(true)
+      setBattleLog((current) => ['— Enemy phase —', ...current].slice(0, 8))
+    }
+  }, [units, enemyPhase, objectiveComplete, partyDefeated])
+
+  // Process one enemy action per tick with a delay for readability
+  useEffect(() => {
+    if (!enemyPhase || objectiveComplete || partyDefeated) return
+
+    const livingEnemies = units.filter((u) => u.team === 'enemy' && u.hp > 0 && !u.acted)
+
+    if (livingEnemies.length === 0) {
+      setUnits((current) => current.map((u) => ({ ...u, acted: false })))
+      setEnemyPhase(false)
+      setSelectedUnitId(null)
+      setBattleLog((current) => ['— Player phase — Choose your next move.', ...current].slice(0, 8))
+      return
+    }
+
+    const enemy = livingEnemies[0]
+    const timer = setTimeout(() => {
+      const action = chooseEnemyAction({ map: activeMission, grid, units, unit: enemy })
+
+      if (action.type === 'move') {
+        setUnits((current) => current.map((u) =>
+          u.id === enemy.id
+            ? { ...u, x: action.to.x, y: action.to.y, facing: getFacingAfterMove(u, action.to), acted: true }
+            : u
+        ))
+        setBattleLog((current) => [`${enemy.name} advances to ${action.to.x},${action.to.y}.`, ...current].slice(0, 8))
+
+      } else if (action.type === 'ability') {
+        const ability = getAbility(action.abilityId)
+        const damage = Math.max(10, Math.round(ability.power * (0.75 + Math.random() * 0.4)))
+        setUnits((current) => current.map((u) => {
+          if (u.id === action.targetUnitId) return applyDamage(u, damage)
+          if (u.id === enemy.id) return { ...u, acted: true }
+          return u
+        }))
+        const targetName = units.find((u) => u.id === action.targetUnitId)?.name ?? 'target'
+        setBattleLog((current) => [`${enemy.name} used ${ability.name} on ${targetName} for ${damage} pressure.`, ...current].slice(0, 8))
+
+      } else {
+        setUnits((current) => current.map((u) => u.id === enemy.id ? { ...u, acted: true } : u))
+        setBattleLog((current) => [`${enemy.name} holds position.`, ...current].slice(0, 8))
+      }
+    }, 700)
+
+    return () => clearTimeout(timer)
+  }, [enemyPhase, units, activeMission, grid, objectiveComplete, partyDefeated])
 
   function addLog(message) {
     setBattleLog((current) => [message, ...current].slice(0, 8))
@@ -166,6 +233,7 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
           <p className="eyebrow">Tactical battle MVP</p>
           <h2>{activeMission.name}</h2>
           <p>{getObjectiveProgress(activeMission.objective, units)}</p>
+          {enemyPhase && !objectiveComplete && <p className="eyebrow">Enemy phase — wait…</p>}
           {partyDefeated && <p className="danger-text">Party defeated. Retreat and regroup.</p>}
         </div>
         <div className="button-row">
