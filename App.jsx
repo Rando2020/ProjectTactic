@@ -1,5 +1,3 @@
-import VaeltharChronicles from './game/VaeltharChronicles'
+import App from './src/App.jsx'
 
-export default function App() {
-  return <VaeltharChronicles />
-}
+export default App
