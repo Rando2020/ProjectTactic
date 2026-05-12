@@ -1,0 +1,10 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="temperGrad" x1="24" y1="18" x2="104" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0B24B"/>
+      <stop offset="1" stop-color="#8F541A"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 10L104 26V58C104 84 87 104 64 118C41 104 24 84 24 58V26L64 10Z" fill="url(#temperGrad)" stroke="#F7D59A" stroke-width="4"/>
+  <path d="M64 32L79 60H69V90H59V60H49L64 32Z" fill="#FFF2D2"/>
+</svg>
