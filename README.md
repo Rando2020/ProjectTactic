@@ -28,12 +28,44 @@ Output goes to `/dist` — deploy anywhere static (Netlify, Vercel, GitHub Pages
 - **DEFLECT**: When an enemy announces an attack, a shield button appears for 500ms. Click it to halve their damage.
 - Each element has a **unique timing rhythm** — Thunder fires 4 rapid bursts, Ice fires one slow massive hit, Fire fires 3 medium hits, Wind fires 3 fast slashes, etc.
 
-### 🟧 TEMPER / 🟪 ETHER (Armor)
-Two separate armor values on every character and enemy:
-- **Temper** (orange) = physical defense. Protects against Bleed, Knockdown, Slow.
-- **Ether** (purple) = magical defense. Protects against Burn, Freeze, Stun, Silence, Curse.
+### 🟧 TEMPER / 🟪 ETHER (Character Armor)
+Two separate armor values appear directly in the character section beside HP/MP:
+- **Temper** (orange) = physical defense. Protects against Bleed, Knockdown, Slow, Weaken, Berserk.
+- **Ether** (purple) = magical defense. Protects against Burn, Freeze, Stun, Silence, Curse, Blind.
 - Armor reduces status chance by up to 85% when full. At zero armor, full base chance applies.
 - Hits strip armor automatically. **+15% damage bonus** when hitting a target with 0 armor.
+- Character sheets now track: `temper`, `maxTemper`, `ether`, `maxEther`, current job, job levels, unlocked jobs, mastered jobs, and ascended jobs.
+
+### 🧬 Character Level System
+Character level uses XP and improves global stats, armor caps, and job eligibility. Job level is separate.
+
+| Character Level | XP Required |
+|---:|---:|
+| 1 | 0 |
+| 2 | 100 |
+| 3 | 240 |
+| 4 | 420 |
+| 5 | 650 |
+| 10 | 2550 |
+| 15 | 5700 |
+| 20 | 10100 |
+| 25 | 16150 |
+| 30 | 24540 |
+
+### ⚜ Job Level System
+Each character tracks JP per job. Job levels unlock related jobs and ascended classes.
+
+| Job Level | JP Required | Title |
+|---:|---:|---|
+| 0 | 0 | Untrained |
+| 1 | 30 | Initiate |
+| 2 | 90 | Apprentice |
+| 3 | 180 | Adept |
+| 4 | 320 | Specialist |
+| 5 | 520 | Veteran |
+| 6 | 800 | Master |
+| 7 | 1200 | Transcendent |
+| 8 | 1700 | Mythic |
 
 ### 🔥 Elemental Surface Reactions
 Apply surface states (Wet, Burning, Frozen, Cursed, Blessed) and then hit with a compatible element:
@@ -68,12 +100,24 @@ Each character has a gold gauge that fills when they take damage. At 100%, they 
 ### ⚜ 18 Job Classes (9 Base + 9 Ascended)
 Base classes: Warder, Arcanist, Resonant, Luminary, Skywarden, Chronist, Oathbound, Voidcaller, Null Resonant
 
-Each has an **Ascended** version (800-1200 JP) with 6 skills, an always-active passive, and an enhanced Limit Break:
-- **Null Breaker** (Warder+): passive strips 18 Temper per physical hit
-- **Etherweaver** (Arcanist+): combo chains last 10 seconds instead of 7
-- **Primal Binder** (Resonant+): all summons +20% power permanently
-- **Seraph** (Luminary+): all healing also restores 35 Temper
-- ... etc.
+Each base job maps to an **Ascended** version through character level + related job levels:
+
+| Base Job | Ascended Job | Unlock Requirement |
+|---|---|---|
+| Warder | Null Breaker | Character Lv. 12, Warder Lv. 5, Skywarden Lv. 2, Oathbound Lv. 2 |
+| Arcanist | Etherweaver | Character Lv. 12, Arcanist Lv. 5, Chronist Lv. 3, Voidcaller Lv. 2 |
+| Resonant | Primal Binder | Character Lv. 14, Resonant Lv. 6, Luminary Lv. 2, Voidcaller Lv. 2, freed any Primal Guardian |
+| Luminary | Seraph | Character Lv. 12, Luminary Lv. 5, Resonant Lv. 2, Oathbound Lv. 3 |
+| Skywarden | Drake Ascendant | Character Lv. 12, Skywarden Lv. 5, Warder Lv. 3, Arcanist Lv. 2 |
+| Chronist | Time Sovereign | Character Lv. 13, Chronist Lv. 5, Arcanist Lv. 3, Resonant Lv. 2 |
+| Oathbound | Aegis Vow | Character Lv. 13, Oathbound Lv. 5, Warder Lv. 3, Luminary Lv. 3 |
+| Voidcaller | Abyssal Magister | Character Lv. 14, Voidcaller Lv. 5, Arcanist Lv. 3, Null Resonant Lv. 3 |
+| Null Resonant | Eclipse Harbinger | Character Lv. 18, Null Resonant Lv. 6, Voidcaller Lv. 4, Resonant Lv. 4, freed Vaelthorn |
+
+Examples:
+- **Null Breaker** requires more than Warder grinding. It needs Warder Lv. 5, plus Skywarden and Oathbound cross-training.
+- **Etherweaver** requires Arcanist mastery, but also Chronist timing knowledge and Voidcaller Ether-break training.
+- **Eclipse Harbinger** is an endgame hybrid gated by Null Resonant, Voidcaller, Resonant, and story progress.
 
 ### 🧪 Items (Vaelthar-named)
 - **Vitae Draught** — restore 200 HP
@@ -91,14 +135,17 @@ vaelthar-chronicles/
 ├── index.html
 ├── package.json
 ├── vite.config.js
+├── docs/
+│   └── systems/
+│       └── character-progression.md
 └── src/
     ├── main.jsx
     ├── App.jsx
     └── game/
-        └── VaeltharChronicles.jsx   ← entire game (single file)
+        ├── VaeltharChronicles.jsx   ← current self-contained game component
+        └── data/
+            └── progression.js       ← character, armor, level, and job unlock data
 ```
-
-The entire game is one self-contained React component. No external game libraries.
 
 ---
 
