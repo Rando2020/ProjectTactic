@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 import TacticalGrid from '../components/TacticalGrid.jsx'
 import CommandMenu from '../components/CommandMenu.jsx'
+import TurnTimeline from '../components/TurnTimeline.jsx'
+import DamagePreviewPanel from '../components/DamagePreviewPanel.jsx'
 import { instantiatePlayerUnit } from '../data/units.js'
-import { getFacingAfterMove } from '../systems/grid.js'
 import { getObjectiveProgress, isObjectiveComplete, isPartyDefeated } from '../systems/objectives.js'
+import { battleReducer, createBattleState } from '../systems/battle/battleReducer.js'
 
 const ENEMY_NAMES = {
   null_drake: 'Null Drake',
@@ -21,6 +23,17 @@ function instantiateEnemy(spawn) {
     mp: 35,
     temper: 80,
     ether: 60,
+    stats: {
+      hp: 120,
+      mp: 35,
+      move: 3,
+      jump: 1,
+      speed: spawn.unitId === 'storm_imp' ? 8 : 6,
+      physical: spawn.unitId === 'null_drake' ? 48 : 34,
+      magic: 24,
+      temper: 80,
+      ether: 60,
+    },
     x: spawn.x,
     y: spawn.y,
     facing: spawn.facing || 'S',
@@ -29,143 +42,55 @@ function instantiateEnemy(spawn) {
   }
 }
 
-function applyDamage(unit, amount) {
-  const armorBreak = Math.min(unit.temper ?? 0, Math.round(amount * 0.35))
-  const hpDamage = Math.max(1, amount - Math.round(armorBreak * 0.25))
-
-  return {
-    ...unit,
-    temper: Math.max(0, (unit.temper ?? 0) - armorBreak),
-    hp: Math.max(0, unit.hp - hpDamage),
-  }
-}
-
 export default function BattleScreen({ gameState, activeMission, completeActiveMission, setScreen }) {
   const initialUnits = useMemo(() => {
     const players = activeMission.playerSpawns
       .map((spawn) => instantiatePlayerUnit(spawn.unitId, spawn))
       .filter(Boolean)
-      .map((unit) => ({ ...unit, acted: false }))
     const enemies = activeMission.enemySpawns.map(instantiateEnemy)
     return [...players, ...enemies]
   }, [activeMission])
 
-  const [units, setUnits] = useState(initialUnits)
-  const [selectedUnitId, setSelectedUnitId] = useState(null)
-  const [activeCommand, setActiveCommand] = useState(null)
-  const [battleLog, setBattleLog] = useState(['Battle started. Select a unit and choose a command.'])
+  const initialBattleState = useMemo(() => createBattleState({ map: activeMission, units: initialUnits }), [activeMission, initialUnits])
+  const [battleState, dispatch] = useReducer(battleReducer, initialBattleState)
 
+  const { units, activeUnitId, selectedUnitId, activeCommand, movementRange, damagePreview, battleLog, turnTimeline } = battleState
+  const activeUnit = units.find((unit) => unit.id === activeUnitId && unit.hp > 0)
   const selectedUnit = units.find((unit) => unit.id === selectedUnitId && unit.hp > 0)
   const objectiveComplete = isObjectiveComplete(activeMission.objective, units)
   const partyDefeated = isPartyDefeated(units)
-  const disabledCommands = selectedUnit?.team !== 'player' || selectedUnit?.acted ? ['move', 'attack', 'ability', 'item', 'wait'] : []
+  const isPlayerTurn = activeUnit?.team === 'player'
+  const disabledCommands = !isPlayerTurn
+    ? ['move', 'attack', 'ability', 'item', 'wait']
+    : [
+        ...(activeUnit?.hasMoved ? ['move'] : []),
+        ...(activeUnit?.hasActed ? ['attack', 'ability', 'item'] : []),
+      ]
 
   useEffect(() => {
-    setUnits(initialUnits)
-    setSelectedUnitId(null)
-    setActiveCommand(null)
-    setBattleLog(['Battle started. Select a unit and choose a command.'])
-  }, [initialUnits])
+    dispatch({ type: 'reset', state: initialBattleState })
+  }, [initialBattleState])
 
   useEffect(() => {
-    if (objectiveComplete) {
-      setBattleLog((current) => ['Objective complete. Rewards ready.', ...current])
+    if (activeUnit?.team === 'enemy' && !objectiveComplete && !partyDefeated) {
+      const timeout = window.setTimeout(() => dispatch({ type: 'runEnemyTurn' }), 450)
+      return () => window.clearTimeout(timeout)
     }
-  }, [objectiveComplete])
-
-  function addLog(message) {
-    setBattleLog((current) => [message, ...current].slice(0, 8))
-  }
-
-  function selectUnit(unitId) {
-    const unit = units.find((candidate) => candidate.id === unitId)
-    setSelectedUnitId(unitId)
-    setActiveCommand(unit?.team === 'player' && !unit.acted ? 'move' : null)
-  }
-
-  function updateUnit(unitId, updater) {
-    setUnits((current) => current.map((unit) => unit.id === unitId ? updater(unit) : unit))
-  }
-
-  function markActed(unitId) {
-    updateUnit(unitId, (unit) => ({ ...unit, acted: true }))
-    setActiveCommand(null)
-  }
-
-  function moveUnit(destination) {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-
-    setUnits((current) => current.map((unit) => {
-      if (unit.id !== selectedUnit.id) return unit
-      return {
-        ...unit,
-        facing: getFacingAfterMove(unit, destination),
-        x: destination.x,
-        y: destination.y,
-        acted: true,
-      }
-    }))
-    addLog(`${selectedUnit.name} moved to ${destination.x},${destination.y}.`)
-    setActiveCommand(null)
-  }
-
-  function attackTarget(targetId) {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-    const target = units.find((unit) => unit.id === targetId)
-    if (!target || target.team !== 'enemy') return
-
-    const damage = Math.max(28, Math.round((selectedUnit.stats?.physical ?? 44) * 1.2))
-    setUnits((current) => current.map((unit) => {
-      if (unit.id === targetId) return applyDamage(unit, damage)
-      if (unit.id === selectedUnit.id) return { ...unit, acted: true }
-      return unit
-    }))
-    addLog(`${selectedUnit.name} attacked ${target.name} for ${damage} pressure.`)
-    setActiveCommand(null)
-  }
-
-  function useItem() {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-    updateUnit(selectedUnit.id, (unit) => ({
-      ...unit,
-      hp: Math.min(unit.stats?.hp ?? unit.hp, unit.hp + 120),
-      acted: true,
-    }))
-    addLog(`${selectedUnit.name} used a Vitae Draught placeholder.`)
-    setActiveCommand(null)
-  }
-
-  function useAbility() {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-    addLog(`${selectedUnit.name} readies a job ability. Ability targeting is the next implementation layer.`)
-    markActed(selectedUnit.id)
-  }
-
-  function waitUnit() {
-    if (!selectedUnit || selectedUnit.team !== 'player' || selectedUnit.acted) return
-    addLog(`${selectedUnit.name} waits and holds position.`)
-    markActed(selectedUnit.id)
-  }
+    return undefined
+  }, [activeUnit?.id, activeUnit?.team, objectiveComplete, partyDefeated])
 
   function handleCommand(commandId) {
-    if (commandId === 'item') {
-      useItem()
-      return
-    }
-    if (commandId === 'ability') {
-      useAbility()
-      return
-    }
-    setActiveCommand(commandId)
+    dispatch({ type: 'selectCommand', commandId })
   }
 
   return (
     <main className="game-panel">
       <div className="screen-header">
         <div>
-          <p className="eyebrow">Tactical battle MVP</p>
+          <p className="eyebrow">Tactical battle core</p>
           <h2>{activeMission.name}</h2>
           <p>{getObjectiveProgress(activeMission.objective, units)}</p>
+          {activeUnit && <p className="muted">Active: <strong>{activeUnit.name}</strong> · {activeUnit.team} · CT {Math.round(activeUnit.ct ?? 0)}</p>}
           {partyDefeated && <p className="danger-text">Party defeated. Retreat and regroup.</p>}
         </div>
         <div className="button-row">
@@ -180,21 +105,32 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
             map={activeMission}
             units={units}
             selectedUnitId={selectedUnitId}
+            activeUnitId={activeUnitId}
             activeCommand={activeCommand}
-            onSelectUnit={selectUnit}
-            onSelectMoveTile={moveUnit}
-            onSelectAttackTarget={attackTarget}
+            movementRange={movementRange}
+            damagePreview={damagePreview}
+            onSelectUnit={(unitId) => dispatch({ type: 'selectUnit', unitId })}
+            onSelectMoveTile={(destination) => dispatch({ type: 'moveActiveUnit', destination })}
+            onSelectAttackTarget={(targetId) => dispatch({ type: 'previewAttack', targetId })}
             showCoordinates={gameState.settings.showTileCoordinates}
           />
         </section>
 
         <aside className="battle-sidebar">
+          <TurnTimeline entries={turnTimeline} activeUnitId={activeUnitId} />
+
           <CommandMenu
             selectedUnit={selectedUnit}
             activeCommand={activeCommand}
             disabledCommands={disabledCommands}
             onSelectCommand={handleCommand}
-            onWait={waitUnit}
+            onWait={() => dispatch({ type: 'selectCommand', commandId: 'wait' })}
+          />
+
+          <DamagePreviewPanel
+            preview={damagePreview}
+            onConfirm={() => dispatch({ type: 'confirmAttack' })}
+            onCancel={() => dispatch({ type: 'cancelCommand' })}
           />
 
           <section className="content-card">
@@ -202,7 +138,7 @@ export default function BattleScreen({ gameState, activeMission, completeActiveM
             <ul>
               {units.map((unit) => (
                 <li key={unit.id} className={unit.hp <= 0 ? 'defeated-unit' : ''}>
-                  <strong>{unit.name}</strong> [{unit.team}] HP {unit.hp} TMP {unit.temper} ETH {unit.ether} {unit.acted ? '· acted' : ''}
+                  <strong>{unit.name}</strong> [{unit.team}] HP {unit.hp} TMP {unit.temper} ETH {unit.ether} CT {Math.round(unit.ct ?? 0)} {unit.hasMoved ? '· moved' : ''} {unit.hasActed ? '· acted' : ''}
                 </li>
               ))}
             </ul>
