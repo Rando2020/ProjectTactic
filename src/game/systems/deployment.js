@@ -15,12 +15,16 @@ export function getDeploymentTileKeys(map) {
   return new Set(getDeploymentTiles(map).map((tile) => keyOf(tile.x, tile.y)))
 }
 
-export function getDefaultDeployment(map) {
+export function getDefaultDeployment(map, rosterUnitIds = null) {
   const availableTiles = getDeploymentTiles(map)
-  const unitIds = map.recommendedUnitIds || map.playerSpawns?.map((spawn) => spawn.unitId) || []
-  const maxPartySize = map.maxPartySize || unitIds.length
+  const rosterSet = rosterUnitIds ? new Set(rosterUnitIds) : null
+  const seededUnitIds = map.recommendedUnitIds || map.playerSpawns?.map((spawn) => spawn.unitId) || []
+  const unitIds = rosterSet ? seededUnitIds.filter((unitId) => rosterSet.has(unitId)) : seededUnitIds
+  const requiredUnitIds = (map.requiredUnitIds || []).filter((unitId) => !rosterSet || rosterSet.has(unitId))
+  const orderedUnitIds = Array.from(new Set([...requiredUnitIds, ...unitIds]))
+  const maxPartySize = map.maxPartySize || orderedUnitIds.length
 
-  return unitIds.slice(0, maxPartySize).map((unitId, index) => {
+  return orderedUnitIds.slice(0, maxPartySize).map((unitId, index) => {
     const defaultSpawn = map.playerSpawns?.find((spawn) => spawn.unitId === unitId)
     const tile = availableTiles[index] || defaultSpawn || availableTiles[0]
     return {
@@ -32,9 +36,10 @@ export function getDefaultDeployment(map) {
   })
 }
 
-export function validateDeployment(map, deployment = []) {
+export function validateDeployment(map, deployment = [], rosterUnitIds = null) {
   const errors = []
   const deploymentTileKeys = getDeploymentTileKeys(map)
+  const rosterSet = rosterUnitIds ? new Set(rosterUnitIds) : null
   const requiredUnitIds = map.requiredUnitIds || []
   const maxPartySize = map.maxPartySize || deployment.length
   const occupied = new Set()
@@ -44,6 +49,10 @@ export function validateDeployment(map, deployment = []) {
   }
 
   for (const requiredUnitId of requiredUnitIds) {
+    if (rosterSet && !rosterSet.has(requiredUnitId)) {
+      errors.push(`${requiredUnitId} is required for this mission but is not in the available roster.`)
+      continue
+    }
     if (!deployment.some((slot) => slot.unitId === requiredUnitId)) {
       errors.push(`${requiredUnitId} is required for this mission.`)
     }
@@ -51,6 +60,9 @@ export function validateDeployment(map, deployment = []) {
 
   for (const slot of deployment) {
     const tileKey = keyOf(slot.x, slot.y)
+    if (rosterSet && !rosterSet.has(slot.unitId)) {
+      errors.push(`${slot.unitId} is not available in the current roster.`)
+    }
     if (!deploymentTileKeys.has(tileKey)) {
       errors.push(`${slot.unitId} is outside the deployment zone.`)
     }
@@ -66,7 +78,10 @@ export function validateDeployment(map, deployment = []) {
   return { valid: errors.length === 0, errors }
 }
 
-export function assignUnitToDeploymentTile({ map, deployment, unitId, tile, facing }) {
+export function assignUnitToDeploymentTile({ map, deployment, unitId, tile, facing, rosterUnitIds = null }) {
+  const rosterSet = rosterUnitIds ? new Set(rosterUnitIds) : null
+  if (rosterSet && !rosterSet.has(unitId)) return deployment
+
   const deploymentTileKeys = getDeploymentTileKeys(map)
   const tileKey = keyOf(tile.x, tile.y)
   if (!deploymentTileKeys.has(tileKey)) return deployment
@@ -98,11 +113,11 @@ export function rotateDeploymentFacing(deployment, unitId) {
   })
 }
 
-export function createBattleStateFromDeployment(mapId, deployment) {
+export function createBattleStateFromDeployment(mapId, deployment, rosterUnitIds = null) {
   const map = getBattleMap(mapId)
   if (!map) throw new Error(`Unknown battle map: ${mapId}`)
 
-  const validation = validateDeployment(map, deployment)
+  const validation = validateDeployment(map, deployment, rosterUnitIds)
   if (!validation.valid) {
     throw new Error(`Invalid deployment: ${validation.errors.join(' ')}`)
   }
