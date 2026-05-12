@@ -1,0 +1,70 @@
+body {
+  margin: 0;
+  background: #05060a;
+}
+
+button {
+  border: 1px solid rgba(201, 167, 86, 0.45);
+  border-radius: 10px;
+  background: rgba(12, 16, 26, 0.88);
+  color: #f7f0df;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.6rem 0.85rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover,
+button:focus-visible {
+  border-color: rgba(244, 211, 118, 0.9);
+  background: rgba(35, 42, 61, 0.95);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: #05060a;
+}
+
+.app-toolbar {
+  align-items: center;
+  background: rgba(5, 6, 10, 0.92);
+  border-bottom: 1px solid rgba(201, 167, 86, 0.22);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-tab {
+  min-width: 9rem;
+}
+
+.app-tab.is-active {
+  background: linear-gradient(135deg, rgba(201, 167, 86, 0.26), rgba(63, 81, 116, 0.45));
+  border-color: rgba(244, 211, 118, 0.95);
+  box-shadow: 0 0 0 1px rgba(244, 211, 118, 0.14) inset;
+}
+
+@media (max-width: 640px) {
+  .app-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .app-tab {
+    width: 100%;
+  }
+}
