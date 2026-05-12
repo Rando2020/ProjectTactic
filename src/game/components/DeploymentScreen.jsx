@@ -15,17 +15,17 @@ const facingArrows = { N: '↑', E: '→', S: '↓', W: '←' }
 export default function DeploymentScreen({ map, roster = Object.keys(PLAYER_UNITS), onStartBattle, onCancel }) {
   const grid = useMemo(() => buildGrid(map), [map])
   const deploymentTileKeys = useMemo(() => getDeploymentTileKeys(map), [map])
-  const [deployment, setDeployment] = useState(() => getDefaultDeployment(map))
+  const [deployment, setDeployment] = useState(() => getDefaultDeployment(map, roster))
   const [selectedUnitId, setSelectedUnitId] = useState(() => deployment[0]?.unitId || roster[0])
 
-  const validation = validateDeployment(map, deployment)
+  const validation = validateDeployment(map, deployment, roster)
   const deployedUnitIds = new Set(deployment.map((slot) => slot.unitId))
   const selectedSlot = deployment.find((slot) => slot.unitId === selectedUnitId)
 
   function handleTileClick(tile) {
     if (!selectedUnitId) return
     if (!deploymentTileKeys.has(keyOf(tile.x, tile.y))) return
-    setDeployment((current) => assignUnitToDeploymentTile({ map, deployment: current, unitId: selectedUnitId, tile }))
+    setDeployment((current) => assignUnitToDeploymentTile({ map, deployment: current, unitId: selectedUnitId, tile, rosterUnitIds: roster }))
   }
 
   function handleRotate() {
@@ -39,7 +39,7 @@ export default function DeploymentScreen({ map, roster = Object.keys(PLAYER_UNIT
   }
 
   function handleStart() {
-    const battleState = createBattleStateFromDeployment(map.id, deployment)
+    const battleState = createBattleStateFromDeployment(map.id, deployment, roster)
     onStartBattle?.(battleState)
   }
 
