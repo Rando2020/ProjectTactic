@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/battle/BattleScene.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/battle/BattleManager.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/grid/TacticalGrid.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/battle/TurnOrder.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/battle/CombatResolver.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/systems/ObjectiveTracker.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/systems/ElementalSystem.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/battle/BattleUI.gd" id="8"]
+
+[node name="BattleScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="BattleManager" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="TacticalGrid" type="Node2D" parent="BattleManager"]
+script = ExtResource("3")
+
+[node name="HighlightLayer" type="Node2D" parent="BattleManager/TacticalGrid"]
+z_index = 5
+
+[node name="UnitLayer" type="Node2D" parent="BattleManager/TacticalGrid"]
+z_index = 10
+
+[node name="TurnOrder" type="Node" parent="BattleManager"]
+script = ExtResource("4")
+
+[node name="CombatResolver" type="Node" parent="BattleManager"]
+script = ExtResource("5")
+
+[node name="ObjectiveTracker" type="Node" parent="BattleManager"]
+script = ExtResource("6")
+
+[node name="ElementalSystem" type="Node" parent="BattleManager"]
+script = ExtResource("7")
+
+[node name="BattleUI" type="CanvasLayer" parent="."]
+script = ExtResource("8")

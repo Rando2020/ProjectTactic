@@ -1,11 +1,3 @@
-## TacticalGrid.gd
-## Node2D that renders the battle map and handles tile selection.
-## Owns tile visual state (highlighted, selected, targetable).
-## Does NOT own units or game logic — emits signals upward to BattleManager.
-##
-## AI AGENT: Implement all TODO sections.
-## Signals are the contract with BattleManager — do not change their signatures.
-
 class_name TacticalGrid
 extends Node2D
 
@@ -15,75 +7,109 @@ signal unit_clicked(unit_id: String)
 @export var tile_size: Vector2i = Vector2i(64, 64)
 @export var map_data: MapData
 
-## Runtime tile state — built from map_data on _ready
-var tiles: Dictionary = {}        # Vector2i -> TileRuntimeData
+var tiles: Dictionary = {}          # Vector2i -> Dictionary
 var unit_positions: Dictionary = {} # Vector2i -> unit_id String
 
-## Visual highlight sets
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
 var selected_tile: Vector2i = Vector2i(-1, -1)
 
-@onready var tile_map: TileMapLayer = $TileMapLayer
 @onready var highlight_layer: Node2D = $HighlightLayer
 @onready var unit_layer: Node2D = $UnitLayer
 
 
 func _ready() -> void:
-	# Build the runtime tiles dictionary from map_data. Each entry stores
-	# terrain ID, height, move_cost, and LoS blocking flags. In a complete
-	# implementation these values would be pulled from TileData resources.
+	if map_data:
+		_build_tiles()
+		_draw_base_tiles()
+
+
+func initialize_from_map(p_map_data: MapData) -> void:
+	map_data = p_map_data
+	_build_tiles()
+	_draw_base_tiles()
+
+
+func _build_tiles() -> void:
 	tiles.clear()
-	# Create a lookup for tile overrides by position
 	var overrides := {}
 	for override in map_data.tile_overrides:
 		var pos := Vector2i(override.get("x", 0), override.get("y", 0))
 		overrides[pos] = override
-	# Iterate across the map dimensions
 	for y in range(map_data.map_height):
 		for x in range(map_data.map_width):
 			var pos := Vector2i(x, y)
-			var data := overrides.get(pos, {})
-			var terrain_id := data.get("terrain", map_data.default_terrain)
-			var height := data.get("height", 0)
-			# Construct a simple runtime dictionary. Real values should be
-			# derived from TileData resources (move_cost, blocks_movement, etc.).
-			var runtime := {
-				"terrain": terrain_id,
+			var data: Dictionary = overrides.get(pos, {})
+			var terrain: String = data.get("terrain", map_data.default_terrain)
+			var height: int = data.get("height", 0)
+			tiles[pos] = {
+				"terrain": terrain,
 				"height": height,
-				"move_cost": 1,
-				"blocks_movement": false,
-				"blocks_line_of_sight": false
+				"move_cost": _move_cost_for(terrain),
+				"blocks_movement": terrain in ["wall", "deep_water"],
+				"blocks_line_of_sight": terrain == "wall",
 			}
-			tiles[pos] = runtime
-    # Optionally render the base tilemap here. Without a TileSet this is a
-    # no-op in the scaffold. When assets are available, iterate tiles and call
-    # tile_map.set_cell() with the appropriate atlas indices.
-    # tile_map.clear()
-    # for pos in tiles.keys():
-    #     var cell_id = 0  # look up atlas index based on terrain
-    #     tile_map.set_cell(0, pos, cell_id)
-    #
-    # Once the runtime tile dictionary is built, there is nothing more to do
-    # here in the scaffold. Removing the trailing `pass` prevents an
-    # unreachable-statement warning.
-    return
 
 
-## Called by BattleManager when a unit is selected
+func _draw_base_tiles() -> void:
+	for child in get_children():
+		if child != highlight_layer and child != unit_layer:
+			child.queue_free()
+	for pos in tiles.keys():
+		var data: Dictionary = tiles[pos]
+		var world := _grid_to_local(pos)
+		var rect := ColorRect.new()
+		rect.size = Vector2(tile_size.x - 3, tile_size.y - 3)
+		rect.position = world - Vector2(tile_size.x * 0.5 - 1, tile_size.y * 0.5 - 1)
+		rect.color = _terrain_color(data.terrain, data.height)
+		rect.z_index = 0
+		add_child(rect)
+		if data.height > 0:
+			var lbl := Label.new()
+			lbl.text = "h%d" % data.height
+			lbl.add_theme_font_size_override("font_size", 9)
+			lbl.position = rect.position + Vector2(3, 2)
+			lbl.z_index = 1
+			add_child(lbl)
+
+
+func _terrain_color(terrain: String, height: int) -> Color:
+	var base: Color
+	match terrain:
+		"grass":         base = Color(0.14, 0.42, 0.17)
+		"road":          base = Color(0.48, 0.37, 0.22)
+		"stone":         base = Color(0.36, 0.40, 0.44)
+		"shrine":        base = Color(0.50, 0.38, 0.16)
+		"shallow_water": base = Color(0.12, 0.46, 0.65)
+		"deep_water":    base = Color(0.07, 0.20, 0.42)
+		"ice":           base = Color(0.65, 0.84, 0.92)
+		"burning":       base = Color(0.70, 0.16, 0.07)
+		"wall":          base = Color(0.09, 0.11, 0.14)
+		"high_ground":   base = Color(0.26, 0.30, 0.34)
+		_:               base = Color(0.14, 0.34, 0.17)
+	return base.lightened(height * 0.07)
+
+
+func _move_cost_for(terrain: String) -> int:
+	match terrain:
+		"shallow_water", "high_ground": return 2
+		"deep_water", "wall": return 99
+		_: return 1
+
+
+# ── Highlight API ─────────────────────────────────────────────────────────────
+
 func show_move_range(positions: Array[Vector2i]) -> void:
 	move_tiles = positions
 	_refresh_highlights()
 
 
-## Called by BattleManager when attack command is active
 func show_attack_range(positions: Array[Vector2i]) -> void:
 	attack_tiles = positions
 	_refresh_highlights()
 
 
-## Clears all highlight overlays
 func clear_highlights() -> void:
 	move_tiles.clear()
 	attack_tiles.clear()
@@ -92,80 +118,75 @@ func clear_highlights() -> void:
 	_refresh_highlights()
 
 
-## Updates unit_positions registry and moves unit sprite to new grid position
+func _refresh_highlights() -> void:
+	for child in highlight_layer.get_children():
+		child.queue_free()
+	for pos in move_tiles:
+		_add_highlight(pos, Color(0.0, 0.9, 1.0, 0.38))
+	for pos in attack_tiles:
+		_add_highlight(pos, Color(1.0, 0.45, 0.0, 0.38))
+	for pos in ability_tiles:
+		_add_highlight(pos, Color(0.6, 0.1, 1.0, 0.38))
+	if _is_valid_pos(selected_tile):
+		_add_highlight(selected_tile, Color(1.0, 0.95, 0.0, 0.45))
+
+
+func _add_highlight(pos: Vector2i, color: Color) -> void:
+	var rect := ColorRect.new()
+	rect.color = color
+	rect.size = Vector2(tile_size.x - 3, tile_size.y - 3)
+	rect.position = _grid_to_local(pos) - Vector2(tile_size.x * 0.5 - 1, tile_size.y * 0.5 - 1)
+	highlight_layer.add_child(rect)
+
+
+# ── Unit management ───────────────────────────────────────────────────────────
+
+func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
+	unit_layer.add_child(unit_node)
+	unit_node.position = _grid_to_local(grid_pos)
+	unit_positions[grid_pos] = unit_node.unit_id
+
+
 func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
-	# Animate the visual representation of a unit moving on the grid. Find
-	# the unit node by its unit_id, then tween its position from the old
-	# world coordinate to the new one. Update the unit_positions dictionary
-	# after initiating the animation.
-	var unit_node: Node2D = null
 	for child in unit_layer.get_children():
-		if child.has_method("unit_id"):
-			# If the child exposes unit_id as a property
-			if child.unit_id == unit_id:
-				unit_node = child
-				break
-	if unit_node:
-		var start_pos := GridSystem.grid_to_world(from, tile_size)
-		var end_pos := GridSystem.grid_to_world(to, tile_size)
-		# Immediately set position if start mismatch
-		unit_node.position = start_pos
-		var tween := create_tween()
-		tween.tween_property(unit_node, "position", end_pos, 0.25)
-	# Update unit_positions registry
+		if child.get("unit_id") == unit_id:
+			var tween := create_tween()
+			tween.tween_property(child, "position", _grid_to_local(to), 0.22)
+			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
 
 
-## Places a unit node at a grid position (called during deployment and battle start)
-func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
-	unit_layer.add_child(unit_node)
-	unit_node.position = GridSystem.grid_to_world(grid_pos, tile_size)
-	unit_positions[grid_pos] = unit_node.unit_id
-
+# ── Input ─────────────────────────────────────────────────────────────────────
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		var grid_pos := GridSystem.world_to_grid(get_local_mouse_position(), tile_size)
-		if not _is_valid_pos(grid_pos):
-			return
-		if unit_positions.has(grid_pos):
-			unit_clicked.emit(unit_positions[grid_pos])
-		else:
-			tile_clicked.emit(grid_pos)
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	var local_mouse := get_local_mouse_position()
+	var grid_pos := Vector2i(
+		int(local_mouse.x / tile_size.x),
+		int(local_mouse.y / tile_size.y)
+	)
+	if not _is_valid_pos(grid_pos):
+		return
+	if unit_positions.has(grid_pos):
+		unit_clicked.emit(unit_positions[grid_pos])
+	else:
+		tile_clicked.emit(grid_pos)
 
 
-func _refresh_highlights() -> void:
-	# Clear existing highlight visuals
-	for child in highlight_layer.get_children():
-		child.queue_free()
-	# Helper to add a colored overlay at a grid position
-	func _add_highlight(pos: Vector2i, color: Color) -> void:
-		var rect := ColorRect.new()
-		rect.color = color
-		rect.size = tile_size
-		# Position rect so it aligns with the top-left corner of the tile
-		var world_pos: Vector2 = GridSystem.grid_to_world(pos, tile_size)
-		rect.position = world_pos - Vector2(tile_size.x * 0.5, tile_size.y * 0.5)
-		highlight_layer.add_child(rect)
-	# Move range: cyan overlay
-	for pos in move_tiles:
-		_add_highlight(pos, Color(0, 1, 1, 0.3))
-	# Attack range: orange overlay
-	for pos in attack_tiles:
-		_add_highlight(pos, Color(1, 0.5, 0, 0.3))
-	# Ability range: purple overlay
-	for pos in ability_tiles:
-		_add_highlight(pos, Color(0.5, 0, 1, 0.3))
-	# Selected tile: yellow overlay
-	if _is_valid_pos(selected_tile):
-		_add_highlight(selected_tile, Color(1, 1, 0, 0.35))
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+func _grid_to_local(pos: Vector2i) -> Vector2:
+	return Vector2(pos.x * tile_size.x + tile_size.x * 0.5,
+				   pos.y * tile_size.y + tile_size.y * 0.5)
 
 
 func _is_valid_pos(pos: Vector2i) -> bool:
+	if not map_data:
+		return false
 	return pos.x >= 0 and pos.y >= 0 and pos.x < map_data.map_width and pos.y < map_data.map_height
 
 
-## Returns TileRuntimeData at position or null
-func get_tile(pos: Vector2i) -> RefCounted:
-	return tiles.get(pos, null)
+func get_tile(pos: Vector2i) -> Dictionary:
+	return tiles.get(pos, {})

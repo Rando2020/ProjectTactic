@@ -1,26 +1,22 @@
-## ObjectiveTracker.gd
-## Minimal implementation of mission win/loss conditions.
-## Tracks objectives during a battle and determines if the player has won or lost.
-
 class_name ObjectiveTracker
 extends Node
 
-## Initializes the tracker with map data and units. In a full game this
-## would configure victory conditions based on the mission definition.
-func initialize(map_data: MapData, p_units: Array[Unit]) -> void:
-    pass
+var map_data: MapData
+var units: Array[Unit] = []
 
-## Returns true if the victory condition has been met. In this scaffold we
-## always return false so battles continue until explicitly ended.
+
+func initialize(p_map_data: MapData, p_units: Array[Unit]) -> void:
+	map_data = p_map_data
+	units = p_units
+
+
 func is_victory() -> bool:
-    return false
+	return units.all(func(u): return u.team != "enemy" or u.hp <= 0)
 
-## Returns true if the defeat condition has been met. This simple
-## implementation checks if all party units have been defeated.
+
 func is_defeat() -> bool:
-    return false
+	return units.all(func(u): return u.team != "player" or u.hp <= 0)
 
-## Called when a unit dies so objectives can update. The scaffold does
-## nothing with this information.
-func on_unit_defeated(unit_id: String) -> void:
-    pass
+
+func on_unit_defeated(_unit_id: String) -> void:
+	pass
