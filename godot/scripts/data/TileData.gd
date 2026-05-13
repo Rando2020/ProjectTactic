@@ -16,5 +16,5 @@ extends Resource
 @export var blocks_movement: bool = false
 @export var blocks_line_of_sight: bool = false
 @export var tags: Array[String] = []
-@export var elemental_reactions: Dictionary = {}
+var elemental_reactions: Dictionary = {}
 @export var surge_profile: String = ""
