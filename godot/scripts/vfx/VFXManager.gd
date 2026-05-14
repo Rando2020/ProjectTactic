@@ -10,6 +10,10 @@ extends Node2D
 
 const TILE_PX := 64.0
 
+func _ready() -> void:
+	z_index = 200
+	z_as_relative = false
+
 
 # ── Coordinate helper ──────────────────────────────────────────────────────────
 
@@ -47,7 +51,7 @@ func _play_slash(from_w: Vector2, to_w: Vector2) -> void:
 			var pct := float(t) / 6.0
 			var arc_bow := sin(pct * PI) * 18.0
 			line.add_point(from_w + offset + dir * (pct * 48.0) + perp * arc_bow)
-		add_child(line)
+		_spawn(line)
 		var tw2 := create_tween()
 		tw2.tween_property(line, "modulate:a", 0.0, 0.22)
 		tw2.tween_callback(line.queue_free)
@@ -62,7 +66,7 @@ func _play_impact_sparks(world_pos: Vector2) -> void:
 		spark.default_color = Color(1.0, 0.9, 0.3)
 		spark.add_point(world_pos + Vector2(cos(angle), sin(angle)) * 4.0)
 		spark.add_point(world_pos + Vector2(cos(angle), sin(angle)) * randf_range(14.0, 22.0))
-		add_child(spark)
+		_spawn(spark)
 		var tw := create_tween()
 		tw.set_parallel(true)
 		tw.tween_property(spark, "modulate:a", 0.0, 0.28)
@@ -85,7 +89,7 @@ func play_damage_number(grid_pos: Vector2i, amount: int,
 	lbl.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.05))
 	lbl.add_theme_constant_override("outline_size", 4)
 	lbl.position = world
-	add_child(lbl)
+	_spawn(lbl)
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(lbl, "position:y", world.y - 52.0, 0.75)
@@ -121,14 +125,14 @@ func play_fire(grid_pos: Vector2i) -> void:
 	grad.set_color(0, Color(1.0, 0.95, 0.3, 1.0))
 	grad.set_color(1, Color(0.85, 0.1, 0.0, 0.0))
 	particles.color_ramp = grad
-	add_child(particles)
+	_spawn(particles)
 	# Ember smoke rings
 	for i in range(5):
 		var ring := ColorRect.new()
 		ring.size     = Vector2(12.0, 12.0)
 		ring.color    = Color(0.6, 0.25, 0.05, 0.6)
 		ring.position = world + Vector2(randf_range(-20.0, 20.0), randf_range(-10.0, 10.0))
-		add_child(ring)
+		_spawn(ring)
 		var tw := create_tween()
 		tw.set_parallel(true)
 		tw.tween_property(ring, "position:y", ring.position.y - randf_range(28.0, 48.0), 0.6)
@@ -149,7 +153,7 @@ func play_blizzard(grid_pos: Vector2i) -> void:
 		shard.rotation = angle
 		shard.color    = Color(0.55, 0.88, 1.0, 0.95)
 		shard.position = world
-		add_child(shard)
+		_spawn(shard)
 		var travel := randf_range(22.0, 42.0)
 		var dir    := Vector2(cos(angle), sin(angle))
 		var tw := create_tween()
@@ -165,7 +169,7 @@ func play_blizzard(grid_pos: Vector2i) -> void:
 		bar.rotation = angle
 		bar.color    = Color(0.8, 0.95, 1.0, 0.9)
 		bar.position = world
-		add_child(bar)
+		_spawn(bar)
 		var tw := create_tween()
 		tw.tween_property(bar, "modulate:a", 0.0, 0.3)
 		tw.tween_callback(bar.queue_free)
@@ -188,12 +192,12 @@ func play_thunder(grid_pos: Vector2i) -> void:
 			cur += Vector2(randf_range(-14.0, 14.0), 12.0 + randf_range(0.0, 4.0))
 			bolt.add_point(cur)
 		bolt.add_point(world)
-		add_child(bolt)
+		_spawn(bolt)
 		# Yellow glow copy
 		var glow := bolt.duplicate() as Line2D
 		glow.width         = 6.0
 		glow.default_color = Color(0.95, 1.0, 0.4, 0.45)
-		add_child(glow)
+		_spawn(glow)
 		var tw := create_tween()
 		tw.tween_interval(float(bolt_i) * 0.055)
 		tw.tween_property(bolt, "modulate:a", 0.0, 0.22)
@@ -220,7 +224,7 @@ func play_cure(grid_pos: Vector2i) -> void:
 		var ox := randf_range(-28.0, 28.0)
 		var oy := randf_range(-16.0, 16.0)
 		cross.position = world + Vector2(ox, oy)
-		add_child(cross)
+		_spawn(cross)
 		var tw := create_tween()
 		tw.set_parallel(true)
 		tw.tween_interval(float(i) * 0.055)
@@ -232,7 +236,7 @@ func play_cure(grid_pos: Vector2i) -> void:
 	beam.size     = Vector2(8.0, 60.0)
 	beam.color    = Color(0.8, 1.0, 0.85, 0.6)
 	beam.position = world + Vector2(-4.0, -60.0)
-	add_child(beam)
+	_spawn(beam)
 	var tw := create_tween()
 	tw.tween_property(beam, "modulate:a", 0.0, 0.4)
 	tw.tween_callback(beam.queue_free)
@@ -251,7 +255,7 @@ func play_wind(grid_pos: Vector2i) -> void:
 			var pct := float(t) / 9.0
 			arc.add_point(world + Vector2(-44.0 + pct * 88.0,
 				oy + sin(pct * PI) * 14.0))
-		add_child(arc)
+		_spawn(arc)
 		var tw := create_tween()
 		tw.tween_interval(float(i) * 0.045)
 		tw.tween_property(arc, "modulate:a", 0.0, 0.38)
@@ -270,7 +274,7 @@ func play_holy(grid_pos: Vector2i) -> void:
 		ray.default_color = Color(1.0, 0.98, 0.8, 0.9)
 		ray.add_point(world + Vector2(cos(angle), sin(angle)) * 8.0)
 		ray.add_point(world + Vector2(cos(angle), sin(angle)) * 38.0)
-		add_child(ray)
+		_spawn(ray)
 		var tw := create_tween()
 		tw.tween_property(ray, "modulate:a", 0.0, 0.45)
 		tw.tween_callback(ray.queue_free)
@@ -282,7 +286,7 @@ func play_holy(grid_pos: Vector2i) -> void:
 		var angle   := randf_range(0.0, TAU)
 		var radius  := randf_range(8.0, 36.0)
 		dot.position = world + Vector2(cos(angle), sin(angle)) * radius
-		add_child(dot)
+		_spawn(dot)
 		var tw := create_tween()
 		tw.set_parallel(true)
 		tw.tween_property(dot, "position:y", dot.position.y - randf_range(20.0, 40.0), 0.6)
@@ -301,7 +305,7 @@ func play_dark(grid_pos: Vector2i) -> void:
 		shard.rotation = angle
 		shard.color    = Color(0.35, 0.0, 0.5, 0.9)
 		shard.position = world
-		add_child(shard)
+		_spawn(shard)
 		var dir := Vector2(cos(angle), sin(angle))
 		var tw  := create_tween()
 		tw.set_parallel(true)
@@ -333,7 +337,7 @@ func play_death(grid_pos: Vector2i) -> void:
 	grad.set_color(0, Color(1.0, 1.0, 1.0, 0.9))
 	grad.set_color(1, Color(0.6, 0.7, 1.0, 0.0))
 	particles.color_ramp = grad
-	add_child(particles)
+	_spawn(particles)
 	get_tree().create_timer(2.0).timeout.connect(particles.queue_free)
 
 
@@ -345,7 +349,7 @@ func play_step(grid_pos: Vector2i) -> void:
 	dot.size     = Vector2(10.0, 10.0)
 	dot.color    = Color(0.4, 0.75, 1.0, 0.55)
 	dot.position = world - Vector2(5.0, 5.0)
-	add_child(dot)
+	_spawn(dot)
 	var tw := create_tween()
 	tw.tween_property(dot, "modulate:a", 0.0, 0.45)
 	tw.tween_callback(dot.queue_free)
@@ -353,12 +357,19 @@ func play_step(grid_pos: Vector2i) -> void:
 
 # ── Utility ────────────────────────────────────────────────────────────────────
 
+## Adds a VFX node as a child and ensures it renders above everything.
+func _spawn(node: CanvasItem) -> void:
+	node.z_index = 200
+	node.z_as_relative = false
+	add_child(node)
+
+
 func _screen_flash(world_pos: Vector2, color: Color, duration: float) -> void:
 	var flash    := ColorRect.new()
 	flash.size   = Vector2(72.0, 72.0)
 	flash.color  = color
 	flash.position = world_pos - Vector2(36.0, 36.0)
-	add_child(flash)
+	_spawn(flash)
 	var tw := create_tween()
 	tw.tween_property(flash, "modulate:a", 0.0, duration)
 	tw.tween_callback(flash.queue_free)
