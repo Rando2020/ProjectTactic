@@ -56,7 +56,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 	# Counter-attack: 25 % chance when hit in melee by a non-counter, non-arrow strike
 	var should_counter := false
 	if not is_counter and vfx_mode != "arrow" and target.hp > 0:
-		var dist := abs(attacker.grid_pos.x - target.grid_pos.x) \
+		var dist: int = abs(attacker.grid_pos.x - target.grid_pos.x) \
 				  + abs(attacker.grid_pos.y - target.grid_pos.y)
 		if dist <= target.unit_data.base_stats.attack_range_max and randf() < 0.25:
 			should_counter = true
