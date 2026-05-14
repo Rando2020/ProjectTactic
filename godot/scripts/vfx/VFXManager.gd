@@ -3,23 +3,35 @@
 ## Call from anywhere: VFXManager.play_attack(attacker_grid, target_grid)
 ##
 ## Coordinate system: grid positions are converted to screen pixels using
-## the same formula as TacticalGrid (tile_size 64, no parent transform offset).
+## the same isometric projection as TacticalGrid.
 
 class_name VFXManager
 extends Node2D
 
-const TILE_PX := 64.0
+const TILE_SIZE := Vector2(96.0, 48.0)
+const HEIGHT_STEP := 14.0
+const MAP_ORIGIN := Vector2(320.0, 64.0)
 
 func _ready() -> void:
-	z_index = 200
+	z_index = 3000
 	z_as_relative = false
 
 
 # ── Coordinate helper ──────────────────────────────────────────────────────────
 
 func gp(grid_pos: Vector2i) -> Vector2:
-	return Vector2(grid_pos.x * TILE_PX + TILE_PX * 0.5,
-				   grid_pos.y * TILE_PX + TILE_PX * 0.5)
+	var height := _height_for(grid_pos)
+	return MAP_ORIGIN + Vector2(
+		(grid_pos.x - grid_pos.y) * TILE_SIZE.x * 0.5,
+		(grid_pos.x + grid_pos.y) * TILE_SIZE.y * 0.5 - float(height) * HEIGHT_STEP
+	)
+
+
+func _height_for(grid_pos: Vector2i) -> int:
+	var grid := get_node_or_null("/root/BattleScene/BattleManager/TacticalGrid")
+	if grid and grid.has_method("get_tile"):
+		return int(grid.get_tile(grid_pos).get("height", 0))
+	return 0
 
 
 # ── Physical attack ────────────────────────────────────────────────────────────
