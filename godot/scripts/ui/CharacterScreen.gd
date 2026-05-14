@@ -6,7 +6,7 @@ extends Control
 
 var _gs: GameState
 
-const UNIT_IDS: Array[String] = ["zane", "mira", "kael"]
+const UNIT_IDS: Array[String] = ["zane", "mira", "kael", "lyra"]
 # Column panels rebuilt when an ability is purchased
 var _columns: Array[VBoxContainer] = []
 
@@ -82,7 +82,7 @@ func _build_ui() -> void:
 
 func _build_unit_column(uid: String) -> VBoxContainer:
 	var col := VBoxContainer.new()
-	col.custom_minimum_size = Vector2(400.0, 0.0)
+	col.custom_minimum_size = Vector2(285.0, 0.0)
 	col.add_theme_constant_override("separation", 8)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 

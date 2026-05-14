@@ -108,7 +108,7 @@ func _run_enemy_ai(unit: Unit) -> void:
 				closest_player = u
 	if not closest_player:
 		return
-	if closest_dist <= 1:
+	if closest_dist <= unit.unit_data.base_stats.attack_range_max:
 		var tile_att := tactical_grid.get_tile(unit.grid_pos)
 		var tile_tar := tactical_grid.get_tile(closest_player.grid_pos)
 		var result := combat_resolver.resolve_attack(unit, closest_player, tile_att, tile_tar)
@@ -189,8 +189,10 @@ func select_command(command: String) -> void:
 			move_range_ready.emit(move_range)
 			tactical_grid.show_move_range(move_range)
 		"attack":
+			var atk_min: int = unit.unit_data.base_stats.attack_range_min
+			var atk_max: int = unit.unit_data.base_stats.attack_range_max
 			var atk_range := GridSystem.get_attack_range(
-				unit.grid_pos, 1, 1, map_data.map_width, map_data.map_height
+				unit.grid_pos, atk_min, atk_max, map_data.map_width, map_data.map_height
 			)
 			attack_range_ready.emit(atk_range)
 			tactical_grid.show_attack_range(atk_range)
@@ -229,7 +231,7 @@ func select_ability(ability_id: String) -> void:
 		_execute_ability(unit, unit, ability)
 		return
 	var ab_range := GridSystem.get_attack_range(
-		unit.grid_pos, 1, range_val, map_data.map_width, map_data.map_height
+		unit.grid_pos, ability.get("min_range", 1), range_val, map_data.map_width, map_data.map_height
 	)
 	tactical_grid.show_ability_range(ab_range)
 
@@ -249,7 +251,8 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
 	elif spell_type == "physical":
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t)
+		var ab_vfx: String = ability.get("vfx_mode", "slash")
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx)
 		if result.get("missed", false):
 			log_message.emit("%s swings but misses! (blind)" % caster.display_name)
 		else:
@@ -332,7 +335,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 		if target.grid_pos in tactical_grid.attack_tiles:
 			var tile_att := tactical_grid.get_tile(attacker.grid_pos)
 			var tile_tar := tactical_grid.get_tile(target.grid_pos)
-			var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar)
+			var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
+			var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
 			tactical_grid.clear_highlights()
 			active_command = ""
 			if result.get("missed", false):

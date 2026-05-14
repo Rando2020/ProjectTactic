@@ -42,6 +42,9 @@ func _init_defaults() -> void:
 	_reg("kael", "Kael",
 		["mighty_strike"],
 		["wind_slash", "tremor", "dark_blade"])
+	_reg("lyra", "Lyra",
+		["pin_shot"],
+		["aimed_shot", "eagle_eye", "scatter_shot"])
 
 
 func _reg(uid: String, dname: String,

@@ -7,7 +7,8 @@ const FACING_OPPOSITE: Dictionary = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 
 func resolve_attack(attacker: Unit, target: Unit,
-		tile_attacker: Dictionary, tile_target: Dictionary) -> Dictionary:
+		tile_attacker: Dictionary, tile_target: Dictionary,
+		vfx_mode: String = "slash") -> Dictionary:
 	# ── Blind miss check (35 % miss when blind) ───────────────────────────
 	if attacker.has_status("blind") and randf() < 0.35:
 		var vfx_node := get_node_or_null("/root/VFX")
@@ -33,10 +34,13 @@ func resolve_attack(attacker: Unit, target: Unit,
 	elif flank_mult > 1.0:
 		dmg_color = Color(1.0, 0.78, 0.2)           # side  — warm yellow
 
-	# ── VFX: slash → impact → damage number ──────────────────────────────
+	# ── VFX: arrow or slash → impact → damage number ─────────────────────
 	if Engine.has_singleton("VFX") or is_instance_valid(get_node_or_null("/root/VFX")):
 		var vfx: VFXManager = get_node("/root/VFX")
-		vfx.play_attack(attacker.grid_pos, target.grid_pos, final_damage, dmg_color)
+		if vfx_mode == "arrow":
+			vfx.play_arrow(attacker.grid_pos, target.grid_pos, final_damage, dmg_color)
+		else:
+			vfx.play_attack(attacker.grid_pos, target.grid_pos, final_damage, dmg_color)
 
 	var dmg_result := target.receive_damage(final_damage, "physical")
 	if target.hp <= 0:

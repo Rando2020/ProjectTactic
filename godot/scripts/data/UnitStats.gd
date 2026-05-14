@@ -10,3 +10,7 @@ extends Resource
 @export var magic: int = 40
 @export var max_temper: int = 80
 @export var max_ether: int = 80
+## Minimum tiles away for a basic Attack (1 = melee, 2 = bow can't hit adjacent)
+@export var attack_range_min: int = 1
+## Maximum tiles away for a basic Attack (1 = melee, 3-5 = ranged)
+@export var attack_range_max: int = 1

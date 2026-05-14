@@ -58,6 +58,49 @@ func _play_slash(from_w: Vector2, to_w: Vector2) -> void:
 		tw2.tween_callback(line.queue_free)
 
 
+func play_arrow(from_grid: Vector2i, to_grid: Vector2i, damage: int,
+		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
+	var fw := gp(from_grid)
+	var tw := gp(to_grid)
+	_play_arrow_shaft(fw, tw)
+	await get_tree().create_timer(0.18).timeout
+	_play_impact_sparks(tw)
+	play_damage_number(to_grid, damage, dmg_color)
+
+
+func _play_arrow_shaft(from_w: Vector2, to_w: Vector2) -> void:
+	var dir  := (to_w - from_w).normalized()
+	var angle := dir.angle()
+	# Shaft line grows from source toward target
+	var shaft := Line2D.new()
+	shaft.width = 3.0
+	shaft.default_color = Color(0.72, 0.52, 0.28)
+	shaft.add_point(from_w)
+	shaft.add_point(from_w)   # tip starts at origin; animated below
+	_spawn(shaft)
+	var shaft_tw := create_tween()
+	shaft_tw.tween_method(
+		func(t: float) -> void: shaft.set_point_position(1, from_w.lerp(to_w, t)),
+		0.0, 1.0, 0.18)
+	shaft_tw.tween_property(shaft, "modulate:a", 0.0, 0.22)
+	shaft_tw.tween_callback(shaft.queue_free)
+	# Arrowhead triangle that travels with the tip
+	var head := Polygon2D.new()
+	head.polygon = PackedVector2Array([
+		Vector2(0.0, -6.0),
+		Vector2(4.0,  4.0),
+		Vector2(-4.0, 4.0),
+	])
+	head.color    = Color(0.85, 0.75, 0.35)
+	head.rotation = angle + deg_to_rad(90.0)
+	head.position = from_w
+	_spawn(head)
+	var head_tw := create_tween()
+	head_tw.tween_property(head, "position", to_w, 0.18)
+	head_tw.tween_property(head, "modulate:a", 0.0, 0.22)
+	head_tw.tween_callback(head.queue_free)
+
+
 func _play_impact_sparks(world_pos: Vector2) -> void:
 	# Eight radial spark lines
 	for i in range(8):

@@ -17,6 +17,7 @@ const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.svg",
 	"mira":         "res://assets/sprites/units/mira.svg",
 	"kael":         "res://assets/sprites/units/kael.svg",
+	"lyra":         "res://assets/sprites/units/lyra.svg",
 	"null_drake":   "res://assets/sprites/units/null_drake.svg",
 	"storm_imp":    "res://assets/sprites/units/storm_imp.svg",
 	"void_cultist": "res://assets/sprites/units/void_cultist.svg",
@@ -172,6 +173,10 @@ func _spawn_player_units() -> Array[Unit]:
 	result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
 		380, 55,  4, 2, 6, 55, 32, 110, 70,
 		gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
+	result.append(_make_unit("lyra", "Lyra", "player", Vector2i(0, 7),
+		240, 70, 4, 2, 9, 52, 18, 55, 65,
+		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
+		{}, 2, 4))
 	return result
 
 
@@ -193,11 +198,14 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 				hp: int, mp: int, move: int, jump: int, speed: int,
 				physical: int, magic: int, max_temper: int, max_ether: int,
 				abilities: Array[String] = [],
-				affinities: Dictionary = {}) -> Unit:
+				affinities: Dictionary = {},
+				atk_range_min: int = 1, atk_range_max: int = 1) -> Unit:
 	var stats := UnitStats.new()
 	stats.hp = hp;  stats.mp = mp;  stats.move = move;  stats.jump = jump
 	stats.speed = speed;  stats.physical = physical;  stats.magic = magic
 	stats.max_temper = max_temper;  stats.max_ether = max_ether
+	stats.attack_range_min = atk_range_min
+	stats.attack_range_max = atk_range_max
 
 	var data := UnitData.new()
 	data.id = id;  data.display_name = uname;  data.faction = faction
