@@ -3,6 +3,7 @@ extends Node2D
 
 signal tile_clicked(grid_pos: Vector2i)
 signal unit_clicked(unit_id: String)
+signal tile_hovered(grid_pos: Vector2i)
 
 @export var tile_size: Vector2i = Vector2i(96, 48)
 @export var height_step: float = 14.0
@@ -17,6 +18,7 @@ var _tile_top_polys: Dictionary = {} # Vector2i -> Polygon2D, for mutation/art s
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
+var aoe_preview_tiles: Array[Vector2i] = []
 var selected_tile: Vector2i = Vector2i(-1, -1)
 
 @onready var highlight_layer: Node2D = $HighlightLayer
@@ -183,10 +185,23 @@ func show_ability_range(positions: Array[Vector2i]) -> void:
 	_refresh_highlights()
 
 
+func show_aoe_preview(positions: Array[Vector2i]) -> void:
+	aoe_preview_tiles = positions
+	_refresh_highlights()
+
+
+func clear_aoe_preview() -> void:
+	if aoe_preview_tiles.is_empty():
+		return
+	aoe_preview_tiles.clear()
+	_refresh_highlights()
+
+
 func clear_highlights() -> void:
 	move_tiles.clear()
 	attack_tiles.clear()
 	ability_tiles.clear()
+	aoe_preview_tiles.clear()
 	selected_tile = Vector2i(-1, -1)
 	_refresh_highlights()
 
@@ -200,6 +215,9 @@ func _refresh_highlights() -> void:
 		_add_highlight(pos, Color(1.0, 0.45, 0.0, 0.38))
 	for pos in ability_tiles:
 		_add_highlight(pos, Color(0.6, 0.1, 1.0, 0.38))
+	# AoE burst preview — hot red, drawn over ability range tiles
+	for pos in aoe_preview_tiles:
+		_add_highlight(pos, Color(1.0, 0.18, 0.08, 0.65))
 	if _is_valid_pos(selected_tile):
 		_add_highlight(selected_tile, Color(1.0, 0.95, 0.0, 0.45))
 
@@ -247,6 +265,16 @@ func ignite_tile(pos: Vector2i) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var hov := _local_to_grid(get_local_mouse_position())
+		if _is_valid_pos(hov) and hov != selected_tile:
+			selected_tile = hov
+			_refresh_highlights()
+			tile_hovered.emit(hov)
+		elif not _is_valid_pos(hov) and _is_valid_pos(selected_tile):
+			selected_tile = Vector2i(-1, -1)
+			_refresh_highlights()
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var grid_pos := _local_to_grid(get_local_mouse_position())

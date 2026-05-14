@@ -30,6 +30,7 @@ var selected_ability_id: String = ""
 func _ready() -> void:
 	tactical_grid.tile_clicked.connect(_on_tile_clicked)
 	tactical_grid.unit_clicked.connect(_on_unit_clicked)
+	tactical_grid.tile_hovered.connect(_on_tile_hovered)
 
 
 func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
@@ -423,6 +424,34 @@ func _try_enemy_spell(unit: Unit) -> bool:
 
 
 # ── Input handlers ────────────────────────────────────────────────────────────
+
+## Called every time the mouse crosses into a new grid tile.
+## If an AoE ability is selected, paints the burst zone in red so the
+## player can see exactly which tiles will be hit before committing.
+func _on_tile_hovered(grid_pos: Vector2i) -> void:
+	if active_command != "ability_target" or selected_ability_id == "":
+		tactical_grid.clear_aoe_preview()
+		return
+	var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
+	if not ability.has("aoe_type"):
+		tactical_grid.clear_aoe_preview()
+		return
+	# Only show preview when the cursor is inside ability range
+	if grid_pos not in tactical_grid.ability_tiles:
+		tactical_grid.clear_aoe_preview()
+		return
+	# Compute all tiles inside the burst
+	var preview: Array[Vector2i] = []
+	if ability.get("aoe_type", "") == "radius":
+		var radius: int = ability.get("aoe_radius", 1)
+		for dx: int in range(-radius, radius + 1):
+			for dy: int in range(-radius, radius + 1):
+				var check := grid_pos + Vector2i(dx, dy)
+				if GridSystem.manhattan(check, grid_pos) <= radius \
+						and tactical_grid.get_tile(check) != {}:
+					preview.append(check)
+	tactical_grid.show_aoe_preview(preview)
+
 
 func _on_tile_clicked(grid_pos: Vector2i) -> void:
 	if current_phase != Phase.PLAYER_TURN:
