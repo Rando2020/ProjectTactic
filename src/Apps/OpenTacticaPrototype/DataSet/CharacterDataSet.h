@@ -7,6 +7,8 @@ namespace tactics {
 struct CharacterDataSet {
 	std::string name;
 	HashId avatarId;
+	HashId jobId;
+	std::vector<HashId> abilityIds;
 	uint16_t hp{};
 	uint16_t mp{};
 	uint8_t level{};
@@ -15,7 +17,7 @@ struct CharacterDataSet {
 	uint8_t jump{};
 	float speed{};
 
-	DATASET(CharacterDataSet, name, avatarId, hp, mp, level, xp, move, jump, speed);
+	DATASET(CharacterDataSet, name, avatarId, jobId, abilityIds, hp, mp, level, xp, move, jump, speed);
 };
 
 } // namespace tactics

@@ -21,12 +21,100 @@
             "spriteSheet00": {
                 "path": "game/textures/spriteSheet00.png",
                 "filter": "Nearest"
+            },
+            "prototypeTacticsAtlas": {
+                "path": "generated_assets/prototype_tactics_atlas.png",
+                "filter": "Nearest"
+            },
+            "firstGrassyBattlefield": {
+                "path": "generated_assets/first_grassy_battlefield.png",
+                "filter": "Nearest"
+            },
+            "unitKnight": {
+                "path": "generated_assets/tokens/unit_knight.png",
+                "filter": "Nearest"
+            },
+            "unitScout": {
+                "path": "generated_assets/tokens/unit_scout.png",
+                "filter": "Nearest"
+            },
+            "unitArcanist": {
+                "path": "generated_assets/tokens/unit_arcanist.png",
+                "filter": "Nearest"
+            },
+            "unitHealer": {
+                "path": "generated_assets/tokens/unit_healer.png",
+                "filter": "Nearest"
+            },
+            "enemyLancer": {
+                "path": "generated_assets/tokens/enemy_lancer.png",
+                "filter": "Nearest"
+            },
+            "enemyRogue": {
+                "path": "generated_assets/tokens/enemy_rogue.png",
+                "filter": "Nearest"
+            },
+            "enemyShadow": {
+                "path": "generated_assets/tokens/enemy_shadow.png",
+                "filter": "Nearest"
+            },
+            "terrainGrass": {
+                "path": "generated_assets/tiles/terrain_grass.png",
+                "filter": "Nearest"
+            },
+            "terrainDirt": {
+                "path": "generated_assets/tiles/terrain_dirt.png",
+                "filter": "Nearest"
+            },
+            "terrainStone": {
+                "path": "generated_assets/tiles/terrain_stone.png",
+                "filter": "Nearest"
+            },
+            "terrainBridge": {
+                "path": "generated_assets/tiles/terrain_bridge.png",
+                "filter": "Nearest"
+            },
+            "terrainWater": {
+                "path": "generated_assets/tiles/terrain_water.png",
+                "filter": "Nearest"
+            },
+            "terrainCrystal": {
+                "path": "generated_assets/tiles/terrain_crystal.png",
+                "filter": "Nearest"
+            },
+            "terrainCliff": {
+                "path": "generated_assets/tiles/terrain_cliff.png",
+                "filter": "Nearest"
+            },
+            "terrainStairs": {
+                "path": "generated_assets/tiles/terrain_stairs.png",
+                "filter": "Nearest"
+            },
+            "nextTerrainTileset": {
+                "path": "generated_assets/next_level/terrain_tileset.png",
+                "filter": "Nearest"
+            },
+            "nextUnitSpritesheet": {
+                "path": "generated_assets/next_level/unit_spritesheet.png",
+                "filter": "Nearest"
+            },
+            "nextUiVfxSheet": {
+                "path": "generated_assets/next_level/ui_vfx_sheet.png",
+                "filter": "Nearest"
             }
         },
         "DataSet": {
             "main_characters": {
                 "path": "game/datasets/main_characters.json",
                 "type": "CharacterDataSet"
+            },
+            "jobs": {
+                "path": "game/datasets/jobs.json",
+                "type": "JobDataSet"
+            },
+            "abilities": {
+                "path": "game/datasets/abilities.json",
+                "type": "AbilityDataSet"
             }
         },
         "SpriteSheet": {

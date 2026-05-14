@@ -1,0 +1,44 @@
+{
+    "guarded": {
+        "name": "Guarded",
+        "description": "Incoming damage is reduced.",
+        "moveModifier": 0,
+        "tickDamage": 0
+    },
+    "warded": {
+        "name": "Warded",
+        "description": "Protected against the next burst of magic pressure.",
+        "moveModifier": 0,
+        "tickDamage": 0
+    },
+    "evasive": {
+        "name": "Evasive",
+        "description": "Harder to pin down until the next turn.",
+        "moveModifier": 1,
+        "tickDamage": 0
+    },
+    "slowed": {
+        "name": "Slowed",
+        "description": "Movement is reduced while active.",
+        "moveModifier": -1,
+        "tickDamage": 0
+    },
+    "marked": {
+        "name": "Marked",
+        "description": "Takes cleaner hits from follow-up attacks.",
+        "moveModifier": 0,
+        "tickDamage": 0
+    },
+    "poisoned": {
+        "name": "Poisoned",
+        "description": "Takes damage at the start of a turn.",
+        "moveModifier": 0,
+        "tickDamage": 6
+    },
+    "shaken": {
+        "name": "Shaken",
+        "description": "Less reliable under pressure.",
+        "moveModifier": 0,
+        "tickDamage": 0
+    }
+}

@@ -1,7 +1,9 @@
 #include "OpenTacticaPrototypeApplication.h"
 
 #include "Component/CharacterComponent.h"
+#include "DataSet/AbilityDataSet.h"
 #include "DataSet/CharacterDataSet.h"
+#include "DataSet/JobDataSet.h"
 #include "State/GameState.h"
 #include "State/InitializationState.h"
 #include "State/UninitializationState.h"
@@ -11,10 +13,10 @@ namespace tactics {
 void OpenTacticaPrototypeApplication::setupComponentReflections() {
 	// Components
 	using namespace component;
-	defineReflection<CharName, CharStats, ChargeTime, CharBattleReady, CharAvatar>();
+	defineReflection<CharName, CharStats, ChargeTime, CharBattleReady, CharAvatar, CharLoadout, TacticalPosition, TacticalTeam>();
 
 	// DataSets
-	defineReflection<CharacterDataSet>();
+	defineReflection<CharacterDataSet, JobDataSet, AbilityDataSet>();
 }
 
 HashId OpenTacticaPrototypeApplication::initialize(ServiceLocator& serviceLocator, FsmBuilder& fsmBuilder) {

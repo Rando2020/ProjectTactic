@@ -1,0 +1,26 @@
+{
+    "notes": [
+        "Placeholder audio hook manifest. Actual .wav/.ogg files can be dropped in later without changing ability IDs.",
+        "The current environment can generate images, not production-ready audio."
+    ],
+    "sfx": {
+        "sfx_sword_slash": { "suggestedFile": "audio/sfx/sword_slash.wav", "description": "Short blade cut" },
+        "sfx_guard_raise": { "suggestedFile": "audio/sfx/guard_raise.wav", "description": "Shield/armor guard stance" },
+        "sfx_rally_chime": { "suggestedFile": "audio/sfx/rally_chime.wav", "description": "Bright morale chime" },
+        "sfx_arrow_release": { "suggestedFile": "audio/sfx/arrow_release.wav", "description": "Bowstring and arrow flight" },
+        "sfx_vine_snare": { "suggestedFile": "audio/sfx/vine_snare.wav", "description": "Roots/vines tightening" },
+        "sfx_soft_heal": { "suggestedFile": "audio/sfx/soft_heal.wav", "description": "Small healing sparkle" },
+        "sfx_fire_burst": { "suggestedFile": "audio/sfx/fire_burst.wav", "description": "Compact fire impact" },
+        "sfx_ice_shard": { "suggestedFile": "audio/sfx/ice_shard.wav", "description": "Ice forming and cracking" },
+        "sfx_lightning_snap": { "suggestedFile": "audio/sfx/lightning_snap.wav", "description": "Sharp electrical snap" },
+        "sfx_heal_chime": { "suggestedFile": "audio/sfx/heal_chime.wav", "description": "Clear restorative bell" },
+        "sfx_ward_bell": { "suggestedFile": "audio/sfx/ward_bell.wav", "description": "Protective magic bell" },
+        "sfx_cleanse_mist": { "suggestedFile": "audio/sfx/cleanse_mist.wav", "description": "Soft mist and sparkle" },
+        "sfx_spear_thrust": { "suggestedFile": "audio/sfx/spear_thrust.wav", "description": "Long weapon thrust" },
+        "sfx_quick_blades": { "suggestedFile": "audio/sfx/quick_blades.wav", "description": "Two quick knife cuts" },
+        "sfx_smoke_puff": { "suggestedFile": "audio/sfx/smoke_puff.wav", "description": "Small smoke burst" },
+        "sfx_shadow_slash": { "suggestedFile": "audio/sfx/shadow_slash.wav", "description": "Dark blade cut" },
+        "sfx_dread_mark": { "suggestedFile": "audio/sfx/dread_mark.wav", "description": "Low ominous mark" },
+        "sfx_default_skill": { "suggestedFile": "audio/sfx/default_skill.wav", "description": "Fallback skill sound" }
+    }
+}

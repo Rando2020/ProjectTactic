@@ -1,0 +1,24 @@
+; Engine configuration file.
+; Open this folder with Godot 4.x.
+
+config_version=5
+
+[application]
+
+config/name="Project Tactics Prototype"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.3")
+config/icon="res://assets/tokens/unit_knight.png"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=800
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+
+[debug]
+
+gdscript/warnings/unused_parameter=0

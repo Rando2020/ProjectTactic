@@ -1,0 +1,24 @@
+[
+    {
+        "id": "training_blade",
+        "name": "Training Blade",
+        "slot": "weapon",
+        "attack": 4,
+        "tags": [ "melee" ]
+    },
+    {
+        "id": "yew_bow",
+        "name": "Yew Bow",
+        "slot": "weapon",
+        "attack": 3,
+        "rangeBonus": 1,
+        "tags": [ "ranged" ]
+    },
+    {
+        "id": "sun_thread",
+        "name": "Sun Thread",
+        "slot": "charm",
+        "spirit": 4,
+        "tags": [ "support" ]
+    }
+]

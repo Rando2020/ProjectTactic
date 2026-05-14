@@ -4,8 +4,10 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 set(SOURCES
     OpenTacticaPrototypeApplication.cpp
     main.cpp
+    DataSet/AbilityDataSet.cpp
     Component/CharacterComponent.cpp
     DataSet/CharacterDataSet.cpp
+    DataSet/JobDataSet.cpp
     Overlay/PrototypeOverlay.cpp
     State/GameState.cpp
     State/InitializationState.cpp
@@ -13,7 +15,9 @@ set(SOURCES
     
 set(HEADERS
     Component/CharacterComponent.h
+    DataSet/AbilityDataSet.h
     DataSet/CharacterDataSet.h
+    DataSet/JobDataSet.h
     Overlay/PrototypeOverlay.h
     State/GameState.h
     State/InitializationState.h

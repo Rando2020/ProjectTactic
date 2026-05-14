@@ -1,0 +1,98 @@
+[
+    {
+        "id": "stoneguard",
+        "name": "Stoneguard",
+        "spriteId": "unitKnight",
+        "portraitId": "unitKnight",
+        "baseHp": 120,
+        "baseMp": 40,
+        "move": 4,
+        "jump": 2,
+        "speed": 24,
+        "abilityIds": [ "iron_cut", "guard_wall", "rally_step" ]
+    },
+    {
+        "id": "greenwarden",
+        "name": "Greenwarden",
+        "spriteId": "unitScout",
+        "portraitId": "unitScout",
+        "baseHp": 82,
+        "baseMp": 55,
+        "move": 5,
+        "jump": 3,
+        "speed": 30,
+        "abilityIds": [ "quick_shot", "snare_vine", "volley_pin", "field_medic" ]
+    },
+    {
+        "id": "runebinder",
+        "name": "Runebinder",
+        "spriteId": "unitArcanist",
+        "portraitId": "unitArcanist",
+        "baseHp": 76,
+        "baseMp": 115,
+        "move": 3,
+        "jump": 2,
+        "speed": 22,
+        "abilityIds": [ "ember_bolt", "ice_sigil", "arc_flash" ]
+    },
+    {
+        "id": "dawncleric",
+        "name": "Dawncleric",
+        "spriteId": "unitHealer",
+        "portraitId": "unitHealer",
+        "baseHp": 74,
+        "baseMp": 125,
+        "move": 4,
+        "jump": 2,
+        "speed": 26,
+        "abilityIds": [ "mend_light", "warding_prayer", "sunlit_aegis", "cleanse_mist" ]
+    },
+    {
+        "id": "bramble_lancer",
+        "name": "Bramble Lancer",
+        "spriteId": "enemyLancer",
+        "portraitId": "enemyLancer",
+        "baseHp": 70,
+        "baseMp": 10,
+        "move": 3,
+        "jump": 2,
+        "speed": 18,
+        "abilityIds": [ "piercing_thrust", "hook_lance", "brace" ]
+    },
+    {
+        "id": "brush_rogue",
+        "name": "Brush Rogue",
+        "spriteId": "enemyRogue",
+        "portraitId": "enemyRogue",
+        "baseHp": 65,
+        "baseMp": 20,
+        "move": 4,
+        "jump": 2,
+        "speed": 24,
+        "abilityIds": [ "knife_flurry", "poison_prick", "smoke_step" ]
+    },
+    {
+        "id": "shade_knife",
+        "name": "Shade Knife",
+        "spriteId": "enemyShadow",
+        "portraitId": "enemyShadow",
+        "baseHp": 55,
+        "baseMp": 30,
+        "move": 5,
+        "jump": 3,
+        "speed": 28,
+        "abilityIds": [ "shadow_cut", "dread_mark", "void_spark" ]
+    },
+    {
+        "id": "bog_shaman",
+        "name": "Bog Shaman",
+        "spriteId": "enemyShadow",
+        "portraitId": "enemyShadow",
+        "baseHp": 60,
+        "baseMp": 55,
+        "move": 3,
+        "jump": 2,
+        "speed": 19,
+        "abilityIds": [ "mire_hex", "mend_light" ]
+    }
+]

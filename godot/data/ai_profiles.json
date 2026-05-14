@@ -1,0 +1,17 @@
+{
+    "bruiser": {
+        "preferredRange": 1,
+        "riskTolerance": 0.7,
+        "focusLowHpTargets": false
+    },
+    "skirmisher": {
+        "preferredRange": 3,
+        "riskTolerance": 0.45,
+        "focusLowHpTargets": true
+    },
+    "caster": {
+        "preferredRange": 4,
+        "riskTolerance": 0.25,
+        "focusLowHpTargets": true
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "generatedPack": "first_fight_next_level",
+    "notes": [
+        "Original generated art using broad tactical RPG genre references.",
+        "Do not treat these sheets as final cut assets; they are clean source sheets for slicing into engine resources."
+    ],
+    "sheets": {
+        "terrainTileset": {
+            "transparent": "terrain_tileset.png",
+            "source": "terrain_tileset_chromakey.png",
+            "intendedUse": "Reusable isometric terrain tiles and highlight overlays"
+        },
+        "unitSpritesheet": {
+            "transparent": "unit_spritesheet.png",
+            "source": "unit_spritesheet_chromakey.png",
+            "intendedUse": "Player and enemy idle/walk/attack/hurt/downed sprites"
+        },
+        "uiVfxSheet": {
+            "transparent": "ui_vfx_sheet.png",
+            "source": "ui_vfx_sheet_chromakey.png",
+            "intendedUse": "Command UI, bars, icons, cursor markers, and battle VFX"
+        }
+    },
+    "nextSteps": [
+        "Slice sheets into named frame PNGs or atlas coordinates.",
+        "Move encounter tile data into runtime loading.",
+        "Replace prototype overlay board with scene-rendered tile entities.",
+        "Animate unit movement along tile paths."
+    ]
+}

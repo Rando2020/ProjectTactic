@@ -14,12 +14,18 @@
 #include <Libs/Resource/ResourceSystem.h>
 #include <Libs/Utility/Time/EngineTime.h>
 
+#include <array>
+#include <vector>
+
 namespace tactics {
 
-void createCharacterFromData(const CharacterDataSet& charData, SceneSystem& sceneSystem, const glm::vec3& position) {
+Entity createCharacterFromData(const CharacterDataSet& charData, SceneSystem& sceneSystem, const glm::vec3& position) {
 	auto entity = sceneSystem.createEntity(HashId(charData.name), "character"_id);
 	entity.getComponent<component::CharName>().name = charData.name;
 	entity.getComponent<component::CharAvatar>().textureId = charData.avatarId;
+	auto& loadout = entity.addComponent<component::CharLoadout>();
+	loadout.jobId = charData.jobId;
+	loadout.abilityIds = charData.abilityIds;
 	auto& charStats = entity.getComponent<component::CharStats>();
 	charStats.hp = charData.hp;
 	charStats.maxHp = charData.hp;
@@ -34,6 +40,44 @@ void createCharacterFromData(const CharacterDataSet& charData, SceneSystem& scen
 	chargeTime.speed = charData.speed;
 
 	entity.getComponent<component::Transform>().setPosition(position);
+	return entity;
+}
+
+Entity createBattleUnit(SceneSystem& sceneSystem,
+						const HashId& name,
+						const HashId& avatarId,
+						int hp,
+						int mp,
+						int move,
+						int jump,
+						float speed,
+						component::BattleTeam team,
+						HashId jobId,
+						std::vector<HashId> abilityIds,
+						int tile,
+						const glm::vec3& scenePosition) {
+	auto entity = sceneSystem.createEntity(name, "character"_id);
+	entity.getComponent<component::CharName>().name = name.str();
+	entity.getComponent<component::CharAvatar>().textureId = avatarId;
+	auto& loadout = entity.addComponent<component::CharLoadout>();
+	loadout.jobId = jobId;
+	loadout.abilityIds = abilityIds;
+	auto& charStats = entity.getComponent<component::CharStats>();
+	charStats.hp = static_cast<uint16_t>(hp);
+	charStats.maxHp = static_cast<uint16_t>(hp);
+	charStats.mp = static_cast<uint16_t>(mp);
+	charStats.maxMp = static_cast<uint16_t>(mp);
+	charStats.level = 1;
+	charStats.xp = 0;
+	charStats.move = static_cast<uint8_t>(move);
+	charStats.jump = static_cast<uint8_t>(jump);
+	auto& chargeTime = entity.getComponent<component::ChargeTime>();
+	chargeTime.chargeTime = 0.0f;
+	chargeTime.speed = speed;
+	entity.addComponent<component::TacticalPosition>(tile, 0);
+	entity.addComponent<component::TacticalTeam>(team);
+	entity.getComponent<component::Transform>().setPosition(scenePosition);
+	return entity;
 }
 
 FsmAction GameState::enter() {
@@ -51,10 +95,53 @@ FsmAction GameState::enter() {
 				   });
 
 	auto i = 0;
+	const std::array<int, 4> playerTiles{34, 35, 42, 43};
 	for (auto& charData : characterDataSet->data) {
-		createCharacterFromData(charData, sceneSystem, positions[i]);
+		auto entity = createCharacterFromData(charData, sceneSystem, positions[i]);
+		entity.addComponent<component::TacticalPosition>(playerTiles[i % playerTiles.size()], 0);
+		entity.addComponent<component::TacticalTeam>(component::BattleTeam::Player);
 		++i;
 	}
+
+	createBattleUnit(sceneSystem,
+					 "Brigand Lancer"_id,
+					 "enemyLancer"_id,
+					 70,
+					 10,
+					 3,
+					 2,
+					 18.0f,
+					 component::BattleTeam::Enemy,
+					 "bramble_lancer"_id,
+					 {"piercing_thrust"_id, "brace"_id},
+					 10,
+					 {-2.0f, 0.0f, 0.0f});
+	createBattleUnit(sceneSystem,
+					 "Brush Rogue"_id,
+					 "enemyRogue"_id,
+					 65,
+					 20,
+					 4,
+					 2,
+					 24.0f,
+					 component::BattleTeam::Enemy,
+					 "brush_rogue"_id,
+					 {"knife_flurry"_id, "smoke_step"_id},
+					 22,
+					 {-1.0f, 0.0f, 0.0f});
+	createBattleUnit(sceneSystem,
+					 "Shade Knife"_id,
+					 "enemyShadow"_id,
+					 55,
+					 30,
+					 5,
+					 3,
+					 28.0f,
+					 component::BattleTeam::Enemy,
+					 "shade_knife"_id,
+					 {"shadow_cut"_id, "dread_mark"_id},
+					 30,
+					 {0.0f, 0.0f, 0.0f});
 
 	sceneSystem.createEntity("MainCamera"_id, "simpleCamera"_id);
 

@@ -1,0 +1,20 @@
+{
+    "mud": {
+        "name": "Mud",
+        "moveCost": 2,
+        "tickDamage": 0,
+        "appliesStatus": { "id": "slowed", "duration": 1 }
+    },
+    "ember": {
+        "name": "Ember",
+        "moveCost": 1,
+        "tickDamage": 5,
+        "appliesStatus": { "id": "shaken", "duration": 1 }
+    },
+    "spark": {
+        "name": "Spark",
+        "moveCost": 1,
+        "tickDamage": 4,
+        "appliesStatus": { "id": "marked", "duration": 1 }
+    }
+}

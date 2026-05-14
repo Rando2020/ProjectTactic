@@ -9,6 +9,13 @@ struct CharAvatar {
 	COMPONENT(CharAvatar, textureId);
 };
 
+struct CharLoadout {
+	HashId jobId;
+	std::vector<HashId> abilityIds;
+
+	COMPONENT(CharLoadout, jobId, abilityIds);
+};
+
 struct CharName {
 	std::string name;
 
@@ -37,6 +44,24 @@ struct ChargeTime {
 
 struct CharBattleReady {
 	COMPONENT_TAG(CharBattleReady);
+};
+
+enum class BattleTeam {
+	Player,
+	Enemy
+};
+
+struct TacticalPosition {
+	int tile{};
+	int height{};
+
+	COMPONENT(TacticalPosition, tile, height);
+};
+
+struct TacticalTeam {
+	BattleTeam team{BattleTeam::Player};
+
+	COMPONENT(TacticalTeam, team);
 };
 
 class BattleSystem {

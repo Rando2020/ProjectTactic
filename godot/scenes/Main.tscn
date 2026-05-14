@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://project_tactics_main"]
+
+[ext_resource type="Script" path="res://scripts/TacticsBattle.gd" id="1"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1")
+
+[node name="OpenMeMarker" type="Label" parent="."]
+offset_left = 32.0
+offset_top = 24.0
+offset_right = 560.0
+offset_bottom = 74.0
+text = "Project Tactics - Grasslands Demo"
+
+[node name="OpenMeInstructions" type="Label" parent="."]
+offset_left = 32.0
+offset_top = 74.0
+offset_right = 760.0
+offset_bottom = 128.0
+text = "Press F5 / Run Project. The battle board is built by scripts when the game runs."
