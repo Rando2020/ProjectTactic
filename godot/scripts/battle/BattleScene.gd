@@ -7,6 +7,14 @@ extends Node2D
 
 var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 
+const SPRITE_PATHS := {
+	"zane":       "res://assets/sprites/units/zane.svg",
+	"mira":       "res://assets/sprites/units/mira.svg",
+	"kael":       "res://assets/sprites/units/kael.svg",
+	"null_drake": "res://assets/sprites/units/null_drake.svg",
+	"storm_imp":  "res://assets/sprites/units/storm_imp.svg",
+}
+
 
 func _ready() -> void:
 	var map_data := _create_ashvale_map()
@@ -78,15 +86,6 @@ func _spawn_enemy_units() -> Array[Unit]:
 	result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2), 120, 35, 3, 1, 6, 38, 30, 80, 60))
 	result.append(_make_unit("storm_imp",  "Storm Imp",  "enemy", Vector2i(8, 3), 90,  50, 4, 2, 8, 25, 45, 50, 90))
 	return result
-
-
-const SPRITE_PATHS := {
-	"zane":       "res://assets/sprites/units/zane.svg",
-	"mira":       "res://assets/sprites/units/mira.svg",
-	"kael":       "res://assets/sprites/units/kael.svg",
-	"null_drake": "res://assets/sprites/units/null_drake.svg",
-	"storm_imp":  "res://assets/sprites/units/storm_imp.svg",
-}
 
 
 func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
