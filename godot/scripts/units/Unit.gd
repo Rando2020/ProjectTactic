@@ -274,6 +274,21 @@ func get_effective_speed() -> int:
 	return base_speed
 
 
+func get_effective_move() -> int:
+	var base_move: int = unit_data.base_stats.move if unit_data else 4
+	if has_status("immobilize") or has_status("petrify"):
+		return 0
+	if has_status("slow"):
+		return max(1, base_move - 1)
+	if has_status("haste"):
+		return base_move + 1
+	return base_move
+
+
+func get_jump_limit() -> int:
+	return unit_data.base_stats.jump if unit_data else 1
+
+
 func can_act() -> bool:
 	return not has_acted and hp > 0 and not has_status("stun") and not has_status("petrify")
 

@@ -3,6 +3,7 @@ extends CanvasLayer
 
 var battle_manager: BattleManager
 
+var _mission_label: Label
 var _phase_label: Label
 var _unit_name: Label
 var _hp_label: Label
@@ -55,12 +56,12 @@ func _build_ui() -> void:
 	add_child(root)
 
 	# Mission header
-	var mission_lbl := Label.new()
-	mission_lbl.text = "ASHVALE ROAD"
-	mission_lbl.add_theme_font_size_override("font_size", 20)
-	mission_lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
-	mission_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(mission_lbl)
+	_mission_label = Label.new()
+	_mission_label.text = "PROJECT TACTIC"
+	_mission_label.add_theme_font_size_override("font_size", 20)
+	_mission_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
+	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_mission_label)
 
 	_phase_label = Label.new()
 	_phase_label.text = "Initializing…"
@@ -230,6 +231,8 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	var unit: Unit = battle_manager.units.get(unit_id)
 	if not unit:
 		return
+	if battle_manager.map_data and _mission_label:
+		_mission_label.text = battle_manager.map_data.display_name.to_upper()
 	_unit_name.text = unit.display_name
 	var max_hp := unit.unit_data.base_stats.hp
 	_hp_bar.max_value = max_hp

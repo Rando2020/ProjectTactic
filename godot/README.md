@@ -24,11 +24,14 @@ godot/
 
 ## Status
 
-The React prototype (`../src/`) is the current source of truth for game logic.
-Port systems to Godot in this order (see `../docs/` for specs):
+The Godot battle scene is now the primary playable tactics prototype.
 
-1. GridSystem + TacticalGrid
-2. TurnOrder (CT system)
-3. BattleManager + Unit
-4. ElementalSystem + damageFormula
-5. ObjectiveTracker + MapData
+Current default battle:
+
+- `Grasslands First Fight`
+- five player units
+- five enemies
+- CT turn order
+- movement, attacks, abilities, healing, support, status effects, VFX, and objective resolution
+
+The React prototype remains useful for fast UI/gameplay experimentation, but Godot is where the battle loop should be hardened.

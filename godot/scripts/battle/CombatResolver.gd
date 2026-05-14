@@ -7,7 +7,8 @@ const FACING_OPPOSITE: Dictionary = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 
 func resolve_attack(attacker: Unit, target: Unit,
-		tile_attacker: Dictionary, tile_target: Dictionary) -> Dictionary:
+		tile_attacker: Dictionary, tile_target: Dictionary,
+		power_scale: float = 1.2) -> Dictionary:
 	# ── Blind miss check (35 % miss when blind) ───────────────────────────
 	if attacker.has_status("blind") and randf() < 0.35:
 		var vfx_node := get_node_or_null("/root/VFX")
@@ -18,7 +19,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		combat_resolved.emit(miss_result)
 		return miss_result
 
-	var raw_damage: float = attacker.unit_data.base_stats.physical * 1.2
+	var raw_damage: float = attacker.unit_data.base_stats.physical * power_scale
 	var att_height: int = tile_attacker.get("height", 0)
 	var tar_height: int = tile_target.get("height", 0)
 	var height_bonus: float = 1.15 if att_height > tar_height \

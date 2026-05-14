@@ -21,6 +21,14 @@ const MAPS: Array[Dictionary] = [
 		"reward":      "220g  +60 JP",
 		"difficulty":  "★★☆",
 	},
+	{
+		"index":       2,
+		"id":          "grasslands_first_fight_01",
+		"title":       "Grasslands First Fight",
+		"subtitle":    "Chapter 1 — Open grass, ridges, water, raider pressure",
+		"reward":      "180g  +55 JP",
+		"difficulty":  "★★☆",
+	},
 ]
 
 

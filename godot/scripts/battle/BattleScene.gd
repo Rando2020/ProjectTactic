@@ -9,6 +9,7 @@ var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
+## 0 = Ashvale Road  1 = Crypt of Echoes  2 = Grasslands First Fight
 @export var map_index: int = 0
 
 var _map_data: MapData
@@ -20,6 +21,10 @@ const SPRITE_PATHS := {
 	"null_drake":   "res://assets/sprites/units/null_drake.svg",
 	"storm_imp":    "res://assets/sprites/units/storm_imp.svg",
 	"void_cultist": "res://assets/sprites/units/void_cultist.svg",
+	"ilyen":        "res://assets/sprites/units/zane.svg",
+	"solenne":      "res://assets/sprites/units/mira.svg",
+	"bramble_lancer": "res://assets/sprites/units/null_drake.svg",
+	"bog_shaman":   "res://assets/sprites/units/void_cultist.svg",
 }
 
 
@@ -28,7 +33,13 @@ func _ready() -> void:
 	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
 		map_index = (get_node("/root/GameState") as GameState).selected_map_index
 
-	_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
+	match map_index:
+		1:
+			_map_data = _create_crypt_map()
+		2:
+			_map_data = _create_grasslands_map()
+		_:
+			_map_data = _create_ashvale_map()
 	tactical_grid.initialize_from_map(_map_data)
 
 	var player_units := _spawn_player_units()
@@ -158,6 +169,44 @@ func _create_crypt_map() -> MapData:
 	return map
 
 
+func _create_grasslands_map() -> MapData:
+	var map := MapData.new()
+	map.id = "grasslands_first_fight_01"
+	map.display_name = "Grasslands First Fight"
+	map.map_width = 10
+	map.map_height = 8
+	map.default_terrain = "grass"
+	map.objective_type = "defeat_all"
+	map.objective_label = "Defeat the raiders in the high grass"
+	map.reward_gold = 180
+	map.reward_jp = 55
+	map.tile_overrides = [
+		{"x": 2, "y": 2, "terrain": "road", "height": 0},
+		{"x": 3, "y": 2, "terrain": "road", "height": 0},
+		{"x": 4, "y": 2, "terrain": "road", "height": 0},
+		{"x": 5, "y": 2, "terrain": "road", "height": 0},
+		{"x": 2, "y": 3, "terrain": "road", "height": 0},
+		{"x": 3, "y": 3, "terrain": "road", "height": 0},
+		{"x": 4, "y": 3, "terrain": "road", "height": 0},
+		{"x": 5, "y": 3, "terrain": "road", "height": 0},
+		{"x": 0, "y": 0, "terrain": "high_ground", "height": 2},
+		{"x": 1, "y": 0, "terrain": "high_ground", "height": 2},
+		{"x": 0, "y": 1, "terrain": "high_ground", "height": 1},
+		{"x": 8, "y": 0, "terrain": "stone", "height": 2},
+		{"x": 9, "y": 0, "terrain": "stone", "height": 2},
+		{"x": 8, "y": 1, "terrain": "stone", "height": 1},
+		{"x": 9, "y": 1, "terrain": "stone", "height": 1},
+		{"x": 6, "y": 5, "terrain": "shallow_water", "height": 0},
+		{"x": 7, "y": 5, "terrain": "shallow_water", "height": 0},
+		{"x": 6, "y": 6, "terrain": "shallow_water", "height": 0},
+		{"x": 1, "y": 5, "terrain": "shrine", "height": 0},
+		{"x": 2, "y": 5, "terrain": "grass", "height": 1},
+		{"x": 3, "y": 5, "terrain": "grass", "height": 1},
+		{"x": 4, "y": 5, "terrain": "grass", "height": 1},
+	]
+	return map
+
+
 # ── Unit spawning ─────────────────────────────────────────────────────────────
 
 func _spawn_player_units() -> Array[Unit]:
@@ -172,6 +221,12 @@ func _spawn_player_units() -> Array[Unit]:
 	result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
 		380, 55,  4, 2, 6, 55, 32, 110, 70,
 		gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
+	result.append(_make_unit("ilyen", "Ilyen",   "player", Vector2i(3, 7),
+		260, 80,  5, 3, 9, 34, 36, 65,  95,
+		gs.get_all_abilities("ilyen") if gs else ["volley_pin", "snare_vine", "field_medic"]))
+	result.append(_make_unit("solenne", "Solenne", "player", Vector2i(4, 7),
+		240, 130, 4, 2, 7, 22, 58, 60,  140,
+		gs.get_all_abilities("solenne") if gs else ["cure", "rally_guard", "holy"]))
 	return result
 
 
@@ -186,6 +241,12 @@ func _spawn_enemy_units() -> Array[Unit]:
 	result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
 		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
 		{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
+	result.append(_make_unit("bramble_lancer", "Bramble Lancer", "enemy", Vector2i(8, 1),
+		115, 30, 3, 2, 6, 40, 24, 85, 55, ["hook_lance"],
+		{"fire": 1.25, "blizzard": 0.75, "thunder": 1.0, "holy": 1.0}))
+	result.append(_make_unit("bog_shaman", "Bog Shaman", "enemy", Vector2i(7, 4),
+		95,  90, 3, 2, 5, 18, 60, 45, 110, ["mire_hex", "void_pulse"],
+		{"holy": 1.5, "dark": 0.5, "fire": 0.75, "blizzard": 1.25}))
 	return result
 
 

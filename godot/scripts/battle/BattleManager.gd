@@ -125,9 +125,9 @@ func _run_enemy_ai(unit: Unit) -> void:
 			if u.unit_id != unit.unit_id and u.hp > 0:
 				occupied.append(u.grid_pos)
 		var reachable := GridSystem.get_move_range(
-			unit.grid_pos, unit.unit_data.base_stats.move,
+			unit.grid_pos, unit.get_effective_move(),
 			tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
-			unit.unit_data.base_stats.jump
+			unit.get_jump_limit()
 		)
 		var best_tile := unit.grid_pos
 		var best_dist := closest_dist
@@ -182,9 +182,9 @@ func select_command(command: String) -> void:
 				if u.unit_id != unit.unit_id and u.hp > 0:
 					occupied.append(u.grid_pos)
 			var move_range := GridSystem.get_move_range(
-				unit.grid_pos, unit.unit_data.base_stats.move,
+				unit.grid_pos, unit.get_effective_move(),
 				tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
-				unit.unit_data.base_stats.jump
+				unit.get_jump_limit()
 			)
 			move_range_ready.emit(move_range)
 			tactical_grid.show_move_range(move_range)
@@ -243,13 +243,15 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
 	var spell_type: String = ability.get("spell_type", "fire")
 	var base_power: int = ability.get("base_power", 100)
 	var ab_name: String = ability.get("display_name", "?")
-	if spell_type == "cure":
+	if spell_type == "guard":
+		log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
+	elif spell_type == "cure":
 		combat_resolver.resolve_heal(caster, target, base_power)
 		log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
 	elif spell_type == "physical":
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t)
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, base_power / 100.0)
 		if result.get("missed", false):
 			log_message.emit("%s swings but misses! (blind)" % caster.display_name)
 		else:

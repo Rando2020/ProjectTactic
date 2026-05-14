@@ -4,7 +4,8 @@
 class_name GameState
 extends Node
 
-## Which map to load when transitioning into Battle.tscn  (0 = Ashvale, 1 = Crypt)
+## Which map to load when transitioning into Battle.tscn
+## 0 = Ashvale, 1 = Crypt, 2 = Grasslands
 var selected_map_index: int = 0
 
 ## Gold accumulated across all battles
@@ -42,6 +43,12 @@ func _init_defaults() -> void:
 	_reg("kael", "Kael",
 		["mighty_strike"],
 		["wind_slash", "tremor", "dark_blade"])
+	_reg("ilyen", "Ilyen",
+		["volley_pin", "snare_vine", "field_medic"],
+		["aero", "rally_guard"])
+	_reg("solenne", "Solenne",
+		["cure", "rally_guard", "holy"],
+		["cura", "field_medic"])
 
 
 func _reg(uid: String, dname: String,
