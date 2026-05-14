@@ -6,6 +6,7 @@ signal temper_changed(unit_id: String, new_temper: int, max_temper: int)
 signal ether_changed(unit_id: String, new_ether: int, max_ether: int)
 signal status_applied(unit_id: String, status_id: String)
 signal status_removed(unit_id: String, status_id: String)
+signal status_tick(unit_id: String, status_id: String, damage: int)
 signal unit_defeated(unit_id: String)
 signal turn_started(unit_id: String)
 signal turn_ended(unit_id: String)
@@ -213,6 +214,16 @@ func has_status(status_id: String) -> bool:
 func tick_statuses() -> void:
 	var to_remove: Array[String] = []
 	for s in statuses:
+		# Damage-over-time (poison, burn)
+		if s.magnitude > 0.0 and hp > 0:
+			var dmg: int = max(1, int(unit_data.base_stats.hp * s.magnitude))
+			hp = max(hp - dmg, 0)
+			hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
+			_update_hp_bar()
+			status_tick.emit(unit_id, s.status_id, dmg)
+			if hp <= 0:
+				unit_defeated.emit(unit_id)
+				animate_death()
 		s.duration -= 1
 		if s.duration <= 0:
 			to_remove.append(s.status_id)

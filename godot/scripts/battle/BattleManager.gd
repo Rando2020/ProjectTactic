@@ -37,6 +37,7 @@ func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	for unit in p_units:
 		units[unit.unit_id] = unit
 		unit.unit_defeated.connect(_on_unit_defeated)
+		unit.status_tick.connect(_on_status_tick)
 	turn_order.initialize(p_units)
 	objective_tracker.initialize(map_data, p_units)
 	log_message.emit("Battle started: %s" % map_data.display_name)
@@ -110,7 +111,10 @@ func _run_enemy_ai(unit: Unit) -> void:
 		var tile_att := tactical_grid.get_tile(unit.grid_pos)
 		var tile_tar := tactical_grid.get_tile(closest_player.grid_pos)
 		var result := combat_resolver.resolve_attack(unit, closest_player, tile_att, tile_tar)
-		log_message.emit("%s hits %s for %d dmg!" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0)])
+		if result.get("missed", false):
+			log_message.emit("%s attacks but misses! (blind)" % unit.display_name)
+		else:
+			log_message.emit("%s hits %s for %d dmg!" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0)])
 	else:
 		var occupied: Array = []
 		for uid in units:
@@ -191,6 +195,9 @@ func select_command(command: String) -> void:
 			var ab_unit: Unit = units.get(active_unit_id)
 			if not ab_unit:
 				return
+			if ab_unit.has_status("silence"):
+				log_message.emit("%s is silenced!" % ab_unit.display_name)
+				return
 			var usable: Array = []
 			for ab_id in ab_unit.unit_data.abilities:
 				var ab: Dictionary = AbilityDB.get_ability(ab_id)
@@ -237,11 +244,19 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
 	elif spell_type == "physical":
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
-		combat_resolver.resolve_attack(caster, target, tile_c, tile_t)
-		log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t)
+		if result.get("missed", false):
+			log_message.emit("%s swings but misses! (blind)" % caster.display_name)
+		else:
+			log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
 	else:
 		combat_resolver.resolve_spell(caster, target, spell_type, base_power)
 		log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
+	# Apply any status effect after a short delay (spells deal damage after 0.18 s)
+	var se_data: Dictionary = ability.get("status_effect", {})
+	if not se_data.is_empty() and spell_type != "cure":
+		get_tree().create_timer(0.3).timeout.connect(
+			func() -> void: _try_apply_status(target, se_data))
 
 
 func _try_enemy_spell(unit: Unit) -> bool:
@@ -341,3 +356,34 @@ func _on_unit_defeated(unit_id: String) -> void:
 		log_message.emit("%s was defeated!" % units[unit_id].display_name)
 	objective_tracker.on_unit_defeated(unit_id)
 	turn_order.remove_unit(unit_id)
+	# A unit dying mid-tick could end the battle — check objectives
+	if current_phase == Phase.TICK or current_phase == Phase.RESOLVE:
+		_set_phase(Phase.CHECK_OBJECTIVE)
+
+
+func _try_apply_status(target: Unit, se_data: Dictionary) -> void:
+	if not is_instance_valid(target) or target.hp <= 0:
+		return
+	var sid: String = se_data.get("id", "")
+	if sid == "" or target.has_status(sid):
+		return
+	var se := StatusEffect.new()
+	se.status_id   = sid
+	se.display_name = sid.capitalize()
+	se.duration    = se_data.get("duration", 2)
+	se.magnitude   = se_data.get("magnitude", 0.0)
+	se.damage_type = se_data.get("damage_type", "pure")
+	target.apply_status(se)
+	log_message.emit("%s is now %s!" % [target.display_name, sid.to_upper()])
+
+
+func _on_status_tick(unit_id: String, status_id: String, damage: int) -> void:
+	var unit: Unit = units.get(unit_id)
+	var uname: String = unit.display_name if unit else unit_id
+	log_message.emit("%s: %s tick -%d HP" % [uname, status_id.capitalize(), damage])
+	# Show a coloured damage number on the unit's tile
+	var vfx_node := get_node_or_null("/root/VFX")
+	if vfx_node and unit:
+		var color: Color = Color(0.2, 0.9, 0.2) if status_id == "poison" \
+			else Color(1.0, 0.5, 0.1)   # green for poison, orange for burn
+		(vfx_node as VFXManager).play_damage_number(unit.grid_pos, damage, color)

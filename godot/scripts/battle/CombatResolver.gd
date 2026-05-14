@@ -6,6 +6,16 @@ signal combat_resolved(result: Dictionary)
 
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary) -> Dictionary:
+	# ── Blind miss check (35 % miss when blind) ───────────────────────────
+	if attacker.has_status("blind") and randf() < 0.35:
+		var vfx_node := get_node_or_null("/root/VFX")
+		if vfx_node:
+			(vfx_node as VFXManager).play_damage_number(
+				target.grid_pos, 0, Color(0.65, 0.65, 0.65))
+		var miss_result := {"damage": 0, "hp_damage": 0, "missed": true}
+		combat_resolved.emit(miss_result)
+		return miss_result
+
 	var raw_damage: float = attacker.unit_data.base_stats.physical * 1.2
 	var att_height: int = tile_attacker.get("height", 0)
 	var tar_height: int = tile_target.get("height", 0)

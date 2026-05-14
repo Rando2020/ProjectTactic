@@ -19,6 +19,7 @@ var _ability_btn: Button
 var _ability_panel: VBoxContainer
 var _ability_list: VBoxContainer
 var _result_label: Label
+var _status_label: Label
 
 const LOG_SIZE := 8
 const TIMELINE_SLOTS := 6
@@ -109,6 +110,12 @@ func _build_ui() -> void:
 	_result_label.add_theme_font_size_override("font_size", 13)
 	_result_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	root.add_child(_result_label)
+
+	_status_label = Label.new()
+	_status_label.text = ""
+	_status_label.add_theme_font_size_override("font_size", 11)
+	_status_label.add_theme_color_override("font_color", Color(0.95, 0.6, 1.0))
+	root.add_child(_status_label)
 
 	# Ability selection panel (hidden by default)
 	_ability_panel = VBoxContainer.new()
@@ -231,6 +238,14 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	_mp_label.text    = "MP: %d" % unit.mp
 	_temper_label.text = "TMP: %d" % unit.temper
 	_ether_label.text  = "ETH: %d" % unit.ether
+	# Status icons
+	if unit.statuses.is_empty():
+		_status_label.text = ""
+	else:
+		var parts: Array[String] = []
+		for s: StatusEffect in unit.statuses:
+			parts.append("%s(%d)" % [s.status_id.to_upper(), s.duration])
+		_status_label.text = "  ".join(parts)
 
 
 func _on_timeline_updated(ordered_units: Array) -> void:
