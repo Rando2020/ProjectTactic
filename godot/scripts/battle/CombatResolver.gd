@@ -24,7 +24,7 @@ func resolve_attack(attacker: Unit, target: Unit, tile_attacker, tile_target) ->
 	return result
 
 
-func resolve_heal(caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
+func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	target.heal(heal_amount)
 	var result := {"healed": heal_amount}
 	combat_resolved.emit(result)
