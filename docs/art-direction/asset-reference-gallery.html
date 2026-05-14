@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ProjectTactic Asset Reference Gallery</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10131a;
+      --panel: #171b24;
+      --text: #f0e6d2;
+      --muted: #a99d88;
+      --gold: #c9a65b;
+      --line: #3a3124;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, rgba(201, 166, 91, 0.16), transparent 28%), var(--bg);
+      color: var(--text);
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 40px 20px; }
+    header, .asset-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(23,27,36,.96), rgba(14,16,22,.96));
+      border-radius: 18px;
+      box-shadow: 0 18px 44px rgba(0,0,0,.24);
+    }
+    header { padding: 24px; margin-bottom: 22px; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; color: var(--gold); }
+    h1 { margin: 0 0 8px; letter-spacing: .04em; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    p { color: var(--muted); line-height: 1.45; }
+    code { color: #f4d28a; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+    .asset-card { padding: 18px; }
+    .thumb {
+      aspect-ratio: 16 / 9;
+      display: grid;
+      place-items: center;
+      border: 1px dashed rgba(201,166,91,.42);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      color: #f4d28a;
+      background: linear-gradient(135deg, rgba(201,166,91,.1), rgba(45,54,77,.18));
+      text-align: center;
+      padding: 16px;
+    }
+    ul { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ProjectTactic Asset Reference Gallery</h1>
+      <p>This index preserves the approved visual direction references from the generated asset pass. Production-ready sliced images should be exported into <code>src/assets/</code> after dimensions, naming, and implementation targets are finalized.</p>
+      <p><strong>Direction:</strong> 80% classic isometric tactical RPG readability and 20% darker grounded gothic fantasy mood.</p>
+    </header>
+
+    <section class="grid">
+      <article class="asset-card">
+        <div class="thumb">Tile / Prop Reference</div>
+        <h2>tileset-cathedral-interior-props-reference</h2>
+        <p>Uploaded cathedral/interior props and floor tile concept sheet. Should be sliced into implementation-ready tile and prop assets before use.</p>
+        <p><code>docs/art-direction/tileset-cathedral-interior-props-reference.jpg</code></p>
+      </article>
+
+      <article class="asset-card">
+        <div class="thumb">Character Status + Job Progression</div>
+        <h2>ui-character-status-job-progression-reference</h2>
+        <p>Reference for the character compendium, Temper/Ether display, equipment slots, job progression tree, JP, and learned skills.</p>
+        <p><code>docs/art-direction/ui-character-status-job-progression-reference.jpg</code></p>
+      </article>
+
+      <article class="asset-card">
+        <div class="thumb">Pre-Battle Deployment</div>
+        <h2>ui-prebattle-deployment-reference</h2>
+        <p>Reference for the 2.5D deployment screen, mission objective panel, turn-order preview, roster, and battlefield preview.</p>
+        <p><code>docs/art-direction/ui-prebattle-deployment-reference.jpg</code></p>
+      </article>
+
+      <article class="asset-card">
+        <div class="thumb">Ironhold Encampment Hub</div>
+        <h2>ui-ironhold-encampment-reference</h2>
+        <p>Reference for the town/camp hub with Tavern, Guild, Shop, Infirmary, Smithy, Story/Briefing, roster, events, and bottom navigation.</p>
+        <p><code>docs/art-direction/ui-ironhold-encampment-reference.jpg</code></p>
+      </article>
+
+      <article class="asset-card">
+        <div class="thumb">UI Asset Sheet</div>
+        <h2>ui-asset-sheet-reference</h2>
+        <p>Reference for cursors, tile highlights, selected-unit rings, range overlays, turn-order badges, resource icons, status icons, and button prompts.</p>
+        <p><code>docs/art-direction/ui-asset-sheet-reference.jpg</code></p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
