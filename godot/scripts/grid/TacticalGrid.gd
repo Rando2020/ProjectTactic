@@ -4,12 +4,15 @@ extends Node2D
 signal tile_clicked(grid_pos: Vector2i)
 signal unit_clicked(unit_id: String)
 
-@export var tile_size: Vector2i = Vector2i(64, 64)
+@export var tile_size: Vector2i = Vector2i(96, 48)
+@export var height_step: float = 14.0
+@export var tile_thickness: float = 16.0
+@export var map_origin: Vector2 = Vector2(320, 64)
 @export var map_data: MapData
 
 var tiles: Dictionary = {}           # Vector2i -> Dictionary
 var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
-var _tile_fill_rects: Dictionary = {} # Vector2i -> ColorRect (inner fill, for mutation)
+var _tile_top_polys: Dictionary = {} # Vector2i -> Polygon2D, for mutation/art swap
 
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
@@ -21,19 +24,29 @@ var selected_tile: Vector2i = Vector2i(-1, -1)
 
 
 func _ready() -> void:
+	_configure_layers()
 	if map_data:
 		_build_tiles()
 		_draw_base_tiles()
 
 
 func initialize_from_map(p_map_data: MapData) -> void:
+	_configure_layers()
 	map_data = p_map_data
 	_build_tiles()
 	_draw_base_tiles()
 
 
+func _configure_layers() -> void:
+	if highlight_layer:
+		highlight_layer.z_index = 1000
+	if unit_layer:
+		unit_layer.z_index = 2000
+
+
 func _build_tiles() -> void:
 	tiles.clear()
+	_tile_top_polys.clear()
 	var overrides := {}
 	for override in map_data.tile_overrides:
 		var pos := Vector2i(override.get("x", 0), override.get("y", 0))
@@ -57,41 +70,78 @@ func _draw_base_tiles() -> void:
 	for child in get_children():
 		if child != highlight_layer and child != unit_layer:
 			child.queue_free()
-	for pos in tiles.keys():
+
+	var draw_positions: Array = tiles.keys()
+	draw_positions.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if a.x + a.y == b.x + b.y:
+			return a.y < b.y
+		return a.x + a.y < b.x + b.y)
+
+	for pos: Vector2i in draw_positions:
 		var data: Dictionary = tiles[pos]
 		var world := _grid_to_local(pos)
 		var base_color := _terrain_color(data.terrain, data.height)
-		# Outer (dark border) rect fills the full tile
-		var border := ColorRect.new()
-		border.size = Vector2(tile_size.x, tile_size.y)
-		border.position = world - Vector2(tile_size.x * 0.5, tile_size.y * 0.5)
-		border.color = base_color.darkened(0.35)
-		border.z_index = 0
-		add_child(border)
-		# Inner fill rect — 2 px inset on all sides
-		var rect := ColorRect.new()
-		rect.size = Vector2(tile_size.x - 4, tile_size.y - 4)
-		rect.position = world - Vector2(tile_size.x * 0.5 - 2, tile_size.y * 0.5 - 2)
-		rect.color = base_color
-		rect.z_index = 0
-		add_child(rect)
-		_tile_fill_rects[pos] = rect
-		# Subtle top-left highlight to give a slight bevel feel
-		var hi := ColorRect.new()
-		hi.size = Vector2(tile_size.x - 4, 2)
-		hi.position = rect.position
-		hi.color = base_color.lightened(0.15)
-		hi.z_index = 0
-		add_child(hi)
-		# Height label
+		_add_iso_tile(pos, world, base_color)
 		if data.height > 0:
 			var lbl := Label.new()
 			lbl.text = "h%d" % data.height
 			lbl.add_theme_font_size_override("font_size", 9)
 			lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.7))
-			lbl.position = rect.position + Vector2(2, 2)
-			lbl.z_index = 1
+			lbl.position = world + Vector2(-10, -tile_size.y * 0.48)
+			lbl.z_index = _depth_for(pos) + 4
 			add_child(lbl)
+
+
+func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
+	var half_w := tile_size.x * 0.5
+	var half_h := tile_size.y * 0.5
+	var depth := _depth_for(pos)
+
+	var left_face := Polygon2D.new()
+	left_face.polygon = PackedVector2Array([
+		Vector2(-half_w, 0),
+		Vector2(0, half_h),
+		Vector2(0, half_h + tile_thickness),
+		Vector2(-half_w, tile_thickness),
+	])
+	left_face.position = world
+	left_face.color = base_color.darkened(0.35)
+	left_face.z_index = depth
+	add_child(left_face)
+
+	var right_face := Polygon2D.new()
+	right_face.polygon = PackedVector2Array([
+		Vector2(half_w, 0),
+		Vector2(0, half_h),
+		Vector2(0, half_h + tile_thickness),
+		Vector2(half_w, tile_thickness),
+	])
+	right_face.position = world
+	right_face.color = base_color.darkened(0.22)
+	right_face.z_index = depth + 1
+	add_child(right_face)
+
+	var top := Polygon2D.new()
+	top.polygon = _diamond_polygon()
+	top.position = world
+	top.color = base_color
+	top.z_index = depth + 2
+	add_child(top)
+	_tile_top_polys[pos] = top
+
+	var rim := Line2D.new()
+	rim.points = PackedVector2Array([
+		Vector2(0, -half_h),
+		Vector2(half_w, 0),
+		Vector2(0, half_h),
+		Vector2(-half_w, 0),
+		Vector2(0, -half_h),
+	])
+	rim.width = 1.0
+	rim.default_color = base_color.lightened(0.18)
+	rim.position = world
+	rim.z_index = depth + 3
+	add_child(rim)
 
 
 func _terrain_color(terrain: String, height: int) -> Color:
@@ -117,8 +167,6 @@ func _move_cost_for(terrain: String) -> int:
 		"deep_water", "wall": return 99
 		_: return 1
 
-
-# ── Highlight API ─────────────────────────────────────────────────────────────
 
 func show_move_range(positions: Array[Vector2i]) -> void:
 	move_tiles = positions
@@ -157,18 +205,18 @@ func _refresh_highlights() -> void:
 
 
 func _add_highlight(pos: Vector2i, color: Color) -> void:
-	var rect := ColorRect.new()
-	rect.color = color
-	rect.size = Vector2(tile_size.x - 4, tile_size.y - 4)
-	rect.position = _grid_to_local(pos) - Vector2(tile_size.x * 0.5 - 2, tile_size.y * 0.5 - 2)
-	highlight_layer.add_child(rect)
+	var diamond := Polygon2D.new()
+	diamond.color = color
+	diamond.polygon = _diamond_polygon(0.86)
+	diamond.position = _grid_to_local(pos)
+	diamond.z_index = _depth_for(pos) + 50
+	highlight_layer.add_child(diamond)
 
-
-# ── Unit management ───────────────────────────────────────────────────────────
 
 func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 	unit_layer.add_child(unit_node)
 	unit_node.position = _grid_to_local(grid_pos)
+	unit_node.z_index = _unit_depth_for(grid_pos)
 	unit_positions[grid_pos] = unit_node.unit_id
 
 
@@ -177,15 +225,14 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 		if child.get("unit_id") == unit_id:
 			var tween := create_tween()
 			tween.tween_property(child, "position", _grid_to_local(to), 0.22)
+			child.z_index = _unit_depth_for(to)
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
 
 
-# ── Terrain mutation ──────────────────────────────────────────────────────────
-
 ## Converts a flammable tile (grass, road) to burning terrain.
-## Updates both the logical tile data and the visual fill colour.
+## Updates both the logical tile data and the visual top colour.
 func ignite_tile(pos: Vector2i) -> void:
 	if not tiles.has(pos):
 		return
@@ -194,21 +241,15 @@ func ignite_tile(pos: Vector2i) -> void:
 		return
 	tile["terrain"] = "burning"
 	tile["move_cost"] = 1
-	if _tile_fill_rects.has(pos):
-		var rect: ColorRect = _tile_fill_rects[pos]
-		rect.color = Color(0.70, 0.16, 0.07)  # burning colour
+	if _tile_top_polys.has(pos):
+		var top: Polygon2D = _tile_top_polys[pos]
+		top.color = Color(0.70, 0.16, 0.07)
 
-
-# ── Input ─────────────────────────────────────────────────────────────────────
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
-	var local_mouse := get_local_mouse_position()
-	var grid_pos := Vector2i(
-		int(local_mouse.x / tile_size.x),
-		int(local_mouse.y / tile_size.y)
-	)
+	var grid_pos := _local_to_grid(get_local_mouse_position())
 	if not _is_valid_pos(grid_pos):
 		return
 	if unit_positions.has(grid_pos):
@@ -217,11 +258,51 @@ func _input(event: InputEvent) -> void:
 		tile_clicked.emit(grid_pos)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 func _grid_to_local(pos: Vector2i) -> Vector2:
-	return Vector2(pos.x * tile_size.x + tile_size.x * 0.5,
-				   pos.y * tile_size.y + tile_size.y * 0.5)
+	var height := 0
+	if tiles.has(pos):
+		height = int(tiles[pos].get("height", 0))
+	return map_origin + Vector2(
+		(pos.x - pos.y) * tile_size.x * 0.5,
+		(pos.x + pos.y) * tile_size.y * 0.5 - float(height) * height_step
+	)
+
+
+func _local_to_grid(local_pos: Vector2) -> Vector2i:
+	var best_pos := Vector2i(-1, -1)
+	var best_dist := INF
+	for pos: Vector2i in tiles.keys():
+		var center := _grid_to_local(pos)
+		var delta := local_pos - center
+		var normalized := abs(delta.x) / (tile_size.x * 0.5) + abs(delta.y) / (tile_size.y * 0.5)
+		if normalized <= 1.08:
+			var dist := delta.length_squared()
+			if dist < best_dist:
+				best_dist = dist
+				best_pos = pos
+	return best_pos
+
+
+func _diamond_polygon(scale: float = 1.0) -> PackedVector2Array:
+	var half_w := tile_size.x * 0.5 * scale
+	var half_h := tile_size.y * 0.5 * scale
+	return PackedVector2Array([
+		Vector2(0, -half_h),
+		Vector2(half_w, 0),
+		Vector2(0, half_h),
+		Vector2(-half_w, 0),
+	])
+
+
+func _depth_for(pos: Vector2i) -> int:
+	var height := 0
+	if tiles.has(pos):
+		height = int(tiles[pos].get("height", 0))
+	return (pos.x + pos.y) * 10 + height * 2
+
+
+func _unit_depth_for(pos: Vector2i) -> int:
+	return _depth_for(pos) + 100
 
 
 func _is_valid_pos(pos: Vector2i) -> bool:
