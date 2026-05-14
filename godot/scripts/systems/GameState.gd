@@ -8,9 +8,9 @@
 ##   completed_stages : Array[String]
 ##   unit_jp          : { uid -> int }
 ##   unit_learned     : { uid -> Array[String] }
-class_name GameState
 extends Node
 
+const AbilityDBScript := preload("res://scripts/data/AbilityDB.gd")
 const SAVE_PATH    := "user://save.json"
 const SAVE_VERSION := 1
 
@@ -99,7 +99,7 @@ func learn_ability(unit_id: String, ability_id: String) -> bool:
 	var reg: Dictionary = unit_registry[unit_id]
 	if knows_ability(unit_id, ability_id):
 		return false
-	var ab: Dictionary = AbilityDB.get_ability(ability_id)
+	var ab: Dictionary = AbilityDBScript.get_ability(ability_id)
 	var cost: int = ab.get("jp_cost", 9999)
 	if reg.get("jp", 0) < cost:
 		return false

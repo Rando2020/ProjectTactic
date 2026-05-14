@@ -118,10 +118,12 @@ const ABILITIES: Dictionary = {
 		"display_name": "Tremor",
 		"spell_type":   "physical",
 		"mp_cost":      12,
-		"range":        1,
+		"range":        0,           # self-cast: center is always the caster
 		"base_power":   115,
 		"target_type":  "enemy",
 		"jp_cost":      150,
+		"aoe_type":     "radius",
+		"aoe_radius":   1,           # hits all enemies within 1 tile of caster
 		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"aero": {
@@ -180,6 +182,41 @@ const ABILITIES: Dictionary = {
 		"target_type":  "enemy",
 		"jp_cost":      250,
 		"vfx_mode":     "arrow",
+		"aoe_type":     "radius",   # hits all enemies within 1 tile of target tile
+		"aoe_radius":   1,
+	},
+	# ── Buff / support abilities ───────────────────────────────────────────
+	"haste": {
+		"display_name": "Haste",
+		"spell_type":   "buff",
+		"mp_cost":      10,
+		"range":        3,
+		"base_power":   0,
+		"target_type":  "ally",
+		"jp_cost":      150,
+		"status_effect": {"id": "haste", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
+	},
+	"protect": {
+		"display_name": "Protect",
+		"spell_type":   "buff",
+		"mp_cost":      8,
+		"range":        2,
+		"base_power":   0,
+		"target_type":  "ally",
+		"jp_cost":      150,
+		"status_effect": {"id": "protect", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
+	},
+	"firaga": {
+		"display_name": "Firaga",
+		"spell_type":   "fire",
+		"mp_cost":      26,
+		"range":        3,
+		"base_power":   195,
+		"target_type":  "enemy",
+		"jp_cost":      300,
+		"aoe_type":     "radius",   # explodes in a 1-tile burst around the target
+		"aoe_radius":   1,
+		"status_effect": {"id": "burn", "duration": 3, "magnitude": 0.09, "damage_type": "fire"},
 	},
 	# ── Enemy abilities ───────────────────────────────────────────────────
 	"dark_breath": {
