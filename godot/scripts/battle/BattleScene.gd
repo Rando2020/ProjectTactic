@@ -26,7 +26,7 @@ const SPRITE_PATHS := {
 func _ready() -> void:
 	# Prefer GameState's selection; @export override still works in editor
 	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
-		map_index = (get_node("/root/GameState") as GameState).selected_map_index
+		map_index = get_node("/root/GameState").selected_map_index
 
 	_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 	tactical_grid.initialize_from_map(_map_data)
@@ -57,7 +57,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 		var u: Unit = battle_manager.units[uid]
 		if u.team == "player":
 			player_ids.append(uid)
-	var gs: GameState = get_node_or_null("/root/GameState")
+	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
 	await get_tree().create_timer(2.2).timeout
@@ -161,7 +161,7 @@ func _create_crypt_map() -> MapData:
 # ── Unit spawning ─────────────────────────────────────────────────────────────
 
 func _spawn_player_units() -> Array[Unit]:
-	var gs: GameState = get_node_or_null("/root/GameState")
+	var gs: Node = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
 	result.append(_make_unit("zane", "Zane", "player", Vector2i(1, 6),
 		320, 90,  4, 2, 8, 42, 48, 80,  110,

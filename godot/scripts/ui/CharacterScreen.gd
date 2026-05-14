@@ -4,7 +4,7 @@
 class_name CharacterScreen
 extends Control
 
-var _gs: GameState
+var _gs: Node
 
 const UNIT_IDS: Array[String] = ["zane", "mira", "kael"]
 # Column panels rebuilt when an ability is purchased

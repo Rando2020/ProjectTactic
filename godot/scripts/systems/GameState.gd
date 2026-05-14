@@ -1,8 +1,9 @@
 ## GameState.gd  —  Autoload singleton.
 ## Persists player progress (JP, gold, learned abilities, completed stages)
 ## across scene transitions.  Never freed between battles.
-class_name GameState
 extends Node
+
+const AbilityDBScript := preload("res://scripts/data/AbilityDB.gd")
 
 ## Which map to load when transitioning into Battle.tscn  (0 = Ashvale, 1 = Crypt)
 var selected_map_index: int = 0
@@ -86,7 +87,7 @@ func learn_ability(unit_id: String, ability_id: String) -> bool:
 	var reg: Dictionary = unit_registry[unit_id]
 	if knows_ability(unit_id, ability_id):
 		return false
-	var ab: Dictionary = AbilityDB.get_ability(ability_id)
+	var ab: Dictionary = AbilityDBScript.get_ability(ability_id)
 	var cost: int = ab.get("jp_cost", 9999)
 	if reg.get("jp", 0) < cost:
 		return false

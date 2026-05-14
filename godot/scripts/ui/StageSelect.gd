@@ -34,7 +34,7 @@ func _build_ui() -> void:
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var gs: GameState = get_node_or_null("/root/GameState")
+	var gs: Node = get_node_or_null("/root/GameState")
 
 	# ── Title ─────────────────────────────────────────────────────────────
 	var title_lbl := Label.new()
@@ -157,7 +157,7 @@ func _meta_chip(parent: Control, key: String, value: String, color: Color) -> vo
 
 
 func _start_battle(map_index: int) -> void:
-	var gs: GameState = get_node_or_null("/root/GameState")
+	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.selected_map_index = map_index
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")

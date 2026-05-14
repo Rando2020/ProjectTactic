@@ -16,7 +16,7 @@ func _build_ui() -> void:
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var gs: GameState = get_node_or_null("/root/GameState")
+	var gs: Node = get_node_or_null("/root/GameState")
 	var rewards: Dictionary = gs.pending_rewards if gs else {}
 	var is_victory: bool = not rewards.is_empty()
 

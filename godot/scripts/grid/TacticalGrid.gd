@@ -274,7 +274,7 @@ func _local_to_grid(local_pos: Vector2) -> Vector2i:
 	for pos: Vector2i in tiles.keys():
 		var center := _grid_to_local(pos)
 		var delta := local_pos - center
-		var normalized := abs(delta.x) / (tile_size.x * 0.5) + abs(delta.y) / (tile_size.y * 0.5)
+		var normalized: float = abs(delta.x) / (tile_size.x * 0.5) + abs(delta.y) / (tile_size.y * 0.5)
 		if normalized <= 1.08:
 			var dist := delta.length_squared()
 			if dist < best_dist:
