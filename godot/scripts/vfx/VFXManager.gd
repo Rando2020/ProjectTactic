@@ -24,14 +24,15 @@ func gp(grid_pos: Vector2i) -> Vector2:
 
 # ── Physical attack ────────────────────────────────────────────────────────────
 
-func play_attack(from_grid: Vector2i, to_grid: Vector2i, damage: int) -> void:
+func play_attack(from_grid: Vector2i, to_grid: Vector2i, damage: int,
+		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
 	var fw := gp(from_grid)
 	var tw := gp(to_grid)
 	_play_slash(fw, tw)
 	# Slight delay so slash arrives before impact
 	await get_tree().create_timer(0.12).timeout
 	_play_impact_sparks(tw)
-	play_damage_number(to_grid, damage, Color(1.0, 0.95, 0.4))
+	play_damage_number(to_grid, damage, dmg_color)
 
 
 func _play_slash(from_w: Vector2, to_w: Vector2) -> void:

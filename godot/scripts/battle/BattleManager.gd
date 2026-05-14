@@ -115,7 +115,9 @@ func _run_enemy_ai(unit: Unit) -> void:
 		if result.get("missed", false):
 			log_message.emit("%s attacks but misses! (blind)" % unit.display_name)
 		else:
-			log_message.emit("%s hits %s for %d dmg!" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0)])
+			var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
+				else (" [flank]" if result.get("flank","") == "side" else "")
+			log_message.emit("%s hits %s for %d dmg!%s" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0), ftag])
 	else:
 		var occupied: Array = []
 		for uid in units:
@@ -254,7 +256,16 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
 			log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
 	else:
 		combat_resolver.resolve_spell(caster, target, spell_type, base_power)
-		log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
+		# Pre-compute affinity tag from data (resolve_spell runs async so we read here)
+		var affinity: float = 1.0
+		if target.unit_data:
+			affinity = target.unit_data.elemental_affinities.get(spell_type, 1.0)
+		var affinity_tag := ""
+		if affinity == 0.0:       affinity_tag = " [IMMUNE]"
+		elif affinity >= 1.5:     affinity_tag = " [WEAK!]"
+		elif affinity > 1.0:      affinity_tag = " [weak]"
+		elif affinity < 1.0:      affinity_tag = " [resist]"
+		log_message.emit("%s casts %s on %s!%s" % [caster.display_name, ab_name, target.display_name, affinity_tag])
 		# Fire spells can ignite flammable terrain
 		if spell_type == "fire":
 			var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
@@ -324,7 +335,12 @@ func _on_unit_clicked(unit_id: String) -> void:
 			var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar)
 			tactical_grid.clear_highlights()
 			active_command = ""
-			log_message.emit("%s hits %s for %d dmg!" % [attacker.display_name, target.display_name, result.get("hp_damage", 0)])
+			if result.get("missed", false):
+				log_message.emit("%s swings but misses! (blind)" % attacker.display_name)
+			else:
+				var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
+					else (" [flank]" if result.get("flank","") == "side" else "")
+				log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
 			_end_player_turn()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		var target: Unit = units.get(unit_id)

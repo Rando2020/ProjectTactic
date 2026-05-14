@@ -156,18 +156,25 @@ func _spawn_player_units() -> Array[Unit]:
 func _spawn_enemy_units() -> Array[Unit]:
 	var result: Array[Unit] = []
 	result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
-		120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"]))
+		120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
+		# Dragon: fire-born, fears holy and ice
+		{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
 	result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
-		90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"]))
+		90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
+		# Lightning creature: immune to thunder, devastated by ice
+		{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
 	result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
-		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"]))
+		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
+		# Void mage: destroyed by holy, immune to dark, slight fire resist
+		{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
 	return result
 
 
 func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
 				hp: int, mp: int, move: int, jump: int, speed: int,
 				physical: int, magic: int, max_temper: int, max_ether: int,
-				abilities: Array[String] = []) -> Unit:
+				abilities: Array[String] = [],
+				affinities: Dictionary = {}) -> Unit:
 	var stats := UnitStats.new()
 	stats.hp = hp;  stats.mp = mp;  stats.move = move;  stats.jump = jump
 	stats.speed = speed;  stats.physical = physical;  stats.magic = magic
@@ -177,6 +184,7 @@ func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
 	data.id = id;  data.display_name = name;  data.faction = faction
 	data.base_stats = stats
 	data.abilities = abilities
+	data.elemental_affinities = affinities
 
 	# Load character sprite (SVG imported as Texture2D)
 	if SPRITE_PATHS.has(id):
