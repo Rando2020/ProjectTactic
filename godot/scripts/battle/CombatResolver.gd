@@ -14,14 +14,14 @@ func resolve_attack(attacker: Unit, target: Unit,
 	var final_damage: int = int(round(raw_damage * height_bonus))
 
 	# ── VFX: slash → impact → damage number ──────────────────────────────
-	if Engine.has_singleton("VFXManager") or is_instance_valid(get_node_or_null("/root/VFXManager")):
-		var vfx: VFXManager = get_node("/root/VFXManager")
+	if Engine.has_singleton("VFX") or is_instance_valid(get_node_or_null("/root/VFX")):
+		var vfx: VFXManager = get_node("/root/VFX")
 		vfx.play_attack(attacker.grid_pos, target.grid_pos, final_damage)
 
 	var dmg_result := target.receive_damage(final_damage, "physical")
 	if target.hp <= 0:
 		# Death VFX fires after a short delay (unit fade starts simultaneously)
-		var vfx_node := get_node_or_null("/root/VFXManager")
+		var vfx_node := get_node_or_null("/root/VFX")
 		if vfx_node:
 			get_tree().create_timer(0.3).timeout.connect(
 				func() -> void: (vfx_node as VFXManager).play_death(target.grid_pos))
@@ -42,7 +42,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	target.heal(heal_amount)
 	# ── VFX: cure sparkles + green number ────────────────────────────────
-	var vfx_node := get_node_or_null("/root/VFXManager")
+	var vfx_node := get_node_or_null("/root/VFX")
 	if vfx_node:
 		var vfx := vfx_node as VFXManager
 		vfx.play_cure(target.grid_pos)
@@ -60,7 +60,7 @@ func resolve_spell(caster: Unit, target: Unit, spell_type: String,
 	var final_damage: int = int(round(raw_damage))
 
 	# ── VFX ──────────────────────────────────────────────────────────────
-	var vfx_node := get_node_or_null("/root/VFXManager")
+	var vfx_node := get_node_or_null("/root/VFX")
 	if vfx_node:
 		var vfx := vfx_node as VFXManager
 		match spell_type:
