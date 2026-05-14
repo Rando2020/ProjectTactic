@@ -165,8 +165,8 @@ func _on_learn(uid: String, ability_id: String) -> void:
 	if not _gs:
 		return
 	if _gs.learn_ability(uid, ability_id):
-		# Rebuild the whole screen so JP balance and lists refresh
-		_build_ui()
+		_gs.save()       # persist immediately so the purchase survives a crash
+		_build_ui()      # rebuild so JP balance and lists refresh
 
 
 # ── UI helpers ────────────────────────────────────────────────────────────────

@@ -1,8 +1,18 @@
 ## GameState.gd  —  Autoload singleton.
 ## Persists player progress (JP, gold, learned abilities, completed stages)
 ## across scene transitions.  Never freed between battles.
+##
+## Save format (user://save.json):
+##   version          : int   (must == SAVE_VERSION)
+##   gold             : int
+##   completed_stages : Array[String]
+##   unit_jp          : { uid -> int }
+##   unit_learned     : { uid -> Array[String] }
 class_name GameState
 extends Node
+
+const SAVE_PATH    := "user://save.json"
+const SAVE_VERSION := 1
 
 ## Which map to load when transitioning into Battle.tscn  (0 = Ashvale, 1 = Crypt)
 var selected_map_index: int = 0
@@ -28,7 +38,7 @@ var unit_registry: Dictionary = {}
 
 
 func _ready() -> void:
-	if unit_registry.is_empty():
+	if not load_save():
 		_init_defaults()
 
 
@@ -123,3 +133,94 @@ func apply_victory(map_id: String, rewards: Dictionary,
 		"map_id":  map_id,
 		"units":   player_unit_ids.duplicate(),
 	}
+	save()   # auto-save on every victory
+
+
+# ── Persistence ───────────────────────────────────────────────────────────────
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+## Writes current state to disk.  Silent on failure.
+func save() -> void:
+	var unit_jp:      Dictionary = {}
+	var unit_learned: Dictionary = {}
+	for uid in unit_registry:
+		var reg: Dictionary = unit_registry[uid]
+		unit_jp[uid]      = reg.get("jp", 0)
+		unit_learned[uid] = reg.get("learned_abilities", []).duplicate()
+
+	var data: Dictionary = {
+		"version":          SAVE_VERSION,
+		"gold":             gold,
+		"completed_stages": completed_stages.duplicate(),
+		"unit_jp":          unit_jp,
+		"unit_learned":     unit_learned,
+	}
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if not file:
+		push_warning("GameState.save: could not open %s for writing." % SAVE_PATH)
+		return
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+
+## Loads save file.  Returns false if no file or format mismatch.
+## On success populates gold, completed_stages, and per-unit JP/learned.
+func load_save() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if not file:
+		return false
+	var text := file.get_as_text()
+	file.close()
+
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary:
+		push_warning("GameState.load_save: JSON parse failed or not a dict.")
+		return false
+
+	var data: Dictionary = parsed as Dictionary
+	if data.get("version", 0) != SAVE_VERSION:
+		push_warning("GameState.load_save: version mismatch — starting fresh.")
+		return false
+
+	# Populate registry with defaults first so learnable/base lists are intact
+	_init_defaults()
+
+	gold = int(data.get("gold", 0))
+
+	completed_stages.clear()
+	for s: Variant in data.get("completed_stages", []):
+		completed_stages.append(str(s))
+
+	var saved_jp:      Dictionary = data.get("unit_jp", {})
+	var saved_learned: Dictionary = data.get("unit_learned", {})
+
+	for uid: String in unit_registry:
+		if saved_jp.has(uid):
+			unit_registry[uid]["jp"] = int(saved_jp[uid])
+		if saved_learned.has(uid):
+			var raw: Array = saved_learned[uid]
+			var typed: Array[String] = []
+			for ab: Variant in raw:
+				typed.append(str(ab))
+			unit_registry[uid]["learned_abilities"] = typed
+
+	return true
+
+
+## Wipes the save file and resets in-memory state to defaults.
+func delete_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		var dir := DirAccess.open("user://")
+		if dir:
+			dir.remove("save.json")
+	gold = 0
+	completed_stages.clear()
+	pending_rewards.clear()
+	unit_registry.clear()
+	_init_defaults()

@@ -55,6 +55,15 @@ func _build_ui() -> void:
 		gold_lbl.position = Vector2(1140.0, 52.0)
 		add_child(gold_lbl)
 
+		# Save-file indicator (top-left)
+		if gs.has_save():
+			var save_lbl := Label.new()
+			save_lbl.text = "● SAVE FILE FOUND"
+			save_lbl.add_theme_font_size_override("font_size", 11)
+			save_lbl.add_theme_color_override("font_color", Color(0.4, 0.85, 0.5))
+			save_lbl.position = Vector2(40.0, 56.0)
+			add_child(save_lbl)
+
 	# ── Stage cards ───────────────────────────────────────────────────────
 	var cards_root := VBoxContainer.new()
 	cards_root.position = Vector2(240.0, 140.0)
@@ -67,14 +76,27 @@ func _build_ui() -> void:
 		var completed: bool = gs != null and map_id in gs.completed_stages
 		cards_root.add_child(_build_card(map_def, completed))
 
-	# ── Party button ──────────────────────────────────────────────────────
+	# ── Bottom buttons ────────────────────────────────────────────────────
+	var bottom_row := HBoxContainer.new()
+	bottom_row.position = Vector2(40.0, 656.0)
+	bottom_row.add_theme_constant_override("separation", 16)
+	add_child(bottom_row)
+
 	var party_btn := Button.new()
 	party_btn.text = "← Manage Party"
 	party_btn.custom_minimum_size = Vector2(200, 44)
-	party_btn.position = Vector2(40.0, 660.0)
 	party_btn.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/CharacterScreen.tscn"))
-	add_child(party_btn)
+	bottom_row.add_child(party_btn)
+
+	# New Game button — only meaningful when a save exists
+	if gs and gs.has_save():
+		var ng_btn := Button.new()
+		ng_btn.text = "New Game"
+		ng_btn.custom_minimum_size = Vector2(140, 44)
+		ng_btn.add_theme_color_override("font_color", Color(0.9, 0.45, 0.3))
+		ng_btn.pressed.connect(_on_new_game)
+		bottom_row.add_child(ng_btn)
 
 
 func _build_card(map_def: Dictionary, completed: bool) -> PanelContainer:
@@ -161,3 +183,13 @@ func _start_battle(map_index: int) -> void:
 	if gs:
 		gs.selected_map_index = map_index
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+
+func _on_new_game() -> void:
+	var gs: GameState = get_node_or_null("/root/GameState")
+	if gs:
+		gs.delete_save()
+	# Rebuild the screen so the save indicator and New Game button disappear
+	for child in get_children():
+		child.queue_free()
+	_build_ui()
