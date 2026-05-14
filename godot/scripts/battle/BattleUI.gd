@@ -273,7 +273,7 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		btn.text = "%s  MP:%d  Rng:%d" % [ab.get("display_name", ab_id), mp, rng]
 		btn.custom_minimum_size = Vector2(0, 32)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var captured_id := ab_id
+		var captured_id: String = ab_id
 		btn.pressed.connect(func() -> void:
 			_ability_panel.visible = false
 			if battle_manager:
