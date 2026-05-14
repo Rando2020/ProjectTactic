@@ -7,6 +7,10 @@ extends Node2D
 
 var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 
+## Change this in the Inspector (or in _ready) to swap maps.
+## 0 = Ashvale Road  1 = Crypt of Echoes
+@export var map_index: int = 0
+
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.svg",
 	"mira":         "res://assets/sprites/units/mira.svg",
@@ -18,7 +22,7 @@ const SPRITE_PATHS := {
 
 
 func _ready() -> void:
-	var map_data := _create_ashvale_map()
+	var map_data: MapData = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 	tactical_grid.initialize_from_map(map_data)
 
 	var player_units := _spawn_player_units()
@@ -68,6 +72,65 @@ func _create_ashvale_map() -> MapData:
 		{"x": 2, "y": 7, "terrain": "road", "height": 0},
 		{"x": 3, "y": 7, "terrain": "road", "height": 0},
 		{"x": 4, "y": 7, "terrain": "road", "height": 0},
+	]
+	return map
+
+
+func _create_crypt_map() -> MapData:
+	var map := MapData.new()
+	map.id           = "crypt_of_echoes_01"
+	map.display_name = "Crypt of Echoes"
+	map.map_width    = 10
+	map.map_height   = 8
+	map.default_terrain = "stone"
+	map.objective_type  = "defeat_all"
+	map.objective_label = "Defeat all enemies"
+	map.reward_gold  = 220
+	map.reward_jp    = 60
+	# Stone walls form a narrow corridor down the centre
+	map.tile_overrides = [
+		# Outer wall border — top row
+		{"x": 0, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 1, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 8, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 0, "terrain": "wall", "height": 0},
+		# Left wall column
+		{"x": 0, "y": 1, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 5, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 6, "terrain": "wall", "height": 0},
+		# Right wall column
+		{"x": 9, "y": 1, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 5, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 6, "terrain": "wall", "height": 0},
+		# Interior wall pillars
+		{"x": 2, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 7, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 2, "y": 5, "terrain": "wall", "height": 0},
+		{"x": 7, "y": 5, "terrain": "wall", "height": 0},
+		# High-ground raised dais in the centre (boss platform)
+		{"x": 4, "y": 3, "terrain": "high_ground", "height": 2},
+		{"x": 5, "y": 3, "terrain": "high_ground", "height": 2},
+		{"x": 4, "y": 4, "terrain": "high_ground", "height": 2},
+		{"x": 5, "y": 4, "terrain": "high_ground", "height": 2},
+		# Shallow water pools flanking the dais
+		{"x": 1, "y": 3, "terrain": "shallow_water", "height": 0},
+		{"x": 1, "y": 4, "terrain": "shallow_water", "height": 0},
+		{"x": 8, "y": 3, "terrain": "shallow_water", "height": 0},
+		{"x": 8, "y": 4, "terrain": "shallow_water", "height": 0},
+		# Shrine at the far end
+		{"x": 4, "y": 0, "terrain": "shrine", "height": 0},
+		{"x": 5, "y": 0, "terrain": "shrine", "height": 0},
+		# Road corridor leading in
+		{"x": 3, "y": 6, "terrain": "road", "height": 0},
+		{"x": 4, "y": 6, "terrain": "road", "height": 0},
+		{"x": 5, "y": 6, "terrain": "road", "height": 0},
+		{"x": 6, "y": 6, "terrain": "road", "height": 0},
+		{"x": 3, "y": 7, "terrain": "road", "height": 0},
+		{"x": 4, "y": 7, "terrain": "road", "height": 0},
+		{"x": 5, "y": 7, "terrain": "road", "height": 0},
+		{"x": 6, "y": 7, "terrain": "road", "height": 0},
 	]
 	return map
 
