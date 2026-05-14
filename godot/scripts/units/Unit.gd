@@ -58,72 +58,90 @@ func _initialize_from_data(data: UnitData) -> void:
 func _draw_unit() -> void:
 	var is_player := team == "player"
 
+	# ── Isometric ground shadow (ellipse at feet level = y 0) ───────────────
+	# This flat oval sells the "standing on the tile" look.
+	var shadow := Polygon2D.new()
+	var shadow_pts: PackedVector2Array = []
+	for i in range(14):
+		var a := TAU * float(i) / 14.0
+		shadow_pts.append(Vector2(cos(a) * 17.0, sin(a) * 5.5))
+	shadow.polygon = shadow_pts
+	shadow.color = Color(0.0, 0.0, 0.0, 0.30)
+	shadow.position = Vector2(0.0, -3.0)   # just below feet
+	shadow.z_index = 8
+	add_child(shadow)
+
 	# ── Sprite or coloured-square fallback ──────────────────────────────────
+	# IMPORTANT: the unit's world origin represents the character's FEET.
+	# All sprites and rects are offset upward so their bottom sits at y = 0.
 	if unit_data and unit_data.sprite_sheet:
 		_sprite = Sprite2D.new()
 		_sprite.texture = unit_data.sprite_sheet
 		var tex_size := unit_data.sprite_sheet.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
-			# Scale so the sprite fits inside 56×56 (leaves a 4 px border inside the 64 px tile)
-			_sprite.scale = Vector2(56.0 / tex_size.x, 56.0 / tex_size.y)
+			_sprite.scale = Vector2(52.0 / tex_size.x, 52.0 / tex_size.y)
+		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
+		_sprite.position = Vector2(0, -26)
 		_sprite.z_index = 10
 		add_child(_sprite)
 	else:
-		# Plain coloured square used when no sprite texture is assigned
+		# Plain coloured pillar used when no sprite texture is assigned
 		_body_rect = ColorRect.new()
-		_body_rect.size = Vector2(44, 44)
-		_body_rect.position = Vector2(-22, -22)
+		_body_rect.size = Vector2(28, 42)
+		_body_rect.position = Vector2(-14, -42)   # bottom at y = 0
 		_body_rect.color = Color(0.18, 0.38, 0.85) if is_player else Color(0.82, 0.18, 0.18)
 		_body_rect.z_index = 10
 		add_child(_body_rect)
 
 		var stripe := ColorRect.new()
-		stripe.size = Vector2(44, 5)
-		stripe.position = Vector2(-22, 17)
+		stripe.size = Vector2(28, 5)
+		stripe.position = Vector2(-14, -14)   # near the base
 		stripe.color = Color(0.7, 0.9, 1.0) if is_player else Color(1.0, 0.8, 0.3)
 		stripe.z_index = 11
 		add_child(stripe)
 
-	# ── Team-colour indicator dot (always shown, top-left corner) ───────────
+	# ── Team-colour dot (top-right, above sprite head) ────────────────────
 	var dot := ColorRect.new()
-	dot.size = Vector2(8, 8)
-	dot.position = Vector2(-28, -28)
+	dot.size = Vector2(7, 7)
+	dot.position = Vector2(12, -60)
 	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
 	dot.z_index = 14
 	add_child(dot)
 
-	# ── Name label ──────────────────────────────────────────────────────────
-	var lbl := Label.new()
-	lbl.text = display_name.left(5)
-	lbl.add_theme_font_size_override("font_size", 8)
-	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	lbl.position = Vector2(-28, 22)
-	lbl.size = Vector2(56, 12)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.z_index = 15
-	add_child(lbl)
-
-	# ── HP bar ───────────────────────────────────────────────────────────────
+	# ── HP bar (floats just above the sprite head) ────────────────────────
 	var hp_bg := ColorRect.new()
-	hp_bg.size = Vector2(52, 5)
-	hp_bg.position = Vector2(-26, 18)
+	hp_bg.size = Vector2(40, 4)
+	hp_bg.position = Vector2(-20, -62)
 	hp_bg.color = Color(0.08, 0.08, 0.08)
 	hp_bg.z_index = 14
 	add_child(hp_bg)
 
 	_hp_bar = ColorRect.new()
-	_hp_bar.size = Vector2(52, 5)
-	_hp_bar.position = Vector2(-26, 18)
+	_hp_bar.size = Vector2(40, 4)
+	_hp_bar.position = Vector2(-20, -62)
 	_hp_bar.color = Color(0.2, 0.85, 0.3)
 	_hp_bar.z_index = 15
 	add_child(_hp_bar)
+
+	# ── Name label (above HP bar) ─────────────────────────────────────────
+	var lbl := Label.new()
+	lbl.text = display_name.left(6)
+	lbl.add_theme_font_size_override("font_size", 8)
+	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
+	lbl.add_theme_constant_override("outline_size", 2)
+	lbl.position = Vector2(-20, -72)
+	lbl.size = Vector2(40, 12)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.z_index = 15
+	add_child(lbl)
 
 
 func _update_hp_bar() -> void:
 	if not _hp_bar or not unit_data:
 		return
 	var ratio := float(hp) / float(unit_data.base_stats.hp)
-	_hp_bar.size.x = 52.0 * ratio
+	_hp_bar.size.x = 40.0 * ratio
 	if ratio < 0.3:
 		_hp_bar.color = Color(0.85, 0.2, 0.2)
 	elif ratio < 0.6:
@@ -153,9 +171,10 @@ func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
 	match damage_type:
 		"physical":
-			var absorbed: int = min(temper, int(amount * 0.35))
+			var effective: int = int(amount * 0.7) if has_status("protect") else amount
+			var absorbed: int = min(temper, int(effective * 0.35))
 			temper = max(temper - absorbed, 0)
-			var hp_dmg: int = max(1, amount - int(absorbed * 0.25))
+			var hp_dmg: int = max(1, effective - int(absorbed * 0.25))
 			hp = max(hp - hp_dmg, 0)
 			result["hp_damage"] = hp_dmg
 			result["temper_damage"] = absorbed
