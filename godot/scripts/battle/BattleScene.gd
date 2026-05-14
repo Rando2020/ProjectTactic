@@ -122,6 +122,11 @@ func _create_crypt_map() -> MapData:
 		# Shrine at the far end
 		{"x": 4, "y": 0, "terrain": "shrine", "height": 0},
 		{"x": 5, "y": 0, "terrain": "shrine", "height": 0},
+		# Burning brazier traps flanking the corridor entrance
+		{"x": 3, "y": 2, "terrain": "burning", "height": 0},
+		{"x": 6, "y": 2, "terrain": "burning", "height": 0},
+		{"x": 3, "y": 5, "terrain": "burning", "height": 0},
+		{"x": 6, "y": 5, "terrain": "burning", "height": 0},
 		# Road corridor leading in
 		{"x": 3, "y": 6, "terrain": "road", "height": 0},
 		{"x": 4, "y": 6, "terrain": "road", "height": 0},

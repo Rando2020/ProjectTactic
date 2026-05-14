@@ -41,7 +41,8 @@ static func get_move_range(
 	tiles_dict: Dictionary,
 	unit_positions: Array,
 	map_width: int,
-	map_height: int
+	map_height: int,
+	jump_range: int = 99
 ) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	var frontier: Array[Dictionary] = [ { "pos": origin, "cost": 0 } ]
@@ -69,7 +70,11 @@ static func get_move_range(
 				var ct: Dictionary = tiles_dict[current_pos]
 				current_height = ct.get("height", 0)
 			var next_height: int = tile.get("height", 0)
-			var new_cost: int = current_cost + step_cost + abs(next_height - current_height)
+			var height_diff: int = abs(next_height - current_height)
+			# Cannot climb or drop more than the unit's jump stat
+			if height_diff > jump_range:
+				continue
+			var new_cost: int = current_cost + step_cost + height_diff
 			if new_cost > move_range:
 				continue
 			var prev: Variant = visited.get(next_pos, null)

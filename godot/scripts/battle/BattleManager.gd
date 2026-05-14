@@ -91,6 +91,7 @@ func _begin_enemy_turn() -> void:
 	else:
 		_run_enemy_ai(unit)
 	unit.end_turn()
+	_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
 	_set_phase(Phase.RESOLVE)
 
@@ -123,7 +124,8 @@ func _run_enemy_ai(unit: Unit) -> void:
 				occupied.append(u.grid_pos)
 		var reachable := GridSystem.get_move_range(
 			unit.grid_pos, unit.unit_data.base_stats.move,
-			tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height
+			tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
+			unit.unit_data.base_stats.jump
 		)
 		var best_tile := unit.grid_pos
 		var best_dist := closest_dist
@@ -179,7 +181,8 @@ func select_command(command: String) -> void:
 					occupied.append(u.grid_pos)
 			var move_range := GridSystem.get_move_range(
 				unit.grid_pos, unit.unit_data.base_stats.move,
-				tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height
+				tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
+				unit.unit_data.base_stats.jump
 			)
 			move_range_ready.emit(move_range)
 			tactical_grid.show_move_range(move_range)
@@ -252,6 +255,12 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
 	else:
 		combat_resolver.resolve_spell(caster, target, spell_type, base_power)
 		log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
+		# Fire spells can ignite flammable terrain
+		if spell_type == "fire":
+			var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
+			if tgt_terrain in ["grass", "road"]:
+				tactical_grid.ignite_tile(target.grid_pos)
+				log_message.emit("The ground catches fire!")
 	# Apply any status effect after a short delay (spells deal damage after 0.18 s)
 	var se_data: Dictionary = ability.get("status_effect", {})
 	if not se_data.is_empty() and spell_type != "cure":
@@ -343,6 +352,7 @@ func _end_player_turn() -> void:
 	var unit: Unit = units.get(active_unit_id)
 	if unit:
 		unit.end_turn()
+		_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
 	active_command = ""
 	selected_ability_id = ""
@@ -359,6 +369,22 @@ func _on_unit_defeated(unit_id: String) -> void:
 	# A unit dying mid-tick could end the battle — check objectives
 	if current_phase == Phase.TICK or current_phase == Phase.RESOLVE:
 		_set_phase(Phase.CHECK_OBJECTIVE)
+
+
+func _process_terrain_hazards(unit: Unit) -> void:
+	if unit.hp <= 0:
+		return
+	var tile: Dictionary = tactical_grid.get_tile(unit.grid_pos)
+	match tile.get("terrain", ""):
+		"burning":
+			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.05))
+			var result := unit.receive_damage(dmg, "magical")
+			var dealt: int = result.get("hp_damage", 0)
+			log_message.emit("%s takes %d fire damage from burning ground!" % [unit.display_name, dealt])
+			var vfx_node := get_node_or_null("/root/VFX")
+			if vfx_node:
+				(vfx_node as VFXManager).play_damage_number(unit.grid_pos, dealt, Color(1.0, 0.45, 0.1))
+				(vfx_node as VFXManager).play_fire(unit.grid_pos)
 
 
 func _try_apply_status(target: Unit, se_data: Dictionary) -> void:

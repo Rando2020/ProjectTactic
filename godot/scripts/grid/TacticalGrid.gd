@@ -7,8 +7,9 @@ signal unit_clicked(unit_id: String)
 @export var tile_size: Vector2i = Vector2i(64, 64)
 @export var map_data: MapData
 
-var tiles: Dictionary = {}          # Vector2i -> Dictionary
-var unit_positions: Dictionary = {} # Vector2i -> unit_id String
+var tiles: Dictionary = {}           # Vector2i -> Dictionary
+var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
+var _tile_fill_rects: Dictionary = {} # Vector2i -> ColorRect (inner fill, for mutation)
 
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
@@ -74,6 +75,7 @@ func _draw_base_tiles() -> void:
 		rect.color = base_color
 		rect.z_index = 0
 		add_child(rect)
+		_tile_fill_rects[pos] = rect
 		# Subtle top-left highlight to give a slight bevel feel
 		var hi := ColorRect.new()
 		hi.size = Vector2(tile_size.x - 4, 2)
@@ -178,6 +180,23 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
+
+
+# ── Terrain mutation ──────────────────────────────────────────────────────────
+
+## Converts a flammable tile (grass, road) to burning terrain.
+## Updates both the logical tile data and the visual fill colour.
+func ignite_tile(pos: Vector2i) -> void:
+	if not tiles.has(pos):
+		return
+	var tile: Dictionary = tiles[pos]
+	if tile.get("terrain", "") not in ["grass", "road"]:
+		return
+	tile["terrain"] = "burning"
+	tile["move_cost"] = 1
+	if _tile_fill_rects.has(pos):
+		var rect: ColorRect = _tile_fill_rects[pos]
+		rect.color = Color(0.70, 0.16, 0.07)  # burning colour
 
 
 # ── Input ─────────────────────────────────────────────────────────────────────
