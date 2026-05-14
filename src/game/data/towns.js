@@ -29,6 +29,12 @@ export const TOWNS = {
         name: 'Captain Rusk',
         role: 'Town watch captain',
         line: 'If you can hear the Guardian, then you can walk toward the noise while the rest of us keep people alive.'
+      },
+      {
+        id: 'elianCrowe',
+        name: 'Elian Crowe',
+        role: 'Ashen Company agitator',
+        line: 'A cracked bell is honest. It finally sounds like the thing it was built to hide.'
       }
     ],
     missions: ['ashvale_null_drake'],
@@ -101,6 +107,12 @@ export const TOWNS = {
         name: 'Storm Acolyte Venn',
         role: 'Torvahk devotee',
         line: 'When Torvahk speaks, most hear thunder. The chosen hear grief.'
+      },
+      {
+        id: 'serraValecourt',
+        name: 'Serra Valecourt',
+        role: 'Concord heir under military escort',
+        line: 'My family taught me how to inherit a country. No one taught me how to give one back.'
       }
     ],
     missions: ['stormglass_deflect_trial'],
