@@ -10,6 +10,7 @@ signal battle_lost()
 signal move_range_ready(positions: Array)
 signal attack_range_ready(positions: Array)
 signal log_message(text: String)
+signal ability_mode_started(usable_ids: Array)
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -23,6 +24,7 @@ var units: Dictionary = {}
 var current_phase: Phase = Phase.INACTIVE
 var active_unit_id: String = ""
 var active_command: String = ""
+var selected_ability_id: String = ""
 
 
 func _ready() -> void:
@@ -82,7 +84,11 @@ func _begin_enemy_turn() -> void:
 		return
 	unit.begin_turn()
 	log_message.emit("Enemy: %s acts." % unit.display_name)
-	_run_enemy_ai(unit)
+	var cast_spell := randf() < 0.45
+	if cast_spell and _try_enemy_spell(unit):
+		pass  # spell was cast
+	else:
+		_run_enemy_ai(unit)
 	unit.end_turn()
 	turn_ended.emit(active_unit_id)
 	_set_phase(Phase.RESOLVE)
@@ -181,6 +187,87 @@ func select_command(command: String) -> void:
 			tactical_grid.show_attack_range(atk_range)
 		"wait":
 			_end_player_turn()
+		"ability":
+			var ab_unit: Unit = units.get(active_unit_id)
+			if not ab_unit:
+				return
+			var usable: Array = []
+			for ab_id in ab_unit.unit_data.abilities:
+				var ab: Dictionary = AbilityDB.get_ability(ab_id)
+				if ab_unit.mp >= ab.get("mp_cost", 0):
+					usable.append(ab_id)
+			ability_mode_started.emit(usable)
+
+
+func select_ability(ability_id: String) -> void:
+	if current_phase != Phase.PLAYER_TURN:
+		return
+	var unit: Unit = units.get(active_unit_id)
+	if not unit:
+		return
+	var ability: Dictionary = AbilityDB.get_ability(ability_id)
+	if unit.mp < ability.get("mp_cost", 0):
+		log_message.emit("Not enough MP!")
+		return
+	selected_ability_id = ability_id
+	active_command = "ability_target"
+	var range_val: int = ability.get("range", 1)
+	var target_type: String = ability.get("target_type", "enemy")
+	if target_type == "self" or range_val == 0:
+		_execute_ability(unit, unit, ability)
+		return
+	var ab_range := GridSystem.get_attack_range(
+		unit.grid_pos, 1, range_val, map_data.map_width, map_data.map_height
+	)
+	tactical_grid.show_ability_range(ab_range)
+
+
+func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
+	var mp_cost: int = ability.get("mp_cost", 0)
+	caster.mp = max(caster.mp - mp_cost, 0)
+	tactical_grid.clear_highlights()
+	active_command = ""
+	selected_ability_id = ""
+	var spell_type: String = ability.get("spell_type", "fire")
+	var base_power: int = ability.get("base_power", 100)
+	var ab_name: String = ability.get("display_name", "?")
+	if spell_type == "cure":
+		combat_resolver.resolve_heal(caster, target, base_power)
+		log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
+	elif spell_type == "physical":
+		var tile_c := tactical_grid.get_tile(caster.grid_pos)
+		var tile_t := tactical_grid.get_tile(target.grid_pos)
+		combat_resolver.resolve_attack(caster, target, tile_c, tile_t)
+		log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
+	else:
+		combat_resolver.resolve_spell(caster, target, spell_type, base_power)
+		log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
+
+
+func _try_enemy_spell(unit: Unit) -> bool:
+	if unit.unit_data.abilities.is_empty():
+		return false
+	# Shuffle abilities so enemies vary their choices
+	var ab_list: Array = unit.unit_data.abilities.duplicate()
+	ab_list.shuffle()
+	for ab_id in ab_list:
+		var ab: Dictionary = AbilityDB.get_ability(ab_id)
+		if unit.mp < ab.get("mp_cost", 0):
+			continue
+		var spell_range: int = ab.get("range", 1)
+		var target_type: String = ab.get("target_type", "enemy")
+		for uid in units:
+			var target: Unit = units[uid]
+			if target.hp <= 0:
+				continue
+			var is_valid := (target_type == "enemy" and target.team == "player") or \
+							(target_type == "ally" and target.team == unit.team and target != unit)
+			if not is_valid:
+				continue
+			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) <= spell_range:
+				_execute_ability(unit, target, ab)
+				return true
+	return false
 
 
 func _on_tile_clicked(grid_pos: Vector2i) -> void:
@@ -215,6 +302,26 @@ func _on_unit_clicked(unit_id: String) -> void:
 			active_command = ""
 			log_message.emit("%s hits %s for %d dmg!" % [attacker.display_name, target.display_name, result.get("hp_damage", 0)])
 			_end_player_turn()
+	elif active_command == "ability_target" and selected_ability_id != "":
+		var target: Unit = units.get(unit_id)
+		if not target or target.hp <= 0:
+			return
+		var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
+		var target_type: String = ability.get("target_type", "enemy")
+		var caster: Unit = units.get(active_unit_id)
+		if not caster:
+			return
+		var valid_target := false
+		if target_type == "enemy" and target.team != caster.team:
+			valid_target = true
+		elif target_type == "ally" and target.team == caster.team:
+			valid_target = true
+		if not valid_target:
+			return
+		if target.grid_pos not in tactical_grid.ability_tiles:
+			return
+		_execute_ability(caster, target, ability)
+		_end_player_turn()
 
 
 func _end_player_turn() -> void:
@@ -223,6 +330,7 @@ func _end_player_turn() -> void:
 		unit.end_turn()
 	turn_ended.emit(active_unit_id)
 	active_command = ""
+	selected_ability_id = ""
 	tactical_grid.clear_highlights()
 	_set_phase(Phase.RESOLVE)
 

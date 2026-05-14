@@ -355,6 +355,49 @@ func play_step(grid_pos: Vector2i) -> void:
 	tw.tween_callback(dot.queue_free)
 
 
+# ── Aura / Dark Breath ────────────────────────────────────────────────────────
+
+## Expanding aura ring — used for War Cry, buffs, etc.
+func play_aura(grid_pos: Vector2i, color: Color) -> void:
+	var world := gp(grid_pos)
+	for i in range(3):
+		var ring := ColorRect.new()
+		ring.size = Vector2(16.0 + float(i) * 10.0, 16.0 + float(i) * 10.0)
+		var half := ring.size * 0.5
+		ring.position = world - half
+		ring.color = Color(color.r, color.g, color.b, 0.55 - float(i) * 0.15)
+		_spawn(ring)
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_interval(float(i) * 0.08)
+		tw.tween_property(ring, "scale", Vector2(2.2, 2.2), 0.45)
+		tw.tween_property(ring, "modulate:a", 0.0, 0.45)
+		tw.chain().tween_callback(ring.queue_free)
+
+
+## Dark breath — sweeping cone of void energy
+func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
+	var fw := gp(from_grid)
+	var tw_world := gp(to_grid)
+	var dir := (tw_world - fw).normalized()
+	var perp := Vector2(-dir.y, dir.x)
+	_screen_flash(tw_world, Color(0.3, 0.0, 0.4, 0.6), 0.2)
+	for i in range(12):
+		var spread := perp * randf_range(-24.0, 24.0)
+		var line := Line2D.new()
+		line.width = 3.5
+		line.default_color = Color(0.5 + randf() * 0.2, 0.0, 0.6 + randf() * 0.2, 0.85)
+		line.add_point(fw + dir * 12.0)
+		var mid := fw + dir * randf_range(20.0, 50.0) + spread * 0.5
+		line.add_point(mid)
+		line.add_point(tw_world + spread)
+		_spawn(line)
+		var tw2 := create_tween()
+		tw2.tween_interval(float(i) * 0.025)
+		tw2.tween_property(line, "modulate:a", 0.0, 0.35)
+		tw2.tween_callback(line.queue_free)
+
+
 # ── Utility ────────────────────────────────────────────────────────────────────
 
 ## Adds a VFX node as a child and ensures it renders above everything.

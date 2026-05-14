@@ -128,6 +128,11 @@ func show_attack_range(positions: Array[Vector2i]) -> void:
 	_refresh_highlights()
 
 
+func show_ability_range(positions: Array[Vector2i]) -> void:
+	ability_tiles = positions
+	_refresh_highlights()
+
+
 func clear_highlights() -> void:
 	move_tiles.clear()
 	attack_tiles.clear()

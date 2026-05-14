@@ -15,6 +15,9 @@ var _timeline_labels: Array[Label] = []
 var _move_btn: Button
 var _attack_btn: Button
 var _wait_btn: Button
+var _ability_btn: Button
+var _ability_panel: VBoxContainer
+var _ability_list: VBoxContainer
 var _result_label: Label
 
 const LOG_SIZE := 8
@@ -29,6 +32,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
 	battle_manager.turn_order.timeline_updated.connect(_on_timeline_updated)
+	battle_manager.ability_mode_started.connect(_on_ability_mode_started)
 
 
 func _ready() -> void:
@@ -98,12 +102,30 @@ func _build_ui() -> void:
 	_move_btn   = _cmd_btn(btn_row, "Move",   _on_move)
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
 	_cmd_btn(btn_row, "Wait", _on_wait)
+	_ability_btn = _cmd_btn(btn_row, "Ability", _on_ability)
 
 	_result_label = Label.new()
 	_result_label.text = ""
 	_result_label.add_theme_font_size_override("font_size", 13)
 	_result_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
 	root.add_child(_result_label)
+
+	# Ability selection panel (hidden by default)
+	_ability_panel = VBoxContainer.new()
+	_ability_panel.visible = false
+	_ability_panel.add_theme_constant_override("separation", 4)
+	root.add_child(_ability_panel)
+
+	var ab_header := Label.new()
+	ab_header.text = "── SELECT SPELL ──"
+	ab_header.add_theme_font_size_override("font_size", 11)
+	ab_header.add_theme_color_override("font_color", Color(0.7, 0.6, 1.0))
+	ab_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_ability_panel.add_child(ab_header)
+
+	_ability_list = VBoxContainer.new()
+	_ability_list.add_theme_constant_override("separation", 3)
+	_ability_panel.add_child(_ability_list)
 
 	root.add_child(_separator())
 
@@ -189,8 +211,10 @@ func _on_log(text: String) -> void:
 func _on_phase_changed(phase: String) -> void:
 	_phase_label.text = phase.replace("_", " ")
 	var is_player := phase == "PLAYER_TURN"
-	if _move_btn:   _move_btn.disabled   = not is_player
-	if _attack_btn: _attack_btn.disabled = not is_player
+	if _move_btn:    _move_btn.disabled    = not is_player
+	if _attack_btn:  _attack_btn.disabled  = not is_player
+	if _ability_btn: _ability_btn.disabled = not is_player
+	if _ability_panel: _ability_panel.visible = false
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
@@ -220,15 +244,41 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 func _on_battle_won(rewards: Dictionary) -> void:
 	_phase_label.text = "VICTORY!"
 	_result_label.text = "+%dg  +%dJP" % [rewards.get("gold", 0), rewards.get("jp", 0)]
-	if _move_btn:   _move_btn.disabled   = true
-	if _attack_btn: _attack_btn.disabled = true
+	if _move_btn:    _move_btn.disabled    = true
+	if _attack_btn:  _attack_btn.disabled  = true
+	if _ability_btn: _ability_btn.disabled = true
 
 
 func _on_battle_lost() -> void:
 	_phase_label.text = "DEFEATED"
 	_result_label.text = "All units fallen."
-	if _move_btn:   _move_btn.disabled   = true
-	if _attack_btn: _attack_btn.disabled = true
+	if _move_btn:    _move_btn.disabled    = true
+	if _attack_btn:  _attack_btn.disabled  = true
+	if _ability_btn: _ability_btn.disabled = true
+
+
+func _on_ability_mode_started(usable_ids: Array) -> void:
+	# Clear old buttons
+	for child in _ability_list.get_children():
+		child.queue_free()
+	if usable_ids.is_empty():
+		_result_label.text = "No usable abilities."
+		return
+	_ability_panel.visible = true
+	for ab_id in usable_ids:
+		var ab: Dictionary = AbilityDB.get_ability(ab_id)
+		var btn := Button.new()
+		var mp: int = ab.get("mp_cost", 0)
+		var rng: int = ab.get("range", 0)
+		btn.text = "%s  MP:%d  Rng:%d" % [ab.get("display_name", ab_id), mp, rng]
+		btn.custom_minimum_size = Vector2(0, 32)
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var captured_id := ab_id
+		btn.pressed.connect(func() -> void:
+			_ability_panel.visible = false
+			if battle_manager:
+				battle_manager.select_ability(captured_id))
+		_ability_list.add_child(btn)
 
 
 # ── Button callbacks ──────────────────────────────────────────────────────────
@@ -241,3 +291,6 @@ func _on_attack() -> void:
 
 func _on_wait() -> void:
 	if battle_manager: battle_manager.select_command("wait")
+
+func _on_ability() -> void:
+	if battle_manager: battle_manager.select_command("ability")
