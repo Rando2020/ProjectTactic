@@ -8,7 +8,7 @@ const FACING_OPPOSITE: Dictionary = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
-		vfx_mode: String = "slash") -> Dictionary:
+		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
 	# ── Blind miss check (35 % miss when blind) ───────────────────────────
 	if attacker.has_status("blind") and randf() < 0.35:
 		var vfx_node := get_node_or_null("/root/VFX")
@@ -53,6 +53,13 @@ func resolve_attack(attacker: Unit, target: Unit,
 		target.animate_hit()
 
 	var flank_str := "back" if flank_mult >= 1.25 else ("side" if flank_mult > 1.0 else "front")
+	# Counter-attack: 25 % chance when hit in melee by a non-counter, non-arrow strike
+	var should_counter := false
+	if not is_counter and vfx_mode != "arrow" and target.hp > 0:
+		var dist := abs(attacker.grid_pos.x - target.grid_pos.x) \
+				  + abs(attacker.grid_pos.y - target.grid_pos.y)
+		if dist <= target.unit_data.base_stats.attack_range_max and randf() < 0.25:
+			should_counter = true
 	var result := {
 		"damage":        final_damage,
 		"hp_damage":     dmg_result.get("hp_damage", 0),
@@ -60,6 +67,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		"ether_damage":  dmg_result.get("ether_damage", 0),
 		"height_bonus":  height_bonus,
 		"flank":         flank_str,
+		"counter":       should_counter,
 	}
 	combat_resolved.emit(result)
 	return result

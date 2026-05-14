@@ -419,6 +419,60 @@ func play_aura(grid_pos: Vector2i, color: Color) -> void:
 		tw.chain().tween_callback(ring.queue_free)
 
 
+## Haste — golden speed streaks shooting upward
+func play_haste(grid_pos: Vector2i) -> void:
+	var world := gp(grid_pos)
+	_screen_flash(world, Color(1.0, 0.88, 0.1, 0.4), 0.14)
+	for i in range(8):
+		var ox := randf_range(-18.0, 18.0)
+		var line := Line2D.new()
+		line.width = 2.5
+		line.default_color = Color(1.0, 0.85, 0.1, 0.9)
+		line.add_point(world + Vector2(ox, randf_range(-4.0, 8.0)))
+		line.add_point(world + Vector2(ox, -randf_range(26.0, 46.0)))
+		_spawn(line)
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_interval(float(i) * 0.035)
+		tw.tween_property(line, "position:y", line.position.y - 22.0, 0.32)
+		tw.tween_property(line, "modulate:a", 0.0, 0.32)
+		tw.chain().tween_callback(line.queue_free)
+
+
+## Protect — blue-silver shield rings expanding outward
+func play_protect(grid_pos: Vector2i) -> void:
+	var world := gp(grid_pos)
+	_screen_flash(world, Color(0.3, 0.55, 1.0, 0.45), 0.18)
+	# Expanding rings
+	for i in range(3):
+		var sz := 20.0 + float(i) * 12.0
+		var ring := ColorRect.new()
+		ring.size = Vector2(sz, sz)
+		ring.position = world - ring.size * 0.5
+		ring.color = Color(0.45, 0.65, 1.0, 0.7 - float(i) * 0.2)
+		_spawn(ring)
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_interval(float(i) * 0.09)
+		tw.tween_property(ring, "scale", Vector2(2.5, 2.5), 0.5)
+		tw.tween_property(ring, "modulate:a", 0.0, 0.5)
+		tw.chain().tween_callback(ring.queue_free)
+	# Silver sparkles rising
+	for i in range(10):
+		var dot := ColorRect.new()
+		dot.size = Vector2(4.0, 4.0)
+		dot.color = Color(0.7, 0.85, 1.0, 1.0)
+		var angle := randf_range(0.0, TAU)
+		var radius := randf_range(8.0, 28.0)
+		dot.position = world + Vector2(cos(angle), sin(angle)) * radius - dot.size * 0.5
+		_spawn(dot)
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(dot, "position:y", dot.position.y - randf_range(18.0, 36.0), 0.55)
+		tw.tween_property(dot, "modulate:a", 0.0, 0.55).set_delay(0.1)
+		tw.chain().tween_callback(dot.queue_free)
+
+
 ## Dark breath — sweeping cone of void energy
 func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
 	var fw := gp(from_grid)

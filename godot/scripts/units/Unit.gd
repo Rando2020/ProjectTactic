@@ -153,9 +153,10 @@ func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
 	match damage_type:
 		"physical":
-			var absorbed: int = min(temper, int(amount * 0.35))
+			var effective: int = int(amount * 0.7) if has_status("protect") else amount
+			var absorbed: int = min(temper, int(effective * 0.35))
 			temper = max(temper - absorbed, 0)
-			var hp_dmg: int = max(1, amount - int(absorbed * 0.25))
+			var hp_dmg: int = max(1, effective - int(absorbed * 0.25))
 			hp = max(hp - hp_dmg, 0)
 			result["hp_damage"] = hp_dmg
 			result["temper_damage"] = absorbed

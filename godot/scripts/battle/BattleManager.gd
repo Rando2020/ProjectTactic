@@ -118,6 +118,10 @@ func _run_enemy_ai(unit: Unit) -> void:
 			var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
 				else (" [flank]" if result.get("flank","") == "side" else "")
 			log_message.emit("%s hits %s for %d dmg!%s" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0), ftag])
+		# Counter-attack
+		if result.get("counter", false):
+			get_tree().create_timer(0.6).timeout.connect(
+				func() -> void: _execute_counter_attack(closest_player, unit))
 	else:
 		var occupied: Array = []
 		for uid in units:
@@ -227,8 +231,13 @@ func select_ability(ability_id: String) -> void:
 	active_command = "ability_target"
 	var range_val: int = ability.get("range", 1)
 	var target_type: String = ability.get("target_type", "enemy")
+	# Self-cast or range-0 → resolve immediately on the caster's tile
 	if target_type == "self" or range_val == 0:
-		_execute_ability(unit, unit, ability)
+		if ability.has("aoe_type"):
+			_execute_aoe_ability(unit, unit.grid_pos, ability)
+		else:
+			_execute_ability(unit, unit, ability)
+		_end_player_turn()
 		return
 	var ab_range := GridSystem.get_attack_range(
 		unit.grid_pos, ability.get("min_range", 1), range_val, map_data.map_width, map_data.map_height
@@ -236,65 +245,167 @@ func select_ability(ability_id: String) -> void:
 	tactical_grid.show_ability_range(ab_range)
 
 
-func _execute_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
-	var mp_cost: int = ability.get("mp_cost", 0)
-	caster.mp = max(caster.mp - mp_cost, 0)
-	tactical_grid.clear_highlights()
-	active_command = ""
-	selected_ability_id = ""
+# ── Ability execution ─────────────────────────────────────────────────────────
+
+## Execute ability against a single target.
+## skip_setup=true skips MP deduction, UI cleanup, and per-target log spam (used by AoE wrapper).
+func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
+		skip_setup: bool = false) -> void:
+	if not skip_setup:
+		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
+		tactical_grid.clear_highlights()
+		active_command = ""
+		selected_ability_id = ""
+
 	var spell_type: String = ability.get("spell_type", "fire")
-	var base_power: int = ability.get("base_power", 100)
-	var ab_name: String = ability.get("display_name", "?")
+	var base_power:  int   = ability.get("base_power", 100)
+	var ab_name:     String = ability.get("display_name", "?")
+
+	# ── Buff abilities (Haste, Protect, …) ────────────────────────────────
+	if spell_type == "buff":
+		var se_data: Dictionary = ability.get("status_effect", {})
+		var vfx_node := get_node_or_null("/root/VFX")
+		if vfx_node and not se_data.is_empty():
+			var vfx := vfx_node as VFXManager
+			match se_data.get("id", ""):
+				"haste":   vfx.play_haste(target.grid_pos)
+				"protect": vfx.play_protect(target.grid_pos)
+				_:         vfx.play_aura(target.grid_pos, Color(0.6, 0.8, 1.0))
+		if not se_data.is_empty():
+			get_tree().create_timer(0.25).timeout.connect(
+				func() -> void: _try_apply_status(target, se_data))
+		if not skip_setup:
+			log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
+		return
+
+	# ── Heal ──────────────────────────────────────────────────────────────
 	if spell_type == "cure":
 		combat_resolver.resolve_heal(caster, target, base_power)
-		log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
-	elif spell_type == "physical":
+		if not skip_setup:
+			log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
+		return
+
+	# ── Physical ──────────────────────────────────────────────────────────
+	if spell_type == "physical":
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
 		var ab_vfx: String = ability.get("vfx_mode", "slash")
 		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx)
-		if result.get("missed", false):
-			log_message.emit("%s swings but misses! (blind)" % caster.display_name)
-		else:
-			log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
-	else:
-		combat_resolver.resolve_spell(caster, target, spell_type, base_power)
-		# Pre-compute affinity tag from data (resolve_spell runs async so we read here)
+		if not skip_setup:
+			if result.get("missed", false):
+				log_message.emit("%s swings but misses! (blind)" % caster.display_name)
+			else:
+				log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
+		if result.get("counter", false):
+			get_tree().create_timer(0.6).timeout.connect(
+				func() -> void: _execute_counter_attack(target, caster))
+		# Status after hit
+		var se_data: Dictionary = ability.get("status_effect", {})
+		if not se_data.is_empty():
+			get_tree().create_timer(0.3).timeout.connect(
+				func() -> void: _try_apply_status(target, se_data))
+		return
+
+	# ── Spell (elemental / dark / etc.) ───────────────────────────────────
+	combat_resolver.resolve_spell(caster, target, spell_type, base_power)
+	# Terrain ignite regardless of skip_setup
+	if spell_type == "fire":
+		var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
+		if tgt_terrain in ["grass", "road"]:
+			tactical_grid.ignite_tile(target.grid_pos)
+			if not skip_setup:
+				log_message.emit("The ground catches fire!")
+	if not skip_setup:
 		var affinity: float = 1.0
 		if target.unit_data:
 			affinity = target.unit_data.elemental_affinities.get(spell_type, 1.0)
 		var affinity_tag := ""
-		if affinity == 0.0:       affinity_tag = " [IMMUNE]"
-		elif affinity >= 1.5:     affinity_tag = " [WEAK!]"
-		elif affinity > 1.0:      affinity_tag = " [weak]"
-		elif affinity < 1.0:      affinity_tag = " [resist]"
+		if affinity == 0.0:   affinity_tag = " [IMMUNE]"
+		elif affinity >= 1.5: affinity_tag = " [WEAK!]"
+		elif affinity > 1.0:  affinity_tag = " [weak]"
+		elif affinity < 1.0:  affinity_tag = " [resist]"
 		log_message.emit("%s casts %s on %s!%s" % [caster.display_name, ab_name, target.display_name, affinity_tag])
-		# Fire spells can ignite flammable terrain
-		if spell_type == "fire":
-			var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
-			if tgt_terrain in ["grass", "road"]:
-				tactical_grid.ignite_tile(target.grid_pos)
-				log_message.emit("The ground catches fire!")
-	# Apply any status effect after a short delay (spells deal damage after 0.18 s)
-	var se_data: Dictionary = ability.get("status_effect", {})
-	if not se_data.is_empty() and spell_type != "cure":
+	# Status
+	var se_data2: Dictionary = ability.get("status_effect", {})
+	if not se_data2.is_empty():
 		get_tree().create_timer(0.3).timeout.connect(
-			func() -> void: _try_apply_status(target, se_data))
+			func() -> void: _try_apply_status(target, se_data2))
+
+
+## Execute an AoE ability centred on a grid tile.
+## Deducts MP once, logs once, then hits every valid unit in the radius.
+func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> void:
+	caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
+	tactical_grid.clear_highlights()
+	active_command = ""
+	selected_ability_id = ""
+	var ab_name: String = ability.get("display_name", "?")
+	log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
+	var targets := _get_aoe_targets(center, ability, caster)
+	if targets.is_empty():
+		log_message.emit("(no targets in burst)")
+		return
+	for tgt: Unit in targets:
+		_execute_ability(caster, tgt, ability, true)
+
+
+## Returns every living unit that falls inside the AoE pattern centred on `center`.
+func _get_aoe_targets(center: Vector2i, ability: Dictionary, caster: Unit) -> Array[Unit]:
+	var result: Array[Unit] = []
+	var aoe_type:    String = ability.get("aoe_type", "")
+	var target_type: String = ability.get("target_type", "enemy")
+	if aoe_type == "radius":
+		var radius: int = ability.get("aoe_radius", 1)
+		for uid: String in units:
+			var u: Unit = units[uid]
+			if u.hp <= 0:
+				continue
+			var dist := GridSystem.manhattan(u.grid_pos, center)
+			if dist > radius:
+				continue
+			var valid := false
+			if target_type == "enemy" and u.team != caster.team:
+				valid = true
+			elif target_type == "ally" and u.team == caster.team:
+				valid = true
+			if valid:
+				result.append(u)
+	return result
+
+
+## Melee counter-attack — never triggers a second counter (is_counter=true).
+func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> void:
+	if not is_instance_valid(counter_unit) or counter_unit.hp <= 0:
+		return
+	if not is_instance_valid(original_attacker) or original_attacker.hp <= 0:
+		return
+	var tile_c := tactical_grid.get_tile(counter_unit.grid_pos)
+	var tile_t := tactical_grid.get_tile(original_attacker.grid_pos)
+	var result := combat_resolver.resolve_attack(
+		counter_unit, original_attacker, tile_c, tile_t, "slash", true)
+	if result.get("missed", false):
+		log_message.emit("%s counters but misses!" % counter_unit.display_name)
+	else:
+		log_message.emit("%s counters! → %d dmg" % [
+			counter_unit.display_name, result.get("hp_damage", 0)])
 
 
 func _try_enemy_spell(unit: Unit) -> bool:
 	if unit.unit_data.abilities.is_empty():
 		return false
-	# Shuffle abilities so enemies vary their choices
 	var ab_list: Array = unit.unit_data.abilities.duplicate()
 	ab_list.shuffle()
-	for ab_id in ab_list:
+	for ab_id: String in ab_list:
 		var ab: Dictionary = AbilityDB.get_ability(ab_id)
 		if unit.mp < ab.get("mp_cost", 0):
 			continue
 		var spell_range: int = ab.get("range", 1)
+		# Self-cast AoE (range == 0) → cast on self immediately
+		if spell_range == 0 and ab.has("aoe_type"):
+			_execute_aoe_ability(unit, unit.grid_pos, ab)
+			return true
 		var target_type: String = ab.get("target_type", "enemy")
-		for uid in units:
+		for uid: String in units:
 			var target: Unit = units[uid]
 			if target.hp <= 0:
 				continue
@@ -303,10 +414,15 @@ func _try_enemy_spell(unit: Unit) -> bool:
 			if not is_valid:
 				continue
 			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) <= spell_range:
-				_execute_ability(unit, target, ab)
+				if ab.has("aoe_type"):
+					_execute_aoe_ability(unit, target.grid_pos, ab)
+				else:
+					_execute_ability(unit, target, ab)
 				return true
 	return false
 
+
+# ── Input handlers ────────────────────────────────────────────────────────────
 
 func _on_tile_clicked(grid_pos: Vector2i) -> void:
 	if current_phase != Phase.PLAYER_TURN:
@@ -322,6 +438,15 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 		active_command = ""
 		log_message.emit("%s moved to %d,%d." % [unit.display_name, grid_pos.x, grid_pos.y])
 		_end_player_turn()
+	elif active_command == "ability_target" and selected_ability_id != "":
+		# AoE abilities can be targeted on empty tiles
+		var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
+		if not ability.has("aoe_type"):
+			return   # single-target abilities require clicking a unit
+		if grid_pos not in tactical_grid.ability_tiles:
+			return
+		_execute_aoe_ability(unit, grid_pos, ability)
+		_end_player_turn()
 
 
 func _on_unit_clicked(unit_id: String) -> void:
@@ -329,7 +454,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 		return
 	if active_command == "attack":
 		var attacker: Unit = units.get(active_unit_id)
-		var target: Unit = units.get(unit_id)
+		var target:   Unit = units.get(unit_id)
 		if not attacker or not target or target.team == attacker.team or target.hp <= 0:
 			return
 		if target.grid_pos in tactical_grid.attack_tiles:
@@ -345,6 +470,9 @@ func _on_unit_clicked(unit_id: String) -> void:
 				var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
 					else (" [flank]" if result.get("flank","") == "side" else "")
 				log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
+			if result.get("counter", false):
+				get_tree().create_timer(0.6).timeout.connect(
+					func() -> void: _execute_counter_attack(target, attacker))
 			_end_player_turn()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		var target: Unit = units.get(unit_id)
@@ -364,7 +492,10 @@ func _on_unit_clicked(unit_id: String) -> void:
 			return
 		if target.grid_pos not in tactical_grid.ability_tiles:
 			return
-		_execute_ability(caster, target, ability)
+		if ability.has("aoe_type"):
+			_execute_aoe_ability(caster, target.grid_pos, ability)
+		else:
+			_execute_ability(caster, target, ability)
 		_end_player_turn()
 
 
@@ -414,11 +545,11 @@ func _try_apply_status(target: Unit, se_data: Dictionary) -> void:
 	if sid == "" or target.has_status(sid):
 		return
 	var se := StatusEffect.new()
-	se.status_id   = sid
+	se.status_id    = sid
 	se.display_name = sid.capitalize()
-	se.duration    = se_data.get("duration", 2)
-	se.magnitude   = se_data.get("magnitude", 0.0)
-	se.damage_type = se_data.get("damage_type", "pure")
+	se.duration     = se_data.get("duration", 2)
+	se.magnitude    = se_data.get("magnitude", 0.0)
+	se.damage_type  = se_data.get("damage_type", "pure")
 	target.apply_status(se)
 	log_message.emit("%s is now %s!" % [target.display_name, sid.to_upper()])
 
@@ -427,7 +558,6 @@ func _on_status_tick(unit_id: String, status_id: String, damage: int) -> void:
 	var unit: Unit = units.get(unit_id)
 	var uname: String = unit.display_name if unit else unit_id
 	log_message.emit("%s: %s tick -%d HP" % [uname, status_id.capitalize(), damage])
-	# Show a coloured damage number on the unit's tile
 	var vfx_node := get_node_or_null("/root/VFX")
 	if vfx_node and unit:
 		var color: Color = Color(0.2, 0.9, 0.2) if status_id == "poison" \

@@ -48,10 +48,10 @@ func _init_defaults() -> void:
 		["dark_blade", "aero", "tremor"])
 	_reg("mira", "Mira Vey",
 		["fire", "thunder", "blizzard", "cure", "holy"],
-		["fira", "blizzara", "cura"])
+		["fira", "blizzara", "cura", "haste", "firaga"])
 	_reg("kael", "Kael",
 		["mighty_strike"],
-		["wind_slash", "tremor", "dark_blade"])
+		["wind_slash", "tremor", "dark_blade", "protect"])
 	_reg("lyra", "Lyra",
 		["pin_shot"],
 		["aimed_shot", "eagle_eye", "scatter_shot"])
