@@ -231,9 +231,15 @@ func _add_highlight(pos: Vector2i, color: Color) -> void:
 	highlight_layer.add_child(diamond)
 
 
+## World position where a unit's feet should sit on the tile.
+## Offset toward the south vertex so the sprite looks planted on the top face.
+func _unit_foot_pos(grid_pos: Vector2i) -> Vector2:
+	return _grid_to_local(grid_pos) + Vector2(0.0, float(tile_size.y) * 0.28)
+
+
 func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 	unit_layer.add_child(unit_node)
-	unit_node.position = _grid_to_local(grid_pos)
+	unit_node.position = _unit_foot_pos(grid_pos)
 	unit_node.z_index = _unit_depth_for(grid_pos)
 	unit_positions[grid_pos] = unit_node.unit_id
 
@@ -242,7 +248,7 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
 			var tween := create_tween()
-			tween.tween_property(child, "position", _grid_to_local(to), 0.22)
+			tween.tween_property(child, "position", _unit_foot_pos(to), 0.22)
 			child.z_index = _unit_depth_for(to)
 			break
 	unit_positions.erase(from)
