@@ -73,8 +73,8 @@ func _begin_player_turn() -> void:
 	if unit:
 		unit.begin_turn()
 	turn_started.emit(active_unit_id, "player")
-	var name := unit.display_name if unit else active_unit_id
-	log_message.emit("%s's turn." % name)
+	var unit_name := unit.display_name if unit else active_unit_id
+	log_message.emit("%s's turn." % unit_name)
 
 
 func _begin_enemy_turn() -> void:

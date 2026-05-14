@@ -237,9 +237,9 @@ func play_cure(grid_pos: Vector2i) -> void:
 	beam.color    = Color(0.8, 1.0, 0.85, 0.6)
 	beam.position = world + Vector2(-4.0, -60.0)
 	_spawn(beam)
-	var tw := create_tween()
-	tw.tween_property(beam, "modulate:a", 0.0, 0.4)
-	tw.tween_callback(beam.queue_free)
+	var beam_tw := create_tween()
+	beam_tw.tween_property(beam, "modulate:a", 0.0, 0.4)
+	beam_tw.tween_callback(beam.queue_free)
 
 
 ## Wind / Aero
