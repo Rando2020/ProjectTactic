@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Shadow -->
+  <ellipse cx="32" cy="60" rx="12" ry="3" fill="#00000040"/>
+  <!-- Staff -->
+  <rect x="47" y="10" width="3" height="42" fill="#8b5e2a" rx="1"/>
+  <!-- Orb (glowing) -->
+  <circle cx="48" cy="10" r="7" fill="#5500cc" opacity="0.5"/>
+  <circle cx="48" cy="10" r="5" fill="#9933ff"/>
+  <circle cx="46" cy="8" r="2" fill="#cc88ff"/>
+  <!-- Robe lower -->
+  <rect x="19" y="32" width="24" height="24" fill="#6622aa" rx="5"/>
+  <rect x="23" y="34" width="16" height="20" fill="#7733bb" rx="3"/>
+  <!-- Robe trim bottom -->
+  <rect x="19" y="52" width="24" height="3" fill="#cc88ff" rx="2"/>
+  <!-- Robe trim top -->
+  <rect x="19" y="32" width="24" height="3" fill="#cc88ff"/>
+  <!-- Sleeves -->
+  <rect x="10" y="30" width="10" height="16" fill="#6622aa" rx="3"/>
+  <rect x="43" y="30" width="9" height="14" fill="#6622aa" rx="3"/>
+  <!-- Hand (left, casting) -->
+  <circle cx="13" cy="46" r="4" fill="#f0c07a"/>
+  <!-- Magic sparkle from hand -->
+  <circle cx="10" cy="44" r="2" fill="#cc88ff" opacity="0.8"/>
+  <circle cx="8" cy="48" r="1" fill="#ffaaff" opacity="0.9"/>
+  <!-- Upper body -->
+  <rect x="21" y="23" width="20" height="10" fill="#7733bb" rx="2"/>
+  <!-- Brooch -->
+  <circle cx="31" cy="28" r="3" fill="#ffcc00"/>
+  <circle cx="31" cy="28" r="1" fill="#ff8800"/>
+  <!-- Neck -->
+  <rect x="27" y="19" width="10" height="6" fill="#f0c07a"/>
+  <!-- Head -->
+  <rect x="21" y="6" width="22" height="16" fill="#f0c07a" rx="4"/>
+  <!-- Hat brim -->
+  <rect x="16" y="9" width="32" height="4" fill="#4411aa" rx="2"/>
+  <!-- Hat cone -->
+  <polygon points="24,9 40,9 36,0 28,0" fill="#5522bb"/>
+  <polygon points="28,0 36,0 34,2 30,2" fill="#6633cc"/>
+  <!-- Star on hat -->
+  <polygon points="32,1 33,4 36,4 34,6 35,9 32,7 29,9 30,6 28,4 31,4" fill="#ffdd00" opacity="0.9"/>
+  <!-- Hair -->
+  <rect x="21" y="6" width="4" height="10" fill="#330000"/>
+  <rect x="39" y="6" width="4" height="10" fill="#330000"/>
+  <!-- Eyes -->
+  <circle cx="27" cy="14" r="3" fill="#330055"/>
+  <circle cx="37" cy="14" r="3" fill="#330055"/>
+  <circle cx="27" cy="14" r="1" fill="#cc44ff"/>
+  <circle cx="37" cy="14" r="1" fill="#cc44ff"/>
+  <!-- Mouth -->
+  <rect x="29" y="19" width="6" height="2" fill="#d4906a" rx="1"/>
+</svg>

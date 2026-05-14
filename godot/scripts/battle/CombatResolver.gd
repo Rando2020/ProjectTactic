@@ -11,6 +11,8 @@ func resolve_attack(attacker: Unit, target: Unit, tile_attacker, tile_target) ->
 	var height_bonus: float = 1.15 if att_height > tar_height else (0.9 if att_height < tar_height else 1.0)
 	var final_damage: int = int(round(raw_damage * height_bonus))
 	var dmg_result := target.receive_damage(final_damage, "physical")
+	if target.hp > 0 and target.has_method("animate_hit"):
+		target.animate_hit()
 	var result := {
 		"damage": final_damage,
 		"hp_damage": dmg_result.get("hp_damage", 0),

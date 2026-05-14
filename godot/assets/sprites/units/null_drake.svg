@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Shadow -->
+  <ellipse cx="32" cy="60" rx="18" ry="4" fill="#00000060"/>
+  <!-- Tail -->
+  <ellipse cx="50" cy="52" rx="7" ry="4" fill="#1a1a2a" transform="rotate(-25 50 52)"/>
+  <ellipse cx="56" cy="46" rx="5" ry="3" fill="#111122" transform="rotate(-35 56 46)"/>
+  <polygon points="57,41 60,37 61,43" fill="#0a0a18"/>
+  <!-- Wings (folded) -->
+  <polygon points="14,34 4,18 10,16 18,30" fill="#110022" opacity="0.95"/>
+  <polygon points="50,34 60,18 54,16 46,30" fill="#110022" opacity="0.95"/>
+  <polygon points="14,34 7,22 12,24 16,32" fill="#220033" opacity="0.7"/>
+  <polygon points="50,34 57,22 52,24 48,32" fill="#220033" opacity="0.7"/>
+  <!-- Body -->
+  <ellipse cx="32" cy="44" rx="20" ry="13" fill="#1a1a2a"/>
+  <ellipse cx="32" cy="43" rx="16" ry="10" fill="#222233"/>
+  <!-- Belly scales -->
+  <ellipse cx="32" cy="45" rx="10" ry="9" fill="#2a2a40"/>
+  <!-- Scale texture -->
+  <ellipse cx="25" cy="37" rx="3" ry="2" fill="#111122" opacity="0.8"/>
+  <ellipse cx="32" cy="35" rx="3" ry="2" fill="#111122" opacity="0.8"/>
+  <ellipse cx="39" cy="37" rx="3" ry="2" fill="#111122" opacity="0.8"/>
+  <ellipse cx="28" cy="41" rx="3" ry="2" fill="#111122" opacity="0.6"/>
+  <ellipse cx="36" cy="41" rx="3" ry="2" fill="#111122" opacity="0.6"/>
+  <!-- Claws (front) -->
+  <polygon points="14,48 9,50 11,54 15,52 16,48" fill="#1a1a2a"/>
+  <polygon points="16,50 11,56 15,57 18,53 17,50" fill="#111122"/>
+  <polygon points="50,48 55,50 53,54 49,52 48,48" fill="#1a1a2a"/>
+  <polygon points="48,50 53,56 49,57 46,53 47,50" fill="#111122"/>
+  <!-- Neck -->
+  <rect x="26" y="28" width="12" height="14" fill="#1a1a2a" rx="4"/>
+  <rect x="28" y="30" width="8" height="12" fill="#222233" rx="3"/>
+  <!-- Head -->
+  <ellipse cx="32" cy="22" rx="15" ry="12" fill="#1a1a2a"/>
+  <ellipse cx="32" cy="21" rx="12" ry="9" fill="#222233"/>
+  <!-- Snout -->
+  <ellipse cx="32" cy="29" rx="9" ry="6" fill="#1a1a2a"/>
+  <ellipse cx="32" cy="30" rx="7" ry="4" fill="#111122"/>
+  <!-- Fangs -->
+  <polygon points="27,33 29,33 28,38" fill="#e8e8e8"/>
+  <polygon points="35,33 37,33 36,38" fill="#e8e8e8"/>
+  <!-- Nostrils -->
+  <circle cx="29" cy="28" r="1" fill="#0a0a18"/>
+  <circle cx="35" cy="28" r="1" fill="#0a0a18"/>
+  <!-- Eyes (glowing red) -->
+  <circle cx="24" cy="18" r="5" fill="#440000"/>
+  <circle cx="40" cy="18" r="5" fill="#440000"/>
+  <circle cx="24" cy="18" r="3" fill="#cc1100"/>
+  <circle cx="40" cy="18" r="3" fill="#cc1100"/>
+  <circle cx="24" cy="18" r="1" fill="#ff5500"/>
+  <circle cx="40" cy="18" r="1" fill="#ff5500"/>
+  <circle cx="23" cy="17" r="1" fill="#ffaa00" opacity="0.7"/>
+  <circle cx="39" cy="17" r="1" fill="#ffaa00" opacity="0.7"/>
+  <!-- Horns -->
+  <polygon points="20,14 14,4 24,11" fill="#222233"/>
+  <polygon points="44,14 50,4 40,11" fill="#222233"/>
+  <polygon points="22,13 17,6 22,10" fill="#2a2a44"/>
+  <polygon points="42,13 47,6 42,10" fill="#2a2a44"/>
+  <!-- Crest spines -->
+  <polygon points="28,10 26,4 30,9" fill="#1a1a2a"/>
+  <polygon points="32,8 30,2 34,7" fill="#1a1a2a"/>
+  <polygon points="36,10 34,4 38,9" fill="#1a1a2a"/>
+</svg>

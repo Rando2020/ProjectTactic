@@ -80,6 +80,15 @@ func _spawn_enemy_units() -> Array[Unit]:
 	return result
 
 
+const SPRITE_PATHS := {
+	"zane":       "res://assets/sprites/units/zane.svg",
+	"mira":       "res://assets/sprites/units/mira.svg",
+	"kael":       "res://assets/sprites/units/kael.svg",
+	"null_drake": "res://assets/sprites/units/null_drake.svg",
+	"storm_imp":  "res://assets/sprites/units/storm_imp.svg",
+}
+
+
 func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
 				hp: int, mp: int, move: int, jump: int, speed: int,
 				physical: int, magic: int, max_temper: int, max_ether: int) -> Unit:
@@ -91,6 +100,12 @@ func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
 	var data := UnitData.new()
 	data.id = id;  data.display_name = name;  data.faction = faction
 	data.base_stats = stats
+
+	# Load character sprite (SVG imported as Texture2D)
+	if SPRITE_PATHS.has(id):
+		var tex = load(SPRITE_PATHS[id])
+		if tex is Texture2D:
+			data.sprite_sheet = tex
 
 	var unit: Unit = unit_scene.instantiate()
 	unit.unit_data = data

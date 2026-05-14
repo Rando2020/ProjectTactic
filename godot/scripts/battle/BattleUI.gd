@@ -39,7 +39,6 @@ func _build_ui() -> void:
 	# Dark background panel on right half
 	var bg := ColorRect.new()
 	bg.color = Color(0.08, 0.10, 0.14)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.position = Vector2(640, 0)
 	bg.size = Vector2(640, 720)
 	add_child(bg)

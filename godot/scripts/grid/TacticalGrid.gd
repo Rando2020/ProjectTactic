@@ -59,17 +59,35 @@ func _draw_base_tiles() -> void:
 	for pos in tiles.keys():
 		var data: Dictionary = tiles[pos]
 		var world := _grid_to_local(pos)
+		var base_color := _terrain_color(data.terrain, data.height)
+		# Outer (dark border) rect fills the full tile
+		var border := ColorRect.new()
+		border.size = Vector2(tile_size.x, tile_size.y)
+		border.position = world - Vector2(tile_size.x * 0.5, tile_size.y * 0.5)
+		border.color = base_color.darkened(0.35)
+		border.z_index = 0
+		add_child(border)
+		# Inner fill rect — 2 px inset on all sides
 		var rect := ColorRect.new()
-		rect.size = Vector2(tile_size.x - 3, tile_size.y - 3)
-		rect.position = world - Vector2(tile_size.x * 0.5 - 1, tile_size.y * 0.5 - 1)
-		rect.color = _terrain_color(data.terrain, data.height)
+		rect.size = Vector2(tile_size.x - 4, tile_size.y - 4)
+		rect.position = world - Vector2(tile_size.x * 0.5 - 2, tile_size.y * 0.5 - 2)
+		rect.color = base_color
 		rect.z_index = 0
 		add_child(rect)
+		# Subtle top-left highlight to give a slight bevel feel
+		var hi := ColorRect.new()
+		hi.size = Vector2(tile_size.x - 4, 2)
+		hi.position = rect.position
+		hi.color = base_color.lightened(0.15)
+		hi.z_index = 0
+		add_child(hi)
+		# Height label
 		if data.height > 0:
 			var lbl := Label.new()
 			lbl.text = "h%d" % data.height
 			lbl.add_theme_font_size_override("font_size", 9)
-			lbl.position = rect.position + Vector2(3, 2)
+			lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.7))
+			lbl.position = rect.position + Vector2(2, 2)
 			lbl.z_index = 1
 			add_child(lbl)
 
@@ -134,8 +152,8 @@ func _refresh_highlights() -> void:
 func _add_highlight(pos: Vector2i, color: Color) -> void:
 	var rect := ColorRect.new()
 	rect.color = color
-	rect.size = Vector2(tile_size.x - 3, tile_size.y - 3)
-	rect.position = _grid_to_local(pos) - Vector2(tile_size.x * 0.5 - 1, tile_size.y * 0.5 - 1)
+	rect.size = Vector2(tile_size.x - 4, tile_size.y - 4)
+	rect.position = _grid_to_local(pos) - Vector2(tile_size.x * 0.5 - 2, tile_size.y * 0.5 - 2)
 	highlight_layer.add_child(rect)
 
 
