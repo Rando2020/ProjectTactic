@@ -7,9 +7,11 @@ extends Node2D
 
 var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 
-## Change this in the Inspector (or in _ready) to swap maps.
-## 0 = Ashvale Road  1 = Crypt of Echoes
+## Set via GameState.selected_map_index before loading this scene.
+## Kept as @export so you can still override in the editor during dev.
 @export var map_index: int = 0
+
+var _map_data: MapData
 
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.svg",
@@ -22,11 +24,15 @@ const SPRITE_PATHS := {
 
 
 func _ready() -> void:
-	var map_data: MapData = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
-	tactical_grid.initialize_from_map(map_data)
+	# Prefer GameState's selection; @export override still works in editor
+	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
+		map_index = (get_node("/root/GameState") as GameState).selected_map_index
+
+	_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
+	tactical_grid.initialize_from_map(_map_data)
 
 	var player_units := _spawn_player_units()
-	var enemy_units := _spawn_enemy_units()
+	var enemy_units  := _spawn_enemy_units()
 
 	for unit in player_units:
 		tactical_grid.place_unit(unit, unit.grid_pos)
@@ -38,7 +44,29 @@ func _ready() -> void:
 	all_units.append_array(enemy_units)
 
 	battle_ui.setup(battle_manager)
-	battle_manager.start_battle(map_data, all_units)
+	battle_manager.start_battle(_map_data, all_units)
+
+	battle_manager.battle_won.connect(_on_battle_won)
+	battle_manager.battle_lost.connect(_on_battle_lost)
+
+
+func _on_battle_won(rewards: Dictionary) -> void:
+	# Collect surviving player unit IDs for JP award
+	var player_ids: Array[String] = []
+	for uid in battle_manager.units:
+		var u: Unit = battle_manager.units[uid]
+		if u.team == "player":
+			player_ids.append(uid)
+	var gs: GameState = get_node_or_null("/root/GameState")
+	if gs:
+		gs.apply_victory(_map_data.id, rewards, player_ids)
+	await get_tree().create_timer(2.2).timeout
+	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+
+
+func _on_battle_lost() -> void:
+	await get_tree().create_timer(2.0).timeout
+	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 
 
 # ── Map data ──────────────────────────────────────────────────────────────────
@@ -87,47 +115,37 @@ func _create_crypt_map() -> MapData:
 	map.objective_label = "Defeat all enemies"
 	map.reward_gold  = 220
 	map.reward_jp    = 60
-	# Stone walls form a narrow corridor down the centre
 	map.tile_overrides = [
-		# Outer wall border — top row
 		{"x": 0, "y": 0, "terrain": "wall", "height": 0},
 		{"x": 1, "y": 0, "terrain": "wall", "height": 0},
 		{"x": 8, "y": 0, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 0, "terrain": "wall", "height": 0},
-		# Left wall column
 		{"x": 0, "y": 1, "terrain": "wall", "height": 0},
 		{"x": 0, "y": 2, "terrain": "wall", "height": 0},
 		{"x": 0, "y": 5, "terrain": "wall", "height": 0},
 		{"x": 0, "y": 6, "terrain": "wall", "height": 0},
-		# Right wall column
 		{"x": 9, "y": 1, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 2, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 5, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 6, "terrain": "wall", "height": 0},
-		# Interior wall pillars
 		{"x": 2, "y": 2, "terrain": "wall", "height": 0},
 		{"x": 7, "y": 2, "terrain": "wall", "height": 0},
 		{"x": 2, "y": 5, "terrain": "wall", "height": 0},
 		{"x": 7, "y": 5, "terrain": "wall", "height": 0},
-		# High-ground raised dais in the centre (boss platform)
 		{"x": 4, "y": 3, "terrain": "high_ground", "height": 2},
 		{"x": 5, "y": 3, "terrain": "high_ground", "height": 2},
 		{"x": 4, "y": 4, "terrain": "high_ground", "height": 2},
 		{"x": 5, "y": 4, "terrain": "high_ground", "height": 2},
-		# Shallow water pools flanking the dais
 		{"x": 1, "y": 3, "terrain": "shallow_water", "height": 0},
 		{"x": 1, "y": 4, "terrain": "shallow_water", "height": 0},
 		{"x": 8, "y": 3, "terrain": "shallow_water", "height": 0},
 		{"x": 8, "y": 4, "terrain": "shallow_water", "height": 0},
-		# Shrine at the far end
 		{"x": 4, "y": 0, "terrain": "shrine", "height": 0},
 		{"x": 5, "y": 0, "terrain": "shrine", "height": 0},
-		# Burning brazier traps flanking the corridor entrance
 		{"x": 3, "y": 2, "terrain": "burning", "height": 0},
 		{"x": 6, "y": 2, "terrain": "burning", "height": 0},
 		{"x": 3, "y": 5, "terrain": "burning", "height": 0},
 		{"x": 6, "y": 5, "terrain": "burning", "height": 0},
-		# Road corridor leading in
 		{"x": 3, "y": 6, "terrain": "road", "height": 0},
 		{"x": 4, "y": 6, "terrain": "road", "height": 0},
 		{"x": 5, "y": 6, "terrain": "road", "height": 0},
@@ -143,13 +161,17 @@ func _create_crypt_map() -> MapData:
 # ── Unit spawning ─────────────────────────────────────────────────────────────
 
 func _spawn_player_units() -> Array[Unit]:
+	var gs: GameState = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
-	result.append(_make_unit("zane", "Zane",     "player", Vector2i(1, 6),
-		320, 90,  4, 2, 8, 42, 48, 80,  110, ["mighty_strike", "wind_slash"]))
+	result.append(_make_unit("zane", "Zane", "player", Vector2i(1, 6),
+		320, 90,  4, 2, 8, 42, 48, 80,  110,
+		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
 	result.append(_make_unit("mira", "Mira Vey", "player", Vector2i(2, 6),
-		280, 120, 4, 2, 7, 28, 54, 65,  130, ["fire", "thunder", "blizzard", "cure", "holy"]))
-	result.append(_make_unit("kael", "Kael",     "player", Vector2i(1, 7),
-		380, 55,  4, 2, 6, 55, 32, 110, 70,  ["mighty_strike"]))
+		280, 120, 4, 2, 7, 28, 54, 65,  130,
+		gs.get_all_abilities("mira") if gs else ["fire", "thunder", "blizzard", "cure", "holy"]))
+	result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
+		380, 55,  4, 2, 6, 55, 32, 110, 70,
+		gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
 	return result
 
 
@@ -157,20 +179,17 @@ func _spawn_enemy_units() -> Array[Unit]:
 	var result: Array[Unit] = []
 	result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
 		120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
-		# Dragon: fire-born, fears holy and ice
 		{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
 	result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
 		90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
-		# Lightning creature: immune to thunder, devastated by ice
 		{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
 	result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
 		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
-		# Void mage: destroyed by holy, immune to dark, slight fire resist
 		{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
 	return result
 
 
-func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
+func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 				hp: int, mp: int, move: int, jump: int, speed: int,
 				physical: int, magic: int, max_temper: int, max_ether: int,
 				abilities: Array[String] = [],
@@ -181,12 +200,11 @@ func _make_unit(id: String, name: String, faction: String, pos: Vector2i,
 	stats.max_temper = max_temper;  stats.max_ether = max_ether
 
 	var data := UnitData.new()
-	data.id = id;  data.display_name = name;  data.faction = faction
+	data.id = id;  data.display_name = uname;  data.faction = faction
 	data.base_stats = stats
 	data.abilities = abilities
 	data.elemental_affinities = affinities
 
-	# Load character sprite (SVG imported as Texture2D)
 	if SPRITE_PATHS.has(id):
 		var tex = load(SPRITE_PATHS[id])
 		if tex is Texture2D:

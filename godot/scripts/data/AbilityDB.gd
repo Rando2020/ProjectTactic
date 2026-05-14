@@ -1,10 +1,11 @@
 class_name AbilityDB
 extends RefCounted
 
-## status_effect dict keys: id, duration, magnitude (0.0 = no DoT), damage_type
+## status_effect keys: id, duration, magnitude (0 = no DoT), damage_type
+## jp_cost: JP required to learn this ability on the character screen
 
 const ABILITIES: Dictionary = {
-	# ── Player abilities ──────────────────────────────────────────────────────
+	# ── Player starting abilities ─────────────────────────────────────────
 	"fire": {
 		"display_name": "Fire",
 		"spell_type":   "fire",
@@ -12,7 +13,7 @@ const ABILITIES: Dictionary = {
 		"range":        3,
 		"base_power":   110,
 		"target_type":  "enemy",
-		# Burns for 2 turns — 7 % max HP per tick, fire damage
+		"jp_cost":      100,
 		"status_effect": {"id": "burn", "duration": 2, "magnitude": 0.07, "damage_type": "fire"},
 	},
 	"blizzard": {
@@ -22,7 +23,7 @@ const ABILITIES: Dictionary = {
 		"range":        3,
 		"base_power":   100,
 		"target_type":  "enemy",
-		# Frozen limbs — slows for 2 turns
+		"jp_cost":      100,
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"thunder": {
@@ -32,7 +33,7 @@ const ABILITIES: Dictionary = {
 		"range":        4,
 		"base_power":   120,
 		"target_type":  "enemy",
-		# Lightning stun — slows for 2 turns
+		"jp_cost":      120,
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"cure": {
@@ -42,7 +43,7 @@ const ABILITIES: Dictionary = {
 		"range":        3,
 		"base_power":   80,
 		"target_type":  "ally",
-		# No status effect
+		"jp_cost":      80,
 	},
 	"holy": {
 		"display_name": "Holy",
@@ -51,7 +52,7 @@ const ABILITIES: Dictionary = {
 		"range":        3,
 		"base_power":   160,
 		"target_type":  "enemy",
-		# Blinding light — blind for 2 turns (physical attacks miss ~35 % of the time)
+		"jp_cost":      300,
 		"status_effect": {"id": "blind", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"wind_slash": {
@@ -61,7 +62,7 @@ const ABILITIES: Dictionary = {
 		"range":        2,
 		"base_power":   90,
 		"target_type":  "enemy",
-		# Wind disrupts footing — slow for 1 turn
+		"jp_cost":      100,
 		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"mighty_strike": {
@@ -71,9 +72,69 @@ const ABILITIES: Dictionary = {
 		"range":        1,
 		"base_power":   150,
 		"target_type":  "enemy",
-		# Pure damage — no status
+		"jp_cost":      100,
 	},
-	# ── Enemy abilities ───────────────────────────────────────────────────────
+	# ── Learnable player abilities ────────────────────────────────────────
+	"fira": {
+		"display_name": "Fira",
+		"spell_type":   "fire",
+		"mp_cost":      18,
+		"range":        3,
+		"base_power":   155,
+		"target_type":  "enemy",
+		"jp_cost":      200,
+		"status_effect": {"id": "burn", "duration": 3, "magnitude": 0.08, "damage_type": "fire"},
+	},
+	"blizzara": {
+		"display_name": "Blizzara",
+		"spell_type":   "blizzard",
+		"mp_cost":      18,
+		"range":        3,
+		"base_power":   145,
+		"target_type":  "enemy",
+		"jp_cost":      200,
+		"status_effect": {"id": "slow", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
+	},
+	"cura": {
+		"display_name": "Cura",
+		"spell_type":   "cure",
+		"mp_cost":      14,
+		"range":        3,
+		"base_power":   130,
+		"target_type":  "ally",
+		"jp_cost":      150,
+	},
+	"dark_blade": {
+		"display_name": "Dark Blade",
+		"spell_type":   "dark",
+		"mp_cost":      10,
+		"range":        1,
+		"base_power":   130,
+		"target_type":  "enemy",
+		"jp_cost":      200,
+		"status_effect": {"id": "poison", "duration": 2, "magnitude": 0.06, "damage_type": "dark"},
+	},
+	"tremor": {
+		"display_name": "Tremor",
+		"spell_type":   "physical",
+		"mp_cost":      12,
+		"range":        1,
+		"base_power":   115,
+		"target_type":  "enemy",
+		"jp_cost":      150,
+		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
+	},
+	"aero": {
+		"display_name": "Aero",
+		"spell_type":   "wind",
+		"mp_cost":      15,
+		"range":        4,
+		"base_power":   110,
+		"target_type":  "enemy",
+		"jp_cost":      180,
+		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
+	},
+	# ── Enemy abilities ───────────────────────────────────────────────────
 	"dark_breath": {
 		"display_name": "Dark Breath",
 		"spell_type":   "dark",
@@ -81,7 +142,7 @@ const ABILITIES: Dictionary = {
 		"range":        2,
 		"base_power":   130,
 		"target_type":  "enemy",
-		# Void corruption — poisons for 3 turns (6 % max HP/turn, dark damage)
+		"jp_cost":      0,
 		"status_effect": {"id": "poison", "duration": 3, "magnitude": 0.06, "damage_type": "dark"},
 	},
 	"thunderstrike": {
@@ -91,7 +152,7 @@ const ABILITIES: Dictionary = {
 		"range":        4,
 		"base_power":   105,
 		"target_type":  "enemy",
-		# Heavy lightning — slows for 2 turns
+		"jp_cost":      0,
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"void_pulse": {
@@ -101,7 +162,7 @@ const ABILITIES: Dictionary = {
 		"range":        3,
 		"base_power":   95,
 		"target_type":  "enemy",
-		# Void energy seals magic — silences for 2 turns
+		"jp_cost":      0,
 		"status_effect": {"id": "silence", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 }
