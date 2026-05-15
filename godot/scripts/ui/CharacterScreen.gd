@@ -32,7 +32,7 @@ func _build_ui() -> void:
 	title_bar.color = Color(0.10, 0.12, 0.17)
 	title_bar.set_anchor(SIDE_LEFT, 0.0)
 	title_bar.set_anchor(SIDE_RIGHT, 1.0)
-	title_bar.size.y = 60.0
+	title_bar.set_offset(SIDE_BOTTOM, 60.0)
 	add_child(title_bar)
 
 	var title_lbl := Label.new()
@@ -129,7 +129,7 @@ func _build_unit_column(uid: String) -> VBoxContainer:
 			ab.get("display_name", ab_id),
 			"MP %d  Rng %d" % [ab.get("mp_cost", 0), ab.get("range", 0)],
 			Color(0.35, 0.65, 0.35),
-			null, "")
+			Callable(), "")
 		col.add_child(row)
 
 	# ── Learnable abilities ───────────────────────────────────────────────
