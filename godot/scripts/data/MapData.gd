@@ -14,6 +14,7 @@ extends Resource
 @export var required_unit_ids: Array[String] = []
 @export var recommended_unit_ids: Array[String] = []
 @export var tile_overrides: Array[Dictionary] = []  # [{x, y, terrain, height}]
+@export var prop_overrides: Array[Dictionary] = []  # [{x, y, prop, offset}]
 @export var player_spawns: Array[Dictionary] = []   # [{unit_id, x, y, facing}]
 @export var enemy_spawns: Array[Dictionary] = []    # [{unit_id, x, y, facing}]
 @export var deployment_zones: Array[Dictionary] = []

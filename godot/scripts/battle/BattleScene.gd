@@ -93,14 +93,24 @@ func _create_ashvale_map() -> MapData:
 		{"x": 0, "y": 2, "terrain": "shallow_water", "height": 0},
 		{"x": 1, "y": 2, "terrain": "shallow_water", "height": 0},
 		{"x": 0, "y": 3, "terrain": "shallow_water", "height": 0},
+		{"x": 1, "y": 1, "terrain": "grass_flowers", "height": 0},
+		{"x": 2, "y": 1, "terrain": "brush", "height": 0},
+		{"x": 6, "y": 5, "terrain": "grass_flowers", "height": 0},
+		{"x": 8, "y": 4, "terrain": "brush", "height": 0},
 		{"x": 7, "y": 0, "terrain": "stone", "height": 2},
 		{"x": 8, "y": 0, "terrain": "stone", "height": 2},
-		{"x": 7, "y": 1, "terrain": "stone", "height": 1},
-		{"x": 8, "y": 1, "terrain": "stone", "height": 1},
+		{"x": 7, "y": 1, "terrain": "high_ground", "height": 1},
+		{"x": 8, "y": 1, "terrain": "high_ground", "height": 1},
 		{"x": 9, "y": 5, "terrain": "shrine", "height": 0},
 		{"x": 2, "y": 7, "terrain": "road", "height": 0},
 		{"x": 3, "y": 7, "terrain": "road", "height": 0},
 		{"x": 4, "y": 7, "terrain": "road", "height": 0},
+	]
+	map.prop_overrides = [
+		{"x": 2, "y": 1, "prop": "leafy_bush", "offset_y": -10},
+		{"x": 6, "y": 0, "prop": "ruin_block", "offset_y": -8},
+		{"x": 6, "y": 5, "prop": "tree_stump", "offset_y": -8},
+		{"x": 9, "y": 4, "prop": "mossy_rock", "offset_y": -6},
 	]
 	return map
 
