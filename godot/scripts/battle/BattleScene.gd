@@ -6,6 +6,7 @@ extends Node2D
 @onready var battle_ui: BattleUI = $BattleUI
 
 var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
+var _battle_camera: Camera2D
 
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
@@ -25,6 +26,7 @@ const SPRITE_PATHS := {
 
 
 func _ready() -> void:
+	_setup_camera()
 	# Prefer GameState's selection; @export override still works in editor
 	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
 		map_index = get_node("/root/GameState").selected_map_index
@@ -49,6 +51,24 @@ func _ready() -> void:
 
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
+	battle_manager.turn_started.connect(_on_turn_started)
+
+
+func _setup_camera() -> void:
+	_battle_camera = Camera2D.new()
+	_battle_camera.enabled = true
+	_battle_camera.position = Vector2(320.0, 245.0)
+	_battle_camera.zoom = Vector2(0.92, 0.92)
+	add_child(_battle_camera)
+
+
+func _on_turn_started(unit_id: String, _team: String) -> void:
+	var unit: Unit = battle_manager.units.get(unit_id)
+	if not unit or not _battle_camera:
+		return
+	var target := tactical_grid.get_unit_focus_position(unit.grid_pos) + Vector2(90.0, 20.0)
+	var tween := create_tween()
+	tween.tween_property(_battle_camera, "position", target, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _on_battle_won(rewards: Dictionary) -> void:

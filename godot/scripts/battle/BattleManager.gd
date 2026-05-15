@@ -11,6 +11,8 @@ signal move_range_ready(positions: Array)
 signal attack_range_ready(positions: Array)
 signal log_message(text: String)
 signal ability_mode_started(usable_ids: Array)
+signal tile_info_changed(text: String)
+signal battle_started(display_name: String, objective: String)
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -25,6 +27,7 @@ var current_phase: Phase = Phase.INACTIVE
 var active_unit_id: String = ""
 var active_command: String = ""
 var selected_ability_id: String = ""
+var is_resolving_action: bool = false
 
 
 func _ready() -> void:
@@ -41,6 +44,7 @@ func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 		unit.status_tick.connect(_on_status_tick)
 	turn_order.initialize(p_units)
 	objective_tracker.initialize(map_data, p_units)
+	battle_started.emit(map_data.display_name, map_data.objective_label)
 	log_message.emit("Battle started: %s" % map_data.display_name)
 	log_message.emit("Objective: %s" % map_data.objective_label)
 	_set_phase(Phase.TICK)
@@ -74,6 +78,7 @@ func _begin_player_turn() -> void:
 	var unit: Unit = units.get(active_unit_id)
 	if unit:
 		unit.begin_turn()
+		tactical_grid.show_active_unit(unit.grid_pos, "player")
 	turn_started.emit(active_unit_id, "player")
 	var unit_name := unit.display_name if unit else active_unit_id
 	log_message.emit("%s's turn." % unit_name)
@@ -85,12 +90,15 @@ func _begin_enemy_turn() -> void:
 		_set_phase(Phase.RESOLVE)
 		return
 	unit.begin_turn()
+	tactical_grid.show_active_unit(unit.grid_pos, "enemy")
+	turn_started.emit(active_unit_id, "enemy")
 	log_message.emit("Enemy: %s acts." % unit.display_name)
+	await get_tree().create_timer(0.50).timeout
 	var cast_spell := randf() < 0.45
 	if cast_spell and _try_enemy_spell(unit):
 		pass  # spell was cast
 	else:
-		_run_enemy_ai(unit)
+		await _run_enemy_ai(unit)
 	unit.end_turn()
 	_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
@@ -144,8 +152,9 @@ func _run_enemy_ai(unit: Unit) -> void:
 		if best_tile != unit.grid_pos:
 			var old_pos := unit.grid_pos
 			unit.grid_pos = best_tile
-			tactical_grid.move_unit_visual(unit.unit_id, old_pos, best_tile)
 			log_message.emit("%s advances." % unit.display_name)
+			await tactical_grid.move_unit_visual(unit.unit_id, old_pos, best_tile)
+			await get_tree().create_timer(0.20).timeout
 		else:
 			log_message.emit("%s holds." % unit.display_name)
 
@@ -429,6 +438,13 @@ func _try_enemy_spell(unit: Unit) -> bool:
 ## If an AoE ability is selected, paints the burst zone in red so the
 ## player can see exactly which tiles will be hit before committing.
 func _on_tile_hovered(grid_pos: Vector2i) -> void:
+	var tile: Dictionary = tactical_grid.get_tile(grid_pos)
+	if not tile.is_empty():
+		tile_info_changed.emit("%s  H:%d  Move:%d" % [
+			str(tile.get("terrain", "unknown")).replace("_", " ").capitalize(),
+			int(tile.get("height", 0)),
+			int(tile.get("move_cost", 1)),
+		])
 	if active_command != "ability_target" or selected_ability_id == "":
 		tactical_grid.clear_aoe_preview()
 		return
@@ -456,16 +472,21 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 func _on_tile_clicked(grid_pos: Vector2i) -> void:
 	if current_phase != Phase.PLAYER_TURN:
 		return
+	if is_resolving_action:
+		return
 	var unit: Unit = units.get(active_unit_id)
 	if not unit:
 		return
 	if active_command == "move" and grid_pos in tactical_grid.move_tiles:
+		is_resolving_action = true
 		var old_pos := unit.grid_pos
 		unit.move_to(grid_pos)
-		tactical_grid.move_unit_visual(unit.unit_id, old_pos, grid_pos)
 		tactical_grid.clear_highlights()
 		active_command = ""
 		log_message.emit("%s moved to %d,%d." % [unit.display_name, grid_pos.x, grid_pos.y])
+		await tactical_grid.move_unit_visual(unit.unit_id, old_pos, grid_pos)
+		await get_tree().create_timer(0.20).timeout
+		is_resolving_action = false
 		_end_player_turn()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		# AoE abilities can be targeted on empty tiles
@@ -480,6 +501,8 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 
 func _on_unit_clicked(unit_id: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:
+		return
+	if is_resolving_action:
 		return
 	if active_command == "attack":
 		var attacker: Unit = units.get(active_unit_id)

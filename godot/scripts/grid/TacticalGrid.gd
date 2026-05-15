@@ -43,6 +43,8 @@ var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
 var aoe_preview_tiles: Array[Vector2i] = []
 var selected_tile: Vector2i = Vector2i(-1, -1)
+var active_unit_tile: Vector2i = Vector2i(-1, -1)
+var active_unit_team: String = ""
 
 @onready var highlight_layer: Node2D = $HighlightLayer
 @onready var unit_layer: Node2D = $UnitLayer
@@ -373,6 +375,12 @@ func clear_aoe_preview() -> void:
 	_refresh_highlights()
 
 
+func show_active_unit(grid_pos: Vector2i, team: String) -> void:
+	active_unit_tile = grid_pos
+	active_unit_team = team
+	_refresh_highlights()
+
+
 func clear_highlights() -> void:
 	move_tiles.clear()
 	attack_tiles.clear()
@@ -394,14 +402,17 @@ func _refresh_highlights() -> void:
 	# AoE burst preview — hot red, drawn over ability range tiles
 	for pos in aoe_preview_tiles:
 		_add_highlight(pos, Color(1.0, 0.18, 0.08, 0.65))
+	if _is_valid_pos(active_unit_tile):
+		var active_color := Color(0.25, 0.72, 1.0, 0.58) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, 0.58)
+		_add_highlight(active_unit_tile, active_color, 1.04)
 	if _is_valid_pos(selected_tile):
 		_add_highlight(selected_tile, Color(1.0, 0.95, 0.0, 0.45))
 
 
-func _add_highlight(pos: Vector2i, color: Color) -> void:
+func _add_highlight(pos: Vector2i, color: Color, scale: float = 0.86) -> void:
 	var diamond := Polygon2D.new()
 	diamond.color = color
-	diamond.polygon = _diamond_polygon(0.86)
+	diamond.polygon = _diamond_polygon(scale)
 	diamond.position = _grid_to_local(pos)
 	diamond.z_index = _depth_for(pos) + 50
 	highlight_layer.add_child(diamond)
@@ -424,11 +435,18 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
 			var tween := create_tween()
-			tween.tween_property(child, "position", _unit_foot_pos(to), 0.22)
+			tween.tween_property(child, "position", _unit_foot_pos(to), 0.50).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			child.z_index = _unit_depth_for(to)
+			await tween.finished
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
+	if active_unit_tile == from:
+		show_active_unit(to, active_unit_team)
+
+
+func get_unit_focus_position(grid_pos: Vector2i) -> Vector2:
+	return _unit_foot_pos(grid_pos)
 
 
 ## Converts a flammable tile (grass, road) to burning terrain.

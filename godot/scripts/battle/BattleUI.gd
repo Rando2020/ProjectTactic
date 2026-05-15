@@ -20,6 +20,8 @@ var _ability_panel: VBoxContainer
 var _ability_list: VBoxContainer
 var _result_label: Label
 var _status_label: Label
+var _tile_info_label: Label
+var _intro_banner: PanelContainer
 
 const LOG_SIZE := 8
 const TIMELINE_SLOTS := 6
@@ -34,6 +36,8 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.battle_lost.connect(_on_battle_lost)
 	battle_manager.turn_order.timeline_updated.connect(_on_timeline_updated)
 	battle_manager.ability_mode_started.connect(_on_ability_mode_started)
+	battle_manager.tile_info_changed.connect(_on_tile_info_changed)
+	battle_manager.battle_started.connect(_on_battle_started)
 
 
 func _ready() -> void:
@@ -68,6 +72,13 @@ func _build_ui() -> void:
 	_phase_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_phase_label)
+
+	_tile_info_label = Label.new()
+	_tile_info_label.text = "Hover a tile"
+	_tile_info_label.add_theme_font_size_override("font_size", 11)
+	_tile_info_label.add_theme_color_override("font_color", Color(0.62, 0.72, 0.80))
+	_tile_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_tile_info_label)
 
 	root.add_child(_separator())
 
@@ -158,6 +169,34 @@ func _build_ui() -> void:
 		root.add_child(lbl)
 		_log_labels.append(lbl)
 
+	_build_intro_banner()
+
+
+func _build_intro_banner() -> void:
+	_intro_banner = PanelContainer.new()
+	_intro_banner.visible = false
+	_intro_banner.position = Vector2(70.0, 36.0)
+	_intro_banner.custom_minimum_size = Vector2(500.0, 82.0)
+	add_child(_intro_banner)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	_intro_banner.add_child(box)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.add_theme_font_size_override("font_size", 25)
+	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.62))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.name = "Subtitle"
+	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.add_theme_color_override("font_color", Color(0.86, 0.90, 0.95))
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(subtitle)
+
 
 # ── Builder helpers ───────────────────────────────────────────────────────────
 
@@ -222,6 +261,28 @@ func _on_phase_changed(phase: String) -> void:
 	if _attack_btn:  _attack_btn.disabled  = not is_player
 	if _ability_btn: _ability_btn.disabled = not is_player
 	if _ability_panel: _ability_panel.visible = false
+
+
+func _on_tile_info_changed(text: String) -> void:
+	if _tile_info_label:
+		_tile_info_label.text = text
+
+
+func _on_battle_started(display_name: String, objective: String) -> void:
+	if not _intro_banner:
+		return
+	var title := _intro_banner.get_node_or_null("VBoxContainer/Title") as Label
+	var subtitle := _intro_banner.get_node_or_null("VBoxContainer/Subtitle") as Label
+	if title:
+		title.text = display_name.to_upper()
+	if subtitle:
+		subtitle.text = objective
+	_intro_banner.modulate.a = 1.0
+	_intro_banner.visible = true
+	var tw := create_tween()
+	tw.tween_interval(1.4)
+	tw.tween_property(_intro_banner, "modulate:a", 0.0, 0.45)
+	tw.tween_callback(func() -> void: _intro_banner.visible = false)
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
