@@ -120,7 +120,7 @@ func _draw_base_tiles() -> void:
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	var terrain: String = tiles[pos].get("terrain", "")
-	if TERRAIN_TEXTURES.has(terrain):
+	if _uses_art_tile(terrain):
 		_add_exposed_faces(pos, world, base_color)
 		_add_art_tile_top(pos, world, TERRAIN_TEXTURES[terrain])
 		return
@@ -176,7 +176,7 @@ func _add_procedural_top(pos: Vector2i, world: Vector2, base_color: Color) -> vo
 	add_child(top)
 	_tile_top_polys[pos] = top
 
-	_add_subtle_top_texture(pos, world, base_color, depth)
+	_add_connected_surface_detail(pos, world, base_color, depth)
 
 
 func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
@@ -194,19 +194,81 @@ func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> voi
 	_add_soft_terrain_tint(pos, world, _terrain_color(tiles[pos].terrain, _height_at(pos)), depth)
 
 
-func _add_subtle_top_texture(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
-	for i in range(3):
+func _uses_art_tile(terrain: String) -> bool:
+	return terrain in ["burning", "ice", "frozen_water", "shrine", "cracked_stone", "scorched"]
+
+
+func _add_connected_surface_detail(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+	var terrain: String = tiles[pos].get("terrain", "")
+	match terrain:
+		"road":
+			_add_surface_lines(pos, world, base_color.darkened(0.18), depth, 4, 0.28, 0.18)
+		"stone", "high_ground":
+			_add_stone_cracks(pos, world, base_color, depth)
+		"shallow_water":
+			_add_surface_lines(pos, world, base_color.lightened(0.28), depth, 3, 0.34, 0.22)
+		"grass_flowers":
+			_add_surface_lines(pos, world, base_color.lightened(0.18), depth, 2, 0.20, 0.12)
+			_add_flower_specks(pos, world, depth)
+		"brush":
+			_add_surface_lines(pos, world, base_color.lightened(0.10), depth, 5, 0.25, 0.18)
+		_:
+			_add_surface_lines(pos, world, base_color.lightened(0.16), depth, 3, 0.22, 0.14)
+
+
+func _add_surface_lines(pos: Vector2i, world: Vector2, color: Color, depth: int,
+		count: int, max_span_ratio: float, alpha: float) -> void:
+	for i in range(count):
 		var detail := Line2D.new()
-		var seed := float((pos.x * 37 + pos.y * 53 + i * 19) % 100) / 100.0
-		var y := lerpf(-tile_size.y * 0.22, tile_size.y * 0.18, seed)
-		var span := tile_size.x * (0.18 + 0.12 * seed)
-		detail.points = PackedVector2Array([Vector2(-span, y), Vector2(span, y + 3.0)])
+		var seed := _tile_seed(pos, i)
+		var y := lerpf(-tile_size.y * 0.24, tile_size.y * 0.20, seed)
+		var span := tile_size.x * lerpf(max_span_ratio * 0.45, max_span_ratio, _tile_seed(pos, i + 11))
+		detail.points = PackedVector2Array([
+			Vector2(-span, y),
+			Vector2(span, y + lerpf(-2.0, 3.0, _tile_seed(pos, i + 23))),
+		])
 		detail.width = 1.0
-		detail.default_color = base_color.lightened(0.16 + seed * 0.08)
-		detail.modulate.a = 0.16
+		detail.default_color = color
+		detail.modulate.a = alpha
 		detail.position = world
 		detail.z_index = depth + 3
 		add_child(detail)
+
+
+func _add_stone_cracks(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+	for i in range(2):
+		var seed := _tile_seed(pos, i + 31)
+		var crack := Line2D.new()
+		var x := lerpf(-tile_size.x * 0.20, tile_size.x * 0.20, seed)
+		var y := lerpf(-tile_size.y * 0.18, tile_size.y * 0.16, _tile_seed(pos, i + 39))
+		crack.points = PackedVector2Array([
+			Vector2(x - 8.0, y),
+			Vector2(x + 1.0, y + 3.0),
+			Vector2(x + 10.0, y - 1.0),
+		])
+		crack.width = 1.0
+		crack.default_color = base_color.darkened(0.30)
+		crack.modulate.a = 0.22
+		crack.position = world
+		crack.z_index = depth + 3
+		add_child(crack)
+
+
+func _add_flower_specks(pos: Vector2i, world: Vector2, depth: int) -> void:
+	for i in range(2):
+		var speck := ColorRect.new()
+		speck.size = Vector2(2.0, 2.0)
+		speck.color = Color(0.95, 0.88, 0.62, 0.55)
+		speck.position = world + Vector2(
+			lerpf(-tile_size.x * 0.20, tile_size.x * 0.20, _tile_seed(pos, i + 47)),
+			lerpf(-tile_size.y * 0.18, tile_size.y * 0.18, _tile_seed(pos, i + 53))
+		)
+		speck.z_index = depth + 4
+		add_child(speck)
+
+
+func _tile_seed(pos: Vector2i, salt: int) -> float:
+	return float(abs((pos.x * 374761 + pos.y * 668265 + salt * 144269) % 1000)) / 1000.0
 
 
 func _add_soft_terrain_tint(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
