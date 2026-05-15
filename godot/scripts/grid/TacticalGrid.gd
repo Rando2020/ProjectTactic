@@ -121,37 +121,53 @@ func _draw_base_tiles() -> void:
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	var terrain: String = tiles[pos].get("terrain", "")
 	if TERRAIN_TEXTURES.has(terrain):
-		_add_art_tile(pos, world, TERRAIN_TEXTURES[terrain])
+		_add_exposed_faces(pos, world, base_color)
+		_add_art_tile_top(pos, world, TERRAIN_TEXTURES[terrain])
 		return
 
+	_add_exposed_faces(pos, world, base_color)
+	_add_procedural_top(pos, world, base_color)
+
+
+func _add_exposed_faces(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	var half_w := tile_size.x * 0.5
 	var half_h := tile_size.y * 0.5
 	var depth := _depth_for(pos)
+	var height := _height_at(pos)
+	var south := Vector2i(pos.x, pos.y + 1)
+	var east := Vector2i(pos.x + 1, pos.y)
+	var south_height := _height_at(south)
+	var east_height := _height_at(east)
 
-	var left_face := Polygon2D.new()
-	left_face.polygon = PackedVector2Array([
-		Vector2(-half_w, 0),
-		Vector2(0, half_h),
-		Vector2(0, half_h + tile_thickness),
-		Vector2(-half_w, tile_thickness),
-	])
-	left_face.position = world
-	left_face.color = base_color.darkened(0.35)
-	left_face.z_index = depth
-	add_child(left_face)
+	if not tiles.has(south) or south_height < height:
+		var left_face := Polygon2D.new()
+		left_face.polygon = PackedVector2Array([
+			Vector2(-half_w, 0),
+			Vector2(0, half_h),
+			Vector2(0, half_h + tile_thickness),
+			Vector2(-half_w, tile_thickness),
+		])
+		left_face.position = world
+		left_face.color = base_color.darkened(0.35)
+		left_face.z_index = depth
+		add_child(left_face)
 
-	var right_face := Polygon2D.new()
-	right_face.polygon = PackedVector2Array([
-		Vector2(half_w, 0),
-		Vector2(0, half_h),
-		Vector2(0, half_h + tile_thickness),
-		Vector2(half_w, tile_thickness),
-	])
-	right_face.position = world
-	right_face.color = base_color.darkened(0.22)
-	right_face.z_index = depth + 1
-	add_child(right_face)
+	if not tiles.has(east) or east_height < height:
+		var right_face := Polygon2D.new()
+		right_face.polygon = PackedVector2Array([
+			Vector2(half_w, 0),
+			Vector2(0, half_h),
+			Vector2(0, half_h + tile_thickness),
+			Vector2(half_w, tile_thickness),
+		])
+		right_face.position = world
+		right_face.color = base_color.darkened(0.22)
+		right_face.z_index = depth + 1
+		add_child(right_face)
 
+
+func _add_procedural_top(pos: Vector2i, world: Vector2, base_color: Color) -> void:
+	var depth := _depth_for(pos)
 	var top := Polygon2D.new()
 	top.polygon = _diamond_polygon()
 	top.position = world
@@ -160,6 +176,52 @@ func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	add_child(top)
 	_tile_top_polys[pos] = top
 
+	_add_subtle_top_texture(pos, world, base_color, depth)
+
+
+func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
+	var depth := _depth_for(pos)
+	var top := Polygon2D.new()
+	top.polygon = _diamond_polygon()
+	top.texture = texture
+	top.texture_offset = Vector2(-tile_size.x * 0.5, -tile_size.y * 0.5)
+	top.color = Color.WHITE
+	top.position = world
+	top.z_index = depth + 2
+	add_child(top)
+	_tile_top_polys[pos] = top
+
+	_add_soft_terrain_tint(pos, world, _terrain_color(tiles[pos].terrain, _height_at(pos)), depth)
+
+
+func _add_subtle_top_texture(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+	for i in range(3):
+		var detail := Line2D.new()
+		var seed := float((pos.x * 37 + pos.y * 53 + i * 19) % 100) / 100.0
+		var y := lerpf(-tile_size.y * 0.22, tile_size.y * 0.18, seed)
+		var span := tile_size.x * (0.18 + 0.12 * seed)
+		detail.points = PackedVector2Array([Vector2(-span, y), Vector2(span, y + 3.0)])
+		detail.width = 1.0
+		detail.default_color = base_color.lightened(0.16 + seed * 0.08)
+		detail.modulate.a = 0.16
+		detail.position = world
+		detail.z_index = depth + 3
+		add_child(detail)
+
+
+func _add_soft_terrain_tint(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+	var tint := Polygon2D.new()
+	tint.polygon = _diamond_polygon(0.96)
+	tint.position = world
+	tint.color = base_color
+	tint.modulate.a = 0.18
+	tint.z_index = depth + 3
+	add_child(tint)
+
+
+func _add_subtle_rim(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+	var half_w := tile_size.x * 0.5
+	var half_h := tile_size.y * 0.5
 	var rim := Line2D.new()
 	rim.points = PackedVector2Array([
 		Vector2(0, -half_h),
@@ -173,15 +235,6 @@ func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	rim.position = world
 	rim.z_index = depth + 3
 	add_child(rim)
-
-
-func _add_art_tile(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
-	var sprite := Sprite2D.new()
-	sprite.texture = texture
-	sprite.centered = true
-	sprite.position = world + Vector2(0.0, tile_thickness * 0.5)
-	sprite.z_index = _depth_for(pos) + 2
-	add_child(sprite)
 
 
 func _draw_props() -> void:
@@ -326,11 +379,7 @@ func ignite_tile(pos: Vector2i) -> void:
 		return
 	tile["terrain"] = "burning"
 	tile["move_cost"] = 1
-	if _tile_top_polys.has(pos):
-		var top: Polygon2D = _tile_top_polys[pos]
-		top.color = Color(0.70, 0.16, 0.07)
-	else:
-		_draw_base_tiles()
+	_draw_base_tiles()
 
 
 func _input(event: InputEvent) -> void:
@@ -392,10 +441,14 @@ func _diamond_polygon(scale: float = 1.0) -> PackedVector2Array:
 
 
 func _depth_for(pos: Vector2i) -> int:
-	var height := 0
-	if tiles.has(pos):
-		height = int(tiles[pos].get("height", 0))
+	var height := _height_at(pos)
 	return (pos.x + pos.y) * 10 + height * 2
+
+
+func _height_at(pos: Vector2i) -> int:
+	if not tiles.has(pos):
+		return -1
+	return int(tiles[pos].get("height", 0))
 
 
 func _unit_depth_for(pos: Vector2i) -> int:
