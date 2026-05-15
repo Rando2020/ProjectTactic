@@ -15,6 +15,29 @@ var tiles: Dictionary = {}           # Vector2i -> Dictionary
 var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
 var _tile_top_polys: Dictionary = {} # Vector2i -> Polygon2D, for mutation/art swap
 
+const TERRAIN_TEXTURES := {
+	"grass": preload("res://assets/tiles/grass.png"),
+	"grass_flowers": preload("res://assets/tiles/grass_flowers.png"),
+	"brush": preload("res://assets/tiles/brush.png"),
+	"road": preload("res://assets/tiles/road.png"),
+	"stone": preload("res://assets/tiles/stone.png"),
+	"cracked_stone": preload("res://assets/tiles/cracked_stone.png"),
+	"high_ground": preload("res://assets/tiles/cliff_grass.png"),
+	"shallow_water": preload("res://assets/tiles/shallow_water.png"),
+	"ice": preload("res://assets/tiles/frozen_water.png"),
+	"frozen_water": preload("res://assets/tiles/frozen_water.png"),
+	"burning": preload("res://assets/tiles/burning_grass.png"),
+	"scorched": preload("res://assets/tiles/scorched_dirt.png"),
+	"shrine": preload("res://assets/tiles/holy_shrine.png"),
+}
+
+const PROP_TEXTURES := {
+	"mossy_rock": preload("res://assets/props/mossy_rock.png"),
+	"leafy_bush": preload("res://assets/props/leafy_bush.png"),
+	"tree_stump": preload("res://assets/props/tree_stump.png"),
+	"ruin_block": preload("res://assets/props/ruin_block.png"),
+}
+
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
@@ -92,9 +115,15 @@ func _draw_base_tiles() -> void:
 			lbl.position = world + Vector2(-10, -tile_size.y * 0.48)
 			lbl.z_index = _depth_for(pos) + 4
 			add_child(lbl)
+	_draw_props()
 
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
+	var terrain: String = tiles[pos].get("terrain", "")
+	if TERRAIN_TEXTURES.has(terrain):
+		_add_art_tile(pos, world, TERRAIN_TEXTURES[terrain])
+		return
+
 	var half_w := tile_size.x * 0.5
 	var half_h := tile_size.y * 0.5
 	var depth := _depth_for(pos)
@@ -146,6 +175,36 @@ func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	add_child(rim)
 
 
+func _add_art_tile(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	sprite.centered = true
+	sprite.position = world + Vector2(0.0, tile_thickness * 0.5)
+	sprite.z_index = _depth_for(pos) + 2
+	add_child(sprite)
+
+
+func _draw_props() -> void:
+	if not map_data:
+		return
+	for prop_data: Dictionary in map_data.prop_overrides:
+		var prop_name: String = prop_data.get("prop", "")
+		if not PROP_TEXTURES.has(prop_name):
+			continue
+		var pos := Vector2i(prop_data.get("x", 0), prop_data.get("y", 0))
+		if not _is_valid_pos(pos):
+			continue
+		var sprite := Sprite2D.new()
+		sprite.texture = PROP_TEXTURES[prop_name]
+		sprite.centered = true
+		sprite.position = _grid_to_local(pos) + Vector2(
+			float(prop_data.get("offset_x", 0.0)),
+			float(prop_data.get("offset_y", -2.0))
+		)
+		sprite.z_index = _depth_for(pos) + 80
+		add_child(sprite)
+
+
 func _terrain_color(terrain: String, height: int) -> Color:
 	var base: Color
 	match terrain:
@@ -157,6 +216,8 @@ func _terrain_color(terrain: String, height: int) -> Color:
 		"deep_water":    base = Color(0.07, 0.20, 0.42)
 		"ice":           base = Color(0.65, 0.84, 0.92)
 		"burning":       base = Color(0.70, 0.16, 0.07)
+		"scorched":      base = Color(0.14, 0.11, 0.09)
+		"cracked_stone": base = Color(0.28, 0.30, 0.32)
 		"wall":          base = Color(0.09, 0.11, 0.14)
 		"high_ground":   base = Color(0.26, 0.30, 0.34)
 		_:               base = Color(0.14, 0.34, 0.17)
@@ -268,6 +329,8 @@ func ignite_tile(pos: Vector2i) -> void:
 	if _tile_top_polys.has(pos):
 		var top: Polygon2D = _tile_top_polys[pos]
 		top.color = Color(0.70, 0.16, 0.07)
+	else:
+		_draw_base_tiles()
 
 
 func _input(event: InputEvent) -> void:

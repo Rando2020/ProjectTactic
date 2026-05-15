@@ -12,25 +12,25 @@ const TILES := {
         "grass": {
                 "id": "grass",
                 "label": "Grass",
-                "path": "res://assets/tiles/grass-tile-placeholder.png",
+                "path": "res://assets/tiles/grass.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "dirt": {
                 "id": "dirt",
                 "label": "Dirt",
-                "path": "res://assets/tiles/dirt-tile-placeholder.png",
+                "path": "res://assets/tiles/scorched_dirt.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "road": {
                 "id": "road",
                 "label": "Road",
-                "path": "res://assets/tiles/stone-road-tile-placeholder.png",
+                "path": "res://assets/tiles/road.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "stone": {
                 "id": "stone",
                 "label": "Stone",
-                "path": "res://assets/tiles/stone-floor-tile-placeholder.png",
+                "path": "res://assets/tiles/stone.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "wall": {
@@ -42,27 +42,57 @@ const TILES := {
         "water": {
                 "id": "water",
                 "label": "Water",
-                "path": "res://assets/tiles/water-tile-placeholder.png",
+                "path": "res://assets/tiles/shallow_water.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "shrine": {
                 "id": "shrine",
                 "label": "Shrine",
-                "path": "res://assets/tiles/shrine-tile-placeholder.png",
+                "path": "res://assets/tiles/holy_shrine.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
         "high_ground": {
                 "id": "high-ground",
                 "label": "High Ground",
-                "path": "res://assets/tiles/high-ground-tile-placeholder.png",
+                "path": "res://assets/tiles/cliff_grass.png",
+                "prompt_source": "docs/prompts/tilesets-terrain.md",
+        },
+        "brush": {
+                "id": "brush",
+                "label": "Brush",
+                "path": "res://assets/tiles/brush.png",
+                "prompt_source": "docs/prompts/tilesets-terrain.md",
+        },
+        "grass_flowers": {
+                "id": "grass-flowers",
+                "label": "Flowering Grass",
+                "path": "res://assets/tiles/grass_flowers.png",
+                "prompt_source": "docs/prompts/tilesets-terrain.md",
+        },
+        "burning": {
+                "id": "burning",
+                "label": "Burning Grass",
+                "path": "res://assets/tiles/burning_grass.png",
+                "prompt_source": "docs/prompts/tilesets-terrain.md",
+        },
+        "ice": {
+                "id": "ice",
+                "label": "Frozen Water",
+                "path": "res://assets/tiles/frozen_water.png",
+                "prompt_source": "docs/prompts/tilesets-terrain.md",
+        },
+        "cracked_stone": {
+                "id": "cracked-stone",
+                "label": "Cracked Stone",
+                "path": "res://assets/tiles/cracked_stone.png",
                 "prompt_source": "docs/prompts/tilesets-terrain.md",
         },
 }
 
 const OVERLAYS := {
         "wet": "res://assets/tiles/wet-overlay-placeholder.png",
-        "burning": "res://assets/tiles/burning-overlay-placeholder.png",
-        "frozen": "res://assets/tiles/frozen-overlay-placeholder.png",
+        "burning": "res://assets/tiles/burning_grass.png",
+        "frozen": "res://assets/tiles/frozen_water.png",
         "electrified": "res://assets/tiles/electrified-overlay-placeholder.png",
 }
 
