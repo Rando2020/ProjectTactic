@@ -14,13 +14,13 @@ var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 var _map_data: MapData
 
 const SPRITE_PATHS := {
-	"zane":         "res://assets/sprites/units/zane.svg",
-	"mira":         "res://assets/sprites/units/mira.svg",
-	"kael":         "res://assets/sprites/units/kael.svg",
-	"lyra":         "res://assets/sprites/units/lyra.svg",
-	"null_drake":   "res://assets/sprites/units/null_drake.svg",
-	"storm_imp":    "res://assets/sprites/units/storm_imp.svg",
-	"void_cultist": "res://assets/sprites/units/void_cultist.svg",
+	"zane":         "res://assets/sprites/units/zane.png",
+	"mira":         "res://assets/sprites/units/mira.png",
+	"kael":         "res://assets/sprites/units/kael.png",
+	"lyra":         "res://assets/sprites/units/lyra.png",
+	"null_drake":   "res://assets/sprites/units/null_drake.png",
+	"storm_imp":    "res://assets/sprites/units/storm_imp.png",
+	"void_cultist": "res://assets/sprites/units/void_cultist.png",
 }
 
 
