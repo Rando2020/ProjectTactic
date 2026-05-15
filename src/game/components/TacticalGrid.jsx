@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { buildGrid, getTile, getAdjacentTiles, getUnitAt, isTileBlocked } from '../systems/grid.js'
+import { buildGrid, getTile, getAdjacentTiles, getUnitAt, keyOf } from '../systems/grid.js'
+import { getReachableTiles } from '../systems/pathfinding.js'
 
 const TERRAIN_COLORS = {
   grass: '#244733',
@@ -29,7 +30,9 @@ function getTileStyle(tile, selected, highlighted, targetable, abilityTargetable
             : '1px solid rgba(255,255,255,.12)',
     background: TERRAIN_COLORS[tile.terrain] || '#243447',
     borderRadius: 10,
-    boxShadow: `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
+    boxShadow: highlighted
+      ? `0 0 0 2px rgba(103,232,249,.18), inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`
+      : `inset 0 ${Math.max(1, tile.height + 1) * -2}px 0 rgba(0,0,0,.3)`,
     color: '#fff',
     overflow: 'hidden',
   }
@@ -57,12 +60,14 @@ export default function TacticalGrid({
     return getAdjacentTiles(map, grid, origin)
   }, [grid, map, selectedUnit])
 
-  const moveKeys = new Set(
-    activeCommand === 'move'
-      ? adjacentTiles
-          .filter((tile) => !isTileBlocked(tile, units, selectedUnitId))
-          .map((tile) => `${tile.x},${tile.y}`)
-      : []
+  const movementEntries = useMemo(() => {
+    if (activeCommand !== 'move' || !selectedUnit || selectedUnit.team !== 'player') return []
+    return getReachableTiles({ map, grid, units, unit: selectedUnit })
+  }, [activeCommand, grid, map, selectedUnit, units])
+
+  const moveEntriesByKey = useMemo(
+    () => new Map(movementEntries.map((entry) => [keyOf(entry.tile.x, entry.tile.y), entry])),
+    [movementEntries]
   )
 
   const attackTargetIds = new Set(
@@ -100,7 +105,9 @@ export default function TacticalGrid({
       onSelectUnit?.(unit.id)
       return
     }
-    if (moveKeys.has(`${tile.x},${tile.y}`)) onSelectMoveTile?.(tile)
+
+    const moveEntry = moveEntriesByKey.get(keyOf(tile.x, tile.y))
+    if (moveEntry) onSelectMoveTile?.(tile, moveEntry)
   }
 
   return (
@@ -114,9 +121,10 @@ export default function TacticalGrid({
       >
         {grid.map((tile) => {
           const unit = getUnitAt(units, tile.x, tile.y)
-          const key = `${tile.x},${tile.y}`
+          const key = keyOf(tile.x, tile.y)
           const selected = unit?.id === selectedUnitId
-          const highlighted = moveKeys.has(key)
+          const moveEntry = moveEntriesByKey.get(key)
+          const highlighted = Boolean(moveEntry)
           const targetable = unit && attackTargetIds.has(unit.id)
           const abilityTargetable = unit && abilityTargetIds.has(unit.id)
 
@@ -131,6 +139,11 @@ export default function TacticalGrid({
                 <span style={{ position: 'absolute', top: 4, left: 6, fontSize: 10, opacity: .65 }}>{tile.x},{tile.y}</span>
               )}
               <span style={{ position: 'absolute', right: 6, top: 4, fontSize: 10, opacity: .75 }}>h{tile.height}</span>
+              {moveEntry && (
+                <span style={{ position: 'absolute', bottom: 4, right: 6, fontSize: 10, color: '#67e8f9', fontWeight: 800 }}>
+                  {moveEntry.remaining}
+                </span>
+              )}
               {unit && (
                 <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontWeight: 800 }}>
                   <span>{unit.team === 'player' ? '◆' : '◇'}</span>
@@ -143,7 +156,7 @@ export default function TacticalGrid({
         })}
       </div>
       <p style={{ opacity: .72, fontSize: 13 }}>
-        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target.
+        Select a player unit, choose Move or Attack, then click a highlighted tile or enemy target. Move range uses unit Move, Jump, terrain cost, blocking, and occupied tiles.
       </p>
     </div>
   )
