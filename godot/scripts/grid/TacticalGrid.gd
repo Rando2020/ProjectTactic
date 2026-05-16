@@ -394,19 +394,19 @@ func _refresh_highlights() -> void:
 	for child in highlight_layer.get_children():
 		child.queue_free()
 	for pos in move_tiles:
-		_add_highlight(pos, Color(0.0, 0.9, 1.0, 0.38))
+		_add_highlight(pos, Color(0.0, 0.85, 1.0, 0.48), 0.90)
 	for pos in attack_tiles:
-		_add_highlight(pos, Color(1.0, 0.45, 0.0, 0.38))
+		_add_highlight(pos, Color(1.0, 0.35, 0.0, 0.50), 0.90)
 	for pos in ability_tiles:
-		_add_highlight(pos, Color(0.6, 0.1, 1.0, 0.38))
+		_add_highlight(pos, Color(0.65, 0.18, 1.0, 0.48), 0.90)
 	# AoE burst preview — hot red, drawn over ability range tiles
 	for pos in aoe_preview_tiles:
-		_add_highlight(pos, Color(1.0, 0.18, 0.08, 0.65))
+		_add_highlight(pos, Color(1.0, 0.18, 0.08, 0.70), 0.98)
 	if _is_valid_pos(active_unit_tile):
 		var active_color := Color(0.25, 0.72, 1.0, 0.58) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, 0.58)
 		_add_highlight(active_unit_tile, active_color, 1.04)
 	if _is_valid_pos(selected_tile):
-		_add_highlight(selected_tile, Color(1.0, 0.95, 0.0, 0.45))
+		_add_selected_tile_guidance()
 
 
 func _add_highlight(pos: Vector2i, color: Color, scale: float = 0.86) -> void:
@@ -416,6 +416,47 @@ func _add_highlight(pos: Vector2i, color: Color, scale: float = 0.86) -> void:
 	diamond.position = _grid_to_local(pos)
 	diamond.z_index = _depth_for(pos) + 50
 	highlight_layer.add_child(diamond)
+
+	var rim := Line2D.new()
+	var poly := _diamond_polygon(scale)
+	rim.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
+	rim.width = 2.0
+	rim.default_color = Color(color.r, color.g, color.b, min(color.a + 0.28, 1.0))
+	rim.position = _grid_to_local(pos)
+	rim.z_index = _depth_for(pos) + 51
+	highlight_layer.add_child(rim)
+
+
+func _add_selected_tile_guidance() -> void:
+	var label := ""
+	var color := Color(1.0, 0.95, 0.0, 0.66)
+	if selected_tile in move_tiles:
+		label = "GO"
+		color = Color(0.1, 1.0, 1.0, 0.82)
+	elif selected_tile in attack_tiles:
+		label = "HIT"
+		color = Color(1.0, 0.28, 0.04, 0.82)
+	elif selected_tile in ability_tiles:
+		label = "CAST"
+		color = Color(0.75, 0.30, 1.0, 0.82)
+	_add_highlight(selected_tile, color, 1.08)
+	if label != "":
+		_add_tile_badge(selected_tile, label, color)
+
+
+func _add_tile_badge(pos: Vector2i, text: String, color: Color) -> void:
+	var badge := Label.new()
+	badge.text = text
+	badge.add_theme_font_size_override("font_size", 11)
+	badge.add_theme_color_override("font_color", Color.WHITE)
+	badge.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
+	badge.add_theme_constant_override("outline_size", 4)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.size = Vector2(58.0, 18.0)
+	badge.position = _grid_to_local(pos) + Vector2(-29.0, -12.0)
+	badge.modulate = Color(1.0, 1.0, 1.0, min(color.a + 0.18, 1.0))
+	badge.z_index = _depth_for(pos) + 60
+	highlight_layer.add_child(badge)
 
 
 ## World position where a unit's feet should sit on the tile.
