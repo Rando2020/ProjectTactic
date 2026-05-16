@@ -21,6 +21,7 @@ var _ability_list: VBoxContainer
 var _result_label: Label
 var _status_label: Label
 var _tile_info_label: Label
+var _command_hint_label: Label
 var _intro_banner: PanelContainer
 
 const LOG_SIZE := 8
@@ -38,6 +39,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.ability_mode_started.connect(_on_ability_mode_started)
 	battle_manager.tile_info_changed.connect(_on_tile_info_changed)
 	battle_manager.battle_started.connect(_on_battle_started)
+	battle_manager.command_hint_changed.connect(_on_command_hint_changed)
 
 
 func _ready() -> void:
@@ -79,6 +81,14 @@ func _build_ui() -> void:
 	_tile_info_label.add_theme_color_override("font_color", Color(0.62, 0.72, 0.80))
 	_tile_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_tile_info_label)
+
+	_command_hint_label = Label.new()
+	_command_hint_label.text = "Choose a command"
+	_command_hint_label.add_theme_font_size_override("font_size", 14)
+	_command_hint_label.add_theme_color_override("font_color", Color(0.25, 0.95, 1.0))
+	_command_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_command_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(_command_hint_label)
 
 	root.add_child(_separator())
 
@@ -266,6 +276,11 @@ func _on_phase_changed(phase: String) -> void:
 func _on_tile_info_changed(text: String) -> void:
 	if _tile_info_label:
 		_tile_info_label.text = text
+
+
+func _on_command_hint_changed(text: String) -> void:
+	if _command_hint_label:
+		_command_hint_label.text = text
 
 
 func _on_battle_started(display_name: String, objective: String) -> void:

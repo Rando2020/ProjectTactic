@@ -13,6 +13,7 @@ signal log_message(text: String)
 signal ability_mode_started(usable_ids: Array)
 signal tile_info_changed(text: String)
 signal battle_started(display_name: String, objective: String)
+signal command_hint_changed(text: String)
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -82,6 +83,7 @@ func _begin_player_turn() -> void:
 	turn_started.emit(active_unit_id, "player")
 	var unit_name := unit.display_name if unit else active_unit_id
 	log_message.emit("%s's turn." % unit_name)
+	command_hint_changed.emit("Choose Move, Attack, Ability, or Wait.")
 
 
 func _begin_enemy_turn() -> void:
@@ -93,6 +95,7 @@ func _begin_enemy_turn() -> void:
 	tactical_grid.show_active_unit(unit.grid_pos, "enemy")
 	turn_started.emit(active_unit_id, "enemy")
 	log_message.emit("Enemy: %s acts." % unit.display_name)
+	command_hint_changed.emit("Enemy is acting...")
 	await get_tree().create_timer(0.50).timeout
 	var cast_spell := randf() < 0.45
 	if cast_spell and _try_enemy_spell(unit):
@@ -190,6 +193,7 @@ func select_command(command: String) -> void:
 		return
 	match command:
 		"move":
+			command_hint_changed.emit("Move: click a blue GO tile.")
 			var occupied: Array = []
 			for uid in units:
 				var u: Unit = units[uid]
@@ -203,6 +207,7 @@ func select_command(command: String) -> void:
 			move_range_ready.emit(move_range)
 			tactical_grid.show_move_range(move_range)
 		"attack":
+			command_hint_changed.emit("Attack: click an orange enemy tile.")
 			var atk_min: int = unit.unit_data.base_stats.attack_range_min
 			var atk_max: int = unit.unit_data.base_stats.attack_range_max
 			var atk_range := GridSystem.get_attack_range(
@@ -211,8 +216,10 @@ func select_command(command: String) -> void:
 			attack_range_ready.emit(atk_range)
 			tactical_grid.show_attack_range(atk_range)
 		"wait":
+			command_hint_changed.emit("Waiting...")
 			_end_player_turn()
 		"ability":
+			command_hint_changed.emit("Ability: choose a spell, then click a purple CAST tile or target.")
 			var ab_unit: Unit = units.get(active_unit_id)
 			if not ab_unit:
 				return
@@ -239,6 +246,7 @@ func select_ability(ability_id: String) -> void:
 		return
 	selected_ability_id = ability_id
 	active_command = "ability_target"
+	command_hint_changed.emit("%s: click a purple CAST tile or target." % ability.get("display_name", ability_id))
 	var range_val: int = ability.get("range", 1)
 	var target_type: String = ability.get("target_type", "enemy")
 	# Self-cast or range-0 → resolve immediately on the caster's tile
@@ -560,6 +568,7 @@ func _end_player_turn() -> void:
 	active_command = ""
 	selected_ability_id = ""
 	tactical_grid.clear_highlights()
+	command_hint_changed.emit("Resolving turn...")
 	_set_phase(Phase.RESOLVE)
 
 
