@@ -7,6 +7,8 @@ extends Node2D
 
 var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 var _battle_camera: Camera2D
+var _camera_base_position: Vector2 = Vector2(320.0, 245.0)
+var _camera_zoom_value: float = 0.92
 
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
@@ -33,6 +35,7 @@ func _ready() -> void:
 
 	_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 	tactical_grid.initialize_from_map(_map_data)
+	_frame_battlefield_camera()
 
 	var player_units := _spawn_player_units()
 	var enemy_units  := _spawn_enemy_units()
@@ -57,16 +60,37 @@ func _ready() -> void:
 func _setup_camera() -> void:
 	_battle_camera = Camera2D.new()
 	_battle_camera.enabled = true
-	_battle_camera.position = Vector2(320.0, 245.0)
-	_battle_camera.zoom = Vector2(0.92, 0.92)
+	_battle_camera.position = _camera_base_position
+	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
 	add_child(_battle_camera)
+
+
+func _frame_battlefield_camera() -> void:
+	if not _battle_camera:
+		return
+	var bounds := tactical_grid.get_board_bounds().grow(72.0)
+	var play_area := Vector2(620.0, 700.0)
+	var zoom_x: float = play_area.x / max(bounds.size.x, 1.0)
+	var zoom_y: float = play_area.y / max(bounds.size.y, 1.0)
+	_camera_zoom_value = clamp(min(zoom_x, zoom_y), 0.72, 1.15)
+	_camera_base_position = bounds.get_center()
+	_camera_base_position.x += 26.0
+	_battle_camera.position = _camera_base_position
+	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
 	var unit: Unit = battle_manager.units.get(unit_id)
 	if not unit or not _battle_camera:
 		return
-	var target := tactical_grid.get_unit_focus_position(unit.grid_pos) + Vector2(90.0, 20.0)
+	var focus := tactical_grid.get_unit_focus_position(unit.grid_pos)
+	var target := _camera_base_position
+	var margin := Vector2(155.0 / _camera_zoom_value, 120.0 / _camera_zoom_value)
+	var delta := focus - _camera_base_position
+	if abs(delta.x) > margin.x:
+		target.x += sign(delta.x) * min(abs(delta.x) - margin.x, 110.0)
+	if abs(delta.y) > margin.y:
+		target.y += sign(delta.y) * min(abs(delta.y) - margin.y, 80.0)
 	var tween := create_tween()
 	tween.tween_property(_battle_camera, "position", target, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 

@@ -449,6 +449,35 @@ func get_unit_focus_position(grid_pos: Vector2i) -> Vector2:
 	return _unit_foot_pos(grid_pos)
 
 
+func get_board_bounds() -> Rect2:
+	var first := true
+	var min_pt := Vector2.ZERO
+	var max_pt := Vector2.ZERO
+	for pos: Vector2i in tiles.keys():
+		var center := _grid_to_local(pos)
+		var half_w := tile_size.x * 0.5
+		var half_h := tile_size.y * 0.5
+		var points := [
+			center + Vector2(0, -half_h),
+			center + Vector2(half_w, tile_thickness),
+			center + Vector2(0, half_h + tile_thickness),
+			center + Vector2(-half_w, tile_thickness),
+		]
+		for point: Vector2 in points:
+			if first:
+				min_pt = point
+				max_pt = point
+				first = false
+			else:
+				min_pt.x = min(min_pt.x, point.x)
+				min_pt.y = min(min_pt.y, point.y)
+				max_pt.x = max(max_pt.x, point.x)
+				max_pt.y = max(max_pt.y, point.y)
+	if first:
+		return Rect2(map_origin, Vector2.ONE)
+	return Rect2(min_pt, max_pt - min_pt)
+
+
 ## Converts a flammable tile (grass, road) to burning terrain.
 ## Updates both the logical tile data and the visual top colour.
 func ignite_tile(pos: Vector2i) -> void:
