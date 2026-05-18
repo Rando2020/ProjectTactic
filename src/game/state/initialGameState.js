@@ -36,6 +36,13 @@ export function createInitialGameState() {
     mode: 'world',
     currentScreen: 'worldMap',
     activeMissionId: STARTING_MISSION_ID,
+    activeRunNodeId: null,
+    currentRun: null,
+    metaProgression: {
+      echoShards: 0,
+      completedRuns: 0,
+      failedRuns: 0,
+    },
     storyFlags: ['new_game_started'],
     completedMissions: [],
     unlockedMissions: [STARTING_MISSION_ID, 'mirefen_marsh_01'],
