@@ -410,7 +410,7 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
 
     <div style={s.layout}>
       <section style={s.gridCard}>
-        <TacticalGrid map={activeMission} units={units} selectedUnitId={selectedUnitId} activeCommand={activeCommand}
+        <TacticalGrid map={activeMission} units={units} selectedUnitId={selectedUnitId} activeUnitId={activeUnitId} activeCommand={activeCommand}
           moveTileKeys={moveTileKeys} attackTileKeys={attackTileKeys} intentTileKeys={intentTileKeys}
           reactionFlashKeys={reactionFlashKeys} pendingTargetKey={pendingTarget?.key} popups={popups}
           onSelectUnit={id=>{if(isPlayerPhase&&id===activeUnitId)setSelectedUnitId(id)}}

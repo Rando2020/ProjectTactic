@@ -4,6 +4,18 @@ const FACING_BONUS = {
   back: 1.28
 }
 
+export const FACING_LABELS = {
+  front: 'Front',
+  side: 'Side',
+  back: 'Back'
+}
+
+export const FACING_WARNINGS = {
+  front: 'Guarded angle: standard hit and crit odds.',
+  side: 'Side attack: improved hit, crit, and damage.',
+  back: 'Back attack: highest hit, crit, and damage.'
+}
+
 export function getRelativeFacing({ attacker, defender }) {
   if (!attacker || !defender) return 'front'
   const dx = attacker.x - defender.x

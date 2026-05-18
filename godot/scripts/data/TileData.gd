@@ -4,7 +4,7 @@
 ## movement costs, height penalties, defense bonuses, and elemental
 ## interactions. See docs/DATA_SCHEMAS.md for field descriptions.
 
-class_name TileData
+class_name ProjectTileData
 extends Resource
 
 @export var id: String = ""

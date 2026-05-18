@@ -236,7 +236,7 @@ The combat prototype includes 32 Guardians across 8 elements and 4 tiers, includ
 1. Keep the browser prototype running.
 2. Stabilize the Game Shell as the default production path.
 3. Extract the growing battle screen into smaller phase, action, and presentation modules.
-4. Improve facing feedback on the grid and forecast panel.
+4. Refine tactical feedback for terrain reactions, enemy intent, and action outcomes.
 5. Consume inventory items during battle actions.
 6. Connect mission rewards to new mission and town unlocks.
 7. Add an asset registry mapping terrain, jobs, units, and enemies to placeholder art.

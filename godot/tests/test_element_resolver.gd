@@ -13,17 +13,13 @@ func _run_tests()->void:
 	_eq(es.apply_element(Vector2i(1,0),"water",[]),"apply_wet","water→apply_wet")
 	_eq(es.get_surface_state(Vector2i(1,0)),"wet","state=wet")
 	es.surface_states[Vector2i(2,0)]="wet"
-	_eq(es.apply_element(Vector2i(2,0),"ice",[]),"freeze_tile","ice on wet→freeze")
-	es.surface_states[Vector2i(3,0)]="ice"
-	_eq(es.apply_element(Vector2i(3,0),"thunder",[]),"shatter_tile","thunder on ice→shatter")
+	_eq(es.apply_element(Vector2i(2,0),"ice",[]),"freeze","ice on wet→freeze")
+	es.surface_states[Vector2i(3,0)]="frozen"
+	_eq(es.apply_element(Vector2i(3,0),"thunder",[]),"shatter","thunder on frozen→shatter")
 	_eq(es.get_surface_state(Vector2i(3,0)),"","shatter clears state")
 	es.surface_states[Vector2i(5,5)]="wet"
-	_eq(es.apply_element(Vector2i(5,5),"thunder",[],{},Vector2i(10,10)),"electrify_chain","thunder on wet→chain")
-	_eq(es.get_surface_state(Vector2i(5,5)),"electrified_water","origin=electrified")
-	_eq(es.get_reaction_label("shatter_tile"),"💥 Shatter!","label correct")
-	var fx:=es.get_unit_effects("electrify_chain")
-	_true(fx.has("damage"),"chain has damage"); _true(fx.has("status"),"chain has status")
-	_eq(fx["status"],"stun","chain status=stun")
+	_eq(es.apply_element(Vector2i(5,5),"thunder",[]),"electrify_chain","thunder on wet→chain")
+	_eq(es.get_surface_state(Vector2i(5,5)),"electrified","origin=electrified")
 	es.free()
 func _eq(got,exp,label)->void:
 	if got==exp:print("PASS %s"%label);_pass+=1

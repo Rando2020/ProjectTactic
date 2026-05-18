@@ -75,7 +75,7 @@ src/game/data/progression.js
 
 1. Extract the player turn flow into a small battle phase/state helper.
 2. Consume inventory items during battle.
-3. Improve facing feedback on the grid and forecast panel.
+3. Refine tactical feedback for terrain reactions, enemy intent, and action outcomes.
 4. Connect post-battle rewards to mission unlocks and town unlocks.
 5. Add save slots and autosave checkpoints.
 6. Replace CSS placeholders with original tactical RPG art assets.
