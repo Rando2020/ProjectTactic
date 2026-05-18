@@ -58,6 +58,23 @@ docs/art-direction/
 | `src/assets/ui/job-seal.svg` | Base job placeholder seal |
 | `src/assets/ui/ascended-seal.svg` | Ascended job placeholder seal |
 
+## Generated Implementation Placeholders
+
+`tools/generate_placeholder_assets.py` now exports the first implementation-ready placeholder pass:
+
+- `src/assets/tiles/`
+- `src/assets/characters/`
+- `src/assets/icons/`
+- `src/assets/ui/`
+- `src/assets/ui/cursors/`
+- `src/assets/ui/range-markers/`
+- `src/assets/ui/status-icons/`
+- `src/assets/vfx/`
+- `src/game/assets/placeholders/`
+- `godot/assets/`
+
+See `docs/art-direction/GENERATED_PLACEHOLDER_ASSETS.md` for provenance and regeneration notes.
+
 ## Naming Rules
 
 Use lowercase kebab-case names.
