@@ -28,6 +28,7 @@ const BLOCKS_ACTION = new Set(['stun','petrify','sleep'])
 const STATUS_TICK_DAMAGE = { bleed:12, burning:15, poison:8 }
 const STATUS_TICK_HEAL   = { regen:20 }
 const KEY_CMDS = { m:'move', a:'attack', s:'ability', i:'item', w:'wait' }
+const VITAE_DRAUGHT_ID = 'vitae_draught'
 
 function buildInitialUnits(activeMission, deploymentSlots) {
   const spawns  = deploymentSlots || activeMission.playerSpawns
@@ -49,7 +50,7 @@ function tickUnitStatuses(unit) {
 
 let _pid = 0
 
-export default function BattleScreen({ gameState, activeMission, deploymentSlots, completeActiveMission, setScreen }) {
+export default function BattleScreen({ gameState, setGameState, activeMission, deploymentSlots, completeActiveMission, setScreen }) {
   const [grid,  setGrid]  = useState(() => buildGrid(activeMission))
   const gridRef  = useRef(grid);  gridRef.current  = grid
   const [units, setUnits] = useState(() => buildInitialUnits(activeMission, deploymentSlots))
@@ -77,8 +78,7 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
   const [lastReaction, setLastReaction] = useState(null)
   const [battleSpeed,  setBattleSpeed]  = useState(1)
   const [battleLog,    setBattleLog]    = useState([`${activeMission.name} — battle started.`])
-  // JP tracking: { characterId: totalJp }
-  const [battleJp,    setBattleJp]    = useState({})
+  const [battleJp,     setBattleJp]     = useState({})
 
   const addLog = useCallback(msg => setBattleLog(l=>[msg,...l].slice(0,14)), [])
 
@@ -153,7 +153,6 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     setForecast({preview,attacker,target,ability,reactionWarning})
   }
 
-  // TICK
   useEffect(()=>{
     if(phase!==PHASE.TICK)return
     if(!unitsRef.current.some(u=>u.hp>0))return
@@ -170,7 +169,6 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     else setPhase(PHASE.ENEMY_TURN)
   },[phase,addLog,activeMission])
 
-  // ENEMY TURN
   useEffect(()=>{
     if(phase!==PHASE.ENEMY_TURN||!activeUnitId)return
     const cur=unitsRef.current,grd=gridRef.current,unit=cur.find(u=>u.id===activeUnitId)
@@ -204,7 +202,6 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     return()=>clearTimeout(t)
   },[phase,activeUnitId,activeMission,addLog,battleSpeed])
 
-  // Player commands
   function handleCommand(commandId){
     if(phase!==PHASE.PLAYER_TURN)return
     const unit=unitsRef.current.find(u=>u.id===activeUnitId); if(!unit)return
@@ -258,7 +255,6 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     const targetUnit=unitsRef.current.find(u=>u.id===targetId); if(!targetUnit)return
     setPendingTarget({targetId,abilityId,key:`${targetUnit.x},${targetUnit.y}`})
     buildForecast(targetId,null)
-    // Open SURGE window
     setSurgeActive(true); setSurgeMultiplier(1.0)
   }
 
@@ -279,7 +275,6 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     const surgeTag=surgeMultiplier>1?` ⚡SURGE`:'';
     addLog(`${unit.name}: ${ability?.name}${el} → ${target?.name} (${dmg?.amount??'?'} dmg, ${dmg?.armorDamage??0} armor)${surgeTag}`)
     spawnCombatPopups(result.events,prevU,result.units)
-    // Award JP
     const jpEvents=extractJpEvents(result.events,unit,target,ability)
     awardJp(activeUnitId,jpEvents)
     const{updatedGrid,updatedUnits}=doReactions(result.events,result.units,gridRef.current)
@@ -290,8 +285,22 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
   }
 
   function executeItem(unit){
+    const available = gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0
+    if(available <= 0){
+      addLog('No Vitae Draughts remaining.')
+      setActiveCommand(null)
+      return
+    }
+
+    setGameState?.(current => ({
+      ...current,
+      inventory: {
+        ...current.inventory,
+        [VITAE_DRAUGHT_ID]: Math.max(0, (current.inventory?.[VITAE_DRAUGHT_ID] ?? 0) - 1),
+      },
+    }))
     setUnits(prev=>prev.map(u=>u.id!==unit.id?u:{...u,hp:Math.min(u.stats?.hp??u.hp,u.hp+120)}))
-    spawnPopup(unit,120,'heal'); addLog(`${unit.name} used Vitae Draught (+120 HP).`)
+    spawnPopup(unit,120,'heal'); addLog(`${unit.name} used Vitae Draught (+120 HP). ${available - 1} remaining.`)
     setActiveCommand(null); setHasActed(true); endPlayerTurn()
   }
 
@@ -306,12 +315,10 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
     setSelectedUnitId(null); setMoveTileKeys(null); setAttackTileKeys(null); setForecast(null); setSelectedAbilityId(null); setPendingTarget(null)
   }
 
-  // Handle victory — pass JP to completeActiveMission
   function handleVictory(){
     completeActiveMission({ battleJp, clearBonus:JP_AWARDS.battle_clear })
   }
 
-  // Keyboard
   const hRef=useRef({})
   hRef.current={handleCommand,handleWait,handleUndoMove,confirmAttack,cancelConfirm:()=>{setPendingTarget(null);setForecast(null);setSurgeActive(false)},phase,hasMoved,hasActed,pendingTarget,activeCommand}
   useEffect(()=>{
@@ -330,7 +337,8 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
   const activeUnit=units.find(u=>u.id===activeUnitId),selectedUnit=units.find(u=>u.id===selectedUnitId&&u.hp>0)
   const isPlayerPhase=phase===PHASE.PLAYER_TURN,isStunned=activeUnit?.statuses?.some(s=>BLOCKS_ACTION.has(s.id))
   const showPicker=isPlayerPhase&&activeCommand==='ability'&&!selectedAbilityId
-  const disabledCmds=!isPlayerPhase||isStunned?['move','attack','ability','item','wait']:[...(hasMoved?['move']:[]),...(hasActed?['attack','ability','item']:[])]
+  const hasVitaeDraught=(gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0) > 0
+  const disabledCmds=!isPlayerPhase||isStunned?['move','attack','ability','item','wait']:[...(hasMoved?['move']:[]),...(hasActed?['attack','ability','item']:[]),...(!hasVitaeDraught?['item']:[])]
   const unitWithDefs=selectedUnit?{...selectedUnit,abilityDefs:getUnitAbilities(selectedUnit)}:null
   const inspectUnit=hoveredUnit?units.find(u=>u.id===hoveredUnit):null
   const totalBattleJp=Object.values(battleJp).reduce((s,v)=>s+v,0)
@@ -349,7 +357,7 @@ export default function BattleScreen({ gameState, activeMission, deploymentSlots
         {phase===PHASE.DEFEAT&&<p style={{color:'#f87171',fontWeight:800,margin:'4px 0 0'}}>⚰ Party defeated.</p>}
         {phase===PHASE.VICTORY&&<p style={{color:'#86efac',fontWeight:800,margin:'4px 0 0'}}>✓ Victory! +{JP_AWARDS.battle_clear} JP</p>}
         {totalBattleJp>0&&<p style={{fontSize:11,color:'#c9a756',margin:'2px 0 0'}}>Battle JP: {totalBattleJp}</p>}
-        {isPlayerPhase&&!isStunned&&<p style={{fontSize:10,color:'rgba(247,240,223,.3)',margin:'6px 0 0'}}>M·Move  A·Attack  S·Ability  I·Item  W·Wait  Z·Undo  Esc·Cancel  Enter·Confirm  Space·SURGE</p>}
+        {isPlayerPhase&&!isStunned&&<p style={{fontSize:10,color:'rgba(247,240,223,.3)',margin:'6px 0 0'}}>M·Move  A·Attack  S·Ability  I·Item ({gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0})  W·Wait  Z·Undo  Esc·Cancel  Enter·Confirm  Space·SURGE</p>}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
         <div style={s.speedRow}>
