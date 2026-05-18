@@ -9,14 +9,18 @@ export function applyMissionRewards(state, mission) {
   const rewards = mission?.rewards ?? {}
   const jpReward = rewards.jp ?? 0
   const xpReward = rewards.xp ?? Math.max(50, jpReward * 2)
+  const battleJp = rewards.battleJp ?? {}
+  const clearBonus = rewards.clearBonus ?? 0
 
   const roster = Object.fromEntries(
     Object.entries(state.roster).map(([characterId, character]) => {
       const currentJobId = character.currentJobId
+      const earnedBattleJp = battleJp[characterId] ?? 0
+      const totalJobJpAward = jpReward + earnedBattleJp + clearBonus
       const nextXp = (character.xp ?? 0) + xpReward
       const nextJobJp = {
         ...(character.jobJp ?? {}),
-        [currentJobId]: (character.jobJp?.[currentJobId] ?? 0) + jpReward,
+        [currentJobId]: (character.jobJp?.[currentJobId] ?? 0) + totalJobJpAward,
       }
       const nextCharacter = {
         ...character,
@@ -58,6 +62,14 @@ export function applyMissionRewards(state, mission) {
       rewards: {
         xp: xpReward,
         jp: jpReward,
+        battleJp,
+        clearBonus,
+        totalJpByCharacter: Object.fromEntries(
+          Object.keys(state.roster).map((characterId) => [
+            characterId,
+            jpReward + (battleJp[characterId] ?? 0) + clearBonus,
+          ])
+        ),
         gold: rewards.gold ?? 0,
         items: rewards.items ?? [],
         flags: rewards.flags ?? [],
