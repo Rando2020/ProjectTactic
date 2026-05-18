@@ -222,8 +222,8 @@ func _add_surface_lines(pos: Vector2i, world: Vector2, color: Color, depth: int,
 		count: int, max_span_ratio: float, alpha: float) -> void:
 	for i in range(count):
 		var detail := Line2D.new()
-		var seed := _tile_seed(pos, i)
-		var y := lerpf(-tile_size.y * 0.24, tile_size.y * 0.20, seed)
+		var tile_noise := _tile_seed(pos, i)
+		var y := lerpf(-tile_size.y * 0.24, tile_size.y * 0.20, tile_noise)
 		var span := tile_size.x * lerpf(max_span_ratio * 0.45, max_span_ratio, _tile_seed(pos, i + 11))
 		detail.points = PackedVector2Array([
 			Vector2(-span, y),
@@ -239,9 +239,9 @@ func _add_surface_lines(pos: Vector2i, world: Vector2, color: Color, depth: int,
 
 func _add_stone_cracks(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
 	for i in range(2):
-		var seed := _tile_seed(pos, i + 31)
+		var tile_noise := _tile_seed(pos, i + 31)
 		var crack := Line2D.new()
-		var x := lerpf(-tile_size.x * 0.20, tile_size.x * 0.20, seed)
+		var x := lerpf(-tile_size.x * 0.20, tile_size.x * 0.20, tile_noise)
 		var y := lerpf(-tile_size.y * 0.18, tile_size.y * 0.16, _tile_seed(pos, i + 39))
 		crack.points = PackedVector2Array([
 			Vector2(x - 8.0, y),
@@ -273,7 +273,7 @@ func _tile_seed(pos: Vector2i, salt: int) -> float:
 	return float(abs((pos.x * 374761 + pos.y * 668265 + salt * 144269) % 1000)) / 1000.0
 
 
-func _add_soft_terrain_tint(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+func _add_soft_terrain_tint(_pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
 	var tint := Polygon2D.new()
 	tint.polygon = _diamond_polygon(0.96)
 	tint.position = world
@@ -283,7 +283,7 @@ func _add_soft_terrain_tint(pos: Vector2i, world: Vector2, base_color: Color, de
 	add_child(tint)
 
 
-func _add_subtle_rim(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
+func _add_subtle_rim(_pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
 	var half_w := tile_size.x * 0.5
 	var half_h := tile_size.y * 0.5
 	var rim := Line2D.new()
@@ -409,16 +409,16 @@ func _refresh_highlights() -> void:
 		_add_selected_tile_guidance()
 
 
-func _add_highlight(pos: Vector2i, color: Color, scale: float = 0.86) -> void:
+func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86) -> void:
 	var diamond := Polygon2D.new()
 	diamond.color = color
-	diamond.polygon = _diamond_polygon(scale)
+	diamond.polygon = _diamond_polygon(highlight_scale)
 	diamond.position = _grid_to_local(pos)
 	diamond.z_index = _depth_for(pos) + 50
 	highlight_layer.add_child(diamond)
 
 	var rim := Line2D.new()
-	var poly := _diamond_polygon(scale)
+	var poly := _diamond_polygon(highlight_scale)
 	rim.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
 	rim.width = 2.0
 	rim.default_color = Color(color.r, color.g, color.b, min(color.a + 0.28, 1.0))
@@ -579,9 +579,9 @@ func _local_to_grid(local_pos: Vector2) -> Vector2i:
 	return best_pos
 
 
-func _diamond_polygon(scale: float = 1.0) -> PackedVector2Array:
-	var half_w := tile_size.x * 0.5 * scale
-	var half_h := tile_size.y * 0.5 * scale
+func _diamond_polygon(polygon_scale: float = 1.0) -> PackedVector2Array:
+	var half_w := tile_size.x * 0.5 * polygon_scale
+	var half_h := tile_size.y * 0.5 * polygon_scale
 	return PackedVector2Array([
 		Vector2(0, -half_h),
 		Vector2(half_w, 0),

@@ -80,8 +80,8 @@ func _draw_unit() -> void:
 		var tex_size := unit_data.sprite_sheet.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
 			var target_size: float = 62.0 if is_player else 70.0
-			var scale: float = target_size / max(tex_size.x, tex_size.y)
-			_sprite.scale = Vector2(scale, scale)
+			var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
+			_sprite.scale = Vector2(sprite_scale, sprite_scale)
 		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
 		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
 		_sprite.z_index = 10

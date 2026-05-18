@@ -123,7 +123,7 @@ func _build_ui() -> void:
 	root.add_child(btn_row)
 	_move_btn   = _cmd_btn(btn_row, "Move",   _on_move)
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
-	_cmd_btn(btn_row, "Wait", _on_wait)
+	_wait_btn   = _cmd_btn(btn_row, "Wait",   _on_wait)
 	_ability_btn = _cmd_btn(btn_row, "Ability", _on_ability)
 
 	_result_label = Label.new()
@@ -269,6 +269,7 @@ func _on_phase_changed(phase: String) -> void:
 	var is_player := phase == "PLAYER_TURN"
 	if _move_btn:    _move_btn.disabled    = not is_player
 	if _attack_btn:  _attack_btn.disabled  = not is_player
+	if _wait_btn:    _wait_btn.disabled    = not is_player
 	if _ability_btn: _ability_btn.disabled = not is_player
 	if _ability_panel: _ability_panel.visible = false
 
