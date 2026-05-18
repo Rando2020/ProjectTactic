@@ -30,6 +30,7 @@ src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
 src/game/components/CommandMenu.jsx
+src/game/components/FacingPicker.jsx
 src/game/systems/objectives.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
@@ -54,8 +55,10 @@ src/game/data/progression.js
 - Boots to the new Game Shell tab by default.
 - Keeps the previous Battle Prototype available as a separate tab.
 - Shows unlocked missions from map data.
-- Renders battle maps with terrain, height, units, and adjacency movement.
+- Renders battle maps with terrain, height, units, and movement range.
 - Supports command-driven battle actions: Move, Attack, Ability, Item, and Wait.
+- Uses a CT timeline with a visible upcoming turn order.
+- Supports movement range, enemy AI intent, ability targeting, damage forecast, hit confirmation, and final facing selection.
 - Resolves `defeat_all` mission objectives from living enemy units.
 - Enables Claim Victory only after the objective is complete.
 - Applies XP, JP, gold, item, mission, and story flag rewards.
@@ -64,21 +67,15 @@ src/game/data/progression.js
 
 ## Known Placeholders
 
-- Tactical movement is currently adjacent-tile only.
 - Enemy units use lightweight temporary stats.
-- Attack damage is simple placeholder pressure, not final combat math.
-- Ability targeting currently logs a placeholder action.
 - Item use currently applies a placeholder Vitae Draught heal without consuming inventory.
-- CT turn order, enemy AI, ability targeting, and damage preview are still pending.
 - Visuals are CSS placeholders, not final pixel assets.
 
 ## Next Evolution
 
-1. Add movement range pathfinding.
-2. Add CT turn order and timeline UI.
-3. Add damage preview and hit confirmation.
-4. Add enemy AI intent preview.
-5. Consume inventory items during battle.
-6. Add real ability targeting by job and ability data.
-7. Connect post-battle rewards to mission unlocks and town unlocks.
-8. Add save slots and autosave checkpoints.
+1. Extract the player turn flow into a small battle phase/state helper.
+2. Consume inventory items during battle.
+3. Improve facing feedback on the grid and forecast panel.
+4. Connect post-battle rewards to mission unlocks and town unlocks.
+5. Add save slots and autosave checkpoints.
+6. Replace CSS placeholders with original tactical RPG art assets.

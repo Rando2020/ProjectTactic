@@ -4,6 +4,7 @@ import CommandMenu    from '../components/CommandMenu.jsx'
 import TurnTimeline   from '../components/TurnTimeline.jsx'
 import DamageForecast from '../components/DamageForecast.jsx'
 import AbilityPicker  from '../components/AbilityPicker.jsx'
+import FacingPicker   from '../components/FacingPicker.jsx'
 import TerrainInfo    from '../components/TerrainInfo.jsx'
 import UnitCard       from '../components/UnitCard.jsx'
 import SurgeWindow    from '../components/SurgeWindow.jsx'
@@ -28,6 +29,7 @@ const BLOCKS_ACTION = new Set(['stun','petrify','sleep'])
 const STATUS_TICK_DAMAGE = { bleed:12, burning:15, poison:8 }
 const STATUS_TICK_HEAL   = { regen:20 }
 const KEY_CMDS = { m:'move', a:'attack', s:'ability', i:'item', w:'wait' }
+const FACING_KEYS = { ArrowUp:'N', ArrowRight:'E', ArrowDown:'S', ArrowLeft:'W' }
 const VITAE_DRAUGHT_ID = 'vitae_draught'
 
 function buildInitialUnits(activeMission, deploymentSlots) {
@@ -78,7 +80,8 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
   const [lastReaction, setLastReaction] = useState(null)
   const [battleSpeed,  setBattleSpeed]  = useState(1)
   const [battleLog,    setBattleLog]    = useState([`${activeMission.name} — battle started.`])
-  const [battleJp,     setBattleJp]     = useState({})
+  // JP tracking: { characterId: totalJp }
+  const [battleJp,    setBattleJp]    = useState({})
 
   const addLog = useCallback(msg => setBattleLog(l=>[msg,...l].slice(0,14)), [])
 
@@ -153,6 +156,7 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     setForecast({preview,attacker,target,ability,reactionWarning})
   }
 
+  // TICK
   useEffect(()=>{
     if(phase!==PHASE.TICK)return
     if(!unitsRef.current.some(u=>u.hp>0))return
@@ -169,6 +173,7 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     else setPhase(PHASE.ENEMY_TURN)
   },[phase,addLog,activeMission])
 
+  // ENEMY TURN
   useEffect(()=>{
     if(phase!==PHASE.ENEMY_TURN||!activeUnitId)return
     const cur=unitsRef.current,grd=gridRef.current,unit=cur.find(u=>u.id===activeUnitId)
@@ -202,10 +207,12 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     return()=>clearTimeout(t)
   },[phase,activeUnitId,activeMission,addLog,battleSpeed])
 
+  // Player commands
   function handleCommand(commandId){
     if(phase!==PHASE.PLAYER_TURN)return
+    if(activeCommand==='facing')return
     const unit=unitsRef.current.find(u=>u.id===activeUnitId); if(!unit)return
-    if(commandId!=='wait'&&unit.statuses?.some(s=>BLOCKS_ACTION.has(s.id))){addLog(`${unit.name} is stunned.`);endPlayerTurn();return}
+    if(commandId!=='wait'&&unit.statuses?.some(s=>BLOCKS_ACTION.has(s.id))){addLog(`${unit.name} is stunned.`);beginFacingSelection();return}
     setActiveCommand(commandId); setSelectedAbilityId(null); setForecast(null); setPendingTarget(null)
     if(commandId==='move'){
       if(unit.statuses?.some(s=>BLOCKS_MOVE.has(s.id))){addLog(`${unit.name} is immobilized.`);setActiveCommand(null);return}
@@ -250,11 +257,12 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
   }
 
   function handleAttackClick(targetId){
-    if(phase!==PHASE.PLAYER_TURN||hasActed)return
+    if(phase!==PHASE.PLAYER_TURN||hasActed||activeCommand==='facing')return
     const abilityId=selectedAbilityId||'basic_attack'
     const targetUnit=unitsRef.current.find(u=>u.id===targetId); if(!targetUnit)return
     setPendingTarget({targetId,abilityId,key:`${targetUnit.x},${targetUnit.y}`})
     buildForecast(targetId,null)
+    // Open SURGE window
     setSurgeActive(true); setSurgeMultiplier(1.0)
   }
 
@@ -275,13 +283,14 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     const surgeTag=surgeMultiplier>1?` ⚡SURGE`:'';
     addLog(`${unit.name}: ${ability?.name}${el} → ${target?.name} (${dmg?.amount??'?'} dmg, ${dmg?.armorDamage??0} armor)${surgeTag}`)
     spawnCombatPopups(result.events,prevU,result.units)
+    // Award JP
     const jpEvents=extractJpEvents(result.events,unit,target,ability)
     awardJp(activeUnitId,jpEvents)
     const{updatedGrid,updatedUnits}=doReactions(result.events,result.units,gridRef.current)
     setGrid(updatedGrid); setUnits(updatedUnits)
     setForecast(null); setAttackTileKeys(null); setActiveCommand(null); setSelectedAbilityId(null); setPendingTarget(null)
     setHasActed(true); setSurgeActive(false)
-    setTimeout(endPlayerTurn,50)
+    beginFacingSelection()
   }
 
   function executeItem(unit){
@@ -301,31 +310,47 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     }))
     setUnits(prev=>prev.map(u=>u.id!==unit.id?u:{...u,hp:Math.min(u.stats?.hp??u.hp,u.hp+120)}))
     spawnPopup(unit,120,'heal'); addLog(`${unit.name} used Vitae Draught (+120 HP). ${available - 1} remaining.`)
-    setActiveCommand(null); setHasActed(true); endPlayerTurn()
+    setHasActed(true); beginFacingSelection()
   }
 
   function handleWait(){
     const unit=unitsRef.current.find(u=>u.id===activeUnitId)
-    if(unit)addLog(`${unit.name} holds position.`); setActiveCommand(null); setPendingTarget(null); setSurgeActive(false); endPlayerTurn()
+    if(unit)addLog(`${unit.name} holds position.`)
+    beginFacingSelection()
+  }
+
+  function beginFacingSelection(){
+    setActiveCommand('facing'); setMoveTileKeys(null); setAttackTileKeys(null); setForecast(null); setSelectedAbilityId(null); setPendingTarget(null); setSurgeActive(false)
+  }
+
+  function chooseFacing(facing){
+    const unit=unitsRef.current.find(u=>u.id===activeUnitId)
+    if(!unit)return
+    setUnits(prev=>prev.map(u=>u.id!==activeUnitId?u:{...u,facing}))
+    addLog(`${unit.name} faces ${facing}.`)
+    endPlayerTurn()
   }
 
   function endPlayerTurn(){
     applyStatusTick(activeUnitId); setHasMoved(false); setPreMovPos(null); setHasActed(false)
     setUnits(prev=>{const next=endTurn(prev,activeUnitId);setTimeout(()=>{if(!checkEnd(unitsRef.current))setPhase(PHASE.TICK)},80);return next})
-    setSelectedUnitId(null); setMoveTileKeys(null); setAttackTileKeys(null); setForecast(null); setSelectedAbilityId(null); setPendingTarget(null)
+    setSelectedUnitId(null); setActiveCommand(null); setMoveTileKeys(null); setAttackTileKeys(null); setForecast(null); setSelectedAbilityId(null); setPendingTarget(null); setSurgeMultiplier(1.0)
   }
 
+  // Handle victory — pass JP to completeActiveMission
   function handleVictory(){
     completeActiveMission({ battleJp, clearBonus:JP_AWARDS.battle_clear })
   }
 
+  // Keyboard
   const hRef=useRef({})
-  hRef.current={handleCommand,handleWait,handleUndoMove,confirmAttack,cancelConfirm:()=>{setPendingTarget(null);setForecast(null);setSurgeActive(false)},phase,hasMoved,hasActed,pendingTarget,activeCommand}
+  hRef.current={handleCommand,handleWait,handleUndoMove,confirmAttack,chooseFacing,cancelConfirm:()=>{setPendingTarget(null);setForecast(null);setSurgeActive(false)},phase,hasMoved,hasActed,pendingTarget,activeCommand}
   useEffect(()=>{
     function onKey(e){
       const h=hRef.current; const tag=document.activeElement?.tagName
       if(tag==='INPUT'||tag==='TEXTAREA')return
       if(h.phase!==PHASE.PLAYER_TURN)return
+      if(h.activeCommand==='facing'){const facing=FACING_KEYS[e.key];if(facing){e.preventDefault();h.chooseFacing(facing)};return}
       if(e.key==='Escape'){if(h.pendingTarget)h.cancelConfirm();else if(h.activeCommand){setActiveCommand(null);setMoveTileKeys(null);setAttackTileKeys(null);setSelectedAbilityId(null);setPendingTarget(null)};return}
       if((e.key==='Enter'||e.key===' ')&&h.pendingTarget&&!surgeActive){e.preventDefault();h.confirmAttack();return}
       if(e.key.toLowerCase()==='z'&&h.hasMoved&&!h.hasActed){h.handleUndoMove();return}
@@ -337,8 +362,9 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
   const activeUnit=units.find(u=>u.id===activeUnitId),selectedUnit=units.find(u=>u.id===selectedUnitId&&u.hp>0)
   const isPlayerPhase=phase===PHASE.PLAYER_TURN,isStunned=activeUnit?.statuses?.some(s=>BLOCKS_ACTION.has(s.id))
   const showPicker=isPlayerPhase&&activeCommand==='ability'&&!selectedAbilityId
+  const showFacingPicker=isPlayerPhase&&activeCommand==='facing'
   const hasVitaeDraught=(gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0) > 0
-  const disabledCmds=!isPlayerPhase||isStunned?['move','attack','ability','item','wait']:[...(hasMoved?['move']:[]),...(hasActed?['attack','ability','item']:[]),...(!hasVitaeDraught?['item']:[])]
+  const disabledCmds=!isPlayerPhase||showFacingPicker?['move','attack','ability','item','wait']:isStunned?['move','attack','ability','item']:[...(hasMoved?['move']:[]),...(hasActed?['attack','ability','item']:[]),...(!hasVitaeDraught?['item']:[])]
   const unitWithDefs=selectedUnit?{...selectedUnit,abilityDefs:getUnitAbilities(selectedUnit)}:null
   const inspectUnit=hoveredUnit?units.find(u=>u.id===hoveredUnit):null
   const totalBattleJp=Object.values(battleJp).reduce((s,v)=>s+v,0)
@@ -357,7 +383,8 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
         {phase===PHASE.DEFEAT&&<p style={{color:'#f87171',fontWeight:800,margin:'4px 0 0'}}>⚰ Party defeated.</p>}
         {phase===PHASE.VICTORY&&<p style={{color:'#86efac',fontWeight:800,margin:'4px 0 0'}}>✓ Victory! +{JP_AWARDS.battle_clear} JP</p>}
         {totalBattleJp>0&&<p style={{fontSize:11,color:'#c9a756',margin:'2px 0 0'}}>Battle JP: {totalBattleJp}</p>}
-        {isPlayerPhase&&!isStunned&&<p style={{fontSize:10,color:'rgba(247,240,223,.3)',margin:'6px 0 0'}}>M·Move  A·Attack  S·Ability  I·Item ({gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0})  W·Wait  Z·Undo  Esc·Cancel  Enter·Confirm  Space·SURGE</p>}
+        {isPlayerPhase&&!isStunned&&!showFacingPicker&&<p style={{fontSize:10,color:'rgba(247,240,223,.3)',margin:'6px 0 0'}}>M·Move  A·Attack  S·Ability  I·Item ({gameState.inventory?.[VITAE_DRAUGHT_ID] ?? 0})  W·Wait  Z·Undo  Esc·Cancel  Enter·Confirm  Space·SURGE</p>}
+        {showFacingPicker&&<p style={{fontSize:10,color:'rgba(247,240,223,.45)',margin:'6px 0 0'}}>Choose final facing with the panel or arrow keys.</p>}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:8,alignItems:'flex-end'}}>
         <div style={s.speedRow}>
@@ -395,7 +422,8 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
       </section>
       <aside style={s.sidebar}>
         <TurnTimeline units={units} activeUnitId={activeUnitId}/>
-        {showPicker?<AbilityPicker unit={unitWithDefs} onSelect={handleAbilityPick} onCancel={()=>{setActiveCommand(null);setSelectedAbilityId(null)}}/>
+        {showFacingPicker?<FacingPicker unit={activeUnit} onChoose={chooseFacing}/>
+          :showPicker?<AbilityPicker unit={unitWithDefs} onSelect={handleAbilityPick} onCancel={()=>{setActiveCommand(null);setSelectedAbilityId(null)}}/>
           :<CommandMenu selectedUnit={selectedUnit} activeCommand={activeCommand} disabledCommands={disabledCmds} hasMoved={hasMoved} onSelectCommand={handleCommand} onWait={handleWait} onUndoMove={handleUndoMove}/>}
         <DamageForecast preview={forecast?.preview} attacker={forecast?.attacker} target={forecast?.target} ability={forecast?.ability} reactionWarning={forecast?.reactionWarning}/>
         {inspectUnit?<UnitCard unit={inspectUnit}/>:<TerrainInfo tile={hoveredTile}/>}

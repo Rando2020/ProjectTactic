@@ -59,7 +59,8 @@ The battle screen now supports a first playable command loop:
 ```txt
 Select player unit
 → Choose Move / Attack / Ability / Item / Wait
-→ Resolve action
+→ Preview and confirm action
+→ Choose final facing
 → Defeat all enemies
 → Claim Victory
 → Apply rewards
@@ -78,6 +79,7 @@ src/game/screens/CharacterSheetScreen.jsx
 src/game/screens/JobTreeScreen.jsx
 src/game/components/TacticalGrid.jsx
 src/game/components/CommandMenu.jsx
+src/game/components/FacingPicker.jsx
 src/game/systems/objectives.js
 src/game/state/initialGameState.js
 src/game/state/progressionReducer.js
@@ -188,7 +190,7 @@ Do not add major new systems directly to the root prototype unless it is explici
 - Battle maps render from `BATTLE_MAPS`.
 - Terrain definitions come from `terrain.js`.
 - Units spawn from map data.
-- Adjacent-tile movement is supported as the first movement layer.
+- Movement range uses terrain cost, unit move, occupied tiles, and jump limits.
 - Height and terrain are visible on the board.
 - Move and Attack commands highlight valid tactical selections.
 
@@ -196,11 +198,11 @@ Do not add major new systems directly to the root prototype unless it is explici
 
 Current commands:
 
-- **Move**: reposition selected player unit to an adjacent open tile.
-- **Attack**: damage an adjacent enemy using placeholder physical pressure.
-- **Ability**: placeholder action for future job ability targeting.
-- **Item**: placeholder Vitae Draught heal.
-- **Wait**: marks the selected unit as acted.
+- **Move**: reposition selected player unit within movement range.
+- **Attack**: target enemies in weapon range with damage, hit, crit, armor, and facing preview.
+- **Ability**: use job ability data for target selection and elemental reactions.
+- **Item**: placeholder Vitae Draught heal, then choose final facing.
+- **Wait**: hold position, choose final facing, and end the unit's CT turn.
 
 ### Objective Resolution MVP
 
@@ -233,13 +235,11 @@ The combat prototype includes 32 Guardians across 8 elements and 4 tiers, includ
 
 1. Keep the browser prototype running.
 2. Stabilize the Game Shell as the default production path.
-3. Add movement range pathfinding beyond adjacent tiles.
-4. Add CT turn order and timeline UI.
-5. Add damage preview and hit confirmation.
-6. Add enemy AI and enemy intent preview.
-7. Consume inventory items during battle actions.
-8. Connect real job abilities to command targeting.
-9. Connect mission rewards to new mission and town unlocks.
-10. Add an asset registry mapping terrain, jobs, units, and enemies to placeholder art.
+3. Extract the growing battle screen into smaller phase, action, and presentation modules.
+4. Improve facing feedback on the grid and forecast panel.
+5. Consume inventory items during battle actions.
+6. Connect mission rewards to new mission and town unlocks.
+7. Add an asset registry mapping terrain, jobs, units, and enemies to placeholder art.
+8. Bring the Godot implementation closer to browser parity.
 
 See `docs/architecture/game-shell.md`, `docs/design/art-direction.md`, `docs/design/tile-manifest.md`, and `docs/design/sprite-manifest.md` for implementation direction.
