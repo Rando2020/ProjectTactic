@@ -26,9 +26,14 @@ const SPRITE_PATHS := {
 	"void_cultist": "res://assets/sprites/units/void_cultist.png",
 }
 
+const DEFAULT_BATTLE_MUSIC: AudioStream = preload("res://assets/music/steel-march-echo-battle.wav")
+
+var _battle_music_player: AudioStreamPlayer
+
 
 func _ready() -> void:
 	_setup_camera()
+	_start_battle_music()
 	# Prefer GameState's selection; @export override still works in editor
 	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
 		map_index = get_node("/root/GameState").selected_map_index
@@ -55,6 +60,25 @@ func _ready() -> void:
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
 	battle_manager.turn_started.connect(_on_turn_started)
+
+
+func _start_battle_music() -> void:
+	_battle_music_player = AudioStreamPlayer.new()
+	_battle_music_player.stream = DEFAULT_BATTLE_MUSIC
+	_battle_music_player.volume_db = -8.0
+	_battle_music_player.finished.connect(_on_battle_music_finished)
+	add_child(_battle_music_player)
+	_battle_music_player.play()
+
+
+func _on_battle_music_finished() -> void:
+	if _battle_music_player:
+		_battle_music_player.play()
+
+
+func _exit_tree() -> void:
+	if _battle_music_player:
+		_battle_music_player.stop()
 
 
 func _setup_camera() -> void:
