@@ -89,8 +89,11 @@ static func compute(active_boons: Array = []) -> Dictionary:
 
 ## Convenience: fetch bonuses for the current run from GameState.
 static func for_current_run() -> Dictionary:
-	var gs: Node = Engine.get_singleton("GameState") if Engine.has_singleton("GameState") \
-		else (Engine.get_main_loop().root.get_node_or_null("/root/GameState") if Engine.get_main_loop() else null)
+	var gs: Node = null
+	if Engine.has_singleton("GameState"):
+		gs = Engine.get_singleton("GameState")
+	elif Engine.get_main_loop():
+		gs = Engine.get_main_loop().root.get_node_or_null("/root/GameState")
 	if not gs or not gs.get("active_run") or not gs.active_run:
 		return compute([])
 	return compute(gs.active_run.active_boons)

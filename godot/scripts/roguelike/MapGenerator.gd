@@ -204,7 +204,7 @@ func _place_cluster(tiles: Array, map_w: int, map_h: int,
 		placed += 1
 
 
-func _generate_enemy_spawns(floor_num: int, count: int, map_w: int, map_h: int,
+func _generate_enemy_spawns(floor_num: int, count: int, map_w: int, _map_h: int,
 		is_boss: bool) -> Array[Dictionary]:
 	# Build weighted pool of valid enemy types for this floor
 	var pool: Array[Dictionary] = []

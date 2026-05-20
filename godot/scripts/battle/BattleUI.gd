@@ -25,7 +25,9 @@ var _tile_info_label: Label
 var _command_hint_label: Label
 var _preview_panel: PanelContainer
 var _preview_mode_label: Label
+var _preview_actor_portrait: TextureRect
 var _preview_actor_label: Label
+var _preview_target_portrait: TextureRect
 var _preview_target_label: Label
 var _preview_action_label: Label
 var _preview_amount_label: Label
@@ -276,8 +278,8 @@ func _build_side_timeline() -> void:
 func _build_action_preview_panel() -> void:
 	_preview_panel = PanelContainer.new()
 	_preview_panel.visible = false
-	_preview_panel.position = Vector2(136.0, 560.0)
-	_preview_panel.custom_minimum_size = Vector2(486.0, 132.0)
+	_preview_panel.position = Vector2(64.0, 552.0)
+	_preview_panel.custom_minimum_size = Vector2(560.0, 140.0)
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(0.035, 0.038, 0.052, 0.92)
 	st.border_color = Color(0.78, 0.66, 0.42, 0.85)
@@ -292,23 +294,55 @@ func _build_action_preview_panel() -> void:
 	root.add_theme_constant_override("separation", 5)
 	_preview_panel.add_child(root)
 
-	_preview_mode_label = _preview_label(root, "FORECAST", 11, Color(0.92, 0.78, 0.46), HORIZONTAL_ALIGNMENT_CENTER)
+	var combat_row := HBoxContainer.new()
+	combat_row.add_theme_constant_override("separation", 12)
+	root.add_child(combat_row)
+	_preview_actor_portrait = _portrait_column(combat_row, true)
+	var center := VBoxContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.add_theme_constant_override("separation", 5)
+	combat_row.add_child(center)
+	_preview_target_portrait = _portrait_column(combat_row, false)
+
+	_preview_mode_label = _preview_label(center, "FORECAST", 11, Color(0.92, 0.78, 0.46), HORIZONTAL_ALIGNMENT_CENTER)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	root.add_child(row)
+	center.add_child(row)
 	_preview_actor_label = _preview_label(row, "Actor", 13, Color(0.8, 0.9, 1.0))
 	_preview_action_label = _preview_label(row, "Action", 13, Color(1.0, 0.95, 0.72))
 	_preview_target_label = _preview_label(row, "Target", 13, Color(1.0, 0.76, 0.72))
 
 	var result_row := HBoxContainer.new()
 	result_row.add_theme_constant_override("separation", 18)
-	root.add_child(result_row)
+	center.add_child(result_row)
 	_preview_amount_label = _preview_label(result_row, "--", 28, Color(1.0, 0.92, 0.35))
 	_preview_hit_label = _preview_label(result_row, "Hit --", 12, Color(0.75, 0.95, 0.85))
 	_preview_crit_label = _preview_label(result_row, "Crit --", 12, Color(0.9, 0.75, 1.0))
 
-	_preview_note_label = _preview_label(root, "", 11, Color(0.72, 0.78, 0.84))
+	_preview_note_label = _preview_label(center, "", 11, Color(0.72, 0.78, 0.84))
 	_preview_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func _portrait_column(parent: Control, flip_h: bool) -> TextureRect:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(92.0, 114.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.07, 0.08, 0.11, 0.92)
+	st.border_color = Color(0.32, 0.34, 0.42, 0.9)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 5)
+	panel.add_theme_stylebox_override("panel", st)
+	parent.add_child(panel)
+
+	var portrait := TextureRect.new()
+	portrait.custom_minimum_size = Vector2(82.0, 104.0)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.flip_h = flip_h
+	panel.add_child(portrait)
+	return portrait
 
 
 func _preview_label(parent: Control, text: String, font_size: int, color: Color,
@@ -552,6 +586,17 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	_preview_hit_label.text = "Hit %s" % preview.get("hit", "--")
 	_preview_crit_label.text = "Crit %s" % preview.get("crit", "--")
 	_preview_note_label.text = str(preview.get("note", ""))
+	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait", "")))
+	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait", "")))
+
+
+func _set_preview_portrait(rect: TextureRect, path: String) -> void:
+	if not rect:
+		return
+	if path.is_empty():
+		rect.texture = null
+		return
+	rect.texture = load(path)
 
 
 func _on_battle_started(display_name: String, objective: String) -> void:

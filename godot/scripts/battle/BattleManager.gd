@@ -643,6 +643,11 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 	var unit: Unit = units.get(active_unit_id)
 	if not unit:
 		return
+	if active_command in ["attack", "ability_target"]:
+		var clicked_unit := _unit_at_pos(grid_pos)
+		if clicked_unit:
+			_on_unit_clicked(clicked_unit.unit_id)
+			return
 	if active_command == "move" and grid_pos in tactical_grid.move_tiles:
 		is_resolving_action = true
 		var old_pos := unit.grid_pos
@@ -678,24 +683,33 @@ func _on_unit_clicked(unit_id: String) -> void:
 		var target:   Unit = units.get(unit_id)
 		if not attacker or not target or target.team == attacker.team or target.hp <= 0:
 			return
-		if target.grid_pos in tactical_grid.attack_tiles:
-			var tile_att := tactical_grid.get_tile(attacker.grid_pos)
-			var tile_tar := tactical_grid.get_tile(target.grid_pos)
-			var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
-			var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
-			tactical_grid.clear_highlights()
-			active_command = ""
-			if result.get("missed", false):
-				log_message.emit("%s swings but misses! (blind)" % attacker.display_name)
-			else:
-				var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
-					else (" [flank]" if result.get("flank","") == "side" else "")
-				log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
-			if result.get("counter", false):
-				get_tree().create_timer(0.6).timeout.connect(
-					func() -> void: _execute_counter_attack(target, attacker))
-			active_unit_has_acted = true
-			_end_player_turn()
+		if target.grid_pos not in tactical_grid.attack_tiles:
+			var distance := GridSystem.manhattan(attacker.grid_pos, target.grid_pos)
+			log_message.emit("%s is out of range." % target.display_name)
+			command_hint_changed.emit("Target is %d tiles away. Attack range is %d-%d. Choose another target, Move, Ability, or Wait." % [
+				distance,
+				attacker.unit_data.base_stats.attack_range_min,
+				attacker.unit_data.base_stats.attack_range_max,
+			])
+			action_preview_changed.emit({})
+			return
+		var tile_att := tactical_grid.get_tile(attacker.grid_pos)
+		var tile_tar := tactical_grid.get_tile(target.grid_pos)
+		var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
+		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
+		tactical_grid.clear_highlights()
+		active_command = ""
+		if result.get("missed", false):
+			log_message.emit("%s swings but misses! (blind)" % attacker.display_name)
+		else:
+			var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
+				else (" [flank]" if result.get("flank","") == "side" else "")
+			log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
+		if result.get("counter", false):
+			get_tree().create_timer(0.6).timeout.connect(
+				func() -> void: _execute_counter_attack(target, attacker))
+		active_unit_has_acted = true
+		_end_player_turn()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		var target: Unit = units.get(unit_id)
 		if not target or target.hp <= 0:
@@ -713,6 +727,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 		if not valid_target:
 			return
 		if target.grid_pos not in tactical_grid.ability_tiles:
+			command_hint_changed.emit("%s is outside %s range." % [target.display_name, ability.get("display_name", selected_ability_id)])
+			action_preview_changed.emit({})
 			return
 		if ability.has("aoe_type"):
 			_execute_aoe_ability(caster, target.grid_pos, ability)
@@ -754,7 +770,9 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 		"visible": true,
 		"mode": "Move",
 		"actor": unit.display_name,
+		"actor_portrait": _portrait_path(unit),
 		"target": "%d,%d" % [grid_pos.x, grid_pos.y],
+		"target_portrait": "",
 		"action": "Reposition",
 		"amount_label": "No damage",
 		"hit": "100%",
@@ -777,7 +795,9 @@ func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
 		"visible": true,
 		"mode": "Attack",
 		"actor": attacker.display_name,
+		"actor_portrait": _portrait_path(attacker),
 		"target": target.display_name,
+		"target_portrait": _portrait_path(target),
 		"action": "Basic attack",
 		"amount_label": "%d damage" % amount,
 		"hit": "95%",
@@ -821,7 +841,9 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 		"visible": true,
 		"mode": "Ability",
 		"actor": caster.display_name,
+		"actor_portrait": _portrait_path(caster),
 		"target": target_name,
+		"target_portrait": _portrait_path(target) if target else "",
 		"action": ability.get("display_name", selected_ability_id),
 		"amount_label": amount_label,
 		"hit": "100%",
@@ -840,7 +862,11 @@ func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Diction
 				raw *= pfx.get("conditional",{}).get("dmg", 1.25)
 	var att_h: int = tile_attacker.get("height", 0)
 	var tar_h: int = tile_target.get("height", 0)
-	var height_m: float = 1.15 if att_h > tar_h else (0.9 if att_h < tar_h else 1.0)
+	var height_m: float = 1.0
+	if att_h > tar_h:
+		height_m = 1.15
+	elif att_h < tar_h:
+		height_m = 0.9
 	return max(0, int(round(raw * height_m * _get_flank_multiplier(attacker, target))))
 
 
@@ -904,6 +930,16 @@ func _affinity_label(target: Unit, spell_type: String) -> String:
 	if affinity < 1.0:
 		return "Resist"
 	return "Normal"
+
+
+func _portrait_path(unit: Unit) -> String:
+	if not unit or not unit.unit_data:
+		return ""
+	if unit.unit_data.portrait:
+		return unit.unit_data.portrait.resource_path
+	if unit.unit_data.sprite_sheet:
+		return unit.unit_data.sprite_sheet.resource_path
+	return ""
 
 
 func _on_unit_defeated(unit_id: String) -> void:

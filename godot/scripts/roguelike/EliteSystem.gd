@@ -100,9 +100,9 @@ func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor_num: 
 	var hp_mult: float = td["hp_mult"]
 	for p in prefixes:
 		hp_mult *= p.get("stats",{}).get("hp_mult", 1.0)
-	result["hp"]         = roundi(spawn.get("hp", 100) * hp_mult)
-	result["max_temper"] = roundi(spawn.get("max_temper", 50) * td["hp_mult"])
-	result["max_ether"]  = roundi(spawn.get("max_ether", 50) * td["hp_mult"])
+	result["hp"]         = roundi(float(spawn.get("hp", 100)) * hp_mult)
+	result["max_temper"] = roundi(float(spawn.get("max_temper", 50)) * float(td["hp_mult"]))
+	result["max_ether"]  = roundi(float(spawn.get("max_ether", 50)) * float(td["hp_mult"]))
 
 	result["elite_tier"]  = tier
 	result["elite_color"] = td["col"]
@@ -160,9 +160,9 @@ func _apply_tier(spawn: Dictionary, tier: String) -> Dictionary:
 	result["name"] = ("%s %s%s" % [pre_str, spawn.get("name","Enemy"), suf_str]).strip_edges()
 	var hp_mult: float = td["hp_mult"]
 	for p in prefixes: hp_mult *= p.get("stats",{}).get("hp_mult", 1.0)
-	result["hp"]         = roundi(spawn.get("hp", 100) * hp_mult)
-	result["max_temper"] = roundi(spawn.get("max_temper", 50) * td["hp_mult"])
-	result["max_ether"]  = roundi(spawn.get("max_ether", 50) * td["hp_mult"])
+	result["hp"]         = roundi(float(spawn.get("hp", 100)) * hp_mult)
+	result["max_temper"] = roundi(float(spawn.get("max_temper", 50)) * float(td["hp_mult"]))
+	result["max_ether"]  = roundi(float(spawn.get("max_ether", 50)) * float(td["hp_mult"]))
 	result["elite_tier"] = tier; result["elite_color"] = td["col"]
 	result["jp_mult"]    = spawn.get("jp_mult", 1.0) * td["jp_mult"]
 	result["prefixes"]   = prefixes; result["suffixes"] = suffixes
