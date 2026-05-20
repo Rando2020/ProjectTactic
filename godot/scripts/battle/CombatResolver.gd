@@ -8,6 +8,7 @@ extends Node
 signal combat_resolved(result: Dictionary)
 
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
+const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 
 
 func resolve_attack(attacker: Unit, target: Unit,
@@ -94,7 +95,7 @@ func resolve_spell(caster: Unit, target: Unit,
 	var raw: float = caster.unit_data.base_stats.magic * (base_power / 100.0)
 
 	# ── Boon elemental bonus ────────────────────────────────────────────
-	var bonuses := RunBonuses.for_current_run()
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = bonuses["elemental_mult"].get(spell_type, 1.0)
 	raw *= el_mult
 
@@ -161,7 +162,7 @@ func resolve_spell(caster: Unit, target: Unit,
 
 func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	# Heal bonus from boons
-	var bonuses := RunBonuses.for_current_run()
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	heal_amount += bonuses["heal_bonus"]
 
 	target.heal(heal_amount)
@@ -210,7 +211,12 @@ func _apply_elite_on_hit(attacker: Unit, target: Unit, damage_dealt: int) -> voi
 					var turns: int    = oh.get("turns", 2)
 					var immune: bool  = target.get_meta("status_immune", false) if target.has_meta("status_immune") else false
 					if not immune and not target.has_status(sid):
-						target.apply_status(sid, turns, 0.0)
+						var status := StatusEffect.new()
+						status.status_id = sid
+						status.display_name = sid.capitalize()
+						status.duration = turns
+						status.magnitude = 0.0
+						target.apply_status(status)
 						if vfx_n: (vfx_n as VFXManager).play_damage_number(
 							target.grid_pos, 0, Color(0.9,0.4,0.1))
 

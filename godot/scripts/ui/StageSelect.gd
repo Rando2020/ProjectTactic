@@ -231,14 +231,31 @@ func _on_boon_picked(boon: Dictionary) -> void:
 		_gs.active_run.active_boons.append(boon)
 	_gs.pending_boon_offers.clear()
 	_gs.active_run.complete_current_node()
+	_apply_between_battle_heal()
 	if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
 	_build_ui()
 
 func _on_boon_skip() -> void:
 	if _gs: _gs.pending_boon_offers.clear()
 	if _gs and _gs.active_run: _gs.active_run.complete_current_node()
+	_apply_between_battle_heal()
 	if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
 	_build_ui()
+
+## Apply Swift Recovery and other between-battle heals from boons.
+func _apply_between_battle_heal() -> void:
+	if not _gs or not _gs.active_run: return
+	var bonuses := RunBonuses.for_current_run()
+	var pct: float = bonuses.get("between_battle_heal", 0.0)
+	if pct <= 0.0: return
+	var gs: Node = get_node_or_null("/root/GameState")
+	if not gs: return
+	for uid in gs.unit_registry:
+		var reg: Dictionary = gs.unit_registry[uid]
+		var max_hp: int = reg.get("base_hp", 200)
+		var heal: int   = int(float(max_hp) * pct)
+		if heal > 0:
+			reg["current_hp"] = min(max_hp, reg.get("current_hp", max_hp) + heal)
 
 func _on_loot_continue() -> void:
 	if _gs: _gs.pending_loot.clear()

@@ -15,6 +15,8 @@ signal tile_info_changed(text: String)
 signal battle_started(display_name: String, objective: String)
 signal command_hint_changed(text: String)
 
+const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
 @onready var tactical_grid: TacticalGrid = $TacticalGrid
@@ -429,7 +431,7 @@ func _award_jp(unit: Unit, event_type: String) -> void:
 	var js := JobSystem.new()
 	var base_jp: int = js.get_jp_award(event_type)
 	if base_jp <= 0: return
-	var bonuses := RunBonuses.for_current_run()
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var total_jp: int = int(ceil(float(base_jp) * bonuses["jp_multiplier"]))
 	var char_data: Dictionary = gs.unit_registry[uid]
 	var job_id: String = char_data.get("current_job_id", "")
@@ -451,7 +453,7 @@ func _check_volatile_explosion(dead_unit: Unit) -> void:
 		var dmg: int = od.get("damage", 45)
 		log_message.emit("💥 %s EXPLODES! %d fire dmg to adjacent!" % [dead_unit.display_name, dmg])
 		var dirs := [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1),
-				     Vector2i(1,1),Vector2i(1,-1),Vector2i(-1,1),Vector2i(-1,-1)]
+					 Vector2i(1,1),Vector2i(1,-1),Vector2i(-1,1),Vector2i(-1,-1)]
 		for d in dirs:
 			var nb: Vector2i = dead_unit.grid_pos + d
 			for u: Unit in units:
@@ -465,7 +467,7 @@ func _check_volatile_explosion(dead_unit: Unit) -> void:
 
 ## Handle boon on-kill effects (Champion's Grit, Vaelthorn kills).
 func _check_boon_on_kill(killer: Unit, dead_unit: Unit) -> void:
-	var bonuses := RunBonuses.for_current_run()
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var is_elite: bool = dead_unit.has_meta("elite_tier") and dead_unit.get_meta("elite_tier","") != ""
 	if is_elite:
 		# Champion's Grit: heal killer
@@ -544,7 +546,26 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 			int(tile.get("height", 0)),
 			int(tile.get("move_cost", 1)),
 		])
+	if active_command == "move":
+		var mover: Unit = units.get(active_unit_id)
+		if mover and grid_pos in tactical_grid.move_tiles:
+			var occupied: Array = []
+			for uid in units:
+				var u: Unit = units[uid]
+				if u.unit_id != mover.unit_id and u.hp > 0:
+					occupied.append(u.grid_pos)
+			var path := GridSystem.find_path(
+				mover.grid_pos, grid_pos, tactical_grid.tiles, occupied,
+				map_data.map_width, map_data.map_height
+			)
+			if path.size() > 1:
+				path.pop_front()
+			tactical_grid.show_path_preview(path)
+		else:
+			tactical_grid.clear_path_preview()
+		return
 	if active_command != "ability_target" or selected_ability_id == "":
+		tactical_grid.clear_path_preview()
 		tactical_grid.clear_aoe_preview()
 		return
 	var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)

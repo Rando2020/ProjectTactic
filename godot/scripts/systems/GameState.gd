@@ -32,6 +32,13 @@ var story_flags:          Array[String] = []
 var pending_loot:         Array = []
 var pending_boon_offers:  Array = []
 
+## Items accumulated during the current run
+var run_inventory:        Array = []
+## Highest floor reached this run (for ResultsScreen)
+var run_floor_reached:    int   = 0
+## Total JP earned this run (for ResultsScreen)
+var run_jp_earned:        int   = 0
+
 ## Per-unit persistent data.
 ## unit_id -> {
 ##   display_name      : String,

@@ -51,6 +51,11 @@ func _ready() -> void:
 		_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 
 	tactical_grid.initialize_from_map(_map_data)
+
+	# Apply boon battle-start effects (Ignareth Unchained, Vaelthorn, etc.)
+	if gs and gs.active_run:
+		_apply_boon_battle_start_effects(gs)
+		gs.run_floor_reached = max(gs.run_floor_reached, gs.active_run.current_floor)
 	_frame_battlefield_camera()
 
 	var player_units := _spawn_player_units()
@@ -168,7 +173,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			if is_boss:
 				rm.end_run(true)
 				await get_tree().create_timer(1.8).timeout
-				get_tree().change_scene_to_file("res://scenes/HubScene.tscn")
+				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
 				return
 
 		if gs.active_run:
@@ -176,6 +181,8 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			var ls    := LootSystem.new()
 			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
 			gs.pending_loot = loot
+			# Accumulate into run inventory
+			for item in loot: gs.run_inventory.append(item)
 			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
 			gs.active_run.elite_kills += elite_n
 			gs.active_run.complete_current_node()
@@ -296,6 +303,50 @@ func _create_crypt_map() -> MapData:
 
 
 # ── Unit spawning ─────────────────────────────────────────────────────────────
+
+func _apply_boon_battle_start_effects(gs: Node) -> void:
+	var bonuses := RunBonuses.for_current_run()
+	var effects: Array = bonuses.get("battle_start_effects", [])
+	for fx: Dictionary in effects:
+		match fx.get("trigger",""):
+
+			"ignite_all_terrain":
+				# Ignareth Unchained — all natural terrain becomes burning
+				for pos in tactical_grid.tiles.keys():
+					var t: String = tactical_grid.tiles[pos].get("terrain","")
+					if t in ["grass","road","brush"]:
+						tactical_grid.tiles[pos]["terrain"] = "burning"
+						if elemental_system: elemental_system.surface_states[pos] = "burning"
+				log_message.emit("🔥 Ignareth Unchained — all terrain ignites!")
+
+			"vaelthorn_curse_all":
+				# Vaelthorn Unchained — all enemies start Cursed (2t)
+				for unit in units:
+					if unit.team == "enemy" and unit.hp > 0:
+						unit.apply_status("burn", 2, 0.0)
+				log_message.emit("💀 Vaelthorn Unchained — all enemies are Cursed!")
+
+			"summon_tide":
+				# Nerevan's Veil — 3x3 water at centre
+				var cx: int = int(tactical_grid.map_data.map_width / 2)
+				var cy: int = int(tactical_grid.map_data.map_height / 2)
+				for dx in range(-1, 2):
+					for dy in range(-1, 2):
+						var p := Vector2i(cx+dx, cy+dy)
+						if tactical_grid.tiles.has(p):
+							tactical_grid.tiles[p]["terrain"] = "shallow_water"
+							if elemental_system: elemental_system.surface_states[p] = "wet"
+				log_message.emit("🌊 Nerevan's Veil — a tide rises!")
+
+			"vaelthorn_bargain":
+				# Vaelthorn's Bargain — sacrifice HP for damage bonus
+				var cost: float = fx.get("hp_cost", 0.2)
+				for unit in units:
+					if unit.team == "player":
+						var sacrifice: int = int(float(unit.unit_data.base_stats.hp) * cost)
+						unit.hp = max(1, unit.hp - sacrifice)
+				log_message.emit("💀 Vaelthorn's Bargain — HP sacrificed for power!")
+
 
 func _spawn_player_units() -> Array[Unit]:
 	var gs: Node = get_node_or_null("/root/GameState")

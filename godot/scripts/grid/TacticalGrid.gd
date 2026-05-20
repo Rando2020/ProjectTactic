@@ -42,6 +42,7 @@ var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
 var aoe_preview_tiles: Array[Vector2i] = []
+var path_preview_tiles: Array[Vector2i] = []
 var selected_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_team: String = ""
@@ -394,6 +395,18 @@ func show_aoe_preview(positions: Array[Vector2i]) -> void:
 	_refresh_highlights()
 
 
+func show_path_preview(positions: Array[Vector2i]) -> void:
+	path_preview_tiles = positions
+	_refresh_highlights()
+
+
+func clear_path_preview() -> void:
+	if path_preview_tiles.is_empty():
+		return
+	path_preview_tiles.clear()
+	_refresh_highlights()
+
+
 func clear_aoe_preview() -> void:
 	if aoe_preview_tiles.is_empty():
 		return
@@ -412,6 +425,7 @@ func clear_highlights() -> void:
 	attack_tiles.clear()
 	ability_tiles.clear()
 	aoe_preview_tiles.clear()
+	path_preview_tiles.clear()
 	selected_tile = Vector2i(-1, -1)
 	_refresh_highlights()
 
@@ -421,6 +435,11 @@ func _refresh_highlights() -> void:
 		child.queue_free()
 	for pos in move_tiles:
 		_add_highlight(pos, Color(0.0, 0.85, 1.0, 0.48), 0.90)
+	for i in path_preview_tiles.size():
+		var pos: Vector2i = path_preview_tiles[i]
+		var alpha: float = 0.38 + min(float(i) * 0.035, 0.26)
+		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.62)
+		_add_path_step_badge(pos, i + 1)
 	for pos in attack_tiles:
 		_add_highlight(pos, Color(1.0, 0.35, 0.0, 0.50), 0.90)
 	for pos in ability_tiles:
@@ -482,6 +501,21 @@ func _add_tile_badge(pos: Vector2i, text: String, color: Color) -> void:
 	badge.position = _grid_to_local(pos) + Vector2(-29.0, -12.0)
 	badge.modulate = Color(1.0, 1.0, 1.0, min(color.a + 0.18, 1.0))
 	badge.z_index = _depth_for(pos) + 60
+	highlight_layer.add_child(badge)
+
+
+func _add_path_step_badge(pos: Vector2i, step: int) -> void:
+	var badge := Label.new()
+	badge.text = str(step)
+	badge.add_theme_font_size_override("font_size", 10)
+	badge.add_theme_color_override("font_color", Color(0.0, 0.08, 0.08))
+	badge.add_theme_color_override("font_outline_color", Color(0.55, 1.0, 0.95))
+	badge.add_theme_constant_override("outline_size", 3)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.size = Vector2(24.0, 18.0)
+	badge.position = _grid_to_local(pos) + Vector2(-12.0, -9.0)
+	badge.z_index = _depth_for(pos) + 62
 	highlight_layer.add_child(badge)
 
 
