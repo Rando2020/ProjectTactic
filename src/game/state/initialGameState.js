@@ -34,7 +34,7 @@ export function createInitialGameState() {
   return {
     version: 1,
     mode: 'world',
-    currentScreen: 'worldMap',
+    currentScreen: 'town',
     activeMissionId: STARTING_MISSION_ID,
     storyFlags: ['new_game_started'],
     completedMissions: [],
@@ -60,6 +60,7 @@ export function createInitialGameState() {
     pendingLoot: null,
     claimedRunItems: [],
     learnedSecretSkills: [],
+    lastRunSummary: null,
     lastResult: null,
   }
 }

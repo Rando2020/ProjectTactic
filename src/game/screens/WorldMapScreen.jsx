@@ -1,16 +1,16 @@
 import { BATTLE_MAPS } from '../data/maps.js'
 
-export default function WorldMapScreen({ gameState, selectMission, setScreen }) {
+export default function WorldMapScreen({ gameState, selectMission, setScreen, onStartStageRun }) {
   const missions = Object.values(BATTLE_MAPS).filter((mission) => gameState.unlockedMissions.includes(mission.id))
 
   return (
     <main className="game-panel">
       <div className="screen-header">
         <div>
-          <p className="eyebrow">Campaign route</p>
-          <h2>World Map</h2>
+          <p className="eyebrow">Stage select</p>
+          <h2>Choose a 10-floor descent</h2>
         </div>
-        <button onClick={() => setScreen('town')}>Visit Town</button>
+        <button onClick={() => setScreen('town')}>Back to Hub</button>
       </div>
 
       <div className="card-grid">
@@ -24,7 +24,10 @@ export default function WorldMapScreen({ gameState, selectMission, setScreen }) 
               <li>Enemies: {mission.enemySpawns.length}</li>
               <li>Rewards: {mission.rewards.gold}g, {mission.rewards.jp} JP</li>
             </ul>
-            <button onClick={() => selectMission(mission.id)}>Deploy</button>
+            <div className="button-row">
+              <button onClick={() => onStartStageRun(mission.id)}>Start 10-Floor Run</button>
+              <button onClick={() => selectMission(mission.id)}>Practice Battle</button>
+            </div>
           </article>
         ))}
       </div>

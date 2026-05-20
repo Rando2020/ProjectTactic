@@ -48,8 +48,17 @@ func _rng() -> float:
 	_s = (_s * 1664525 + 1013904223) & 0xffffffff
 	return float(_s & 0xffffffff) / 4294967296.0
 
-func get_rates(floor: int) -> Dictionary:
-	return FLOOR_RATES[clamp(floor - 1, 0, FLOOR_RATES.size() - 1)]
+## Get elite spawn rates for a floor, scaled by heat level.
+## heat_level 0 = base, each +1 shifts 3% from normal → champion.
+func get_rates(floor: int, heat_level: int = 0) -> Dictionary:
+	var base := FLOOR_RATES[clamp(floor - 1, 0, FLOOR_RATES.size() - 1)].duplicate()
+	if heat_level <= 0: return base
+	# Each heat level shifts 3% of normal chance to harder tiers
+	var shift := minf(base["normal"] - 0.05, float(heat_level) * 0.03)
+	base["normal"]   = base["normal"]   - shift
+	base["elite"]    = base["elite"]    + shift * 0.5
+	base["champion"] = base["champion"] + shift * 0.5
+	return base
 
 func roll_tier(unit_seed: int, floor: int) -> String:
 	_s = unit_seed & 0xffffffff; if _s == 0: _s = 1
@@ -114,10 +123,53 @@ func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor: int)
 	return result
 
 ## Apply to all spawns in a list.
-func apply_to_floor(spawns: Array, run_seed: int, floor: int) -> Array:
+func apply_to_floor(spawns: Array, run_seed: int, floor: int, heat_level: int = 0) -> Array:
 	var result: Array = []
 	var idx := 0
 	for s in spawns:
-		result.append(apply_to_spawn(s.duplicate(true), run_seed, idx, floor))
+		result.append(apply_to_spawn_with_heat(s.duplicate(true), run_seed, idx, floor, heat_level))
 		idx += 1
+	return result
+
+func apply_to_spawn_with_heat(spawn: Dictionary, run_seed: int, unit_idx: int,
+		floor: int, heat_level: int) -> Dictionary:
+	var useed := (run_seed * 31 + unit_idx * 7919) & 0xffffffff
+	var tier  := _roll_tier_with_rates(useed, get_rates(floor, heat_level))
+	if tier == "normal": return spawn
+	_s = useed; return _apply_tier(spawn, tier)
+
+func _roll_tier_with_rates(unit_seed: int, rates: Dictionary) -> String:
+	_s = unit_seed & 0xffffffff; if _s == 0: _s = 1
+	var r := _rng()
+	if r < rates["champion"]: return "champion"
+	r -= rates["champion"]
+	if r < rates["elite"]: return "elite"
+	r -= rates["elite"]
+	if r < rates["marked"]: return "marked"
+	return "normal"
+
+func _apply_tier(spawn: Dictionary, tier: String) -> Dictionary:
+	var td := TIERS[tier]
+	var result := spawn.duplicate(true)
+	var pre_copy := PREFIXES.duplicate(); pre_copy.shuffle()
+	var prefixes := pre_copy.slice(0, 2 if tier == "champion" else 1)
+	var suffixes: Array = []
+	if tier != "marked": suffixes.append(SUFFIXES[int(_rng() * SUFFIXES.size())])
+	var pre_str := " ".join(prefixes.map(func(p: Dictionary) -> String: return p["label"]))
+	var suf_str := (" " + suffixes[0]["label"]) if suffixes.size() > 0 else ""
+	result["name"] = ("%s %s%s" % [pre_str, spawn.get("name","Enemy"), suf_str]).strip_edges()
+	var hp_mult: float = td["hp_mult"]
+	for p in prefixes: hp_mult *= p.get("stats",{}).get("hp_mult", 1.0)
+	result["hp"]         = roundi(spawn.get("hp", 100) * hp_mult)
+	result["max_temper"] = roundi(spawn.get("max_temper", 50) * td["hp_mult"])
+	result["max_ether"]  = roundi(spawn.get("max_ether", 50) * td["hp_mult"])
+	result["elite_tier"] = tier; result["elite_color"] = td["col"]
+	result["jp_mult"]    = spawn.get("jp_mult", 1.0) * td["jp_mult"]
+	result["prefixes"]   = prefixes; result["suffixes"] = suffixes
+	var dmg_mult := 1.0
+	for p in prefixes: dmg_mult *= p.get("stats",{}).get("dmg_mult", 1.0)
+	if dmg_mult > 1.0: result["dmg_mult"] = dmg_mult
+	for suf in suffixes:
+		if suf.get("status_immune", false): result["status_immune"] = true
+		if suf.has("dodge"): result["dodge_chance"] = suf["dodge"]
 	return result

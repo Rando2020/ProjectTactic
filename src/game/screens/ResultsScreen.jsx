@@ -1,5 +1,6 @@
 export default function ResultsScreen({ gameState, setScreen, persistGame }) {
   const result = gameState.lastResult
+  const runSummary = gameState.lastRunSummary
   const totalJpByCharacter = result?.rewards?.totalJpByCharacter ?? {}
   const battleJp = result?.rewards?.battleJp ?? {}
   const clearBonus = result?.rewards?.clearBonus ?? 0
@@ -8,17 +9,47 @@ export default function ResultsScreen({ gameState, setScreen, persistGame }) {
     <main className="game-panel">
       <div className="screen-header">
         <div>
-          <p className="eyebrow">Mission complete</p>
-          <h2>{result?.missionName ?? 'Battle Results'}</h2>
+          <p className="eyebrow">{runSummary ? 'Run complete' : 'Mission complete'}</p>
+          <h2>{runSummary?.stageName ?? result?.missionName ?? 'Battle Results'}</h2>
         </div>
         <div className="button-row">
           <button onClick={persistGame}>Save Progress</button>
-          <button onClick={() => setScreen('worldMap')}>Return to World</button>
+          <button onClick={() => setScreen('town')}>Return to Hub</button>
         </div>
       </div>
 
-      {!result && <p>No mission result recorded yet.</p>}
-      {result && (
+      {runSummary && (
+        <div className="card-grid">
+          <article className="content-card">
+            <h3>{runSummary.status === 'victory' ? 'Descent Cleared' : 'Run Failed'}</h3>
+            <ul>
+              <li>Floors: {runSummary.floorsCleared}/{runSummary.totalFloors}</li>
+              <li>Run Gold: {runSummary.runGold}</li>
+              <li>Boons: {runSummary.boons.length}</li>
+              <li>Equipment Drops: {runSummary.items.length}</li>
+            </ul>
+          </article>
+
+          <article className="content-card">
+            <h3>Boons</h3>
+            {runSummary.boons.length === 0 && <p>No boons collected.</p>}
+            <ul>
+              {runSummary.boons.map((boon) => <li key={boon.id}>{boon.name} - {boon.rarity}</li>)}
+            </ul>
+          </article>
+
+          <article className="content-card">
+            <h3>Spoils</h3>
+            {runSummary.items.length === 0 && <p>No equipment drops collected.</p>}
+            <ul>
+              {runSummary.items.map((item) => <li key={item.id}>{item.name} - {item.rarity}</li>)}
+            </ul>
+          </article>
+        </div>
+      )}
+
+      {!runSummary && !result && <p>No mission result recorded yet.</p>}
+      {!runSummary && result && (
         <div className="card-grid">
           <article className="content-card">
             <h3>Rewards</h3>

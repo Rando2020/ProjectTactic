@@ -1,7 +1,12 @@
 import { BOONS, BOON_RARITIES } from '../data/boons.js'
 import { WANDERERS, getWanderersForFloor } from '../data/wanderers.js'
 
-const FLOOR_MAPS = { 1:['ashvale_road_01'], 2:['mirefen_marsh_01','ashvale_road_01'], 3:['thornspire_vault_01','mirefen_marsh_01'], 4:['thornspire_vault_01'] }
+const FLOOR_MAPS = {
+  1: ['ashvale_road_01'],
+  2: ['mirefen_marsh_01', 'ashvale_road_01'],
+  3: ['mirefen_marsh_01', 'ashvale_road_01'],
+  4: ['mirefen_marsh_01', 'ashvale_road_01'],
+}
 
 function seededRng(seed) {
   let s=(seed>>>0)||1
@@ -36,35 +41,36 @@ function generateWandererEvent(rng, floor) {
   return { type:'wanderer', wanderer, floor }
 }
 
-function generateBattle(floorNum, rng, isElite=false, isBoss=false) {
-  const pool = FLOOR_MAPS[floorNum] ?? FLOOR_MAPS[1]
+function generateBattle(floorNum, rng, isElite=false, isBoss=false, preferredMapId=null) {
+  const pool = preferredMapId ? [preferredMapId, ...(FLOOR_MAPS[floorNum] ?? FLOOR_MAPS[1]).filter(id => id !== preferredMapId)] : FLOOR_MAPS[floorNum] ?? FLOOR_MAPS[1]
   return { type:isBoss?'boss':isElite?'elite_battle':'battle', mapId:pickRng(pool,rng), eliteRateBonus:isElite?0.5:isBoss?1.0:0, completed:false }
 }
 
-export function generateRun(seed, floors=4) {
+export function generateRun(seed, floors=10, stage={}) {
   const rng  = seededRng(seed)
   const plan = []
+  const preferredMapId = stage.missionId ?? null
   for (let f=1;f<=floors;f++) {
     const nodes=[]
     if (f===floors) {
-      nodes.push(generateBattle(f,rng,false,true))
+      nodes.push(generateBattle(f,rng,false,true,preferredMapId))
     } else if (f===1) {
-      nodes.push(generateBattle(f,rng))
+      nodes.push(generateBattle(f,rng,false,false,preferredMapId))
       nodes.push(generateBoonPick(rng,f))
     } else if (f===2) {
-      nodes.push(generateBattle(f,rng))
+      nodes.push(generateBattle(f,rng,false,false,preferredMapId))
       nodes.push(generateWandererEvent(rng,f))  // wanderer replaces generic event
-      nodes.push(generateBattle(f,rng))
+      nodes.push(generateBattle(f,rng,false,false,preferredMapId))
       nodes.push(generateBoonPick(rng,f))
     } else {
-      nodes.push(generateBattle(f,rng))
+      nodes.push(generateBattle(f,rng,false,false,preferredMapId))
       nodes.push(generateWandererEvent(rng,f))  // wanderer on deeper floors
-      nodes.push(generateBattle(f,rng,true))
+      nodes.push(generateBattle(f,rng,true,false,preferredMapId))
       nodes.push(generateBoonPick(rng,f))
     }
     plan.push({ floor:f, nodes, completed:false })
   }
-  return { runId:`run_${seed.toString(36)}`, seed, totalFloors:floors, currentFloor:1, currentNodeIndex:0, plan, activeBoons:[], equipment:{}, elitesSlain:0, runGold:0, deaths:0, startedAt:Date.now() }
+  return { runId:`run_${seed.toString(36)}`, seed, stageId:stage.missionId??'ashvale_road_01', stageName:stage.name??'Guardian Descent', totalFloors:floors, currentFloor:1, currentNodeIndex:0, plan, activeBoons:[], equipment:{}, elitesSlain:0, runGold:0, deaths:0, startedAt:Date.now() }
 }
 
 export function getCurrentNode(run) {

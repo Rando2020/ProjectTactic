@@ -10,10 +10,21 @@ export default function TownScreen({ gameState, setScreen }) {
       <div className="screen-header">
         <div>
           <p className="eyebrow">Preparation hub</p>
-          <h2>Towns</h2>
+          <h2>Hub</h2>
         </div>
-        <button onClick={() => setScreen('worldMap')}>Return to World</button>
+        <button onClick={() => setScreen('worldMap')}>Stage Select</button>
       </div>
+
+      <section className="content-card" style={{ marginBottom: 18 }}>
+        <p className="eyebrow">Run flow</p>
+        <h3>Choose a stage, clear 10 floors, bank the spoils.</h3>
+        <p>Winning a run shows the full spoils report. Losing a battle returns the party here and the run starts over.</p>
+        <div className="button-row">
+          <button onClick={() => setScreen('worldMap')}>Choose Stage</button>
+          <button onClick={() => setScreen('party')}>Party</button>
+          <button onClick={() => setScreen('inventory')}>Inventory</button>
+        </div>
+      </section>
 
       <div className="card-grid">
         {towns.length === 0 && <p>No towns unlocked yet.</p>}

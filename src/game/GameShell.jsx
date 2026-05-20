@@ -28,6 +28,16 @@ import InnScreen            from './components/InnScreen.jsx'
 
 const BATTLE_SCREENS = new Set(['deployment','battle'])
 const NAV = [['Menu','mainMenu'],['World','worldMap'],['Run','runMap'],['Town','town'],['Party','party'],['Jobs','jobTree'],['Inventory','inventory'],['Codex','codex'],['Summons','summons'],['Quests','quests']]
+const RUN_FLOORS = 10
+
+function hubState(state) {
+  return {
+    ...state,
+    currentScreen: 'town',
+    activeRun: null,
+    pendingLoot: null,
+  }
+}
 
 export default function GameShell() {
   const [gameState, setGameState] = useState(() => loadGame() ?? createInitialGameState())
@@ -36,8 +46,8 @@ export default function GameShell() {
   const activeMission = useMemo(() => getBattleMap(gameState.activeMissionId), [gameState.activeMissionId])
 
   function setScreen(s) { setGameState(g => ({ ...g, currentScreen: s })) }
-  function startNewGame() { setGameState(createInitialGameState()); setNotice('New campaign started.') }
-  function continueGame() { const s=loadGame(); if(s){setGameState(s);setNotice('Save loaded.')}else startNewGame() }
+  function startNewGame() { setGameState(hubState(createInitialGameState())); setDeploymentSlots(null); setNotice('New campaign started at the hub.') }
+  function continueGame() { const s=loadGame(); if(s){setGameState(hubState(s));setDeploymentSlots(null);setNotice('Save loaded. Returned to hub.')}else startNewGame() }
   function persistGame() { saveGame(gameState); setNotice('Game saved.') }
   function clearSave() { deleteSave(); setNotice('Save deleted.') }
 
@@ -70,15 +80,36 @@ export default function GameShell() {
     setNotice(gameState.activeRun ? 'Victory! Loot is ready.' : 'Victory! Rewards collected.')
   }
 
-  function startRun() {
+  function startRun(stageMissionId = gameState.activeMissionId) {
     const seed = Date.now() >>> 0
+    const stage = getBattleMap(stageMissionId) ?? getBattleMap(gameState.activeMissionId)
     setGameState(g => ({
       ...g,
-      activeRun: generateRun(seed),
+      activeMissionId: stage?.id ?? g.activeMissionId,
+      activeRun: generateRun(seed, RUN_FLOORS, { missionId: stage?.id, name: stage?.name }),
       pendingLoot: null,
+      claimedRunItems: [],
+      lastRunSummary: null,
       currentScreen: 'runMap',
     }))
-    setNotice('Run started.')
+    setNotice(`${RUN_FLOORS}-floor run started.`)
+  }
+
+  function abandonRun(message = 'Run abandoned. Returned to hub.') {
+    setDeploymentSlots(null)
+    setGameState(g => hubState({
+      ...g,
+      lastRunSummary: g.activeRun ? {
+        status: 'defeat',
+        stageName: g.activeRun.stageName,
+        floorsCleared: Math.max(0, (g.activeRun.currentFloor ?? 1) - 1),
+        totalFloors: g.activeRun.totalFloors ?? RUN_FLOORS,
+        runGold: g.activeRun.runGold ?? 0,
+        boons: g.activeRun.activeBoons ?? [],
+        items: g.claimedRunItems ?? [],
+      } : g.lastRunSummary,
+    }))
+    setNotice(message)
   }
 
   function enterRunNode() {
@@ -125,13 +156,24 @@ export default function GameShell() {
         },
         runGold: (g.activeRun.runGold ?? 0) + (g.pendingLoot?.gold ?? 0),
       }) : null
+      const completed = completedRun?.completed
+      const allItems = [...(g.claimedRunItems ?? []), ...items]
 
       return {
         ...g,
-        activeRun: completedRun,
-        claimedRunItems: [...(g.claimedRunItems ?? []), ...items],
+        activeRun: completed ? null : completedRun,
+        claimedRunItems: allItems,
         pendingLoot: null,
-        currentScreen: completedRun?.completed ? 'results' : 'runMap',
+        lastRunSummary: completed ? {
+          status: 'victory',
+          stageName: completedRun.stageName,
+          floorsCleared: completedRun.totalFloors,
+          totalFloors: completedRun.totalFloors,
+          runGold: completedRun.runGold ?? 0,
+          boons: completedRun.activeBoons ?? [],
+          items: allItems,
+        } : g.lastRunSummary,
+        currentScreen: completed ? 'results' : 'runMap',
       }
     })
     setNotice('Loot claimed.')
@@ -179,7 +221,7 @@ export default function GameShell() {
         )}
         {notice&&<div style={{ border:'1px solid rgba(201,167,86,.35)',background:'rgba(201,167,86,.1)',padding:12,borderRadius:12,marginBottom:16,fontSize:13 }}>{notice}</div>}
         {currentScreen==='mainMenu'        && <MainMenu hasSave={hasSave()} onNewGame={startNewGame} onContinue={continueGame} onDeleteSave={clearSave} onWorld={()=>setScreen('worldMap')}/>}
-        {currentScreen==='worldMap'        && <WorldMapScreen {...p}/>}
+        {currentScreen==='worldMap'        && <WorldMapScreen {...p} onStartStageRun={startRun}/>}
         {currentScreen==='runMap'          && <RunMapScreen {...p} onStartRun={startRun} onEnterRunNode={enterRunNode}/>}
         {currentScreen==='boonPick'        && <BoonPickScreen {...p} onChooseBoon={chooseRunBoon}/>}
         {currentScreen==='loot'            && <LootScreen {...p} onClaimLoot={claimLoot}/>}
@@ -194,8 +236,8 @@ export default function GameShell() {
           />
         )}
         {currentScreen==='town'            && <TownScreen {...p}/>}
-        {currentScreen==='deployment'&&activeMission && <DeploymentScreen map={activeMission} onStartBattle={handleStartBattle} onCancel={()=>setScreen('worldMap')}/>}
-        {currentScreen==='battle'&&activeMission && <BattleScreen {...p} deploymentSlots={deploymentSlots}/>}
+        {currentScreen==='deployment'&&activeMission && <DeploymentScreen map={activeMission} onStartBattle={handleStartBattle} onCancel={()=>gameState.activeRun?abandonRun():setScreen('worldMap')}/>}
+        {currentScreen==='battle'&&activeMission && <BattleScreen {...p} deploymentSlots={deploymentSlots} onDefeat={() => abandonRun('Defeat. Returned to hub to start over.')}/>}
         {currentScreen==='results'         && <ResultsScreen {...p}/>}
         {currentScreen==='characterSheet'  && <CharacterSheetScreen {...p}/>}
         {currentScreen==='jobTree'         && <JobTreeScreen {...p}/>}

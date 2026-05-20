@@ -26,6 +26,13 @@ func start_new_run(p_heat_level: int = 0, seed: int = -1) -> void:
 		rng.randomize()
 		run_seed = int(rng.randi())
 		rng.seed = run_seed
+
+	# Create RunState and store in GameState for MapGenerator + EliteSystem
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs:
+		gs.active_run = RunState.create(run_seed)
+		gs.active_run.heat_level = heat_level
+
 	run_started.emit(run_seed, heat_level)
 
 func end_run(victory: bool) -> void:
@@ -33,7 +40,14 @@ func end_run(victory: bool) -> void:
 	var meta: Node = get_node_or_null("/root/MetaProgression")
 	if meta and run_aether > 0:
 		meta.add_currency(Currency.SOUL_SHARDS, int(run_aether / 10))
+		if victory:
+			# Bonus shards for completing the run
+			meta.add_currency(Currency.SOUL_SHARDS, 20 + heat_level * 5)
+			meta.add_currency(Currency.BOSS_TOKENS, 1)
 		meta.save()
+	# Clear run state
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs: gs.active_run = null
 	run_ended.emit(victory)
 
 func award_stage_reward(stage_index: int, is_elite: bool = false, is_boss: bool = false) -> Dictionary:
@@ -63,6 +77,19 @@ func _apply_rewards(rewards: Dictionary) -> void:
 
 func add_boon(boon: Dictionary) -> void:
 	active_boons.append(boon)
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.active_run:
+		gs.active_run.active_boons.append(boon)
 
 func get_reward_multiplier() -> float:
 	return 1.0 + float(heat_level) * 0.12
+
+## Returns heat_level — used by EliteSystem to scale difficulty
+func get_heat_level() -> int:
+	return heat_level
+
+## How many floors total in this run
+func get_total_floors() -> int:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.active_run: return gs.active_run.TOTAL_FLOORS
+	return 10

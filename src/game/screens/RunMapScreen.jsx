@@ -39,7 +39,7 @@ export default function RunMapScreen({ gameState, onStartRun, onEnterRunNode, se
           <div>
             <p style={s.eyebrow}>Roguelike run</p>
             <h2 style={s.title}>Guardian Path</h2>
-            <p style={s.copy}>Start a floor route with battles, wanderers, loot, and Guardian boon choices.</p>
+            <p style={s.copy}>Start a 10-floor route with battles, wanderers, loot, and Guardian boon choices.</p>
           </div>
           <button style={s.primaryBtn} onClick={onStartRun}>Start Run</button>
         </div>
@@ -52,7 +52,7 @@ export default function RunMapScreen({ gameState, onStartRun, onEnterRunNode, se
       <div style={s.header}>
         <div>
           <p style={s.eyebrow}>Guardian Path</p>
-          <h2 style={s.title}>Floor {run.currentFloor} of {run.totalFloors}</h2>
+          <h2 style={s.title}>{run.stageName ?? 'Guardian Path'} - Floor {run.currentFloor} of {run.totalFloors}</h2>
           <p style={s.copy}>{run.completed ? 'Run complete. Claim your route rewards and return to camp.' : `Current node: ${nodeTitle(currentNode)}`}</p>
         </div>
         <div style={s.actions}>

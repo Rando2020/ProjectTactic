@@ -60,14 +60,43 @@ func _build_start_screen() -> void:
 	_lbl(vbox, "10 floors. Randomised maps. Five Guardians.", 14, DIM, true)
 	_space(vbox, 28)
 
+	# Heat level selector
+	var meta: Node = get_node_or_null("/root/MetaProgression")
+	var heat := 0
+	if meta: heat = meta.selected_heat_level
+	var max_heat := 0
+	if meta: max_heat = meta.max_heat_unlocked
+
+	if max_heat > 0:
+		var heat_row := HBoxContainer.new()
+		heat_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		heat_row.add_theme_constant_override("separation", 10)
+		vbox.add_child(heat_row)
+		_lbl(heat_row, "Heat Level:", 13, DIM)
+		var heat_lbl := _lbl(heat_row, str(heat), 16, Color(1.0,0.5,0.2))
+		var less := _btn("-", DIM); less.custom_minimum_size = Vector2(36,36)
+		less.pressed.connect(func() -> void:
+			if meta: meta.selected_heat_level = maxi(0, meta.selected_heat_level - 1)
+			heat_lbl.text = str(meta.selected_heat_level if meta else 0))
+		var more := _btn("+", Color(1.0,0.5,0.2)); more.custom_minimum_size = Vector2(36,36)
+		more.pressed.connect(func() -> void:
+			if meta: meta.selected_heat_level = mini(meta.max_heat_unlocked, meta.selected_heat_level + 1)
+			heat_lbl.text = str(meta.selected_heat_level if meta else 0))
+		heat_row.add_child(less); heat_row.add_child(more)
+		_space(vbox, 8)
+
 	var btn := _btn("▶  Start New Run", GOLD)
 	btn.custom_minimum_size = Vector2(300, 52)
-	btn.pressed.connect(_on_start_run)
+	btn.pressed.connect(func() -> void: _on_start_run(meta.selected_heat_level if meta else 0))
 	vbox.add_child(btn)
 	_space(vbox, 12)
 
 	if _gs:
 		_lbl(vbox, "Gold: %dg" % _gs.gold, 14, GOLD, true)
+
+	# Show meta currencies
+	if meta:
+		_lbl(vbox, "Soul Shards: %d  ·  Obsidian: %d" % [meta.get_currency(Currency.SOUL_SHARDS), meta.get_currency(Currency.OBSIDIAN)], 12, DIM, true)
 
 
 # ── Run screen ────────────────────────────────────────────────────────────────
@@ -165,10 +194,15 @@ func _build_run_screen(run: RunState) -> void:
 
 # ── Node entry ────────────────────────────────────────────────────────────────
 
-func _on_start_run() -> void:
+func _on_start_run(heat: int = 0) -> void:
 	if not _gs: return
-	var seed := Time.get_unix_time_from_system() & 0xffffff
-	_gs.active_run = RunState.create(seed)
+	var rm: Node = get_node_or_null("/root/RunManager")
+	if rm:
+		rm.start_new_run(heat)
+	else:
+		# Fallback: create RunState directly if RunManager not registered yet
+		var seed := Time.get_unix_time_from_system() & 0xffffff
+		_gs.active_run = RunState.create(seed)
 	_build_ui()
 
 func _on_enter_node(node: Dictionary) -> void:
@@ -187,7 +221,9 @@ func _on_enter_node(node: Dictionary) -> void:
 			_build_ui()
 
 func _on_abandon() -> void:
-	if _gs: _gs.active_run = null
+	var rm: Node = get_node_or_null("/root/RunManager")
+	if rm and rm.is_run_active: rm.end_run(false)
+	elif _gs: _gs.active_run = null
 	_build_ui()
 
 func _on_boon_picked(boon: Dictionary) -> void:

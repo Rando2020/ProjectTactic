@@ -27,6 +27,8 @@ config/icon="res://icon.svg"
 VFX="*res://scripts/vfx/VFXManager.gd"
 GameState="*res://scripts/systems/GameState.gd"
 SaveSystem="*res://scripts/state/SaveSystem.gd"
+RunManager="*res://scripts/roguelite/RunManager.gd"
+MetaProgression="*res://scripts/roguelite/MetaProgression.gd"
 AudioSettings="*res://scripts/systems/AudioSettings.gd"
 
 [display]

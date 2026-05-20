@@ -149,6 +149,15 @@ func _on_battle_won(rewards: Dictionary) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
+		# Award stage rewards (Soul Shards, Aether, Obsidian)
+		var rm: Node = get_node_or_null("/root/RunManager")
+		if rm and rm.is_run_active:
+			var floor_num := gs.active_run.current_floor if gs.active_run else 1
+			var is_boss   := floor_num >= 10
+			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
+			rm.award_stage_reward(floor_num, has_elite, is_boss)
+			if is_boss: rm.end_run(true)
+
 		if gs.active_run:
 			# Generate loot, advance run, route to StageSelect
 			var ls    := LootSystem.new()
@@ -291,6 +300,17 @@ func _spawn_player_units() -> Array[Unit]:
 		240, 70, 4, 2, 9, 52, 18, 55, 65,
 		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
 		{}, 2, 4))
+	# Apply MetaProgression permanent stat bonuses
+	var meta: Node = get_node_or_null("/root/MetaProgression")
+	if meta:
+		var hp_bonus:   int = meta.get_stat_bonus("max_hp")
+		var phys_bonus: int = meta.get_stat_bonus("physical")
+		var mag_bonus:  int = meta.get_stat_bonus("magic")
+		for unit in result:
+			if unit.unit_data and unit.unit_data.base_stats:
+				unit.unit_data.base_stats.hp       += hp_bonus
+				unit.unit_data.base_stats.physical += phys_bonus
+				unit.unit_data.base_stats.magic    += mag_bonus
 	return result
 
 
@@ -317,7 +337,10 @@ func _spawn_enemy_units() -> Array[Unit]:
 				"max_temper": unit.unit_data.base_stats.max_temper if unit.unit_data else 50,
 				"max_ether":  unit.unit_data.base_stats.max_ether  if unit.unit_data else 50,
 			})
-		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor)
+		var heat: int = 0
+		var rm: Node = get_node_or_null("/root/RunManager")
+		if rm: heat = rm.get_heat_level()
+		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor, heat)
 		for i in result.size():
 			var r: Dictionary = rolled[i]
 			if r.get("elite_tier","") != "" and result[i].unit_data:
