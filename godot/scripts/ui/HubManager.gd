@@ -76,7 +76,6 @@ func _build_ui() -> void:
 	_cur_row.add_theme_constant_override("separation", 6)
 	hh.add_child(_cur_row)
 	_rebuild_currencies()
-	_root.add_child(hdr)
 
 	# Message bar
 	var msg_bar := _panel_solid(Color(0.06, 0.07, 0.10), Vector2(0, 34))
@@ -86,7 +85,6 @@ func _build_ui() -> void:
 	_msg_lbl.add_theme_constant_override("margin_left", 32)
 	_msg_lbl.set_anchors_and_offsets_preset(Control.PRESET_VCENTER_WIDE)
 	msg_bar.add_child(_msg_lbl)
-	_root.add_child(msg_bar)
 
 	_space(16)
 
@@ -337,7 +335,7 @@ func _rebuild_currencies() -> void:
 	var currencies := [Currency.SOUL_SHARDS, Currency.OBSIDIAN,
 		Currency.GLYPHS, Currency.BOSS_TOKENS, "phoenix-sigils", "titan-sigils"]
 	for cid in currencies:
-		var amount := _meta.get_currency(cid)
+		var amount: int = int(_meta.get_currency(cid))
 		if amount == 0 and cid in ["phoenix-sigils","titan-sigils"]: continue
 		var chip := _currency_chip(Currency.display_name(cid), amount)
 		_cur_row.add_child(chip)

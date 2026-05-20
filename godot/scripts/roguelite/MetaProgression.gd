@@ -1,4 +1,3 @@
-class_name MetaProgression
 extends Node
 
 const SAVE_PATH := "user://meta-progression.json"
@@ -63,9 +62,9 @@ func has_unlock(flag_id: String) -> bool:
 	return flag_id in unlocked_flags
 
 func award_stage_rewards(map_id: String) -> Dictionary:
-	var is_boss := map_id == "crypt_of_echoes_01"
-	var heat_bonus := max(selected_heat_level, 0)
-	var rewards := {
+	var is_boss: bool = map_id == "crypt_of_echoes_01"
+	var heat_bonus: int = maxi(selected_heat_level, 0)
+	var rewards: Dictionary = {
 		Currency.SOUL_SHARDS: 6 + heat_bonus,
 		Currency.GLYPHS: 1,
 	}

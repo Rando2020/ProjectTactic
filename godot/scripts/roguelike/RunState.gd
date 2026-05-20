@@ -15,6 +15,7 @@ var elite_kills:   int    = 0
 var deaths:        int    = 0
 var completed:     bool   = false
 var started_at:    int    = 0
+var heat_level:    int    = 0
 
 ## Flat 10-battle node plan with boon picks every ~3 floors
 static func create(p_seed: int) -> RunState:
@@ -86,4 +87,5 @@ static func from_dict(d: Dictionary) -> RunState:
 	rs.deaths        = d.get("deaths", 0)
 	rs.completed     = d.get("completed", false)
 	rs.started_at    = d.get("started_at", 0)
+	rs.heat_level    = d.get("heat_level", 0)
 	return rs

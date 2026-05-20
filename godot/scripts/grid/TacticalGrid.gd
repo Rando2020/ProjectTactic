@@ -200,6 +200,32 @@ func _uses_art_tile(terrain: String) -> bool:
 	return terrain in ["burning", "ice", "frozen_water", "shrine", "cracked_stone", "scorched"]
 
 
+## Draw a glowing marker on void_anchor and high-value tiles
+func _add_tile_marker(pos: Vector2i, world: Vector2, terrain: String) -> void:
+	if terrain != "void_anchor": return
+	var depth := _depth_for(pos)
+	# Pulsing inner diamond
+	var glow := Polygon2D.new()
+	var half_w := tile_size.x * 0.28
+	var half_h := tile_size.y * 0.28
+	glow.polygon = PackedVector2Array([
+		Vector2(0, -half_h), Vector2(half_w, 0),
+		Vector2(0, half_h),  Vector2(-half_w, 0),
+	])
+	glow.position = world
+	glow.color = Color(0.75, 0.20, 1.0, 0.60)
+	glow.z_index = depth + 10
+	add_child(glow)
+	# Label
+	var lbl := Label.new()
+	lbl.text = "ANCHOR"
+	lbl.add_theme_font_size_override("font_size", 8)
+	lbl.add_theme_color_override("font_color", Color(0.85, 0.55, 1.0, 0.9))
+	lbl.position = world + Vector2(-20, -tile_size.y * 0.35)
+	lbl.z_index = depth + 11
+	add_child(lbl)
+
+
 func _add_connected_surface_detail(pos: Vector2i, world: Vector2, base_color: Color, depth: int) -> void:
 	var terrain: String = tiles[pos].get("terrain", "")
 	match terrain:

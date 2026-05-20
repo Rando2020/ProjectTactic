@@ -59,7 +59,7 @@ func generate_item(item_seed: int, rarity_bonus: float = 0.0) -> Dictionary:
 		else: w = w + int(rarity_bonus * 10)
 		for _i in range(w): rpool.append(r)
 	var rarity: String = rpool[int(_rng() * rpool.size())]
-	var rd := RARITIES[rarity]
+	var rd: Dictionary = RARITIES[rarity]
 
 	var base: Dictionary = _pick(BASES)
 	var adj:  String     = _pick(ADJS[rarity])
@@ -95,7 +95,7 @@ func generate_battle_loot(defeated: Array, run_seed: int, floor: int) -> Array:
 	var rarity_bonus := minf(0.6, float(floor) * 0.06)
 	for i in defeated.size():
 		_s = ((run_seed * 997 + i * 6271) & 0xffffffff)
-		var is_elite := defeated[i].get("elite_tier","") != ""
+		var is_elite: bool = defeated[i].get("elite_tier","") != ""
 		if _rng() < (0.75 if is_elite else 0.12):
 			var eb := 0.3 if defeated[i].get("elite_tier","") == "champion" else (0.15 if is_elite else 0.0)
 			drops.append(generate_item((run_seed * 997 + i * 6271 + 2) & 0xffffffff, rarity_bonus + eb))

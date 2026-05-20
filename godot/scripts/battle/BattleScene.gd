@@ -36,11 +36,20 @@ var _battle_music_player: AudioStreamPlayer
 func _ready() -> void:
 	_setup_camera()
 	_start_battle_music()
-	# Prefer GameState's selection; @export override still works in editor
-	if Engine.has_singleton("GameState") or is_instance_valid(get_node_or_null("/root/GameState")):
-		map_index = get_node("/root/GameState").selected_map_index
 
-	_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
+	var gs: Node = get_node_or_null("/root/GameState")
+
+	# Use procedurally generated map when inside a roguelike run
+	if gs and gs.active_run and not gs.active_run.completed:
+		var mg := MapGenerator.new()
+		var run: RunState = gs.active_run
+		_map_data = mg.generate_floor(run.current_floor, run.seed)
+		_elite_system = EliteSystem.new()
+	else:
+		# Hardcoded maps for editor / debug
+		if gs: map_index = gs.selected_map_index
+		_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
+
 	tactical_grid.initialize_from_map(_map_data)
 	_frame_battlefield_camera()
 

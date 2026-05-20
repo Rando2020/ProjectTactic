@@ -78,7 +78,7 @@ func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor: int)
 	if tier == "normal": return spawn
 
 	_s = useed
-	var td := TIERS[tier]
+	var td: Dictionary = TIERS[tier]
 	var result := spawn.duplicate(true)
 
 	# Prefixes
@@ -93,7 +93,7 @@ func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor: int)
 
 	# Build name
 	var pre_str := " ".join(prefixes.map(func(p: Dictionary) -> String: return p["label"]))
-	var suf_str := (" " + suffixes[0]["label"]) if suffixes.size() > 0 else ""
+	var suf_str: String = (" " + suffixes[0]["label"]) if suffixes.size() > 0 else ""
 	result["name"] = ("%s %s%s" % [pre_str, spawn.get("name","Enemy"), suf_str]).strip_edges()
 
 	# Scale HP
@@ -149,14 +149,14 @@ func _roll_tier_with_rates(unit_seed: int, rates: Dictionary) -> String:
 	return "normal"
 
 func _apply_tier(spawn: Dictionary, tier: String) -> Dictionary:
-	var td := TIERS[tier]
+	var td: Dictionary = TIERS[tier]
 	var result := spawn.duplicate(true)
 	var pre_copy := PREFIXES.duplicate(); pre_copy.shuffle()
 	var prefixes := pre_copy.slice(0, 2 if tier == "champion" else 1)
 	var suffixes: Array = []
 	if tier != "marked": suffixes.append(SUFFIXES[int(_rng() * SUFFIXES.size())])
 	var pre_str := " ".join(prefixes.map(func(p: Dictionary) -> String: return p["label"]))
-	var suf_str := (" " + suffixes[0]["label"]) if suffixes.size() > 0 else ""
+	var suf_str: String = (" " + suffixes[0]["label"]) if suffixes.size() > 0 else ""
 	result["name"] = ("%s %s%s" % [pre_str, spawn.get("name","Enemy"), suf_str]).strip_edges()
 	var hp_mult: float = td["hp_mult"]
 	for p in prefixes: hp_mult *= p.get("stats",{}).get("hp_mult", 1.0)

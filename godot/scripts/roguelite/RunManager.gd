@@ -1,4 +1,3 @@
-class_name RunManager
 extends Node
 
 signal run_started(seed: int, heat_level: int)

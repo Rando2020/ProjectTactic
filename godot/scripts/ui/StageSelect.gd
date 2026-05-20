@@ -151,11 +151,11 @@ func _build_run_screen(run: RunState) -> void:
 
 	for idx in run.floor_plan.size():
 		var node: Dictionary = run.floor_plan[idx]
-		var is_cur     := idx == run.current_node
-		var is_done    := node.get("completed", false)
-		var is_future  := idx > run.current_node
-		var ntype      := node.get("type","battle")
-		var meta       := NODE_META.get(ntype, NODE_META["battle"])
+		var is_cur: bool = idx == run.current_node
+		var is_done: bool = bool(node.get("completed", false))
+		var is_future: bool = idx > run.current_node
+		var ntype: String = str(node.get("type","battle"))
+		var meta: Dictionary = NODE_META.get(ntype, NODE_META["battle"])
 
 		var nc := _node_card(meta, is_cur, is_done, is_future, node.get("floor",1))
 		if is_cur:
@@ -178,7 +178,7 @@ func _build_run_screen(run: RunState) -> void:
 		ph.add_theme_constant_override("margin_left", 28)
 		ph.add_theme_constant_override("margin_right", 20)
 		ph.alignment = BoxContainer.ALIGNMENT_CENTER
-		var nm     := NODE_META.get(cur.get("type","battle"), NODE_META["battle"])
+		var nm: Dictionary = NODE_META.get(cur.get("type","battle"), NODE_META["battle"])
 		_lbl(ph, nm["icon"], 24, nm["color"])
 		_gap(ph, 12)
 		var info := _vbox(ph)
@@ -201,7 +201,7 @@ func _on_start_run(heat: int = 0) -> void:
 		rm.start_new_run(heat)
 	else:
 		# Fallback: create RunState directly if RunManager not registered yet
-		var seed := Time.get_unix_time_from_system() & 0xffffff
+		var seed: int = int(Time.get_unix_time_from_system()) & 0xffffff
 		_gs.active_run = RunState.create(seed)
 	_build_ui()
 
@@ -211,8 +211,8 @@ func _on_enter_node(node: Dictionary) -> void:
 		"battle", "boss":
 			get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 		"boon_pick":
-			var owned := _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
-			var floor := _gs.active_run.current_floor
+			var owned: Array = _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
+			var floor: int = int(_gs.active_run.current_floor)
 			var offers := _bs.generate_offers(_gs.active_run.seed * 17 + floor * 3 + _gs.active_run.current_node, floor, owned)
 			_show_boon_pick(offers)
 		"wanderer":
@@ -266,7 +266,7 @@ func _show_boon_pick(offers: Array) -> void:
 	hbox.add_theme_constant_override("separation", 16)
 
 	for boon in offers:
-		var rd := BoonSystem.RARITIES.get(boon.get("rarity","common"), {})
+		var rd: Dictionary = BoonSystem.RARITIES.get(boon.get("rarity","common"), {})
 		var col: Color = rd.get("color", Color.WHITE)
 		var card := _boon_card(boon, col)
 		card.pressed.connect(_on_boon_picked.bind(boon))
@@ -297,7 +297,7 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	_lbl(inner, boon.get("name","?"), 15, FG, true)
 	_space(inner, 4)
 
-	var guardian := boon.get("guardian","")
+	var guardian: String = str(boon.get("guardian",""))
 	if guardian:
 		_lbl(inner, guardian.capitalize() + " · " + _guardian_label(guardian), 9, accent.lerp(FG, 0.4), true)
 		_space(inner, 4)
@@ -314,7 +314,7 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	var flavour: String = boon.get("flavour","")
 	if flavour:
 		_space(inner, 4)
-		var fl := RichTextLabel.new()
+		var fl: RichTextLabel = RichTextLabel.new()
 		fl.bbcode_enabled = false
 		fl.text = '"%s"' % flavour
 		fl.add_theme_font_size_override("normal_font_size", 10)

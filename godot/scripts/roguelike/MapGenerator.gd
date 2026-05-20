@@ -88,7 +88,7 @@ const TERRAIN_WATER        := "shallow_water"
 const TERRAIN_DEEP_WATER   := "deep_water"
 const TERRAIN_HIGH_GROUND  := "high_ground"
 const TERRAIN_SHRINE       := "shrine"
-const TERRAIN_BURNING      := "burning_grass"
+const TERRAIN_BURNING      := "burning"
 const TERRAIN_VOID_ANCHOR  := "void_anchor"
 const TERRAIN_BRUSH        := "brush"
 
