@@ -1,6 +1,6 @@
 ## ResultsScreen.gd
-## Shown after every battle.  Reads pending_rewards from GameState,
-## displays gold / JP earned, then routes to CharacterScreen.
+## Shown after every battle. Reads pending_rewards from GameState,
+## displays gold, JP, run/meta rewards, then routes to the next run scene.
 class_name ResultsScreen
 extends Control
 
@@ -10,7 +10,6 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Full-screen dark background
 	var bg := ColorRect.new()
 	bg.color = Color(0.06, 0.07, 0.10)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -19,14 +18,14 @@ func _build_ui() -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var rewards: Dictionary = gs.pending_rewards if gs else {}
 	var is_victory: bool = not rewards.is_empty()
+	var next_scene: String = rewards.get("next_scene", "res://scenes/StageSelect.tscn")
 
 	var center := VBoxContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	center.custom_minimum_size = Vector2(520, 0)
-	center.add_theme_constant_override("separation", 18)
+	center.custom_minimum_size = Vector2(680, 0)
+	center.add_theme_constant_override("separation", 16)
 	add_child(center)
 
-	# ── Result header ────────────────────────────────────────────────────
 	var header := Label.new()
 	header.text = "VICTORY!" if is_victory else "DEFEATED"
 	header.add_theme_font_size_override("font_size", 52)
@@ -38,7 +37,6 @@ func _build_ui() -> void:
 	center.add_child(_separator())
 
 	if is_victory:
-		# ── Map name ─────────────────────────────────────────────────────
 		var map_lbl := Label.new()
 		map_lbl.text = rewards.get("map_id", "").replace("_", " ").to_upper()
 		map_lbl.add_theme_font_size_override("font_size", 14)
@@ -46,10 +44,9 @@ func _build_ui() -> void:
 		map_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		center.add_child(map_lbl)
 
-		# ── Rewards row ───────────────────────────────────────────────────
 		var reward_row := HBoxContainer.new()
 		reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
-		reward_row.add_theme_constant_override("separation", 40)
+		reward_row.add_theme_constant_override("separation", 36)
 		center.add_child(reward_row)
 
 		_reward_chip(reward_row, "+%d" % rewards.get("gold", 0), "GOLD",
@@ -57,9 +54,53 @@ func _build_ui() -> void:
 		_reward_chip(reward_row, "+%d" % rewards.get("jp", 0), "JP / UNIT",
 			Color(0.5, 0.85, 1.0))
 
+		var meta_rewards: Dictionary = rewards.get("meta_rewards", {})
+		if not meta_rewards.is_empty():
+			center.add_child(_separator())
+			var meta_header := Label.new()
+			meta_header.text = "RUN REWARDS"
+			meta_header.add_theme_font_size_override("font_size", 12)
+			meta_header.add_theme_color_override("font_color", Color(0.5, 0.55, 0.65))
+			meta_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			center.add_child(meta_header)
+
+			var meta_row := HBoxContainer.new()
+			meta_row.alignment = BoxContainer.ALIGNMENT_CENTER
+			meta_row.add_theme_constant_override("separation", 22)
+			center.add_child(meta_row)
+			for currency_id: String in meta_rewards.keys():
+				_reward_chip(meta_row, "+%d" % int(meta_rewards[currency_id]), Currency.display_name(currency_id).to_upper(),
+					Color(0.72, 0.55, 1.0))
+
+		if int(rewards.get("elite_kills", 0)) > 0:
+			var elite_lbl := Label.new()
+			elite_lbl.text = "Elites defeated: %d" % int(rewards.get("elite_kills", 0))
+			elite_lbl.add_theme_font_size_override("font_size", 13)
+			elite_lbl.add_theme_color_override("font_color", Color(1.0, 0.55, 0.25))
+			elite_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			center.add_child(elite_lbl)
+
+		var loot: Array = rewards.get("loot", [])
+		if not loot.is_empty():
+			var loot_lbl := Label.new()
+			loot_lbl.text = "Loot found: %d item%s" % [loot.size(), "" if loot.size() == 1 else "s"]
+			loot_lbl.add_theme_font_size_override("font_size", 13)
+			loot_lbl.add_theme_color_override("font_color", Color(0.75, 0.85, 1.0))
+			loot_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			center.add_child(loot_lbl)
+
 		if gs:
 			var total_lbl := Label.new()
-			total_lbl.text = "Total gold: %d" % gs.gold
+			var meta: Node = get_node_or_null("/root/MetaProgression")
+			if meta:
+				total_lbl.text = "Totals: %d Gold  •  %d Soul Shards  •  %d Obsidian  •  %d Boss Tokens" % [
+					gs.gold,
+					meta.get_currency(Currency.SOUL_SHARDS),
+					meta.get_currency(Currency.OBSIDIAN),
+					meta.get_currency(Currency.BOSS_TOKENS),
+				]
+			else:
+				total_lbl.text = "Total gold: %d" % gs.gold
 			total_lbl.add_theme_font_size_override("font_size", 13)
 			total_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
 			total_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -67,7 +108,6 @@ func _build_ui() -> void:
 
 		center.add_child(_separator())
 
-		# ── Unit JP totals ────────────────────────────────────────────────
 		var jp_header := Label.new()
 		jp_header.text = "UNIT JP TOTALS"
 		jp_header.add_theme_font_size_override("font_size", 12)
@@ -84,32 +124,30 @@ func _build_ui() -> void:
 		for uid: String in unit_ids:
 			if gs and gs.unit_registry.has(uid):
 				var reg: Dictionary = gs.unit_registry[uid]
-				_jp_chip(unit_row, reg.get("display_name", uid),
-					reg.get("jp", 0))
+				_jp_chip(unit_row, reg.get("display_name", uid), reg.get("jp", 0))
 
 		center.add_child(_separator())
 
-	# ── Navigation buttons ────────────────────────────────────────────────
 	var btn_row := HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	btn_row.add_theme_constant_override("separation", 16)
 	center.add_child(btn_row)
 
 	if is_victory:
-		var manage_btn := _nav_btn("Manage Party  →", Color(0.3, 0.55, 0.9))
+		var manage_btn := _nav_btn("Manage Party", Color(0.3, 0.55, 0.9))
 		manage_btn.pressed.connect(func() -> void:
 			get_tree().change_scene_to_file("res://scenes/CharacterScreen.tscn"))
 		btn_row.add_child(manage_btn)
 
-	var skip_btn := _nav_btn(
-		"Select Stage  →" if is_victory else "← Back to Map",
-		Color(0.35, 0.38, 0.44))
-	skip_btn.pressed.connect(func() -> void:
-		get_tree().change_scene_to_file("res://scenes/StageSelect.tscn"))
-	btn_row.add_child(skip_btn)
+	var next_label := "Return to Hub" if next_scene.ends_with("HubScene.tscn") else "Continue Run"
+	if not is_victory:
+		next_label = "← Back to Hub"
+		next_scene = "res://scenes/HubScene.tscn"
+	var next_btn := _nav_btn(next_label, Color(0.35, 0.75, 0.45) if is_victory else Color(0.85, 0.35, 0.35))
+	next_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file(next_scene))
+	btn_row.add_child(next_btn)
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 func _separator() -> HSeparator:
 	var sep := HSeparator.new()
@@ -125,14 +163,14 @@ func _reward_chip(parent: Control, value: String,
 
 	var val_lbl := Label.new()
 	val_lbl.text = value
-	val_lbl.add_theme_font_size_override("font_size", 36)
+	val_lbl.add_theme_font_size_override("font_size", 28)
 	val_lbl.add_theme_color_override("font_color", color)
 	val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(val_lbl)
 
 	var key_lbl := Label.new()
 	key_lbl.text = label
-	key_lbl.add_theme_font_size_override("font_size", 12)
+	key_lbl.add_theme_font_size_override("font_size", 10)
 	key_lbl.add_theme_color_override("font_color", Color(0.55, 0.58, 0.65))
 	key_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(key_lbl)
@@ -161,6 +199,6 @@ func _jp_chip(parent: Control, uname: String, jp: int) -> void:
 func _nav_btn(label: String, color: Color) -> Button:
 	var btn := Button.new()
 	btn.text = label
-	btn.custom_minimum_size = Vector2(200, 48)
+	btn.custom_minimum_size = Vector2(190, 48)
 	btn.add_theme_color_override("font_color", color)
 	return btn
