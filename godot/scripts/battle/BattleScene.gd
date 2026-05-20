@@ -329,15 +329,40 @@ func _spawn_player_units() -> Array[Unit]:
 
 func _spawn_enemy_units() -> Array[Unit]:
 	var result: Array[Unit] = []
-	result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
-		120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
-		{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
-	result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
-		90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
-		{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
-	result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
-		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
-		{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
+
+	# ── Procedural spawns from MapGenerator ─────────────────────────────────
+	if _map_data and _map_data.enemy_spawns.size() > 0:
+		for spawn in _map_data.enemy_spawns:
+			var unit := _make_unit(
+				spawn.get("unit_id", "null_drake"),
+				spawn.get("name",    "Enemy"),
+				"enemy",
+				Vector2i(spawn.get("x", 5), spawn.get("y", 2)),
+				spawn.get("hp",          120),
+				spawn.get("mp",           35),
+				spawn.get("move",          3),
+				spawn.get("jump",          1),
+				spawn.get("speed",         6),
+				spawn.get("physical",     38),
+				spawn.get("magic",        30),
+				spawn.get("max_temper",   80),
+				spawn.get("max_ether",    60),
+				spawn.get("abilities",    []) as Array[String],
+				spawn.get("affinities",   {}),
+			)
+			result.append(unit)
+	else:
+		# ── Hardcoded fallback for editor / debug ────────────────────────────
+		result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
+			120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
+			{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
+		result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
+			90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
+			{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
+		result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
+			80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
+			{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
+
 	# Apply elite rolls when in a roguelike run
 	var gs2: Node = get_node_or_null("/root/GameState")
 	if gs2 and gs2.active_run and _elite_system:
