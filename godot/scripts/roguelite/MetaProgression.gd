@@ -70,11 +70,11 @@ func award_stage_rewards(map_id: String) -> Dictionary:
 	}
 	if is_boss:
 		rewards[Currency.OBSIDIAN] = 5 + heat_bonus
-		rewards[Currency.BOSS_TOKENS] = 1 + int(heat_bonus / 3)
-		rewards["titan-sigils"] = 2 + int(heat_bonus / 2)
+		rewards[Currency.BOSS_TOKENS] = 1 + floori(float(heat_bonus) / 3.0)
+		rewards["titan-sigils"] = 2 + floori(float(heat_bonus) / 2.0)
 	else:
-		rewards[Currency.OBSIDIAN] = 1 + int(heat_bonus / 2)
-		rewards["phoenix-sigils"] = 2 + int(heat_bonus / 2)
+		rewards[Currency.OBSIDIAN] = 1 + floori(float(heat_bonus) / 2.0)
+		rewards["phoenix-sigils"] = 2 + floori(float(heat_bonus) / 2.0)
 	for currency_id: String in rewards.keys():
 		add_currency(currency_id, int(rewards[currency_id]))
 	save()

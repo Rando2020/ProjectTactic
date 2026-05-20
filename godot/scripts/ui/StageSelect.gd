@@ -21,7 +21,6 @@ var _bs:  BoonSystem
 
 var _boon_overlay:  Control = null
 var _loot_overlay:  Control = null
-var _result_overlay:Control = null
 
 
 func _ready() -> void:
@@ -201,8 +200,8 @@ func _on_start_run(heat: int = 0) -> void:
 		rm.start_new_run(heat)
 	else:
 		# Fallback: create RunState directly if RunManager not registered yet
-		var seed: int = int(Time.get_unix_time_from_system()) & 0xffffff
-		_gs.active_run = RunState.create(seed)
+		var run_seed: int = int(Time.get_unix_time_from_system()) & 0xffffff
+		_gs.active_run = RunState.create(run_seed)
 	_build_ui()
 
 func _on_enter_node(node: Dictionary) -> void:
@@ -212,8 +211,8 @@ func _on_enter_node(node: Dictionary) -> void:
 			get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 		"boon_pick":
 			var owned: Array = _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
-			var floor: int = int(_gs.active_run.current_floor)
-			var offers := _bs.generate_offers(_gs.active_run.seed * 17 + floor * 3 + _gs.active_run.current_node, floor, owned)
+			var floor_num: int = int(_gs.active_run.current_floor)
+			var offers := _bs.generate_offers(_gs.active_run.seed * 17 + floor_num * 3 + _gs.active_run.current_node, floor_num, owned)
 			_show_boon_pick(offers)
 		"wanderer":
 			# Auto-complete wanderer node for now (full UI can be added)
@@ -399,16 +398,16 @@ func _item_card(item: Dictionary) -> PanelContainer:
 
 # ── Widget helpers ────────────────────────────────────────────────────────────
 
-func _lbl(parent: Control, text: String, size: int, color: Color, centered: bool = false) -> Label:
+func _lbl(parent: Control, text: String, font_size: int, color: Color, centered: bool = false) -> Label:
 	var l := Label.new(); l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	if centered: l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(l); return l
 
-func _lbl_widget(text: String, size: int, color: Color) -> Label:
+func _lbl_widget(text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new(); l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	return l
 
@@ -431,21 +430,21 @@ func _hbox(parent: Control) -> HBoxContainer:
 	parent.add_child(h); return h
 
 func _bg(parent: Control) -> void:
-	var r := ColorRect.new(); r.color = BG
-	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	r.z_index = -1; parent.add_child(r)
+	var rect := ColorRect.new(); rect.color = BG
+	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	rect.z_index = -1; parent.add_child(rect)
 
 func _btn(text: String, color: Color) -> Button:
-	var b := Button.new(); b.text = text
+	var btn := Button.new(); btn.text = text
 	var st := StyleBoxFlat.new()
 	st.bg_color = color.darkened(0.55); st.border_color = color.lerp(Color.TRANSPARENT, 0.3)
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
 		st.set_border_width(side, 1)
 		st.set_corner_radius(CORNER_TOP_LEFT, 10); st.set_corner_radius(CORNER_TOP_RIGHT, 10)
 		st.set_corner_radius(CORNER_BOTTOM_LEFT, 10); st.set_corner_radius(CORNER_BOTTOM_RIGHT, 10)
-	b.add_theme_stylebox_override("normal", st); b.add_theme_stylebox_override("hover", st)
-	b.add_theme_color_override("font_color", color)
-	b.add_theme_font_size_override("font_size", 14); return b
+	btn.add_theme_stylebox_override("normal", st); btn.add_theme_stylebox_override("hover", st)
+	btn.add_theme_color_override("font_color", color)
+	btn.add_theme_font_size_override("font_size", 14); return btn
 
 func _panel(parent: Control, color: Color, min_size: Vector2 = Vector2.ZERO) -> PanelContainer:
 	var pc := PanelContainer.new()
@@ -491,7 +490,7 @@ func _pill(parent: Control, text: String, color: Color) -> void:
 	l.add_theme_color_override("font_color", color)
 	pc.add_child(l); parent.add_child(pc)
 
-func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, is_future: bool, floor: int) -> Button:
+func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool, floor_num: int) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(82, 100)
 	var st := StyleBoxFlat.new()
@@ -524,7 +523,7 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, is_future: bool, 
 	# Floor number badge at bottom
 	if meta["label"] in ["Battle","Boss"]:
 		var fl := Label.new()
-		fl.text = "F%d" % floor
+		fl.text = "F%d" % floor_num
 		fl.add_theme_font_size_override("font_size", 9)
 		fl.add_theme_color_override("font_color", meta["color"] if is_cur else DIM)
 		fl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -109,7 +109,6 @@ func _build_ui() -> void:
 	))
 
 	# Heat Altar
-	var heat_max: int = _meta.max_heat_unlocked if _meta else 0
 	grid.add_child(_upgrade_panel(
 		"Heat Altar", "Optional difficulty — higher heat, better rewards.",
 		Color(1.0, 0.57, 0.20),
@@ -341,7 +340,7 @@ func _rebuild_currencies() -> void:
 		_cur_row.add_child(chip)
 		var gap := Control.new(); gap.custom_minimum_size = Vector2(6, 0); _cur_row.add_child(gap)
 
-func _currency_chip(name: String, amount: int) -> PanelContainer:
+func _currency_chip(currency_name: String, amount: int) -> PanelContainer:
 	var pc  := PanelContainer.new()
 	var st  := StyleBoxFlat.new()
 	st.bg_color      = Color(0.12, 0.13, 0.17)
@@ -353,7 +352,7 @@ func _currency_chip(name: String, amount: int) -> PanelContainer:
 	st.content_margin_top  = 3; st.content_margin_bottom = 3
 	pc.add_theme_stylebox_override("panel", st)
 	var lbl := Label.new()
-	lbl.text = "%s: %d" % [name, amount]
+	lbl.text = "%s: %d" % [currency_name, amount]
 	lbl.add_theme_font_size_override("font_size", 12)
 	lbl.add_theme_color_override("font_color", GOLD if amount > 0 else DIM)
 	pc.add_child(lbl)
@@ -362,10 +361,10 @@ func _currency_chip(name: String, amount: int) -> PanelContainer:
 
 # ── Widget helpers ────────────────────────────────────────────────────────────
 
-func _lbl(parent: Control, text: String, size: int, color: Color,
+func _lbl(parent: Control, text: String, font_size: int, color: Color,
 		centered: bool = false) -> Label:
 	var l := Label.new(); l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	if centered: l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(l); return l

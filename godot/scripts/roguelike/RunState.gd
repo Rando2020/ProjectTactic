@@ -5,6 +5,7 @@ extends RefCounted
 const TOTAL_FLOORS := 10
 
 var run_id:        String = ""
+@warning_ignore("shadowed_global_identifier")
 var seed:          int    = 0
 var current_floor: int    = 1
 var current_node:  int    = 0

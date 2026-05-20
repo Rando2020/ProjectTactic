@@ -16,18 +16,18 @@ func resolve_attack(attacker: Unit, target: Unit,
 		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
 	# Blind miss
 	if attacker.has_status("blind") and randf() < 0.35:
-		var vfx_n := get_node_or_null("/root/VFX")
-		if vfx_n: (vfx_n as VFXManager).play_damage_number(target.grid_pos, 0, Color(0.65,0.65,0.65))
-		var r := {"damage":0,"hp_damage":0,"missed":true}
-		combat_resolved.emit(r); return r
+		var blind_vfx_node := get_node_or_null("/root/VFX")
+		if blind_vfx_node: (blind_vfx_node as VFXManager).play_damage_number(target.grid_pos, 0, Color(0.65,0.65,0.65))
+		var blind_result := {"damage":0,"hp_damage":0,"missed":true}
+		combat_resolved.emit(blind_result); return blind_result
 
 	# Dodge from elite suffix
 	if target.has_meta("elite_tier") and target.get_meta("dodge_chance", 0.0) > 0:
 		if randf() < target.get_meta("dodge_chance", 0.0):
-			var vfx_n := get_node_or_null("/root/VFX")
-			if vfx_n: (vfx_n as VFXManager).play_damage_number(target.grid_pos, 0, Color(0.6,0.6,0.9))
-			var r := {"damage":0,"hp_damage":0,"missed":true,"dodged":true}
-			combat_resolved.emit(r); return r
+			var dodge_vfx_node := get_node_or_null("/root/VFX")
+			if dodge_vfx_node: (dodge_vfx_node as VFXManager).play_damage_number(target.grid_pos, 0, Color(0.6,0.6,0.9))
+			var dodge_result := {"damage":0,"hp_damage":0,"missed":true,"dodged":true}
+			combat_resolved.emit(dodge_result); return dodge_result
 
 	var raw: float = attacker.unit_data.base_stats.physical * 1.2
 

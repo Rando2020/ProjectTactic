@@ -9,6 +9,14 @@ var unit_scene: PackedScene = preload("res://scenes/Unit.tscn")
 var _battle_camera: Camera2D
 var _camera_base_position: Vector2 = Vector2(320.0, 245.0)
 var _camera_zoom_value: float = 0.92
+var _camera_bounds: Rect2 = Rect2()
+var _camera_dragging: bool = false
+var _camera_drag_last: Vector2 = Vector2.ZERO
+
+const CAMERA_PAN_SPEED := 560.0
+const CAMERA_MIN_ZOOM := 0.55
+const CAMERA_MAX_ZOOM := 1.40
+const CAMERA_ZOOM_STEP := 0.08
 
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
@@ -77,6 +85,7 @@ func _ready() -> void:
 	battle_manager.battle_lost.connect(_on_battle_lost)
 	battle_manager.turn_started.connect(_on_turn_started)
 	battle_manager.unit_defeated.connect(_on_unit_defeated)
+	battle_manager.unit_moved.connect(_on_unit_moved)
 
 
 func _start_battle_music() -> void:
@@ -118,6 +127,7 @@ func _frame_battlefield_camera() -> void:
 	if not _battle_camera:
 		return
 	var bounds := tactical_grid.get_board_bounds().grow(72.0)
+	_camera_bounds = bounds.grow(260.0)
 	var play_area := Vector2(620.0, 700.0)
 	var zoom_x: float = play_area.x / max(bounds.size.x, 1.0)
 	var zoom_y: float = play_area.y / max(bounds.size.y, 1.0)
@@ -126,6 +136,71 @@ func _frame_battlefield_camera() -> void:
 	_camera_base_position.x += 26.0
 	_battle_camera.position = _camera_base_position
 	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
+	_clamp_camera_to_board()
+
+
+func _process(delta: float) -> void:
+	if not _battle_camera:
+		return
+	var direction := Vector2.ZERO
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+		direction.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+		direction.x += 1.0
+	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+		direction.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+		direction.y += 1.0
+	if direction != Vector2.ZERO:
+		_battle_camera.position += direction.normalized() * CAMERA_PAN_SPEED * delta / max(_camera_zoom_value, 0.1)
+		_clamp_camera_to_board()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _battle_camera:
+		return
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			_set_camera_zoom(_camera_zoom_value + CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			_set_camera_zoom(_camera_zoom_value - CAMERA_ZOOM_STEP)
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
+			_camera_dragging = event.pressed
+			_camera_drag_last = event.position
+			get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _camera_dragging:
+		var drag_delta: Vector2 = event.position - _camera_drag_last
+		_camera_drag_last = event.position
+		_battle_camera.position -= drag_delta / max(_camera_zoom_value, 0.1)
+		_clamp_camera_to_board()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F:
+			_reset_camera()
+			get_viewport().set_input_as_handled()
+
+
+func _set_camera_zoom(value: float) -> void:
+	_camera_zoom_value = clamp(value, CAMERA_MIN_ZOOM, CAMERA_MAX_ZOOM)
+	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
+	_clamp_camera_to_board()
+
+
+func _reset_camera() -> void:
+	if not _battle_camera:
+		return
+	var tween := create_tween()
+	tween.tween_property(_battle_camera, "position", _camera_base_position, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_set_camera_zoom(clamp(_camera_zoom_value, CAMERA_MIN_ZOOM, CAMERA_MAX_ZOOM))
+
+
+func _clamp_camera_to_board() -> void:
+	if not _battle_camera or _camera_bounds.size == Vector2.ZERO:
+		return
+	_battle_camera.position.x = clamp(_battle_camera.position.x, _camera_bounds.position.x, _camera_bounds.end.x)
+	_battle_camera.position.y = clamp(_battle_camera.position.y, _camera_bounds.position.y, _camera_bounds.end.y)
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
@@ -142,6 +217,14 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 		target.y += sign(delta.y) * min(abs(delta.y) - margin.y, 80.0)
 	var tween := create_tween()
 	tween.tween_property(_battle_camera, "position", target, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _on_unit_moved(_unit_id: String, _from: Vector2i, to: Vector2i) -> void:
+	if not _battle_camera:
+		return
+	var target := tactical_grid.get_unit_focus_position(to)
+	var tween := create_tween()
+	tween.tween_property(_battle_camera, "position", target, 0.24).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _on_unit_defeated(unit_id: String) -> void:
@@ -328,8 +411,8 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 
 			"summon_tide":
 				# Nerevan's Veil — 3x3 water at centre
-				var cx: int = int(tactical_grid.map_data.map_width / 2)
-				var cy: int = int(tactical_grid.map_data.map_height / 2)
+				var cx: int = floori(float(tactical_grid.map_data.map_width) / 2.0)
+				var cy: int = floori(float(tactical_grid.map_data.map_height) / 2.0)
 				for dx in range(-1, 2):
 					for dy in range(-1, 2):
 						var p := Vector2i(cx+dx, cy+dy)
@@ -427,7 +510,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 	# Apply elite rolls when in a roguelike run
 	var gs2: Node = get_node_or_null("/root/GameState")
 	if gs2 and gs2.active_run and _elite_system:
-		var floor: int = int(gs2.active_run.current_floor)
+		var floor_num: int = int(gs2.active_run.current_floor)
 		var spawns_as_dicts: Array = []
 		for unit in result:
 			spawns_as_dicts.append({
@@ -439,19 +522,19 @@ func _spawn_enemy_units() -> Array[Unit]:
 		var heat: int = 0
 		var rm: Node = get_node_or_null("/root/RunManager")
 		if rm: heat = rm.get_heat_level()
-		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor, heat)
+		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor_num, heat)
 		for i in result.size():
-			var r: Dictionary = rolled[i]
-			if r.get("elite_tier","") != "" and result[i].unit_data:
-				result[i].unit_data.display_name         = r["name"]
-				result[i].unit_data.base_stats.hp        = r["hp"]
-				result[i].unit_data.base_stats.max_temper = r["max_temper"]
-				result[i].unit_data.base_stats.max_ether  = r["max_ether"]
-				result[i].set_meta("elite_tier",  r["elite_tier"])
-				result[i].set_meta("elite_color", r["elite_color"])
-				result[i].set_meta("jp_mult",     r.get("jp_mult", 1.0))
-				result[i].set_meta("prefixes",    r.get("prefixes", []))
-				result[i].set_meta("suffixes",    r.get("suffixes", []))
+			var rolled_spawn: Dictionary = rolled[i]
+			if rolled_spawn.get("elite_tier","") != "" and result[i].unit_data:
+				result[i].unit_data.display_name         = rolled_spawn["name"]
+				result[i].unit_data.base_stats.hp        = rolled_spawn["hp"]
+				result[i].unit_data.base_stats.max_temper = rolled_spawn["max_temper"]
+				result[i].unit_data.base_stats.max_ether  = rolled_spawn["max_ether"]
+				result[i].set_meta("elite_tier",  rolled_spawn["elite_tier"])
+				result[i].set_meta("elite_color", rolled_spawn["elite_color"])
+				result[i].set_meta("jp_mult",     rolled_spawn.get("jp_mult", 1.0))
+				result[i].set_meta("prefixes",    rolled_spawn.get("prefixes", []))
+				result[i].set_meta("suffixes",    rolled_spawn.get("suffixes", []))
 	return result
 
 

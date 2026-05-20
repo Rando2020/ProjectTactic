@@ -96,36 +96,36 @@ const TERRAIN_BRUSH        := "brush"
 # ── Main entry ────────────────────────────────────────────────────────────────
 
 ## Generate a complete MapData for a given floor and run seed.
-func generate_floor(floor: int, run_seed: int) -> MapData:
-	_s = ((run_seed * 1000 + floor) * 6364136223846793005 + 1442695040888963407) & 0xffffffff
+func generate_floor(floor_num: int, run_seed: int) -> MapData:
+	_s = ((run_seed * 1000 + floor_num) * 6364136223846793005 + 1442695040888963407) & 0xffffffff
 	if _s == 0: _s = 1
 
 	var map       := MapData.new()
 	var map_w     := 10
 	var map_h     := 8
-	var is_boss   := floor >= 10
+	var is_boss   := floor_num >= 10
 
-	map.id            = "generated_floor_%d_%d" % [floor, run_seed]
-	map.display_name  = _floor_name(floor)
+	map.id            = "generated_floor_%d_%d" % [floor_num, run_seed]
+	map.display_name  = _floor_name(floor_num)
 	map.map_width     = map_w
 	map.map_height    = map_h
-	map.default_terrain = TERRAIN_STONE if floor >= 5 else TERRAIN_GRASS
+	map.default_terrain = TERRAIN_STONE if floor_num >= 5 else TERRAIN_GRASS
 	map.objective_type  = "destroy_anchor" if is_boss else "defeat_all"
 	map.objective_label = "Destroy the Void Anchor" if is_boss else "Defeat all enemies"
-	map.reward_gold   = 100 + floor * 30
-	map.reward_jp     = 30 + floor * 8
+	map.reward_gold   = 100 + floor_num * 30
+	map.reward_jp     = 30 + floor_num * 8
 
 	# ── Tile overrides ────────────────────────────────────────────────────
 	var tiles: Array[Dictionary] = []
 
 	# Water cluster (1-2 clusters)
-	var water_count := _ri(3) + 2 + (floor / 3)
+	var water_count := _ri(3) + 2 + floori(float(floor_num) / 3.0)
 	_place_cluster(tiles, map_w, map_h, TERRAIN_WATER, water_count,
 		_ri(map_w - 2) + 1, _ri(4) + 2)
-	if floor >= 4 and _rb(0.45):
+	if floor_num >= 4 and _rb(0.45):
 		var extra := _ri(2) + 1
 		_place_cluster(tiles, map_w, map_h,
-			TERRAIN_DEEP_WATER if floor >= 6 else TERRAIN_WATER,
+			TERRAIN_DEEP_WATER if floor_num >= 6 else TERRAIN_WATER,
 			extra, _ri(map_w - 2) + 1, _ri(3) + 1)
 
 	# High ground
@@ -147,15 +147,15 @@ func generate_floor(floor: int, run_seed: int) -> MapData:
 			"terrain": TERRAIN_BRUSH, "height": 0})
 
 	# Shrine (floor 3+)
-	if floor >= 3:
-		var shrine_count := 1 + (1 if floor >= 7 else 0)
+	if floor_num >= 3:
+		var shrine_count := 1 + (1 if floor_num >= 7 else 0)
 		for _i in range(shrine_count):
 			tiles.append({"x": _ri(map_w - 2) + 1, "y": _ri(4) + 2,
 				"terrain": TERRAIN_SHRINE, "height": 0})
 
 	# Burning ground (floor 4+)
-	if floor >= 4:
-		var burn_count := _ri(2) + 1 + (floor / 4)
+	if floor_num >= 4:
+		var burn_count := _ri(2) + 1 + floori(float(floor_num) / 4.0)
 		_place_cluster(tiles, map_w, map_h, TERRAIN_BURNING, burn_count,
 			_ri(map_w - 2) + 1, _ri(3) + 1)
 
@@ -173,8 +173,8 @@ func generate_floor(floor: int, run_seed: int) -> MapData:
 	map.tile_overrides = tiles
 
 	# ── Enemy spawns ──────────────────────────────────────────────────────
-	var enemy_count := ENEMY_COUNTS[clamp(floor - 1, 0, ENEMY_COUNTS.size() - 1)]
-	map.enemy_spawns = _generate_enemy_spawns(floor, enemy_count, map_w, map_h, is_boss)
+	var enemy_count := ENEMY_COUNTS[clamp(floor_num - 1, 0, ENEMY_COUNTS.size() - 1)]
+	map.enemy_spawns = _generate_enemy_spawns(floor_num, enemy_count, map_w, map_h, is_boss)
 
 	# ── Player spawns (bottom edge) ───────────────────────────────────────
 	map.player_spawns = [
@@ -204,12 +204,12 @@ func _place_cluster(tiles: Array, map_w: int, map_h: int,
 		placed += 1
 
 
-func _generate_enemy_spawns(floor: int, count: int, map_w: int, map_h: int,
+func _generate_enemy_spawns(floor_num: int, count: int, map_w: int, map_h: int,
 		is_boss: bool) -> Array[Dictionary]:
 	# Build weighted pool of valid enemy types for this floor
 	var pool: Array[Dictionary] = []
 	for e in ENEMY_POOL:
-		if floor >= e["floor_min"] and floor <= e["floor_max"]:
+		if floor_num >= e["floor_min"] and floor_num <= e["floor_max"]:
 			for _w in range(e["weight"]):
 				pool.append(e)
 
@@ -263,7 +263,7 @@ func _make_spawn(enemy_def: Dictionary, pos: Vector2i) -> Dictionary:
 	}
 
 
-func _floor_name(floor: int) -> String:
+func _floor_name(floor_num: int) -> String:
 	var names: Array[String] = [
 		"Ashvale Outskirts",
 		"Crumbled Watchpost",
@@ -276,4 +276,4 @@ func _floor_name(floor: int) -> String:
 		"Thornspire Approach",
 		"Thornspire Vault — The Sleeping Anchor",
 	]
-	return names[clamp(floor - 1, 0, names.size() - 1)]
+	return names[clamp(floor_num - 1, 0, names.size() - 1)]

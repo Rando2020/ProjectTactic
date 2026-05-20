@@ -225,9 +225,9 @@ func _item_chip(item: Dictionary) -> PanelContainer:
 	lbl.add_theme_color_override("font_color", col)
 	pc.add_child(lbl); return pc
 
-func _lbl(parent: Control, text: String, size: int, color: Color) -> Label:
+func _lbl(parent: Control, text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new(); l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	parent.add_child(l); return l
 
@@ -240,13 +240,13 @@ func _separator(parent: Control) -> void:
 	s.add_theme_stylebox_override("separator", st); parent.add_child(s)
 
 func _btn(text: String, color: Color) -> Button:
-	var b := Button.new(); b.text = text
+	var btn := Button.new(); btn.text = text
 	var st := StyleBoxFlat.new()
 	st.bg_color    = color.darkened(0.55)
 	st.border_color = color.lerp(Color.TRANSPARENT, 0.3)
 	for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: st.set_border_width(side, 1)
 	for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]:
 		st.set_corner_radius(c, 10)
-	b.add_theme_stylebox_override("normal", st); b.add_theme_stylebox_override("hover", st)
-	b.add_theme_color_override("font_color", color)
-	b.add_theme_font_size_override("font_size", 15); return b
+	btn.add_theme_stylebox_override("normal", st); btn.add_theme_stylebox_override("hover", st)
+	btn.add_theme_color_override("font_color", color)
+	btn.add_theme_font_size_override("font_size", 15); return btn

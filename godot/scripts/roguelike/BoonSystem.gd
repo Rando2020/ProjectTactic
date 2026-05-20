@@ -90,14 +90,14 @@ func _rng() -> float:
 	return float(_s & 0xffffffff) / 4294967296.0
 
 ## Generate 3 boon offers for a floor. Floor scales rarity weights.
-func generate_offers(rng_seed: int, floor: int, owned_ids: Array) -> Array:
+func generate_offers(rng_seed: int, floor_num: int, owned_ids: Array) -> Array:
 	_s = rng_seed & 0xffffffff; if _s == 0: _s = 1
 
 	var weights := {
-		"common":    max(10, 55 - (floor - 1) * 5),
-		"rare":      25 + (floor - 1) * 3,
-		"legendary": 10 + (floor - 1) * 2,
-		"unique":    (floor - 3) * 2 if floor >= 4 else 0,
+		"common":    max(10, 55 - (floor_num - 1) * 5),
+		"rare":      25 + (floor_num - 1) * 3,
+		"legendary": 10 + (floor_num - 1) * 2,
+		"unique":    (floor_num - 3) * 2 if floor_num >= 4 else 0,
 	}
 	var rpool: Array[String] = []
 	for r in weights: for _i in range(weights[r]): rpool.append(r)
@@ -118,8 +118,8 @@ func generate_offers(rng_seed: int, floor: int, owned_ids: Array) -> Array:
 		var commons := BOONS.filter(func(b: Dictionary) -> bool:
 			return b["rarity"] == "common" and not used.has(b["id"]))
 		if commons.is_empty(): break
-		var b: Dictionary = commons[int(_rng() * commons.size())]
-		used.append(b["id"]); offers.append(b)
+		var fallback_boon: Dictionary = commons[int(_rng() * commons.size())]
+		used.append(fallback_boon["id"]); offers.append(fallback_boon)
 
 	return offers
 

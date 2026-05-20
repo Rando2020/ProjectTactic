@@ -72,9 +72,9 @@ func generate_item(item_seed: int, rarity_bonus: float = 0.0) -> Dictionary:
 		var pool := AFFIXES.filter(func(a: Dictionary) -> bool: return not used.has(a["id"]))
 		if pool.is_empty(): break
 		var total: int = pool.reduce(func(s: int, a: Dictionary) -> int: return s + a["weight"], 0)
-		var r := int(_rng() * total)
+		var roll := int(_rng() * total)
 		var chosen: Dictionary = pool[0]
-		for a in pool: r -= a["weight"]; if r <= 0: chosen = a; break
+		for a in pool: roll -= a["weight"]; if roll <= 0: chosen = a; break
 		var n := int(chosen["roll"][0] + _rng() * (chosen["roll"][1] - chosen["roll"][0]))
 		affixes.append({"id":chosen["id"], "label":chosen["label"].replace("{n}", str(n)), "value":n})
 		used.append(chosen["id"])
@@ -90,9 +90,9 @@ func generate_item(item_seed: int, rarity_bonus: float = 0.0) -> Dictionary:
 		"affixes": affixes,
 	}
 
-func generate_battle_loot(defeated: Array, run_seed: int, floor: int) -> Array:
+func generate_battle_loot(defeated: Array, run_seed: int, floor_num: int) -> Array:
 	var drops: Array = []
-	var rarity_bonus := minf(0.6, float(floor) * 0.06)
+	var rarity_bonus := minf(0.6, float(floor_num) * 0.06)
 	for i in defeated.size():
 		_s = ((run_seed * 997 + i * 6271) & 0xffffffff)
 		var is_elite: bool = defeated[i].get("elite_tier","") != ""

@@ -50,8 +50,8 @@ func _rng() -> float:
 
 ## Get elite spawn rates for a floor, scaled by heat level.
 ## heat_level 0 = base, each +1 shifts 3% from normal → champion.
-func get_rates(floor: int, heat_level: int = 0) -> Dictionary:
-	var base := FLOOR_RATES[clamp(floor - 1, 0, FLOOR_RATES.size() - 1)].duplicate()
+func get_rates(floor_num: int, heat_level: int = 0) -> Dictionary:
+	var base := FLOOR_RATES[clamp(floor_num - 1, 0, FLOOR_RATES.size() - 1)].duplicate()
 	if heat_level <= 0: return base
 	# Each heat level shifts 3% of normal chance to harder tiers
 	var shift := minf(base["normal"] - 0.05, float(heat_level) * 0.03)
@@ -60,21 +60,21 @@ func get_rates(floor: int, heat_level: int = 0) -> Dictionary:
 	base["champion"] = base["champion"] + shift * 0.5
 	return base
 
-func roll_tier(unit_seed: int, floor: int) -> String:
+func roll_tier(unit_seed: int, floor_num: int) -> String:
 	_s = unit_seed & 0xffffffff; if _s == 0: _s = 1
-	var rates := get_rates(floor)
-	var r := _rng()
-	if r < rates["champion"]: return "champion"
-	r -= rates["champion"]
-	if r < rates["elite"]: return "elite"
-	r -= rates["elite"]
-	if r < rates["marked"]: return "marked"
+	var rates := get_rates(floor_num)
+	var roll := _rng()
+	if roll < rates["champion"]: return "champion"
+	roll -= rates["champion"]
+	if roll < rates["elite"]: return "elite"
+	roll -= rates["elite"]
+	if roll < rates["marked"]: return "marked"
 	return "normal"
 
 ## Apply elite modifiers to a spawn dict in place. Returns modified dict.
-func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor: int) -> Dictionary:
+func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor_num: int) -> Dictionary:
 	var useed := (run_seed * 31 + unit_idx * 7919) & 0xffffffff
-	var tier  := roll_tier(useed, floor)
+	var tier  := roll_tier(useed, floor_num)
 	if tier == "normal": return spawn
 
 	_s = useed
@@ -123,29 +123,29 @@ func apply_to_spawn(spawn: Dictionary, run_seed: int, unit_idx: int, floor: int)
 	return result
 
 ## Apply to all spawns in a list.
-func apply_to_floor(spawns: Array, run_seed: int, floor: int, heat_level: int = 0) -> Array:
+func apply_to_floor(spawns: Array, run_seed: int, floor_num: int, heat_level: int = 0) -> Array:
 	var result: Array = []
 	var idx := 0
 	for s in spawns:
-		result.append(apply_to_spawn_with_heat(s.duplicate(true), run_seed, idx, floor, heat_level))
+		result.append(apply_to_spawn_with_heat(s.duplicate(true), run_seed, idx, floor_num, heat_level))
 		idx += 1
 	return result
 
 func apply_to_spawn_with_heat(spawn: Dictionary, run_seed: int, unit_idx: int,
-		floor: int, heat_level: int) -> Dictionary:
+		floor_num: int, heat_level: int) -> Dictionary:
 	var useed := (run_seed * 31 + unit_idx * 7919) & 0xffffffff
-	var tier  := _roll_tier_with_rates(useed, get_rates(floor, heat_level))
+	var tier  := _roll_tier_with_rates(useed, get_rates(floor_num, heat_level))
 	if tier == "normal": return spawn
 	_s = useed; return _apply_tier(spawn, tier)
 
 func _roll_tier_with_rates(unit_seed: int, rates: Dictionary) -> String:
 	_s = unit_seed & 0xffffffff; if _s == 0: _s = 1
-	var r := _rng()
-	if r < rates["champion"]: return "champion"
-	r -= rates["champion"]
-	if r < rates["elite"]: return "elite"
-	r -= rates["elite"]
-	if r < rates["marked"]: return "marked"
+	var roll := _rng()
+	if roll < rates["champion"]: return "champion"
+	roll -= rates["champion"]
+	if roll < rates["elite"]: return "elite"
+	roll -= rates["elite"]
+	if roll < rates["marked"]: return "marked"
 	return "normal"
 
 func _apply_tier(spawn: Dictionary, tier: String) -> Dictionary:
