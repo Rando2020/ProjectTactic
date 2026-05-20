@@ -1,0 +1,82 @@
+# Hub and Currency System Design
+
+This document specifies the initial design for the **Hub** and **Currency** systems in ProjectTactic’s Godot prototype.  It lays out how players will progress both within a run and across runs through various resource types, and how defeating bosses unlocks additional upgrades and jobs.
+
+## Hub Overview
+
+The hub acts as the player’s base of operations between runs.  In the hub the player can:
+
+* **View current meta‑currencies** (soul shards, obsidian, glyphs).
+* **Spend currencies on permanent upgrades** (stat increases, extra ability slots, job unlock tokens, heat modifiers).
+* **Inspect and unlock jobs** using **job points (JP)** earned in combat.
+* **Manage Guardian Resonance** — invest summon‑specific currencies to unlock and upgrade boons tied to particular Guardians.
+* **Review unlocked boons** and their levels.
+* **Start new runs** with chosen difficulty modifiers (heat) and party composition.
+
+The hub should be represented as a dedicated scene with NPC vendors or interfaces for each upgrade category.  Initially, this can be a simple UI menu listing upgrade options; later it can become a navigable 3D/2D environment.
+
+## Currency Types
+
+### Job Points (JP)
+
+* Earned by using actions in combat (e.g. dealing damage, using abilities, defeating enemies).
+* Spent on **job levels** and **ability unlocks** within a job tree.  Each job level requires a fixed or scaling amount of JP.  Unlocking new jobs may require reaching certain job levels in prerequisite jobs and paying JP.
+* JP resets at the end of a run (it is not a meta‑currency) but stays with the character within the run; any unspent JP at run end converts to a small amount of meta‑currency.
+
+### Summon Currency (Guardian Sigils)
+
+* Each summon/Guardian has an associated currency (e.g. *Phoenix Sigils*, *Titan Sigils*).  These are obtained by picking **summon‑boon nodes** during runs, defeating elite versions of that summon’s followers, or finishing stages while the Guardian is equipped.
+* Used in the hub to **unlock boons** tied to that Guardian or to permanently enhance the Guardian’s bonuses.  For example, investing ten *Titan Sigils* might increase the Titan Guardian’s defensive boon potency.
+* Sigils are meta‑currencies: they persist between runs.
+
+### Run Currency (Aether or Gold)
+
+* Dropped from enemies and treasure chests during runs.  It does **not persist** between runs.
+* Spent during the run at altars or mid‑run shops to purchase temporary boosts: healing, stat increases, consumable items, extra rerolls on boon choices, or unique random effects.
+* Unspent run currency at run end converts to a small amount of meta‑currency.
+
+### Meta Currencies
+
+Meta‑currencies persist across runs and are used in the hub for permanent upgrades:
+
+| Currency | Description | Uses |
+|---|---|---|
+| **Soul Shards** | Base meta‑currency awarded for clearing stages, defeating bosses and completing events. | Purchase core stat upgrades (HP, strength, magic), party size increases, inventory slots, and heat modifier unlocks. |
+| **Obsidian** | Rare meta‑currency from defeating elite enemies, making heat challenges or discovering secrets. | Unlock new job classes, advanced job tiers, and additional ability slots. |
+| **Glyphs** | Earned by selecting boons instead of currencies, or by completing special objectives. | Unlock new boon types, increase the rarity pool, and upgrade Guardian resonance trees. |
+| **Boss Tokens** | Earned by defeating bosses; quantity depends on difficulty modifiers. | Gate access to powerful upgrades like ascended jobs, Guardian transformation tiers, or additional meta‑currency cap increases. |
+
+These currencies encourage players to choose between temporary power during a run and long‑term progression.
+
+## Upgrade Categories in the Hub
+
+1. **Stat Upgrades Vendor** – Spend soul shards to increase base HP, attack, defense, agility or grant additional ability slots.  Each upgrade tier costs more shards.
+2. **Job Unlock Board** – Spend obsidian to unlock new jobs.  Jobs require meeting prerequisites (e.g. Warrior Lv. 3 and Mage Lv. 2) plus an obsidian cost.  Some advanced jobs require **Boss Tokens** in addition to obsidian.
+3. **Guardian Shrine** – Spend Guardian sigils and glyphs to unlock or upgrade boons tied to a specific Guardian.  Investments might improve boon potency, add extra charges or unlock new summon abilities.
+4. **Heat Altar** – Spend soul shards to unlock difficulty modifiers (heat levels).  Each heat option increases run difficulty but also increases currency and boon rewards.  Beating bosses at new heat levels awards **Boss Tokens**.
+5. **Boon Codex** – View all unlocked boons.  Spend glyphs to add new boons to the pool or upgrade their tiers (common → rare, etc.).
+
+## Job System Integration
+
+* Characters gain **JP** from actions in battle.  Job abilities and levels are unlocked using JP in the hub or between battles.  A baseline character level may exist, but progression should revolve primarily around the job tree rather than a universal XP bar.
+* Ascended or advanced jobs require defeating specific bosses a certain number of times and spending **Boss Tokens** and **Obsidian**.  For example, unlocking the *Dragoon* job might require beating the second boss twice at heat 2 and spending 5 Boss Tokens and 20 Obsidian.
+
+## Boss Defeat and Unlocks
+
+* Bosses appear at defined stages (e.g. every third stage).  Defeating a boss awards a large amount of soul shards, obsidian, and boss tokens.
+* **Repeat clears**: Each additional clear of the same boss at the same heat yields diminishing returns of currency but counts toward unlock thresholds for advanced jobs and Guardian evolutions.
+* **Heat clears**: Clearing bosses at higher heat levels yields more currency and may count toward unlocking new job tiers or Guardian forms faster.
+
+## Summary and Next Steps
+
+This design lays the groundwork for a rich meta‑progression loop: during runs the player makes meaningful choices between temporary advantages and collecting resources.  Between runs the hub offers multiple upgrade paths, tying meta‑currencies to stat upgrades, job unlocks, Guardian progression, and optional difficulty modifiers.  Boss defeats drive gating of advanced content and encourage replay at higher difficulties.
+
+### Implementation Plan
+
+1. **Define data structures**: Extend `Currency.gd` to include new types (soul shards, obsidian, glyphs, boss tokens, and Guardian sigils).  Define `JobProgress` and `JobUnlock` structures to track job levels, JP costs and unlock requirements.
+2. **Stub the hub UI**: Create a new Godot scene (`HubScene.tscn`) and script (`hub-manager.gd`) to present currency totals and upgrade options.  Use placeholder buttons to trigger upgrades.
+3. **Integrate with `RunManager`**: Ensure that meta‑currencies persist across runs and are updated at run end.  Add methods to `RunManager` to award meta‑currency and boss tokens.
+4. **Implement vendor interactions**: Build UI components for each upgrade category.  Add methods to spend currencies and unlock upgrades in `hub-manager.gd`.  Make sure purchases cannot exceed currency totals.
+5. **Design job unlock flow**: Link job unlocks to the hub.  A separate job tree UI should update when new jobs are purchased via obsidian and boss tokens.
+6. **Design Guardian shrine flow**: Use the existing `Boon` and new `Guardian` data to allow investment of sigils and glyphs into specific boon upgrades.
+7. **Balance costs**: Playtest to determine baseline currency earnings, upgrade costs and heat rewards to ensure progression feels rewarding but not trivial.
