@@ -65,6 +65,10 @@ func initialize_from_map(p_map_data: MapData) -> void:
 	_draw_base_tiles()
 
 
+func redraw_base_tiles() -> void:
+	_draw_base_tiles()
+
+
 func _configure_layers() -> void:
 	if highlight_layer:
 		highlight_layer.z_index = 1000

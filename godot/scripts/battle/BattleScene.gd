@@ -29,6 +29,7 @@ const SPRITE_PATHS := {
 }
 
 const DEFAULT_BATTLE_MUSIC: AudioStream = preload("res://assets/music/steel-march-echo-battle.wav")
+const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 
 var _battle_music_player: AudioStreamPlayer
 
@@ -52,10 +53,6 @@ func _ready() -> void:
 
 	tactical_grid.initialize_from_map(_map_data)
 
-	# Apply boon battle-start effects (Ignareth Unchained, Vaelthorn, etc.)
-	if gs and gs.active_run:
-		_apply_boon_battle_start_effects(gs)
-		gs.run_floor_reached = max(gs.run_floor_reached, gs.active_run.current_floor)
 	_frame_battlefield_camera()
 
 	var player_units := _spawn_player_units()
@@ -71,6 +68,9 @@ func _ready() -> void:
 	all_units.append_array(enemy_units)
 
 	battle_ui.setup(battle_manager)
+	if gs and gs.active_run:
+		_apply_boon_battle_start_effects(gs, all_units)
+		gs.run_floor_reached = max(gs.run_floor_reached, gs.active_run.current_floor)
 	battle_manager.start_battle(_map_data, all_units)
 
 	battle_manager.battle_won.connect(_on_battle_won)
@@ -304,8 +304,8 @@ func _create_crypt_map() -> MapData:
 
 # ── Unit spawning ─────────────────────────────────────────────────────────────
 
-func _apply_boon_battle_start_effects(gs: Node) -> void:
-	var bonuses := RunBonuses.for_current_run()
+func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void:
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var effects: Array = bonuses.get("battle_start_effects", [])
 	for fx: Dictionary in effects:
 		match fx.get("trigger",""):
@@ -316,15 +316,15 @@ func _apply_boon_battle_start_effects(gs: Node) -> void:
 					var t: String = tactical_grid.tiles[pos].get("terrain","")
 					if t in ["grass","road","brush"]:
 						tactical_grid.tiles[pos]["terrain"] = "burning"
-						if elemental_system: elemental_system.surface_states[pos] = "burning"
-				log_message.emit("🔥 Ignareth Unchained — all terrain ignites!")
+				tactical_grid.redraw_base_tiles()
+				battle_manager.log_message.emit("Ignareth Unchained: all terrain ignites!")
 
 			"vaelthorn_curse_all":
 				# Vaelthorn Unchained — all enemies start Cursed (2t)
-				for unit in units:
+				for unit in all_units:
 					if unit.team == "enemy" and unit.hp > 0:
-						unit.apply_status("burn", 2, 0.0)
-				log_message.emit("💀 Vaelthorn Unchained — all enemies are Cursed!")
+						unit.apply_status(_make_status("burn", "Burn", 2, 0.0, "fire"))
+				battle_manager.log_message.emit("Vaelthorn Unchained: all enemies are cursed!")
 
 			"summon_tide":
 				# Nerevan's Veil — 3x3 water at centre
@@ -335,17 +335,27 @@ func _apply_boon_battle_start_effects(gs: Node) -> void:
 						var p := Vector2i(cx+dx, cy+dy)
 						if tactical_grid.tiles.has(p):
 							tactical_grid.tiles[p]["terrain"] = "shallow_water"
-							if elemental_system: elemental_system.surface_states[p] = "wet"
-				log_message.emit("🌊 Nerevan's Veil — a tide rises!")
+				tactical_grid.redraw_base_tiles()
+				battle_manager.log_message.emit("Nerevan's Veil: a tide rises!")
 
 			"vaelthorn_bargain":
 				# Vaelthorn's Bargain — sacrifice HP for damage bonus
 				var cost: float = fx.get("hp_cost", 0.2)
-				for unit in units:
+				for unit in all_units:
 					if unit.team == "player":
 						var sacrifice: int = int(float(unit.unit_data.base_stats.hp) * cost)
 						unit.hp = max(1, unit.hp - sacrifice)
-				log_message.emit("💀 Vaelthorn's Bargain — HP sacrificed for power!")
+				battle_manager.log_message.emit("Vaelthorn's Bargain: HP sacrificed for power!")
+
+
+func _make_status(status_id: String, display_name: String, turns: int, magnitude: float, damage_type: String = "pure") -> StatusEffect:
+	var status := StatusEffect.new()
+	status.status_id = status_id
+	status.display_name = display_name
+	status.duration = turns
+	status.magnitude = magnitude
+	status.damage_type = damage_type
+	return status
 
 
 func _spawn_player_units() -> Array[Unit]:
