@@ -23,6 +23,13 @@ var _status_label: Label
 var _tile_info_label: Label
 var _command_hint_label: Label
 var _intro_banner: PanelContainer
+var _settings_overlay: Control
+var _game_slider: HSlider
+var _music_slider: HSlider
+var _fx_slider: HSlider
+var _game_value_label: Label
+var _music_value_label: Label
+var _fx_value_label: Label
 
 const LOG_SIZE := 8
 const TIMELINE_SLOTS := 6
@@ -180,6 +187,13 @@ func _build_ui() -> void:
 		_log_labels.append(lbl)
 
 	_build_intro_banner()
+	_build_settings_overlay()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		_toggle_settings_overlay()
+		get_viewport().set_input_as_handled()
 
 
 func _build_intro_banner() -> void:
@@ -209,6 +223,122 @@ func _build_intro_banner() -> void:
 
 
 # ── Builder helpers ───────────────────────────────────────────────────────────
+
+func _build_settings_overlay() -> void:
+	_settings_overlay = Control.new()
+	_settings_overlay.visible = false
+	_settings_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_settings_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_settings_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.58)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_settings_overlay.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.position = Vector2(400.0, 146.0)
+	panel.custom_minimum_size = Vector2(480.0, 360.0)
+	_settings_overlay.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "SETTINGS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.62))
+	box.add_child(title)
+
+	var hint := Label.new()
+	hint.text = "Press Esc to return"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_color_override("font_color", Color(0.70, 0.76, 0.84))
+	box.add_child(hint)
+
+	_game_slider = _add_volume_slider(box, "Game", _on_game_volume_changed)
+	_music_slider = _add_volume_slider(box, "Music", _on_music_volume_changed)
+	_fx_slider = _add_volume_slider(box, "FX", _on_fx_volume_changed)
+
+	var close_btn := Button.new()
+	close_btn.text = "Return"
+	close_btn.custom_minimum_size = Vector2(120.0, 38.0)
+	close_btn.pressed.connect(_toggle_settings_overlay)
+	box.add_child(close_btn)
+
+	_refresh_audio_settings_controls()
+
+
+func _add_volume_slider(parent: Control, label_text: String, callback: Callable) -> HSlider:
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	parent.add_child(row)
+
+	var labels := HBoxContainer.new()
+	row.add_child(labels)
+
+	var name_label := Label.new()
+	name_label.text = label_text
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 13)
+	labels.add_child(name_label)
+
+	var value_label := Label.new()
+	value_label.text = "100"
+	value_label.custom_minimum_size.x = 42.0
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.add_theme_font_size_override("font_size", 13)
+	labels.add_child(value_label)
+
+	var slider := HSlider.new()
+	slider.min_value = 0
+	slider.max_value = 100
+	slider.step = 1
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.value_changed.connect(callback)
+	row.add_child(slider)
+
+	match label_text:
+		"Game":
+			_game_value_label = value_label
+		"Music":
+			_music_value_label = value_label
+		"FX":
+			_fx_value_label = value_label
+
+	return slider
+
+
+func _toggle_settings_overlay() -> void:
+	if not _settings_overlay:
+		return
+	_settings_overlay.visible = not _settings_overlay.visible
+	if _settings_overlay.visible:
+		_refresh_audio_settings_controls()
+
+
+func _refresh_audio_settings_controls() -> void:
+	var audio := _audio_settings()
+	if not audio:
+		return
+	_set_slider_value(_game_slider, _game_value_label, audio.game_volume)
+	_set_slider_value(_music_slider, _music_value_label, audio.music_volume)
+	_set_slider_value(_fx_slider, _fx_value_label, audio.fx_volume)
+
+
+func _set_slider_value(slider: HSlider, label: Label, value: int) -> void:
+	if slider:
+		slider.set_value_no_signal(value)
+	if label:
+		label.text = "%d" % value
+
+
+func _audio_settings() -> Node:
+	return get_node_or_null("/root/AudioSettings")
+
 
 func _separator() -> HSeparator:
 	var sep := HSeparator.new()
@@ -272,6 +402,30 @@ func _on_phase_changed(phase: String) -> void:
 	if _wait_btn:    _wait_btn.disabled    = not is_player
 	if _ability_btn: _ability_btn.disabled = not is_player
 	if _ability_panel: _ability_panel.visible = false
+
+
+func _on_game_volume_changed(value: float) -> void:
+	var audio := _audio_settings()
+	if audio:
+		audio.set_game_volume(value)
+	if _game_value_label:
+		_game_value_label.text = "%d" % int(round(value))
+
+
+func _on_music_volume_changed(value: float) -> void:
+	var audio := _audio_settings()
+	if audio:
+		audio.set_music_volume(value)
+	if _music_value_label:
+		_music_value_label.text = "%d" % int(round(value))
+
+
+func _on_fx_volume_changed(value: float) -> void:
+	var audio := _audio_settings()
+	if audio:
+		audio.set_fx_volume(value)
+	if _fx_value_label:
+		_fx_value_label.text = "%d" % int(round(value))
 
 
 func _on_tile_info_changed(text: String) -> void:

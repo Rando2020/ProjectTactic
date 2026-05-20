@@ -65,6 +65,7 @@ func _ready() -> void:
 func _start_battle_music() -> void:
 	_battle_music_player = AudioStreamPlayer.new()
 	_battle_music_player.stream = DEFAULT_BATTLE_MUSIC
+	_battle_music_player.bus = "Music"
 	_battle_music_player.volume_db = -8.0
 	_battle_music_player.finished.connect(_on_battle_music_finished)
 	add_child(_battle_music_player)

@@ -26,6 +26,7 @@ config/icon="res://icon.svg"
 
 VFX="*res://scripts/vfx/VFXManager.gd"
 GameState="*res://scripts/systems/GameState.gd"
+AudioSettings="*res://scripts/systems/AudioSettings.gd"
 
 [display]
 
