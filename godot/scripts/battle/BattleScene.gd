@@ -347,7 +347,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 				spawn.get("magic",        30),
 				spawn.get("max_temper",   80),
 				spawn.get("max_ether",    60),
-				spawn.get("abilities",    []) as Array[String],
+				spawn.get("abilities",    []),
 				spawn.get("affinities",   {}),
 			)
 			result.append(unit)
@@ -397,7 +397,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 				hp: int, mp: int, move: int, jump: int, speed: int,
 				physical: int, magic: int, max_temper: int, max_ether: int,
-				abilities: Array[String] = [],
+				abilities: Array = [],
 				affinities: Dictionary = {},
 				atk_range_min: int = 1, atk_range_max: int = 1) -> Unit:
 	var stats := UnitStats.new()
@@ -410,7 +410,7 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	var data := UnitData.new()
 	data.id = id;  data.display_name = uname;  data.faction = faction
 	data.base_stats = stats
-	data.abilities = abilities
+	data.abilities = _to_string_array(abilities)
 	data.elemental_affinities = affinities
 
 	if SPRITE_PATHS.has(id):
@@ -423,3 +423,10 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	unit.grid_pos = pos
 	unit.team = faction
 	return unit
+
+
+func _to_string_array(values: Array) -> Array[String]:
+	var result: Array[String] = []
+	for value in values:
+		result.append(str(value))
+	return result
