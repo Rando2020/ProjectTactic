@@ -17,8 +17,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="ProjectTactic"
 config/description="Tactical RPG - Godot 4 Implementation"
 config/version="0.1.0"
-config/tags=PackedStringArray("tactical", "rpg", "turn-based")
-run/main_scene="res://scenes/StageSelect.tscn"
+config/tags=PackedStringArray("tactical", "rpg", "turn-based", "roguelite")
+run/main_scene="res://scenes/HubScene.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -27,6 +27,7 @@ config/icon="res://icon.svg"
 VFX="*res://scripts/vfx/VFXManager.gd"
 GameState="*res://scripts/systems/GameState.gd"
 AudioSettings="*res://scripts/systems/AudioSettings.gd"
+RunManager="*res://scripts/roguelite/RunManager.gd"
 
 [display]
 
