@@ -151,47 +151,63 @@ func _on_unit_defeated(unit_id: String) -> void:
 
 
 func _on_battle_won(rewards: Dictionary) -> void:
+	_fade_battle_music()
 	var player_ids: Array[String] = []
 	for uid in battle_manager.units:
 		var u: Unit = battle_manager.units[uid]
-		if u.team == "player": player_ids.append(uid)
+		if u.team == "player":
+			player_ids.append(uid)
+
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
-		# Award stage rewards (Soul Shards, Aether, Obsidian)
-		var rm: Node = get_node_or_null("/root/RunManager")
-		if rm and rm.is_run_active:
-			var floor_num := gs.active_run.current_floor if gs.active_run else 1
-			var is_boss   := floor_num >= 10
-			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
-			rm.award_stage_reward(floor_num, has_elite, is_boss)
-			if is_boss:
-				rm.end_run(true)
-				await get_tree().create_timer(1.8).timeout
-				get_tree().change_scene_to_file("res://scenes/HubScene.tscn")
-				return
 
-		if gs.active_run:
-			# Generate loot, advance run, route to StageSelect
-			var ls    := LootSystem.new()
-			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
-			gs.pending_loot = loot
-			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
-			gs.active_run.elite_kills += elite_n
-			gs.active_run.complete_current_node()
-			# If next node is boon_pick, generate offers
-			var next_nd := gs.active_run.get_current_node()
-			if next_nd.get("type","") == "boon_pick":
-				var bs := BoonSystem.new()
-				var owned := gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
-				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
-			await get_tree().create_timer(1.5).timeout
-			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
-			return
-	await get_tree().create_timer(2.2).timeout
+		var rm: Node = get_node_or_null("/root/RunManager")
+		if rm and rm.is_run_active and gs.active_run:
+			var floor_num: int = gs.active_run.current_floor
+			var is_boss: bool = floor_num >= rm.get_total_floors()
+			var elite_n: int = _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
+			var has_elite: bool = elite_n > 0
+			var meta_rewards: Dictionary = rm.award_stage_reward(floor_num, has_elite, is_boss)
+
+			var loot: Array = []
+			if not is_boss:
+				var ls := LootSystem.new()
+				loot = ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
+				gs.pending_loot = loot
+				gs.active_run.elite_kills += elite_n
+				gs.active_run.complete_current_node()
+
+				var next_nd := gs.active_run.get_current_node()
+				if next_nd.get("type","") == "boon_pick":
+					var bs := BoonSystem.new()
+					var owned := gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
+					gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
+			else:
+				rm.end_run(true)
+
+			gs.pending_rewards["meta_rewards"] = meta_rewards
+			gs.pending_rewards["run_aether"] = rm.run_aether
+			gs.pending_rewards["elite_kills"] = elite_n
+			gs.pending_rewards["loot"] = loot
+			gs.pending_rewards["is_boss"] = is_boss
+			gs.pending_rewards["next_scene"] = "res://scenes/HubScene.tscn" if is_boss else "res://scenes/StageSelect.tscn"
+			gs.save()
+		else:
+			gs.pending_rewards["next_scene"] = "res://scenes/StageSelect.tscn"
+
+	await get_tree().create_timer(1.4).timeout
 	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+
+
 func _on_battle_lost() -> void:
 	_fade_battle_music()
+	var rm: Node = get_node_or_null("/root/RunManager")
+	if rm and rm.is_run_active:
+		rm.end_run(false)
+		await get_tree().create_timer(2.0).timeout
+		get_tree().change_scene_to_file("res://scenes/HubScene.tscn")
+		return
 	await get_tree().create_timer(2.0).timeout
 	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 
