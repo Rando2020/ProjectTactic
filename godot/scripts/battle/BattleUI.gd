@@ -521,6 +521,7 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var captured_id: String = ab_id
 		btn.pressed.connect(func() -> void:
+			_play_sfx("ui_confirm")
 			_ability_panel.visible = false
 			if battle_manager:
 				battle_manager.select_ability(captured_id))
@@ -530,13 +531,23 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 # ── Button callbacks ──────────────────────────────────────────────────────────
 
 func _on_move() -> void:
+	_play_sfx("ui_confirm")
 	if battle_manager: battle_manager.select_command("move")
 
 func _on_attack() -> void:
+	_play_sfx("ui_confirm")
 	if battle_manager: battle_manager.select_command("attack")
 
 func _on_wait() -> void:
+	_play_sfx("ui_confirm")
 	if battle_manager: battle_manager.select_command("wait")
 
 func _on_ability() -> void:
+	_play_sfx("ui_confirm")
 	if battle_manager: battle_manager.select_command("ability")
+
+
+func _play_sfx(sfx_id: String) -> void:
+	var audio := _audio_settings()
+	if audio and audio.has_method("play_sfx"):
+		audio.play_sfx(sfx_id)

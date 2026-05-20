@@ -61,7 +61,7 @@ func _set_phase(new_phase: Phase) -> void:
 		Phase.RESOLVE:         _resolve_turn()
 		Phase.CHECK_OBJECTIVE: _check_objective()
 		Phase.VICTORY:         _handle_victory()
-		Phase.DEFEAT:          battle_lost.emit()
+		Phase.DEFEAT:          _handle_defeat()
 
 
 func _run_tick() -> void:
@@ -178,11 +178,23 @@ func _check_objective() -> void:
 func _handle_victory() -> void:
 	var rewards := {"gold": map_data.reward_gold, "jp": map_data.reward_jp,
 					"items": map_data.reward_items, "flags": map_data.reward_flags}
+	_play_sfx("victory", -2.0)
 	log_message.emit("VICTORY! +%dg +%dJP" % [map_data.reward_gold, map_data.reward_jp])
 	battle_won.emit(rewards)
 
 
 # ── Player commands ───────────────────────────────────────────────────────────
+
+func _handle_defeat() -> void:
+	_play_sfx("defeat", -2.0)
+	battle_lost.emit()
+
+
+func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
+	var audio := get_node_or_null("/root/AudioSettings")
+	if audio and audio.has_method("play_sfx"):
+		audio.play_sfx(sfx_id, volume_db)
+
 
 func select_command(command: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:

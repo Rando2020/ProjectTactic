@@ -77,6 +77,13 @@ func _on_battle_music_finished() -> void:
 		_battle_music_player.play()
 
 
+func _fade_battle_music(target_db: float = -30.0, duration: float = 1.1) -> void:
+	if not _battle_music_player or not _battle_music_player.playing:
+		return
+	var tween := create_tween()
+	tween.tween_property(_battle_music_player, "volume_db", target_db, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
 func _exit_tree() -> void:
 	if _battle_music_player:
 		_battle_music_player.stop()
@@ -121,6 +128,7 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 
 
 func _on_battle_won(rewards: Dictionary) -> void:
+	_fade_battle_music()
 	# Collect surviving player unit IDs for JP award
 	var player_ids: Array[String] = []
 	for uid in battle_manager.units:
@@ -135,6 +143,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 
 
 func _on_battle_lost() -> void:
+	_fade_battle_music()
 	await get_tree().create_timer(2.0).timeout
 	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 

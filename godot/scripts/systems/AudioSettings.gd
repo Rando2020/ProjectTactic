@@ -7,6 +7,14 @@ const BUS_GAME := "Game"
 const BUS_MUSIC := "Music"
 const BUS_FX := "FX"
 
+const SFX_STREAMS := {
+	"ui_confirm": preload("res://assets/audio/sfx/ui-confirm.wav"),
+	"attack_impact": preload("res://assets/audio/sfx/attack-impact.wav"),
+	"spell_cast": preload("res://assets/audio/sfx/spell-cast.wav"),
+	"victory": preload("res://assets/audio/sfx/victory-chime.wav"),
+	"defeat": preload("res://assets/audio/sfx/defeat-sting.wav"),
+}
+
 var game_volume: int = 100
 var music_volume: int = 80
 var fx_volume: int = 100
@@ -49,6 +57,19 @@ func get_volume(bus_name: String) -> int:
 			return fx_volume
 		_:
 			return 100
+
+
+func play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
+	var stream: AudioStream = SFX_STREAMS.get(sfx_id)
+	if not stream:
+		return
+	var player := AudioStreamPlayer.new()
+	player.stream = stream
+	player.bus = BUS_FX
+	player.volume_db = volume_db
+	player.finished.connect(player.queue_free)
+	add_child(player)
+	player.play()
 
 
 func apply_all() -> void:

@@ -42,6 +42,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		else:
 			vfx.play_attack(attacker.grid_pos, target.grid_pos, final_damage, dmg_color)
 
+	_play_sfx("attack_impact", -3.0)
 	var dmg_result := target.receive_damage(final_damage, "physical")
 	if target.hp <= 0:
 		# Death VFX fires after a short delay (unit fade starts simultaneously)
@@ -73,6 +74,12 @@ func resolve_attack(attacker: Unit, target: Unit,
 	return result
 
 
+func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
+	var audio := get_node_or_null("/root/AudioSettings")
+	if audio and audio.has_method("play_sfx"):
+		audio.play_sfx(sfx_id, volume_db)
+
+
 func _get_flank_multiplier(attacker: Unit, target: Unit) -> float:
 	var delta: Vector2i = attacker.grid_pos - target.grid_pos
 	var attack_from: String
@@ -89,6 +96,7 @@ func _get_flank_multiplier(attacker: Unit, target: Unit) -> float:
 
 func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	target.heal(heal_amount)
+	_play_sfx("spell_cast", -4.0)
 	# ── VFX: cure sparkles + green number ────────────────────────────────
 	var vfx_node := get_node_or_null("/root/VFX")
 	if vfx_node:
@@ -104,6 +112,7 @@ func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 ## spell_type: "fire" | "blizzard" | "thunder" | "wind" | "holy" | "dark"
 func resolve_spell(caster: Unit, target: Unit, spell_type: String,
 		base_power: int) -> Dictionary:
+	_play_sfx("spell_cast", -2.5)
 	var raw_damage: float = caster.unit_data.base_stats.magic * (base_power / 100.0)
 
 	# ── Elemental affinity multiplier ─────────────────────────────────────
