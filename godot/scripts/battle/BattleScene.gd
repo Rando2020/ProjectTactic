@@ -156,7 +156,11 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			var is_boss   := floor_num >= 10
 			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
 			rm.award_stage_reward(floor_num, has_elite, is_boss)
-			if is_boss: rm.end_run(true)
+			if is_boss:
+				rm.end_run(true)
+				await get_tree().create_timer(1.8).timeout
+				get_tree().change_scene_to_file("res://scenes/HubScene.tscn")
+				return
 
 		if gs.active_run:
 			# Generate loot, advance run, route to StageSelect

@@ -18,7 +18,7 @@ config/name="ProjectTactic"
 config/description="Tactical RPG - Godot 4 Implementation"
 config/version="0.1.0"
 config/tags=PackedStringArray("tactical", "rpg", "turn-based")
-run/main_scene="res://scenes/StageSelect.tscn"
+run/main_scene="res://scenes/HubScene.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
