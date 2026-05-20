@@ -52,7 +52,7 @@ function tickUnitStatuses(unit) {
 
 let _pid = 0
 
-export default function BattleScreen({ gameState, setGameState, activeMission, deploymentSlots, completeActiveMission, setScreen }) {
+export default function BattleScreen({ gameState, setGameState, activeMission, deploymentSlots, completeActiveMission, setScreen, onDefeat }) {
   const [grid,  setGrid]  = useState(() => buildGrid(activeMission))
   const gridRef  = useRef(grid);  gridRef.current  = grid
   const [units, setUnits] = useState(() => buildInitialUnits(activeMission, deploymentSlots))
@@ -396,7 +396,8 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
           {SPEED_OPTIONS.map(opt=><button key={opt.value} style={{...s.speedBtn,...(battleSpeed===opt.value?s.speedActive:{})}} onClick={()=>setBattleSpeed(opt.value)}>{opt.label}</button>)}
         </div>
         <div style={s.btnRow}>
-          <button onClick={()=>setScreen('worldMap')}>Retreat</button>
+          <button onClick={()=>gameState.activeRun?onDefeat?.():setScreen('worldMap')}>Retreat</button>
+          {phase===PHASE.DEFEAT&&<button onClick={()=>onDefeat?.()} style={s.defeatBtn}>Return to Hub</button>}
           {phase===PHASE.VICTORY&&<button onClick={handleVictory} style={s.victoryBtn}>Claim Victory ✓</button>}
         </div>
       </div>
@@ -471,6 +472,7 @@ const s={
   speedBtn:{padding:'5px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,.18)',background:'rgba(255,255,255,.07)',color:'#f7f0df',fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
   speedActive:{background:'rgba(201,167,86,.28)',borderColor:'rgba(201,167,86,.7)',color:'#ffd86b'},
   victoryBtn:{background:'linear-gradient(135deg,#22c55e,#16a34a)',border:'none',color:'white',fontWeight:900,padding:'10px 18px',borderRadius:999,cursor:'pointer'},
+  defeatBtn:{background:'linear-gradient(135deg,#ef4444,#991b1b)',border:'none',color:'white',fontWeight:900,padding:'10px 18px',borderRadius:999,cursor:'pointer'},
   confirmBanner:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,padding:'10px 16px',marginBottom:14,borderRadius:14,background:'rgba(134,239,172,.1)',border:'1px solid rgba(134,239,172,.35)',flexWrap:'wrap'},
   confirmBtn:{padding:'7px 14px',borderRadius:10,border:'1px solid rgba(134,239,172,.5)',background:'rgba(134,239,172,.15)',color:'#86efac',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'},
   cancelBtn:{padding:'7px 14px',borderRadius:10,border:'1px solid rgba(248,113,113,.4)',background:'rgba(248,113,113,.1)',color:'#f87171',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'},
