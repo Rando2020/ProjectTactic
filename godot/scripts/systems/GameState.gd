@@ -26,6 +26,12 @@ var completed_stages: Array[String] = []
 ## Rewards from the most recent victory — read by ResultsScreen
 var pending_rewards: Dictionary = {}
 
+## Roguelike run state
+var active_run:           RunState = null
+var story_flags:          Array[String] = []
+var pending_loot:         Array = []
+var pending_boon_offers:  Array = []
+
 ## Per-unit persistent data.
 ## unit_id -> {
 ##   display_name      : String,

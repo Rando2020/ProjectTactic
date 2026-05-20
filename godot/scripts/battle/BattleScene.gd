@@ -15,6 +15,8 @@ var _camera_zoom_value: float = 0.92
 @export var map_index: int = 0
 
 var _map_data: MapData
+var _defeated_enemies: Array[Dictionary] = []
+var _elite_system:     EliteSystem = null
 
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.png",
@@ -60,6 +62,7 @@ func _ready() -> void:
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
 	battle_manager.turn_started.connect(_on_turn_started)
+	battle_manager.unit_defeated.connect(_on_unit_defeated)
 
 
 func _start_battle_music() -> void:
@@ -127,21 +130,44 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	tween.tween_property(_battle_camera, "position", target, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
+func _on_unit_defeated(unit_id: String) -> void:
+	var u: Unit = battle_manager.units.get(unit_id)
+	if u and u.team == "enemy":
+		_defeated_enemies.append({
+			"id":         unit_id,
+			"name":       u.unit_data.display_name if u.unit_data else unit_id,
+			"elite_tier": u.get_meta("elite_tier","") if u.has_meta("elite_tier") else "",
+			"jp_mult":    float(u.get_meta("jp_mult", 1.0)) if u.has_meta("jp_mult") else 1.0,
+		})
+
+
 func _on_battle_won(rewards: Dictionary) -> void:
-	_fade_battle_music()
-	# Collect surviving player unit IDs for JP award
 	var player_ids: Array[String] = []
 	for uid in battle_manager.units:
 		var u: Unit = battle_manager.units[uid]
-		if u.team == "player":
-			player_ids.append(uid)
+		if u.team == "player": player_ids.append(uid)
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
+		if gs.active_run:
+			# Generate loot, advance run, route to StageSelect
+			var ls    := LootSystem.new()
+			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
+			gs.pending_loot = loot
+			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
+			gs.active_run.elite_kills += elite_n
+			gs.active_run.complete_current_node()
+			# If next node is boon_pick, generate offers
+			var next_nd := gs.active_run.get_current_node()
+			if next_nd.get("type","") == "boon_pick":
+				var bs := BoonSystem.new()
+				var owned := gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
+				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
+			await get_tree().create_timer(1.5).timeout
+			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
+			return
 	await get_tree().create_timer(2.2).timeout
 	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
-
-
 func _on_battle_lost() -> void:
 	_fade_battle_music()
 	await get_tree().create_timer(2.0).timeout
@@ -279,6 +305,31 @@ func _spawn_enemy_units() -> Array[Unit]:
 	result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
 		80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
 		{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
+	# Apply elite rolls when in a roguelike run
+	var gs2: Node = get_node_or_null("/root/GameState")
+	if gs2 and gs2.active_run and _elite_system:
+		var floor := gs2.active_run.current_floor
+		var spawns_as_dicts: Array = []
+		for unit in result:
+			spawns_as_dicts.append({
+				"name": unit.unit_data.display_name if unit.unit_data else "Enemy",
+				"hp":   unit.unit_data.base_stats.hp if unit.unit_data else 100,
+				"max_temper": unit.unit_data.base_stats.max_temper if unit.unit_data else 50,
+				"max_ether":  unit.unit_data.base_stats.max_ether  if unit.unit_data else 50,
+			})
+		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor)
+		for i in result.size():
+			var r: Dictionary = rolled[i]
+			if r.get("elite_tier","") != "" and result[i].unit_data:
+				result[i].unit_data.display_name         = r["name"]
+				result[i].unit_data.base_stats.hp        = r["hp"]
+				result[i].unit_data.base_stats.max_temper = r["max_temper"]
+				result[i].unit_data.base_stats.max_ether  = r["max_ether"]
+				result[i].set_meta("elite_tier",  r["elite_tier"])
+				result[i].set_meta("elite_color", r["elite_color"])
+				result[i].set_meta("jp_mult",     r.get("jp_mult", 1.0))
+				result[i].set_meta("prefixes",    r.get("prefixes", []))
+				result[i].set_meta("suffixes",    r.get("suffixes", []))
 	return result
 
 

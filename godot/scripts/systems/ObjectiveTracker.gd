@@ -1,22 +1,91 @@
+## ObjectiveTracker.gd — All objective types including destroy_anchor.
 class_name ObjectiveTracker
 extends Node
 
-var map_data: MapData
-var units: Array[Unit] = []
+var map_data:     MapData
+var units:        Array[Unit] = []
+var surface_states: Dictionary = {}   # shared ref to ElementalSystem.surface_states
+var turns_elapsed: int = 0
+
+signal objective_updated(progress_text: String)
 
 
 func initialize(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
-	units = p_units
+	units    = p_units
 
 
 func is_victory() -> bool:
-	return units.all(func(u): return u.team != "enemy" or u.hp <= 0)
+	match map_data.objective_type:
+		"defeat_all":
+			return _all_enemies_dead()
+		"destroy_anchor":
+			# Victory when no void_anchor surface state remains
+			for pos in surface_states:
+				if surface_states[pos] == "void_anchor": return false
+			# Also check if map had an anchor and it's been destroyed
+			return _anchor_destroyed()
+		"reach_tile":
+			var tx: int = map_data.get("objective_tile_x", -1)
+			var ty: int = map_data.get("objective_tile_y", -1)
+			if tx < 0: return _all_enemies_dead()
+			return units.any(func(u: Unit) -> bool:
+				return u.team == "player" and u.hp > 0 and u.grid_pos.x == tx and u.grid_pos.y == ty)
+		"protect_unit":
+			var protected_id: String = map_data.get("protected_unit_id", "")
+			var protected := units.filter(func(u: Unit) -> bool: return u.unit_data.id == protected_id)
+			return _all_enemies_dead() and (protected.is_empty() or protected[0].hp > 0)
+		"survive_turns":
+			return turns_elapsed >= map_data.get("survive_turns", 5)
+		_:
+			return _all_enemies_dead()
 
 
 func is_defeat() -> bool:
-	return units.all(func(u): return u.team != "player" or u.hp <= 0)
+	return units.all(func(u: Unit) -> bool: return u.team != "player" or u.hp <= 0)
 
 
-func on_unit_defeated(_unit_id: String) -> void:
-	pass
+func on_unit_defeated(unit_id: String) -> void:
+	# Check if a void anchor guardian died (for destroy_anchor missions)
+	var u := units.filter(func(x: Unit) -> bool: return x.unit_data.id == unit_id)
+	if not u.is_empty() and map_data.objective_type == "destroy_anchor":
+		objective_updated.emit(get_progress_text())
+
+
+func on_turn_advanced() -> void:
+	turns_elapsed += 1
+	objective_updated.emit(get_progress_text())
+
+
+func get_progress_text() -> String:
+	match map_data.objective_type:
+		"defeat_all":
+			var remaining := units.filter(func(u: Unit) -> bool: return u.team == "enemy" and u.hp > 0).size()
+			return "Defeat all enemies — %d remaining." % remaining if remaining > 0 else "✓ All enemies defeated."
+		"destroy_anchor":
+			return "✓ Anchor destroyed!" if _anchor_destroyed() else "Destroy the Void Anchor — use a holy ability on it."
+		"reach_tile":
+			return "Reach tile (%d, %d)." % [map_data.get("objective_tile_x", 0), map_data.get("objective_tile_y", 0)]
+		"protect_unit":
+			return "Defeat all enemies. Protect your unit."
+		"survive_turns":
+			var left := maxi(0, map_data.get("survive_turns", 5) - turns_elapsed)
+			return "✓ Survived." if left == 0 else "Survive %d more turn%s." % [left, "s" if left != 1 else ""]
+		_:
+			return map_data.get("objective_label", "Objective in progress.")
+
+
+func _all_enemies_dead() -> bool:
+	return units.all(func(u: Unit) -> bool: return u.team != "enemy" or u.hp <= 0)
+
+
+func _anchor_destroyed() -> bool:
+	# Anchor is destroyed if any surface state that WAS void_anchor is now gone
+	# We track this by checking if the map had an anchor tile and no anchor-type
+	# units/surfaces remain
+	if map_data.objective_type != "destroy_anchor": return false
+	# Check if any enemy tagged as anchor-guardian is still alive
+	var anchor_guardians := units.filter(func(u: Unit) -> bool:
+		return u.team == "enemy" and u.unit_data.get("is_anchor_guardian", false) and u.hp > 0)
+	if anchor_guardians.size() > 0: return false
+	return _all_enemies_dead()
