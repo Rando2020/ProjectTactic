@@ -161,8 +161,8 @@ func _on_battle_won(rewards: Dictionary) -> void:
 		# Award stage rewards (Soul Shards, Aether, Obsidian)
 		var rm: Node = get_node_or_null("/root/RunManager")
 		if rm and rm.is_run_active:
-			var floor_num := gs.active_run.current_floor if gs.active_run else 1
-			var is_boss   := floor_num >= 10
+			var floor_num: int = int(gs.active_run.current_floor) if gs.active_run else 1
+			var is_boss: bool = floor_num >= 10
 			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
 			rm.award_stage_reward(floor_num, has_elite, is_boss)
 			if is_boss:
@@ -180,10 +180,10 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			gs.active_run.elite_kills += elite_n
 			gs.active_run.complete_current_node()
 			# If next node is boon_pick, generate offers
-			var next_nd := gs.active_run.get_current_node()
+			var next_nd: Dictionary = gs.active_run.get_current_node()
 			if next_nd.get("type","") == "boon_pick":
 				var bs := BoonSystem.new()
-				var owned := gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
+				var owned: Array = gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
 				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
 			await get_tree().create_timer(1.5).timeout
 			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
@@ -366,7 +366,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 	# Apply elite rolls when in a roguelike run
 	var gs2: Node = get_node_or_null("/root/GameState")
 	if gs2 and gs2.active_run and _elite_system:
-		var floor := gs2.active_run.current_floor
+		var floor: int = int(gs2.active_run.current_floor)
 		var spawns_as_dicts: Array = []
 		for unit in result:
 			spawns_as_dicts.append({

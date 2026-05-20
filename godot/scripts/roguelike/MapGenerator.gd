@@ -196,8 +196,8 @@ func _place_cluster(tiles: Array, map_w: int, map_h: int,
 	var placed := 0
 	for d in dirs:
 		if placed >= count: break
-		var tx := clamp(cx + d.x, 0, map_w - 1)
-		var ty := clamp(cy + d.y, 0, map_h - 1)
+		var tx: int = clampi(cx + d.x, 0, map_w - 1)
+		var ty: int = clampi(cy + d.y, 0, map_h - 1)
 		# Don't place in player spawn rows (y >= 6)
 		if ty >= 6: continue
 		tiles.append({"x": tx, "y": ty, "terrain": terrain, "height": 0})
