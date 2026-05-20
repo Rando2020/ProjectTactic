@@ -12,6 +12,7 @@ var _ether_label: Label
 var _hp_bar: ProgressBar
 var _log_labels: Array[Label] = []
 var _timeline_labels: Array[Label] = []
+var _side_timeline_labels: Array[Label] = []
 var _move_btn: Button
 var _attack_btn: Button
 var _wait_btn: Button
@@ -22,6 +23,15 @@ var _result_label: Label
 var _status_label: Label
 var _tile_info_label: Label
 var _command_hint_label: Label
+var _preview_panel: PanelContainer
+var _preview_mode_label: Label
+var _preview_actor_label: Label
+var _preview_target_label: Label
+var _preview_action_label: Label
+var _preview_amount_label: Label
+var _preview_hit_label: Label
+var _preview_crit_label: Label
+var _preview_note_label: Label
 var _intro_banner: PanelContainer
 var _settings_overlay: Control
 var _game_slider: HSlider
@@ -47,6 +57,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.tile_info_changed.connect(_on_tile_info_changed)
 	battle_manager.battle_started.connect(_on_battle_started)
 	battle_manager.command_hint_changed.connect(_on_command_hint_changed)
+	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
 
 
 func _ready() -> void:
@@ -187,6 +198,8 @@ func _build_ui() -> void:
 		_log_labels.append(lbl)
 
 	_build_intro_banner()
+	_build_side_timeline()
+	_build_action_preview_panel()
 	_build_settings_overlay()
 
 
@@ -223,6 +236,92 @@ func _build_intro_banner() -> void:
 
 
 # ── Builder helpers ───────────────────────────────────────────────────────────
+
+func _build_side_timeline() -> void:
+	var panel := PanelContainer.new()
+	panel.position = Vector2(12.0, 84.0)
+	panel.custom_minimum_size = Vector2(120.0, 300.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.03, 0.04, 0.06, 0.82)
+	st.border_color = Color(0.25, 0.45, 0.65, 0.65)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 6)
+	panel.add_theme_stylebox_override("panel", st)
+	add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "NEXT"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 11)
+	title.add_theme_color_override("font_color", Color(0.75, 0.86, 1.0))
+	box.add_child(title)
+
+	for i in range(TIMELINE_SLOTS):
+		var lbl := Label.new()
+		lbl.text = "%d  -" % (i + 1)
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.9))
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.custom_minimum_size = Vector2(104.0, 28.0)
+		box.add_child(lbl)
+		_side_timeline_labels.append(lbl)
+
+
+func _build_action_preview_panel() -> void:
+	_preview_panel = PanelContainer.new()
+	_preview_panel.visible = false
+	_preview_panel.position = Vector2(136.0, 560.0)
+	_preview_panel.custom_minimum_size = Vector2(486.0, 132.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.035, 0.038, 0.052, 0.92)
+	st.border_color = Color(0.78, 0.66, 0.42, 0.85)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 6)
+	_preview_panel.add_theme_stylebox_override("panel", st)
+	add_child(_preview_panel)
+
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 5)
+	_preview_panel.add_child(root)
+
+	_preview_mode_label = _preview_label(root, "FORECAST", 11, Color(0.92, 0.78, 0.46), HORIZONTAL_ALIGNMENT_CENTER)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	root.add_child(row)
+	_preview_actor_label = _preview_label(row, "Actor", 13, Color(0.8, 0.9, 1.0))
+	_preview_action_label = _preview_label(row, "Action", 13, Color(1.0, 0.95, 0.72))
+	_preview_target_label = _preview_label(row, "Target", 13, Color(1.0, 0.76, 0.72))
+
+	var result_row := HBoxContainer.new()
+	result_row.add_theme_constant_override("separation", 18)
+	root.add_child(result_row)
+	_preview_amount_label = _preview_label(result_row, "--", 28, Color(1.0, 0.92, 0.35))
+	_preview_hit_label = _preview_label(result_row, "Hit --", 12, Color(0.75, 0.95, 0.85))
+	_preview_crit_label = _preview_label(result_row, "Crit --", 12, Color(0.9, 0.75, 1.0))
+
+	_preview_note_label = _preview_label(root, "", 11, Color(0.72, 0.78, 0.84))
+	_preview_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func _preview_label(parent: Control, text: String, font_size: int, color: Color,
+		align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = align
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(lbl)
+	return lbl
+
 
 func _build_settings_overlay() -> void:
 	_settings_overlay = Control.new()
@@ -438,6 +537,23 @@ func _on_command_hint_changed(text: String) -> void:
 		_command_hint_label.text = text
 
 
+func _on_action_preview_changed(preview: Dictionary) -> void:
+	if not _preview_panel:
+		return
+	if preview.is_empty() or not bool(preview.get("visible", false)):
+		_preview_panel.visible = false
+		return
+	_preview_panel.visible = true
+	_preview_mode_label.text = str(preview.get("mode", "Forecast")).to_upper()
+	_preview_actor_label.text = "ACTOR\n%s" % preview.get("actor", "-")
+	_preview_action_label.text = "ACTION\n%s" % preview.get("action", "-")
+	_preview_target_label.text = "TARGET\n%s" % preview.get("target", "-")
+	_preview_amount_label.text = str(preview.get("amount_label", "--"))
+	_preview_hit_label.text = "Hit %s" % preview.get("hit", "--")
+	_preview_crit_label.text = "Crit %s" % preview.get("crit", "--")
+	_preview_note_label.text = str(preview.get("note", ""))
+
+
 func _on_battle_started(display_name: String, objective: String) -> void:
 	if not _intro_banner:
 		return
@@ -483,7 +599,11 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 	for i in range(TIMELINE_SLOTS):
 		if i < ordered_units.size():
 			_timeline_labels[i].text = ordered_units[i].get("display_name", "?")
+			if i < _side_timeline_labels.size():
+				_side_timeline_labels[i].text = "%d  %s" % [i + 1, ordered_units[i].get("display_name", "?")]
 		else:
+			if i < _side_timeline_labels.size():
+				_side_timeline_labels[i].text = "%d  -" % (i + 1)
 			_timeline_labels[i].text = "—"
 
 

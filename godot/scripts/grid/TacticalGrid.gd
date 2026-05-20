@@ -4,6 +4,7 @@ extends Node2D
 signal tile_clicked(grid_pos: Vector2i)
 signal unit_clicked(unit_id: String)
 signal tile_hovered(grid_pos: Vector2i)
+signal unit_visual_position_changed(unit_id: String, world_pos: Vector2)
 
 @export var tile_size: Vector2i = Vector2i(96, 48)
 @export var height_step: float = 14.0
@@ -539,8 +540,17 @@ func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
+			var start_pos: Vector2 = child.position
+			var end_pos: Vector2 = _unit_foot_pos(to)
 			var tween := create_tween()
-			tween.tween_property(child, "position", _unit_foot_pos(to), 0.50).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tween.tween_method(
+				func(pos: Vector2) -> void:
+					child.position = pos
+					unit_visual_position_changed.emit(unit_id, child.global_position),
+				start_pos,
+				end_pos,
+				0.50
+			).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			child.z_index = _unit_depth_for(to)
 			await tween.finished
 			break

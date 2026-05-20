@@ -15,8 +15,10 @@ signal ability_mode_started(usable_ids: Array)
 signal tile_info_changed(text: String)
 signal battle_started(display_name: String, objective: String)
 signal command_hint_changed(text: String)
+signal action_preview_changed(preview: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -585,6 +587,7 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 			int(tile.get("move_cost", 1)),
 		])
 	if active_command == "move":
+		action_preview_changed.emit(_move_preview(grid_pos))
 		var mover: Unit = units.get(active_unit_id)
 		if mover and grid_pos in tactical_grid.move_tiles:
 			var occupied: Array = []
@@ -602,11 +605,16 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 		else:
 			tactical_grid.clear_path_preview()
 		return
+	if active_command == "attack":
+		action_preview_changed.emit(_attack_preview_for_tile(grid_pos))
+		return
 	if active_command != "ability_target" or selected_ability_id == "":
+		action_preview_changed.emit({})
 		tactical_grid.clear_path_preview()
 		tactical_grid.clear_aoe_preview()
 		return
 	var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
+	action_preview_changed.emit(_ability_preview_for_tile(grid_pos, ability))
 	if not ability.has("aoe_type"):
 		tactical_grid.clear_aoe_preview()
 		return
@@ -724,9 +732,178 @@ func _end_player_turn() -> void:
 	selected_ability_id = ""
 	active_unit_has_moved = false
 	active_unit_has_acted = false
+	action_preview_changed.emit({})
 	tactical_grid.clear_highlights()
 	command_hint_changed.emit("Resolving turn...")
 	_set_phase(Phase.RESOLVE)
+
+
+func _unit_at_pos(grid_pos: Vector2i) -> Unit:
+	for uid in units:
+		var unit: Unit = units[uid]
+		if unit.grid_pos == grid_pos and unit.hp > 0:
+			return unit
+	return null
+
+
+func _move_preview(grid_pos: Vector2i) -> Dictionary:
+	var unit: Unit = units.get(active_unit_id)
+	if not unit or grid_pos not in tactical_grid.move_tiles:
+		return {}
+	return {
+		"visible": true,
+		"mode": "Move",
+		"actor": unit.display_name,
+		"target": "%d,%d" % [grid_pos.x, grid_pos.y],
+		"action": "Reposition",
+		"amount_label": "No damage",
+		"hit": "100%",
+		"crit": "--",
+		"note": "Turn continues after moving.",
+	}
+
+
+func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
+	var attacker: Unit = units.get(active_unit_id)
+	var target := _unit_at_pos(grid_pos)
+	if not attacker or not target or target.team == attacker.team or grid_pos not in tactical_grid.attack_tiles:
+		return {}
+	var tile_att := tactical_grid.get_tile(attacker.grid_pos)
+	var tile_tar := tactical_grid.get_tile(target.grid_pos)
+	var amount := _predict_attack_damage(attacker, target, tile_att, tile_tar)
+	var flank := _flank_label(attacker, target)
+	var counter := "Counter possible" if _target_can_counter(attacker, target) else "No counter"
+	return {
+		"visible": true,
+		"mode": "Attack",
+		"actor": attacker.display_name,
+		"target": target.display_name,
+		"action": "Basic attack",
+		"amount_label": "%d damage" % amount,
+		"hit": "95%",
+		"crit": "10%",
+		"note": "%s | %s | HP %d -> %d" % [flank, counter, target.hp, max(target.hp - amount, 0)],
+	}
+
+
+func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dictionary:
+	var caster: Unit = units.get(active_unit_id)
+	if not caster or grid_pos not in tactical_grid.ability_tiles:
+		return {}
+	var target := _unit_at_pos(grid_pos)
+	var target_name := "Area"
+	var amount_label := "Preview"
+	var note := "Targets tiles in the highlighted area."
+	var target_type: String = ability.get("target_type", "enemy")
+	if target:
+		var valid_target := (target_type == "enemy" and target.team != caster.team) or \
+			(target_type == "ally" and target.team == caster.team)
+		if not valid_target:
+			return {}
+		target_name = target.display_name
+		var spell_type: String = ability.get("spell_type", "fire")
+		if spell_type == "cure":
+			var heal_amount: int = int(ability.get("base_power", 100))
+			amount_label = "%d heal" % heal_amount
+			note = "HP %d -> %d" % [target.hp, min(target.hp + heal_amount, target.unit_data.base_stats.hp)]
+		elif spell_type == "buff":
+			amount_label = "Status"
+			note = "Applies %s" % str(ability.get("status_effect", {}).get("id", "buff")).capitalize()
+		elif spell_type == "physical":
+			var amount := _predict_attack_damage(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
+			amount_label = "%d damage" % amount
+			note = "HP %d -> %d" % [target.hp, max(target.hp - amount, 0)]
+		else:
+			var amount := _predict_spell_damage(caster, target, ability)
+			amount_label = "%d damage" % amount
+			note = "%s affinity | HP %d -> %d" % [_affinity_label(target, spell_type), target.hp, max(target.hp - amount, 0)]
+	return {
+		"visible": true,
+		"mode": "Ability",
+		"actor": caster.display_name,
+		"target": target_name,
+		"action": ability.get("display_name", selected_ability_id),
+		"amount_label": amount_label,
+		"hit": "100%",
+		"crit": "--",
+		"note": note,
+	}
+
+
+func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Dictionary, tile_target: Dictionary) -> int:
+	var raw: float = attacker.unit_data.base_stats.physical * 1.2
+	if attacker.has_meta("dmg_mult"):
+		raw *= attacker.get_meta("dmg_mult", 1.0)
+	if attacker.has_meta("prefixes"):
+		for pfx: Dictionary in attacker.get_meta("prefixes", []):
+			if pfx.get("id","") == "berserker" and attacker.hp < attacker.unit_data.base_stats.hp * 0.5:
+				raw *= pfx.get("conditional",{}).get("dmg", 1.25)
+	var att_h: int = tile_attacker.get("height", 0)
+	var tar_h: int = tile_target.get("height", 0)
+	var height_m: float = 1.15 if att_h > tar_h else (0.9 if att_h < tar_h else 1.0)
+	return max(0, int(round(raw * height_m * _get_flank_multiplier(attacker, target))))
+
+
+func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> int:
+	var spell_type: String = ability.get("spell_type", "fire")
+	var base_power: int = ability.get("base_power", 100)
+	var raw: float = caster.unit_data.base_stats.magic * (float(base_power) / 100.0)
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
+	raw *= bonuses["elemental_mult"].get(spell_type, 1.0)
+	var affinity: float = 1.0
+	if target.unit_data and not target.unit_data.elemental_affinities.is_empty():
+		affinity = target.unit_data.elemental_affinities.get(spell_type, 1.0)
+	if target.has_meta("elite_tier"):
+		var immune: Array = target.get_meta("immune", [])
+		if spell_type in immune:
+			affinity = 0.0
+	var damage := int(round(raw * affinity))
+	if bonuses["brand_bonus"] > 0.0 and target.has_status("burn"):
+		damage = int(round(float(damage) * (1.0 + bonuses["brand_bonus"])))
+	return max(0, damage)
+
+
+func _get_flank_multiplier(attacker: Unit, target: Unit) -> float:
+	var delta: Vector2i = attacker.grid_pos - target.grid_pos
+	var attack_from: String
+	if abs(delta.x) >= abs(delta.y):
+		attack_from = "E" if delta.x > 0 else "W"
+	else:
+		attack_from = "S" if delta.y > 0 else "N"
+	if attack_from == target.facing:
+		return 1.0
+	if attack_from == FACING_OPPOSITE.get(target.facing, ""):
+		return 1.3
+	return 1.15
+
+
+func _flank_label(attacker: Unit, target: Unit) -> String:
+	var mult := _get_flank_multiplier(attacker, target)
+	if mult >= 1.25:
+		return "Back attack"
+	if mult > 1.0:
+		return "Flank"
+	return "Front"
+
+
+func _target_can_counter(attacker: Unit, target: Unit) -> bool:
+	var distance := GridSystem.manhattan(attacker.grid_pos, target.grid_pos)
+	return distance <= target.unit_data.base_stats.attack_range_max
+
+
+func _affinity_label(target: Unit, spell_type: String) -> String:
+	var affinity := 1.0
+	if target.unit_data and not target.unit_data.elemental_affinities.is_empty():
+		affinity = target.unit_data.elemental_affinities.get(spell_type, 1.0)
+	if affinity == 0.0:
+		return "Immune"
+	if affinity >= 1.5:
+		return "Weak"
+	if affinity > 1.0:
+		return "Soft"
+	if affinity < 1.0:
+		return "Resist"
+	return "Normal"
 
 
 func _on_unit_defeated(unit_id: String) -> void:

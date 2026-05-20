@@ -70,6 +70,7 @@ func _ready() -> void:
 		tactical_grid.place_unit(unit, unit.grid_pos)
 	for unit in enemy_units:
 		tactical_grid.place_unit(unit, unit.grid_pos)
+	tactical_grid.unit_visual_position_changed.connect(_on_unit_visual_position_changed)
 
 	var all_units: Array[Unit] = []
 	all_units.append_array(player_units)
@@ -225,6 +226,13 @@ func _on_unit_moved(_unit_id: String, _from: Vector2i, to: Vector2i) -> void:
 	var target := tactical_grid.get_unit_focus_position(to)
 	var tween := create_tween()
 	tween.tween_property(_battle_camera, "position", target, 0.24).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+func _on_unit_visual_position_changed(_unit_id: String, world_pos: Vector2) -> void:
+	if not _battle_camera:
+		return
+	_battle_camera.global_position = world_pos
+	_clamp_camera_to_board()
 
 
 func _on_unit_defeated(unit_id: String) -> void:
