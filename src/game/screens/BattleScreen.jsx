@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import TacticalGrid   from '../components/TacticalGrid.jsx'
 import CommandMenu    from '../components/CommandMenu.jsx'
 import TurnTimeline   from '../components/TurnTimeline.jsx'
-import DamageForecast from '../components/DamageForecast.jsx'
+import BattleForecastHud from '../components/BattleForecastHud.jsx'
 import AbilityPicker  from '../components/AbilityPicker.jsx'
 import FacingPicker   from '../components/FacingPicker.jsx'
 import TerrainInfo    from '../components/TerrainInfo.jsx'
@@ -413,23 +413,25 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     )}
 
     <div style={s.layout}>
-      <section style={s.gridCard}>
-        <TacticalGrid map={activeMission} units={units} selectedUnitId={selectedUnitId} activeUnitId={activeUnitId} activeCommand={activeCommand}
-          moveTileKeys={moveTileKeys} attackTileKeys={attackTileKeys} intentTileKeys={intentTileKeys}
-          reactionFlashKeys={reactionFlashKeys} pendingTargetKey={pendingTarget?.key} popups={popups}
-          onSelectUnit={id=>{if(isPlayerPhase&&id===activeUnitId)setSelectedUnitId(id)}}
-          onSelectMoveTile={handleMoveClick} onSelectAttackTarget={handleAttackClick}
-          onHoverUnit={id=>{setHoveredUnit(id);setHoveredTile(null);buildForecast(id,null)}}
-          onHoverTile={tile=>{setHoveredTile(tile);setHoveredUnit(null)}}
-          onLeave={()=>{setHoveredUnit(null);setHoveredTile(null)}}
-          showCoordinates={gameState.settings?.showTileCoordinates??true}/>
+      <TurnTimeline units={units} activeUnitId={activeUnitId} variant="rail"/>
+      <section>
+        <div style={s.gridCard}>
+          <TacticalGrid map={activeMission} units={units} selectedUnitId={selectedUnitId} activeUnitId={activeUnitId} activeCommand={activeCommand}
+            moveTileKeys={moveTileKeys} attackTileKeys={attackTileKeys} intentTileKeys={intentTileKeys}
+            reactionFlashKeys={reactionFlashKeys} pendingTargetKey={pendingTarget?.key} popups={popups}
+            onSelectUnit={id=>{if(isPlayerPhase&&id===activeUnitId)setSelectedUnitId(id)}}
+            onSelectMoveTile={handleMoveClick} onSelectAttackTarget={handleAttackClick}
+            onHoverUnit={id=>{setHoveredUnit(id);setHoveredTile(null);buildForecast(id,null)}}
+            onHoverTile={tile=>{setHoveredTile(tile);setHoveredUnit(null)}}
+            onLeave={()=>{setHoveredUnit(null);setHoveredTile(null)}}
+            showCoordinates={gameState.settings?.showTileCoordinates??true}/>
+        </div>
+        <BattleForecastHud preview={forecast?.preview} attacker={forecast?.attacker} target={forecast?.target} ability={forecast?.ability} reactionWarning={forecast?.reactionWarning} pendingTarget={pendingTarget}/>
       </section>
       <aside style={s.sidebar}>
-        <TurnTimeline units={units} activeUnitId={activeUnitId}/>
         {showFacingPicker?<FacingPicker unit={activeUnit} onChoose={chooseFacing}/>
           :showPicker?<AbilityPicker unit={unitWithDefs} onSelect={handleAbilityPick} onCancel={()=>{setActiveCommand(null);setSelectedAbilityId(null)}}/>
           :<CommandMenu selectedUnit={selectedUnit} activeCommand={activeCommand} disabledCommands={disabledCmds} hasMoved={hasMoved} onSelectCommand={handleCommand} onWait={handleWait} onUndoMove={handleUndoMove}/>}
-        <DamageForecast preview={forecast?.preview} attacker={forecast?.attacker} target={forecast?.target} ability={forecast?.ability} reactionWarning={forecast?.reactionWarning}/>
         {inspectUnit?<UnitCard unit={inspectUnit}/>:<TerrainInfo tile={hoveredTile}/>}
         <section style={s.card}>
           <h3 style={{margin:'0 0 10px',fontSize:15}}>Units</h3>
@@ -472,7 +474,7 @@ const s={
   confirmBanner:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,padding:'10px 16px',marginBottom:14,borderRadius:14,background:'rgba(134,239,172,.1)',border:'1px solid rgba(134,239,172,.35)',flexWrap:'wrap'},
   confirmBtn:{padding:'7px 14px',borderRadius:10,border:'1px solid rgba(134,239,172,.5)',background:'rgba(134,239,172,.15)',color:'#86efac',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'},
   cancelBtn:{padding:'7px 14px',borderRadius:10,border:'1px solid rgba(248,113,113,.4)',background:'rgba(248,113,113,.1)',color:'#f87171',fontWeight:800,fontSize:13,cursor:'pointer',fontFamily:'inherit'},
-  layout:{display:'grid',gridTemplateColumns:'minmax(0,1fr) 268px',gap:16},
+  layout:{display:'grid',gridTemplateColumns:'196px minmax(0,1fr) 268px',gap:16,alignItems:'start'},
   gridCard:{border:'1px solid rgba(255,255,255,.11)',background:'rgba(255,255,255,.04)',borderRadius:18,padding:16},
   sidebar:{display:'grid',alignContent:'start',gap:12},
   card:{border:'1px solid rgba(255,255,255,.11)',background:'rgba(255,255,255,.055)',borderRadius:18,padding:16},
