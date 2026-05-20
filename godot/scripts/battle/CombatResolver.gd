@@ -147,6 +147,20 @@ func resolve_spell(caster: Unit, target: Unit,
 	# ── Elite on-hit effects (spell) ─────────────────────────────────────
 	_apply_elite_on_hit(caster, target, final_damage)
 
+	# ── Curse: Vaelthorn's Hunger — ether drain on hit ────────────────────
+	if bonuses.get("curse_ether_drain_on_hit", 0) > 0 and target.team == "enemy":
+		for player_unit: Unit in get_tree().get_nodes_in_group("player_units"):
+			if player_unit.hp > 0:
+				player_unit.ether = max(0, player_unit.ether - bonuses["curse_ether_drain_on_hit"])
+
+	# ── Curse: Ignareth's Debt — self fire damage ─────────────────────────
+	if spell_type == "fire" and bonuses.get("curse_self_fire_pct", 0.0) > 0.0:
+		var self_dmg: int = int(float(final_damage) * bonuses["curse_self_fire_pct"])
+		if self_dmg > 0 and caster.team == "player":
+			caster.receive_damage(self_dmg, "magical")
+			var vfx2 := get_node_or_null("/root/VFX")
+			if vfx2: (vfx2 as VFXManager).play_damage_number(caster.grid_pos, self_dmg, Color(1.0,0.35,0.1))
+
 	var result := {
 		"damage":      final_damage,
 		"hp_damage":   dmg_result.get("hp_damage",0),

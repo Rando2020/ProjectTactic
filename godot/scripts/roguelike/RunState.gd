@@ -11,6 +11,8 @@ var current_floor: int    = 1
 var current_node:  int    = 0
 var floor_plan:    Array  = []   # Array of node Dictionaries
 var active_boons:  Array  = []
+var active_curses: Array  = []   ## accepted curses this run
+var banned_guardian: String = ""  ## set by Guardian's Absence curse
 var active_wanderer_conditions: Array = []
 var elite_kills:   int    = 0
 var deaths:        int    = 0
@@ -72,7 +74,7 @@ func to_dict() -> Dictionary:
 	return {
 		"run_id": run_id, "seed": seed, "floor": current_floor,
 		"node": current_node, "floor_plan": floor_plan,
-		"active_boons": active_boons, "elite_kills": elite_kills,
+		"active_boons": active_boons, "active_curses": active_curses, "banned_guardian": banned_guardian, "elite_kills": elite_kills,
 		"deaths": deaths, "completed": completed, "started_at": started_at,
 	}
 
@@ -83,7 +85,9 @@ static func from_dict(d: Dictionary) -> RunState:
 	rs.current_floor = d.get("floor", 1)
 	rs.current_node  = d.get("node", 0)
 	rs.floor_plan    = d.get("floor_plan", [])
-	rs.active_boons  = d.get("active_boons", [])
+	rs.active_boons   = d.get("active_boons", [])
+	rs.active_curses  = d.get("active_curses", [])
+	rs.banned_guardian = d.get("banned_guardian", "")
 	rs.elite_kills   = d.get("elite_kills", 0)
 	rs.deaths        = d.get("deaths", 0)
 	rs.completed     = d.get("completed", false)

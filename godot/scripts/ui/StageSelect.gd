@@ -289,6 +289,24 @@ func _show_boon_pick(offers: Array) -> void:
 		hbox.add_child(card)
 
 	_space(vbox, 16)
+
+	# ── Curse offer (Returnal-style tradeoff) ─────────────────────────────
+	if _gs and _gs.active_run:
+		var cs := CurseSystem.new()
+		var owned_curse_ids: Array = _gs.active_run.active_curses.map(
+			func(c: Dictionary) -> String: return c.get("id",""))
+		var curse_offer := cs.generate_curse_offer(
+			_gs.active_run.seed + _gs.active_run.current_node * 31,
+			_gs.active_run.current_floor, owned_curse_ids)
+		if not curse_offer.is_empty():
+			var divider := HSeparator.new()
+			vbox.add_child(divider)
+			_space(vbox, 8)
+			_lbl(vbox, "— OR ACCEPT A CURSE —", 11, Color(0.65,0.25,0.25), true)
+			_space(vbox, 8)
+			vbox.add_child(_curse_card(curse_offer))
+
+	_space(vbox, 10)
 	var skip := _btn("Decline all", DIM)
 	skip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	skip.pressed.connect(_on_boon_skip)

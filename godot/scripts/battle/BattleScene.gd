@@ -465,6 +465,10 @@ func _spawn_player_units() -> Array[Unit]:
 		240, 70, 4, 2, 9, 52, 18, 55, 65,
 		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
 		{}, 2, 4))
+	# Apply curse move penalty
+	var bonuses := RunBonuses.for_current_run()
+	var move_pen: int = bonuses.get("curse_move_penalty", 0)
+
 	# Apply MetaProgression permanent stat bonuses
 	var meta: Node = get_node_or_null("/root/MetaProgression")
 	if meta:
@@ -476,6 +480,8 @@ func _spawn_player_units() -> Array[Unit]:
 				unit.unit_data.base_stats.hp       += hp_bonus
 				unit.unit_data.base_stats.physical += phys_bonus
 				unit.unit_data.base_stats.magic    += mag_bonus
+			if move_pen != 0:
+				unit.unit_data.base_stats.movement = max(1, unit.unit_data.base_stats.movement + move_pen)
 	return result
 
 
