@@ -56,6 +56,10 @@ export function createInitialGameState() {
       combatSpeed: 'normal',
       tutorialsEnabled: true,
     },
+    activeRun: null,
+    pendingLoot: null,
+    claimedRunItems: [],
+    learnedSecretSkills: [],
     lastResult: null,
   }
 }

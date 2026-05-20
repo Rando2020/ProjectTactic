@@ -339,7 +339,11 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
 
   // Handle victory — pass JP to completeActiveMission
   function handleVictory(){
-    completeActiveMission({ battleJp, clearBonus:JP_AWARDS.battle_clear })
+    completeActiveMission({
+      battleJp,
+      clearBonus: JP_AWARDS.battle_clear,
+      defeatedUnits: unitsRef.current.filter(u => u.team === 'enemy' && u.hp <= 0),
+    })
   }
 
   // Keyboard

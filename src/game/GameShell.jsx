@@ -3,6 +3,8 @@ import { createInitialGameState } from './state/initialGameState.js'
 import { saveGame, loadGame, hasSave, deleteSave } from './state/saveSystem.js'
 import { applyMissionRewards } from './state/progressionReducer.js'
 import { getBattleMap } from './data/maps.js'
+import { completeCurrentNode, generateRun, getCurrentNode } from './systems/floorGenerator.js'
+import { generateBattleLoot } from './systems/lootSystem.js'
 import MainMenu             from './screens/MainMenu.jsx'
 import WorldMapScreen       from './screens/WorldMapScreen.jsx'
 import TownScreen           from './screens/TownScreen.jsx'
@@ -10,6 +12,10 @@ import BattleScreen         from './screens/BattleScreen.jsx'
 import ResultsScreen        from './screens/ResultsScreen.jsx'
 import CharacterSheetScreen from './screens/CharacterSheetScreen.jsx'
 import JobTreeScreen        from './screens/JobTreeScreen.jsx'
+import RunMapScreen         from './screens/RunMapScreen.jsx'
+import BoonPickScreen       from './screens/BoonPickScreen.jsx'
+import LootScreen           from './screens/LootScreen.jsx'
+import WandererScreen       from './screens/WandererScreen.jsx'
 import DeploymentScreen     from './components/DeploymentScreen.jsx'
 import StoryScene           from './components/StoryScene.jsx'
 import QuestLog             from './components/QuestLog.jsx'
@@ -21,7 +27,7 @@ import JobBoard             from './components/JobBoard.jsx'
 import InnScreen            from './components/InnScreen.jsx'
 
 const BATTLE_SCREENS = new Set(['deployment','battle'])
-const NAV = [['Menu','mainMenu'],['World','worldMap'],['Town','town'],['Party','party'],['Jobs','jobTree'],['Inventory','inventory'],['Codex','codex'],['Summons','summons'],['Quests','quests']]
+const NAV = [['Menu','mainMenu'],['World','worldMap'],['Run','runMap'],['Town','town'],['Party','party'],['Jobs','jobTree'],['Inventory','inventory'],['Codex','codex'],['Summons','summons'],['Quests','quests']]
 
 export default function GameShell() {
   const [gameState, setGameState] = useState(() => loadGame() ?? createInitialGameState())
@@ -45,14 +51,114 @@ export default function GameShell() {
     const mission = getBattleMap(gameState.activeMissionId)
     // Merge battle JP into rewards
     const enhancedMission = { ...mission, rewards:{ ...mission.rewards, battleJp: battleResult.battleJp ?? {}, clearBonus: battleResult.clearBonus ?? 0 } }
-    setGameState(g => applyMissionRewards(g, enhancedMission))
-    setScreen('results')
-    setNotice('Victory! Rewards collected.')
+    setGameState(g => {
+      const rewarded = applyMissionRewards(g, enhancedMission)
+      if (!g.activeRun) return rewarded
+
+      const drops = generateBattleLoot(battleResult.defeatedUnits ?? [], g.activeRun.seed, g.activeRun.currentFloor)
+      return {
+        ...rewarded,
+        currentScreen: 'loot',
+        pendingLoot: {
+          missionName: mission.name,
+          gold: enhancedMission.rewards.gold ?? 0,
+          items: drops,
+          floor: g.activeRun.currentFloor,
+        },
+      }
+    })
+    setNotice(gameState.activeRun ? 'Victory! Loot is ready.' : 'Victory! Rewards collected.')
+  }
+
+  function startRun() {
+    const seed = Date.now() >>> 0
+    setGameState(g => ({
+      ...g,
+      activeRun: generateRun(seed),
+      pendingLoot: null,
+      currentScreen: 'runMap',
+    }))
+    setNotice('Run started.')
+  }
+
+  function enterRunNode() {
+    setGameState(g => {
+      const run = g.activeRun
+      if (!run) return { ...g, currentScreen: 'runMap' }
+      const node = getCurrentNode(run)
+      if (!node) return { ...g, currentScreen: 'runMap' }
+
+      if (['battle', 'elite_battle', 'boss'].includes(node.type)) {
+        return { ...g, activeMissionId: node.mapId, currentScreen: 'deployment' }
+      }
+      if (node.type === 'boon_pick') return { ...g, currentScreen: 'boonPick' }
+      if (node.type === 'wanderer') return { ...g, currentScreen: 'wanderer' }
+
+      return { ...g, activeRun: completeCurrentNode(run), currentScreen: 'runMap' }
+    })
+  }
+
+  function chooseRunBoon(boon) {
+    setGameState(g => {
+      if (!g.activeRun) return { ...g, currentScreen: 'runMap' }
+      const runWithBoon = {
+        ...g.activeRun,
+        activeBoons: [...(g.activeRun.activeBoons ?? []), boon],
+      }
+      return {
+        ...g,
+        activeRun: completeCurrentNode(runWithBoon),
+        currentScreen: 'runMap',
+      }
+    })
+    setNotice(`${boon.name} added to the run.`)
+  }
+
+  function claimLoot() {
+    setGameState(g => {
+      const items = g.pendingLoot?.items ?? []
+      const completedRun = g.activeRun ? completeCurrentNode({
+        ...g.activeRun,
+        equipment: {
+          ...(g.activeRun.equipment ?? {}),
+          inventory: [...(g.activeRun.equipment?.inventory ?? []), ...items],
+        },
+        runGold: (g.activeRun.runGold ?? 0) + (g.pendingLoot?.gold ?? 0),
+      }) : null
+
+      return {
+        ...g,
+        activeRun: completedRun,
+        claimedRunItems: [...(g.claimedRunItems ?? []), ...items],
+        pendingLoot: null,
+        currentScreen: completedRun?.completed ? 'results' : 'runMap',
+      }
+    })
+    setNotice('Loot claimed.')
+  }
+
+  function finishWandererNode(result = {}) {
+    setGameState(g => {
+      if (!g.activeRun) return { ...g, currentScreen: 'runMap' }
+      const reward = result.reward
+      const learnedSecretSkills = reward?.type === 'secret_skill'
+        ? Array.from(new Set([...(g.learnedSecretSkills ?? []), reward.skillId]))
+        : g.learnedSecretSkills ?? []
+      return {
+        ...g,
+        gold: Math.max(0, (g.gold ?? 0) - (result.cost ?? 0)),
+        learnedSecretSkills,
+        activeRun: completeCurrentNode(g.activeRun),
+        currentScreen: 'runMap',
+      }
+    })
+    setNotice('Wanderer encounter resolved.')
   }
 
   const p = { gameState, setGameState, activeMission, setScreen, selectMission, completeActiveMission, persistGame }
   const { currentScreen } = gameState
   const showNav = !BATTLE_SCREENS.has(currentScreen)
+  const activeRunNode = gameState.activeRun ? getCurrentNode(gameState.activeRun) : null
 
   return (
     <div style={{ minHeight:'100vh',background:'radial-gradient(circle at top left,#172033 0,#090b12 42%,#05060a 100%)',color:'#f7f0df',fontFamily:'Inter,ui-sans-serif,system-ui,-apple-system,sans-serif' }}>
@@ -74,6 +180,19 @@ export default function GameShell() {
         {notice&&<div style={{ border:'1px solid rgba(201,167,86,.35)',background:'rgba(201,167,86,.1)',padding:12,borderRadius:12,marginBottom:16,fontSize:13 }}>{notice}</div>}
         {currentScreen==='mainMenu'        && <MainMenu hasSave={hasSave()} onNewGame={startNewGame} onContinue={continueGame} onDeleteSave={clearSave} onWorld={()=>setScreen('worldMap')}/>}
         {currentScreen==='worldMap'        && <WorldMapScreen {...p}/>}
+        {currentScreen==='runMap'          && <RunMapScreen {...p} onStartRun={startRun} onEnterRunNode={enterRunNode}/>}
+        {currentScreen==='boonPick'        && <BoonPickScreen {...p} onChooseBoon={chooseRunBoon}/>}
+        {currentScreen==='loot'            && <LootScreen {...p} onClaimLoot={claimLoot}/>}
+        {currentScreen==='wanderer'&&activeRunNode?.wanderer && (
+          <WandererScreen
+            {...p}
+            run={gameState.activeRun}
+            wanderer={activeRunNode.wanderer}
+            onAccept={finishWandererNode}
+            onDecline={() => finishWandererNode()}
+            onLeave={() => setScreen('runMap')}
+          />
+        )}
         {currentScreen==='town'            && <TownScreen {...p}/>}
         {currentScreen==='deployment'&&activeMission && <DeploymentScreen map={activeMission} onStartBattle={handleStartBattle} onCancel={()=>setScreen('worldMap')}/>}
         {currentScreen==='battle'&&activeMission && <BattleScreen {...p} deploymentSlots={deploymentSlots}/>}
