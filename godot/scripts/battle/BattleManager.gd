@@ -334,6 +334,13 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		if not se_data.is_empty():
 			get_tree().create_timer(0.3).timeout.connect(
 				func() -> void: _try_apply_status(target, se_data))
+		# JP award for physical ability
+		if not skip_setup:
+			_award_jp(caster, "action_used")
+		# Volatile explosion on kill
+		if target.hp <= 0:
+			_check_volatile_explosion(target)
+			_check_boon_on_kill(caster, target)
 		return
 
 	# ── Spell (elemental / dark / etc.) ───────────────────────────────────
@@ -345,6 +352,15 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 			tactical_grid.ignite_tile(target.grid_pos)
 			if not skip_setup:
 				log_message.emit("The ground catches fire!")
+		# JP award for spell + weakness bonus
+		if not skip_setup:
+			_award_jp(caster, "action_used")
+		# On kill checks
+		if target.hp <= 0:
+			_check_volatile_explosion(target)
+			_check_boon_on_kill(caster, target)
+			if not skip_setup: _award_jp(caster, "boss_clear" if target.has_meta("is_boss") else "battle_clear")
+
 	if not skip_setup:
 		var affinity: float = 1.0
 		if target.unit_data:
@@ -404,6 +420,69 @@ func _get_aoe_targets(center: Vector2i, ability: Dictionary, caster: Unit) -> Ar
 
 
 ## Melee counter-attack — never triggers a second counter (is_counter=true).
+## Award JP to a unit via JobSystem. Multiplied by run boon JP bonus.
+func _award_jp(unit: Unit, event_type: String) -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if not gs: return
+	var uid: String = unit.unit_data.id if unit.unit_data else unit.name
+	if not gs.unit_registry.has(uid): return
+	var js := JobSystem.new()
+	var base_jp: int = js.get_jp_award(event_type)
+	if base_jp <= 0: return
+	var bonuses := RunBonuses.for_current_run()
+	var total_jp: int = int(ceil(float(base_jp) * bonuses["jp_multiplier"]))
+	var char_data: Dictionary = gs.unit_registry[uid]
+	var job_id: String = char_data.get("current_job_id", "")
+	if job_id.is_empty(): return
+	var result := js.apply_jp(char_data, job_id, total_jp)
+	if result["leveled_up"]:
+		log_message.emit("★ %s: %s reached %s!" % [unit.display_name, job_id.capitalize(), result["title"]])
+		var vfx_n := get_node_or_null("/root/VFX")
+		if vfx_n: (vfx_n as VFXManager).play_aura(unit.grid_pos, Color(0.9, 0.8, 0.2, 0.8))
+
+
+## Handle Volatile prefix explosion on unit death.
+func _check_volatile_explosion(dead_unit: Unit) -> void:
+	if not dead_unit.has_meta("prefixes"): return
+	var prefixes: Array = dead_unit.get_meta("prefixes", [])
+	for pfx: Dictionary in prefixes:
+		var od: Dictionary = pfx.get("on_death", {})
+		if od.get("type","") != "explosion": continue
+		var dmg: int = od.get("damage", 45)
+		log_message.emit("💥 %s EXPLODES! %d fire dmg to adjacent!" % [dead_unit.display_name, dmg])
+		var dirs := [Vector2i(1,0),Vector2i(-1,0),Vector2i(0,1),Vector2i(0,-1),
+				     Vector2i(1,1),Vector2i(1,-1),Vector2i(-1,1),Vector2i(-1,-1)]
+		for d in dirs:
+			var nb: Vector2i = dead_unit.grid_pos + d
+			for u: Unit in units:
+				if u.grid_pos == nb and u.hp > 0 and u != dead_unit:
+					var r := u.receive_damage(dmg, "magical")
+					var vfx_n := get_node_or_null("/root/VFX")
+					if vfx_n:
+						(vfx_n as VFXManager).play_fire(nb)
+						(vfx_n as VFXManager).play_damage_number(nb, dmg, Color(1.0,0.35,0.1))
+
+
+## Handle boon on-kill effects (Champion's Grit, Vaelthorn kills).
+func _check_boon_on_kill(killer: Unit, dead_unit: Unit) -> void:
+	var bonuses := RunBonuses.for_current_run()
+	var is_elite: bool = dead_unit.has_meta("elite_tier") and dead_unit.get_meta("elite_tier","") != ""
+	if is_elite:
+		# Champion's Grit: heal killer
+		var hp_r: int   = bonuses["on_elite_kill_hp"]
+		var tmpr_r: int = bonuses["on_elite_kill_tmpr"]
+		if hp_r > 0 or tmpr_r > 0:
+			if hp_r > 0:   killer.heal(hp_r)
+			if tmpr_r > 0: killer.temper = mini(killer.unit_data.base_stats.max_temper, killer.temper + tmpr_r)
+			log_message.emit("💪 Champion's Grit: +%d HP, +%d Temper!" % [hp_r, tmpr_r])
+	# Vaelthorn Unchained on-kill
+	var ve_hp:    int = bonuses["vaelthorn_kill_hp"]
+	var ve_ether: int = bonuses["vaelthorn_kill_ether"]
+	if ve_hp > 0 or ve_ether > 0:
+		if ve_hp > 0:    killer.heal(ve_hp)
+		if ve_ether > 0: killer.ether = mini(killer.unit_data.base_stats.max_ether, killer.ether + ve_ether)
+
+
 func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> void:
 	if not is_instance_valid(counter_unit) or counter_unit.hp <= 0:
 		return

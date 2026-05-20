@@ -249,6 +249,71 @@ const ABILITIES: Dictionary = {
 		"jp_cost":      0,
 		"status_effect": {"id": "silence", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
+
+	# ── Secret Skills (learned from Wanderers only) ──────────────────────────
+	"resonance_fracture": {
+		"id": "resonance_fracture", "display_name": "Resonance Fracture",
+		"type": "spell", "spell_type": "dark", "base_power": 90,
+		"mp_cost": 60, "range": 5, "aoe_radius": 3,
+		"vfx_mode": "dark",
+		"description": "Fractures the resonant field — 90 dmg to all enemies + strips one status each.",
+		"secret": true, "teacher": "the_wandering_null",
+	},
+	"null_break": {
+		"id": "null_break", "display_name": "Null-Break",
+		"type": "spell", "spell_type": "dark", "base_power": 45,
+		"mp_cost": 35, "range": 2,
+		"description": "Disrupts target — 45 dmg and removes one elite prefix for this battle.",
+		"status_effect": {"id": "null_broken", "duration": 99, "magnitude": 0.0, "damage_type": "dark"},
+		"secret": true, "teacher": "void_scholar_thresh",
+	},
+	"leyline_burst": {
+		"id": "leyline_burst", "display_name": "Leyline Burst",
+		"type": "spell", "spell_type": "holy", "base_power": 55,
+		"mp_cost": 40, "range": 3, "aoe_radius": 1,
+		"vfx_mode": "holy",
+		"description": "Taps the ley network — 55 holy+fire dmg in a 3×3 area. Ignites terrain.",
+		"secret": true, "teacher": "archive_mage_volant",
+	},
+	"last_rites": {
+		"id": "last_rites", "display_name": "Last Rites",
+		"type": "spell", "spell_type": "buff", "base_power": 0,
+		"mp_cost": 30, "range": 4,
+		"status_effect": {"id": "last_rites", "duration": 99, "magnitude": 0.0, "damage_type": "pure"},
+		"description": "When target would die, they act one final time first.",
+		"secret": true, "teacher": "chaplain_aldis",
+	},
+	"blaze_counter": {
+		"id": "blaze_counter", "display_name": "Blaze Counter",
+		"type": "spell", "spell_type": "fire", "base_power": 50,
+		"mp_cost": 0, "range": 1,
+		"status_effect": {"id": "blaze_counter_ready", "duration": 99, "magnitude": 0.0, "damage_type": "fire"},
+		"description": "Passive: once per battle, auto-counter with 50 fire dmg when struck.",
+		"secret": true, "teacher": "ember_knight_solara",
+	},
+	"sunder_armor": {
+		"id": "sunder_armor", "display_name": "Sunder Armor",
+		"type": "spell", "spell_type": "physical", "base_power": 30,
+		"mp_cost": 20, "range": 1,
+		"status_effect": {"id": "armor_broken", "duration": 99, "magnitude": 0.25, "damage_type": "physical"},
+		"description": "30 dmg and permanently reduces physical defense 25% for this run.",
+		"secret": true, "teacher": "iron_duelist_garek",
+	},
+	"arc_counter": {
+		"id": "arc_counter", "display_name": "Arc Counter",
+		"type": "spell", "spell_type": "thunder", "base_power": 40,
+		"mp_cost": 0, "range": 1,
+		"status_effect": {"id": "arc_counter_ready", "duration": 99, "magnitude": 0.0, "damage_type": "pure"},
+		"description": "Passive: once per battle, auto-counter with 40 thunder dmg (30% stun) when struck.",
+		"secret": true, "teacher": "storm_duelist_kira",
+	},
+	"dark_echo": {
+		"id": "dark_echo", "display_name": "Dark Echo",
+		"type": "spell", "spell_type": "dark", "base_power": 60,
+		"mp_cost": 25, "range": 3,
+		"description": "Copies and mirrors the last ability any enemy used, dark-typed at 60 power.",
+		"secret": true, "teacher": "shadow_of_vaelthorn",
+	},
 }
 
 
