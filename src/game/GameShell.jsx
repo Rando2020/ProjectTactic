@@ -3,6 +3,10 @@ import { createInitialGameState } from './state/initialGameState.js'
 import { saveGame, loadGame, hasSave, deleteSave } from './state/saveSystem.js'
 import { applyMissionRewards } from './state/progressionReducer.js'
 import { getBattleMap } from './data/maps.js'
+import { getRunNode } from './data/runNodes.js'
+import { createRun } from './systems/run/createRun.js'
+import { selectRunNode as selectRunNodeState, completeRunNode, skipRunReward as skipRunRewardState } from './systems/run/advanceRun.js'
+import { applyDraftReward } from './systems/run/applyDraftReward.js'
 import MainMenu             from './screens/MainMenu.jsx'
 import WorldMapScreen       from './screens/WorldMapScreen.jsx'
 import TownScreen           from './screens/TownScreen.jsx'
@@ -10,6 +14,8 @@ import BattleScreen         from './screens/BattleScreen.jsx'
 import ResultsScreen        from './screens/ResultsScreen.jsx'
 import CharacterSheetScreen from './screens/CharacterSheetScreen.jsx'
 import JobTreeScreen        from './screens/JobTreeScreen.jsx'
+import RunMapScreen         from './screens/RunMapScreen.jsx'
+import RewardDraftScreen    from './screens/RewardDraftScreen.jsx'
 import DeploymentScreen     from './components/DeploymentScreen.jsx'
 import StoryScene           from './components/StoryScene.jsx'
 import QuestLog             from './components/QuestLog.jsx'
@@ -21,7 +27,7 @@ import JobBoard             from './components/JobBoard.jsx'
 import InnScreen            from './components/InnScreen.jsx'
 
 const BATTLE_SCREENS = new Set(['deployment','battle'])
-const NAV = [['Menu','mainMenu'],['World','worldMap'],['Town','town'],['Party','party'],['Jobs','jobTree'],['Inventory','inventory'],['Codex','codex'],['Summons','summons'],['Quests','quests']]
+const NAV = [['Menu','mainMenu'],['World','worldMap'],['Run','runMap'],['Town','town'],['Party','party'],['Jobs','jobTree'],['Inventory','inventory'],['Codex','codex'],['Summons','summons'],['Quests','quests']]
 
 export default function GameShell() {
   const [gameState, setGameState] = useState(() => loadGame() ?? createInitialGameState())
@@ -37,20 +43,86 @@ export default function GameShell() {
 
   function selectMission(missionId) {
     setDeploymentSlots(null)
-    setGameState(g => ({ ...g, activeMissionId:missionId, currentScreen:'deployment' }))
+    setGameState(g => ({ ...g, activeMissionId:missionId, activeRunNodeId:null, currentScreen:'deployment' }))
   }
   function handleStartBattle(slots) { setDeploymentSlots(slots); setScreen('battle') }
 
-  function completeActiveMission(battleResult = {}) {
-    const mission = getBattleMap(gameState.activeMissionId)
-    // Merge battle JP into rewards
-    const enhancedMission = { ...mission, rewards:{ ...mission.rewards, battleJp: battleResult.battleJp ?? {}, clearBonus: battleResult.clearBonus ?? 0 } }
-    setGameState(g => applyMissionRewards(g, enhancedMission))
-    setScreen('results')
-    setNotice('Victory! Rewards collected.')
+  function startRun() {
+    const run = createRun('first-route')
+    setDeploymentSlots(null)
+    setGameState(g => ({ ...g, currentRun:run, activeRunNodeId:null, currentScreen:'runMap' }))
+    setNotice('Run started: The Burning Bell route.')
   }
 
-  const p = { gameState, setGameState, activeMission, setScreen, selectMission, completeActiveMission, persistGame }
+  function selectRunNode(nodeId) {
+    setGameState(g => {
+      if (!g.currentRun) return g
+      return { ...g, currentRun: selectRunNodeState(g.currentRun, nodeId), currentScreen:'runMap' }
+    })
+  }
+
+  function startRunNode(nodeId) {
+    const node = getRunNode(nodeId)
+    if (!node) return
+
+    if (node.missionId) {
+      setDeploymentSlots(null)
+      setGameState(g => ({ ...g, activeMissionId:node.missionId, activeRunNodeId:node.id, currentScreen:'deployment' }))
+      setNotice(`${node.name} selected.`)
+      return
+    }
+
+    setGameState(g => {
+      if (!g.currentRun) return g
+      return { ...g, currentRun: completeRunNode(g.currentRun, node.id), activeRunNodeId:node.id, currentScreen:'rewardDraft' }
+    })
+    setNotice(`${node.name} resolved. Choose a reward.`)
+  }
+
+  function completeActiveMission(battleResult = {}) {
+    const mission = getBattleMap(gameState.activeMissionId)
+    const enhancedMission = { ...mission, rewards:{ ...mission.rewards, battleJp: battleResult.battleJp ?? {}, clearBonus: battleResult.clearBonus ?? 0 } }
+
+    setGameState(g => {
+      const rewardedState = applyMissionRewards(g, enhancedMission)
+      if (!g.activeRunNodeId || !g.currentRun) return rewardedState
+
+      const nextRun = completeRunNode(g.currentRun, g.activeRunNodeId)
+      const runComplete = nextRun.status === 'complete'
+      return {
+        ...rewardedState,
+        currentRun: nextRun,
+        activeRunNodeId: null,
+        currentScreen: runComplete ? 'runMap' : 'rewardDraft',
+        metaProgression: runComplete
+          ? {
+              ...(rewardedState.metaProgression ?? {}),
+              completedRuns: (rewardedState.metaProgression?.completedRuns ?? 0) + 1,
+              echoShards: (rewardedState.metaProgression?.echoShards ?? 0) + (nextRun.echoShardsEarned ?? 0),
+            }
+          : rewardedState.metaProgression,
+      }
+    })
+    setNotice(gameState.activeRunNodeId ? 'Run node complete. Choose a draft reward.' : 'Victory! Rewards collected.')
+  }
+
+  function chooseRunReward(rewardId) {
+    setGameState(g => {
+      if (!g.currentRun) return g
+      return { ...g, currentRun: applyDraftReward(g.currentRun, rewardId), currentScreen:'runMap' }
+    })
+    setNotice('Reward drafted. Choose the next route node.')
+  }
+
+  function skipRunReward() {
+    setGameState(g => {
+      if (!g.currentRun) return g
+      return { ...g, currentRun: skipRunRewardState(g.currentRun), currentScreen:'runMap' }
+    })
+    setNotice('Reward skipped. Choose the next route node.')
+  }
+
+  const p = { gameState, setGameState, activeMission, setScreen, selectMission, completeActiveMission, persistGame, startRun, selectRunNode, startRunNode, chooseRunReward, skipRunReward }
   const { currentScreen } = gameState
   const showNav = !BATTLE_SCREENS.has(currentScreen)
 
@@ -74,8 +146,10 @@ export default function GameShell() {
         {notice&&<div style={{ border:'1px solid rgba(201,167,86,.35)',background:'rgba(201,167,86,.1)',padding:12,borderRadius:12,marginBottom:16,fontSize:13 }}>{notice}</div>}
         {currentScreen==='mainMenu'        && <MainMenu hasSave={hasSave()} onNewGame={startNewGame} onContinue={continueGame} onDeleteSave={clearSave} onWorld={()=>setScreen('worldMap')}/>}
         {currentScreen==='worldMap'        && <WorldMapScreen {...p}/>}
+        {currentScreen==='runMap'          && <RunMapScreen {...p}/>}
+        {currentScreen==='rewardDraft'     && <RewardDraftScreen {...p}/>}
         {currentScreen==='town'            && <TownScreen {...p}/>}
-        {currentScreen==='deployment'&&activeMission && <DeploymentScreen map={activeMission} onStartBattle={handleStartBattle} onCancel={()=>setScreen('worldMap')}/>}
+        {currentScreen==='deployment'&&activeMission && <DeploymentScreen map={activeMission} onStartBattle={handleStartBattle} onCancel={()=>setScreen(gameState.activeRunNodeId ? 'runMap' : 'worldMap')}/>}
         {currentScreen==='battle'&&activeMission && <BattleScreen {...p} deploymentSlots={deploymentSlots}/>}
         {currentScreen==='results'         && <ResultsScreen {...p}/>}
         {currentScreen==='characterSheet'  && <CharacterSheetScreen {...p}/>}
