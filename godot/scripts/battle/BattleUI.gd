@@ -11,6 +11,7 @@ var _objective_label: Label
 var _enemy_intent_panel: PanelContainer
 var _enemy_intent_title: Label
 var _enemy_intent_body: Label
+var _enemy_intent_effect: Label
 var _unit_name: Label
 var _hp_label: Label
 var _mp_label: Label
@@ -149,6 +150,11 @@ func _build_ui() -> void:
 	_enemy_intent_body.add_theme_color_override("font_color", Color(0.92, 0.90, 0.84))
 	_enemy_intent_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intent_box.add_child(_enemy_intent_body)
+	_enemy_intent_effect = Label.new()
+	_enemy_intent_effect.text = ""
+	_enemy_intent_effect.add_theme_font_size_override("font_size", 16)
+	_enemy_intent_effect.add_theme_color_override("font_color", Color(1.0, 0.86, 0.36))
+	intent_box.add_child(_enemy_intent_effect)
 
 	_tile_info_label = Label.new()
 	_tile_info_label.text = "Hover a tile"
@@ -791,8 +797,14 @@ func _on_enemy_intent_changed(intent: Dictionary) -> void:
 	var action := str(intent.get("action", "Act"))
 	var target := str(intent.get("target", "-"))
 	var note := str(intent.get("note", ""))
+	var result_note := str(intent.get("result_note", ""))
+	var amount := str(intent.get("amount_label", "--"))
+	var hit := str(intent.get("hit", "--"))
+	var crit := str(intent.get("crit", "--"))
 	_enemy_intent_title.text = "ENEMY INTENT - %s" % actor.to_upper()
 	_enemy_intent_body.text = "%s -> %s\n%s" % [action, target, note]
+	if _enemy_intent_effect:
+		_enemy_intent_effect.text = "%s    Hit %s    Crit %s\n%s" % [amount, hit, crit, result_note]
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:

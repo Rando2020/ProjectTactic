@@ -125,12 +125,15 @@ func _begin_enemy_turn() -> void:
 	var intent := _evaluate_enemy_intent(unit)
 	_last_enemy_intents[unit.unit_id] = intent
 	enemy_intent_changed.emit(intent)
+	action_preview_changed.emit(_enemy_preview_from_intent(intent))
 	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
 	await get_tree().create_timer(0.50).timeout
 	await _execute_enemy_intent(unit, intent)
 	unit.end_turn()
 	_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
+	enemy_intent_changed.emit({})
+	action_preview_changed.emit({})
 	_set_phase(Phase.RESOLVE)
 
 
@@ -271,7 +274,78 @@ func _enemy_intent(unit: Unit, kind: String, target: Unit, action_name: String, 
 	var summary := "%s intends to %s" % [unit.display_name, action_name.to_lower()]
 	if target:
 		summary += " -> %s" % target.display_name
-	return {"actor": unit.display_name, "kind": kind, "target_id": target.unit_id if target else "", "target": target_name, "action": action_name, "note": note, "summary": summary, "ability": ability, "move_to": move_to}
+	var amount_label := _enemy_intent_amount_label(unit, kind, target, ability)
+	var result_note := _enemy_intent_result_note(kind, target, amount_label, move_to)
+	return {
+		"actor": unit.display_name,
+		"actor_portrait": _portrait_path(unit),
+		"kind": kind,
+		"target_id": target.unit_id if target else "",
+		"target": target_name,
+		"target_portrait": _portrait_path(target),
+		"action": action_name,
+		"amount_label": amount_label,
+		"hit": "100%" if kind in ["spell", "heal", "retreat", "advance", "hold"] else "95%",
+		"crit": "--" if kind in ["spell", "heal", "retreat", "advance", "hold"] else "10%",
+		"note": note,
+		"result_note": result_note,
+		"summary": summary,
+		"ability": ability,
+		"move_to": move_to,
+	}
+
+
+func _enemy_intent_amount_label(unit: Unit, kind: String, target: Unit, ability: Dictionary) -> String:
+	if kind == "heal":
+		return "%d heal" % int(ability.get("base_power", 0))
+	if kind == "spell" and target:
+		return "%d damage" % _predict_spell_damage(unit, target, ability)
+	if kind == "attack" and target:
+		return "%d damage" % _predict_attack_damage(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+	if kind == "advance":
+		return "Move + threat"
+	if kind == "retreat":
+		return "Fall back"
+	return "No damage"
+
+
+func _enemy_intent_result_note(kind: String, target: Unit, amount_label: String, move_to: Vector2i) -> String:
+	var amount := _amount_from_label(amount_label)
+	if kind in ["attack", "spell"] and target:
+		return "HP %d -> %d" % [target.hp, max(target.hp - amount, 0)]
+	if kind == "heal" and target:
+		return "HP %d -> %d" % [target.hp, min(target.hp + amount, target.unit_data.base_stats.hp)]
+	if kind in ["advance", "retreat"] and move_to != Vector2i(-1, -1):
+		return "Destination %d,%d" % [move_to.x, move_to.y]
+	return "Watch the turn order."
+
+
+func _amount_from_label(amount_label: String) -> int:
+	var parts := amount_label.split(" ")
+	if parts.size() == 0:
+		return 0
+	var raw := str(parts[0])
+	if not raw.is_valid_int():
+		return 0
+	return int(raw)
+
+
+func _enemy_preview_from_intent(intent: Dictionary) -> Dictionary:
+	if intent.is_empty():
+		return {}
+	return {
+		"visible": true,
+		"mode": "Enemy Intent",
+		"actor": str(intent.get("actor", "Enemy")),
+		"actor_portrait": str(intent.get("actor_portrait", "")),
+		"target": str(intent.get("target", "-")),
+		"target_portrait": str(intent.get("target_portrait", "")),
+		"action": str(intent.get("action", "Act")),
+		"amount_label": str(intent.get("amount_label", "--")),
+		"hit": str(intent.get("hit", "--")),
+		"crit": str(intent.get("crit", "--")),
+		"note": "%s | %s" % [str(intent.get("note", "")), str(intent.get("result_note", ""))],
+	}
 
 
 func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:

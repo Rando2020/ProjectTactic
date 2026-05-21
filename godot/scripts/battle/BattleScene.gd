@@ -12,6 +12,8 @@ var _camera_zoom_value: float = 0.92
 var _camera_bounds: Rect2 = Rect2()
 var _camera_dragging: bool = false
 var _camera_drag_last: Vector2 = Vector2.ZERO
+var _camera_shake_strength: float = 0.0
+var _camera_shake_timer: float = 0.0
 
 const CAMERA_PAN_SPEED := 560.0
 const CAMERA_MIN_ZOOM := 0.55
@@ -87,6 +89,7 @@ func _ready() -> void:
 	battle_manager.turn_started.connect(_on_turn_started)
 	battle_manager.unit_defeated.connect(_on_unit_defeated)
 	battle_manager.unit_moved.connect(_on_unit_moved)
+	battle_manager.combat_resolver.combat_resolved.connect(_on_combat_resolved)
 
 
 func _start_battle_music() -> void:
@@ -155,6 +158,7 @@ func _process(delta: float) -> void:
 	if direction != Vector2.ZERO:
 		_battle_camera.position += direction.normalized() * CAMERA_PAN_SPEED * delta / max(_camera_zoom_value, 0.1)
 		_clamp_camera_to_board()
+	_update_camera_shake(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -235,8 +239,36 @@ func _on_unit_visual_position_changed(_unit_id: String, world_pos: Vector2) -> v
 	_clamp_camera_to_board()
 
 
+func _on_combat_resolved(result: Dictionary) -> void:
+	if bool(result.get("missed", false)):
+		_camera_shake(2.0, 0.10)
+		return
+	var amount := int(result.get("hp_damage", result.get("damage", 0)))
+	if amount <= 0:
+		return
+	_camera_shake(clamp(float(amount) * 0.10, 2.5, 8.0), 0.16)
+
+
+func _camera_shake(strength: float, duration: float) -> void:
+	_camera_shake_strength = max(_camera_shake_strength, strength)
+	_camera_shake_timer = max(_camera_shake_timer, duration)
+
+
+func _update_camera_shake(delta: float) -> void:
+	if _camera_shake_timer <= 0.0 or not _battle_camera:
+		return
+	_camera_shake_timer = max(_camera_shake_timer - delta, 0.0)
+	var offset := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _camera_shake_strength
+	_battle_camera.offset = offset
+	_camera_shake_strength = lerpf(_camera_shake_strength, 0.0, min(delta * 12.0, 1.0))
+	if _camera_shake_timer <= 0.0:
+		_battle_camera.offset = Vector2.ZERO
+
+
 func _on_unit_defeated(unit_id: String) -> void:
 	var u: Unit = battle_manager.units.get(unit_id)
+	if u:
+		_camera_shake(7.0, 0.20)
 	if u and u.team == "enemy":
 		_defeated_enemies.append({
 			"id":         unit_id,
