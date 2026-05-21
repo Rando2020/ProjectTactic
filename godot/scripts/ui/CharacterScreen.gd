@@ -80,6 +80,105 @@ func _build_ui() -> void:
 	nav_row.add_child(next_btn)
 
 
+## Build the job tree panel for a unit — shown at top of each column.
+func _build_job_tree_panel(uid: String) -> PanelContainer:
+	var reg: Dictionary = _gs.unit_registry.get(uid, {})
+	var job_jp: Dictionary = reg.get("job_jp", {})
+	var current_job: String = reg.get("current_job_id", "squire")
+
+	var pc := PanelContainer.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.07, 0.08, 0.12)
+	for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: st.set_border_width(side, 1)
+	st.border_color = Color(1,1,1,0.1)
+	for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 10)
+	pc.add_theme_stylebox_override("panel", st)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("margin_left", 10)
+	vbox.add_theme_constant_override("margin_right", 10)
+	vbox.add_theme_constant_override("margin_top", 8)
+	vbox.add_theme_constant_override("margin_bottom", 8)
+	vbox.add_theme_constant_override("separation", 6)
+	pc.add_child(vbox)
+
+	# Title
+	var title := Label.new()
+	title.text = "JOB CLASS"
+	title.add_theme_font_size_override("font_size", 9)
+	title.add_theme_color_override("font_color", Color(0.5,0.47,0.42))
+	vbox.add_child(title)
+
+	# Three tiers
+	for tier in [1, 2, 3]:
+		var tier_names := ["Basic", "Advanced", "Ascended"]
+		var tier_colors := [Color(0.7,0.76,0.82), Color(0.98,0.75,0.14), Color(0.93,0.27,0.27)]
+		var tier_lbl := Label.new()
+		tier_lbl.text = "— %s —" % tier_names[tier - 1]
+		tier_lbl.add_theme_font_size_override("font_size", 8)
+		tier_lbl.add_theme_color_override("font_color", tier_colors[tier - 1].darkened(0.2))
+		vbox.add_child(tier_lbl)
+
+		var tier_row := HBoxContainer.new()
+		tier_row.add_theme_constant_override("separation", 4)
+		vbox.add_child(tier_row)
+
+		var tier_jobs := JobTreeData.get_jobs_by_tier(tier)
+		for job_id in tier_jobs:
+			var job := JobTreeData.get_job(job_id)
+			var is_current := job_id == current_job
+			var can_change := JobTreeData.meets_prerequisites(job_id, job_jp) and not is_current
+			var jp_in_job: int = job_jp.get(job_id, 0)
+			var level: int = JobTreeData._jp_to_level(jp_in_job)
+
+			var btn := Button.new()
+			btn.custom_minimum_size = Vector2(80, 52)
+			var txt := "%s\nLv%d" % [job["name"], level]
+			if is_current: txt = "★ " + txt
+			btn.text = txt
+			btn.add_theme_font_size_override("font_size", 9)
+
+			var bst := StyleBoxFlat.new()
+			if is_current:
+				bst.bg_color = tier_colors[tier-1].darkened(0.5)
+				bst.border_color = tier_colors[tier-1]
+				for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: bst.set_border_width(side, 2)
+				btn.add_theme_color_override("font_color", tier_colors[tier-1])
+			elif can_change:
+				bst.bg_color = Color(0.10, 0.11, 0.15)
+				bst.border_color = Color(1,1,1,0.18)
+				for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: bst.set_border_width(side, 1)
+				btn.add_theme_color_override("font_color", Color(0.85,0.82,0.77))
+			else:
+				bst.bg_color = Color(0.06, 0.07, 0.09)
+				bst.border_color = Color(1,1,1,0.06)
+				for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: bst.set_border_width(side, 1)
+				btn.add_theme_color_override("font_color", Color(0.4,0.38,0.35))
+
+			for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]:
+				bst.set_corner_radius(c, 7)
+			btn.add_theme_stylebox_override("normal", bst)
+			btn.add_theme_stylebox_override("hover", bst)
+			btn.disabled = not can_change
+			btn.tooltip_text = job.get("description","")
+			if can_change:
+				btn.pressed.connect(_on_change_job.bind(uid, job_id))
+			tier_row.add_child(btn)
+
+	return pc
+
+
+func _on_change_job(uid: String, new_job: String) -> void:
+	if not _gs: return
+	var reg: Dictionary = _gs.unit_registry.get(uid, {})
+	reg["current_job_id"] = new_job
+	# Refresh learnable abilities from new job
+	var job := JobTreeData.get_job(new_job)
+	reg["learnable_abilities"] = job.get("abilities", [])
+	_build_ui()
+
+
 func _build_unit_column(uid: String) -> VBoxContainer:
 	var col := VBoxContainer.new()
 	col.custom_minimum_size = Vector2(285.0, 0.0)

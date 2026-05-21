@@ -324,6 +324,153 @@ const ABILITIES: Dictionary = {
 		"is_anchor_ability": true,
 	},
 
+	# ── Job-tree abilities ───────────────────────────────────────────────────
+
+	# Squire / Warder
+	"defend": {
+		"id": "defend", "display_name": "Defend",
+		"type": "buff", "spell_type": "physical", "base_power": 0,
+		"mp_cost": 0, "range": 0,
+		"status_effect": {"id": "defending", "duration": 1, "magnitude": 0.5, "damage_type": "physical"},
+		"description": "Brace — take 50% less damage until your next turn.",
+	},
+	"cover_ally": {
+		"id": "cover_ally", "display_name": "Cover",
+		"type": "buff", "spell_type": "physical", "base_power": 0,
+		"mp_cost": 0, "range": 2,
+		"status_effect": {"id": "covering", "duration": 1, "magnitude": 1.0, "damage_type": "physical"},
+		"description": "Take hits directed at an adjacent ally until your next turn.",
+	},
+	"iron_wall": {
+		"id": "iron_wall", "display_name": "Iron Wall",
+		"type": "buff", "spell_type": "physical", "base_power": 0,
+		"mp_cost": 10, "range": 0,
+		"status_effect": {"id": "iron_wall", "duration": 2, "magnitude": 0.6, "damage_type": "physical"},
+		"description": "Shield stance for 2 turns. Take 40% less damage. Cannot act.",
+	},
+	"retribution": {
+		"id": "retribution", "display_name": "Retribution",
+		"type": "attack", "spell_type": "physical", "base_power": 70,
+		"mp_cost": 15, "range": 1,
+		"description": "A fierce counter-blow. Deals +50% bonus damage if used after being hit.",
+	},
+	"rally": {
+		"id": "rally", "display_name": "Rally",
+		"type": "buff", "spell_type": "holy", "base_power": 0,
+		"mp_cost": 20, "range": 3,
+		"status_effect": {"id": "rallied", "duration": 2, "magnitude": 1.25, "damage_type": "physical"},
+		"description": "Inspire an ally — they deal 25% more damage for 2 turns.",
+	},
+
+	# Scout
+	"long_shot": {
+		"id": "long_shot", "display_name": "Long Shot",
+		"type": "attack", "spell_type": "physical", "base_power": 60,
+		"mp_cost": 0, "range": 5, "attack_range_min": 3, "attack_range_max": 5,
+		"description": "Precise arrow from extreme range (3-5 tiles). Can't be used at melee range.",
+	},
+	"rain_of_arrows": {
+		"id": "rain_of_arrows", "display_name": "Rain of Arrows",
+		"type": "attack", "spell_type": "physical", "base_power": 40,
+		"mp_cost": 20, "range": 4, "aoe_radius": 1,
+		"description": "Fires into a 3×3 area — 40 power to all units in range. Friendly fire possible.",
+	},
+	"quickstep": {
+		"id": "quickstep", "display_name": "Quickstep",
+		"type": "buff", "spell_type": "physical", "base_power": 0,
+		"mp_cost": 5, "range": 0,
+		"status_effect": {"id": "quickstep", "duration": 1, "magnitude": 2.0, "damage_type": "physical"},
+		"description": "Move again immediately. Can't act after.",
+	},
+	"smoke_screen": {
+		"id": "smoke_screen", "display_name": "Smoke Screen",
+		"type": "spell", "spell_type": "wind", "base_power": 0,
+		"mp_cost": 15, "range": 3, "aoe_radius": 1,
+		"status_effect": {"id": "blind", "duration": 2, "magnitude": 1.0, "damage_type": "wind"},
+		"description": "Applies Blind (2t) to all units in target area — miss chance 35%.",
+	},
+
+	# Luminary
+	"luminous_barrier": {
+		"id": "luminous_barrier", "display_name": "Luminous Barrier",
+		"type": "buff", "spell_type": "holy", "base_power": 0,
+		"mp_cost": 25, "range": 3,
+		"status_effect": {"id": "barrier", "duration": 2, "magnitude": 60.0, "damage_type": "pure"},
+		"description": "Grants target a 60-HP absorb shield that lasts 2 turns.",
+	},
+	"mass_cure": {
+		"id": "mass_cure", "display_name": "Mass Cure",
+		"type": "heal", "spell_type": "holy", "base_power": 60,
+		"mp_cost": 40, "range": 3, "aoe_radius": 2,
+		"description": "Heals all allies within a 5×5 area for 60 power.",
+	},
+	"consecrate": {
+		"id": "consecrate", "display_name": "Consecrate",
+		"type": "spell", "spell_type": "holy", "base_power": 55,
+		"mp_cost": 30, "range": 4,
+		"status_effect": {"id": "burn", "duration": 1, "magnitude": 0.0, "damage_type": "holy"},
+		"description": "Holy fire — 55 holy damage, removes one negative status from caster.",
+	},
+
+	# Shadow
+	"shadow_step": {
+		"id": "shadow_step", "display_name": "Shadow Step",
+		"type": "buff", "spell_type": "dark", "base_power": 0,
+		"mp_cost": 10, "range": 4,
+		"status_effect": {"id": "invisible", "duration": 1, "magnitude": 1.0, "damage_type": "dark"},
+		"description": "Teleport to any unoccupied tile within 4 tiles and gain Invisible (1t).",
+	},
+	"expose_weakness": {
+		"id": "expose_weakness", "display_name": "Expose Weakness",
+		"type": "spell", "spell_type": "dark", "base_power": 25,
+		"mp_cost": 12, "range": 2,
+		"status_effect": {"id": "exposed", "duration": 2, "magnitude": 0.25, "damage_type": "dark"},
+		"description": "25 dark damage and applies Exposed (2t) — target takes 25% more damage.",
+	},
+	"vanish": {
+		"id": "vanish", "display_name": "Vanish",
+		"type": "buff", "spell_type": "dark", "base_power": 0,
+		"mp_cost": 8, "range": 0,
+		"status_effect": {"id": "invisible", "duration": 2, "magnitude": 1.0, "damage_type": "dark"},
+		"description": "Become Invisible for 2 turns. Enemies cannot target you.",
+	},
+
+	# Resonant
+	"elemental_convergence": {
+		"id": "elemental_convergence", "display_name": "Elemental Convergence",
+		"type": "spell", "spell_type": "resonance", "base_power": 65,
+		"mp_cost": 45, "range": 4,
+		"description": "Deals 65 damage of the element the target is weakest to. Auto-selects element.",
+	},
+	"chain_resonance": {
+		"id": "chain_resonance", "display_name": "Chain Resonance",
+		"type": "spell", "spell_type": "thunder", "base_power": 40,
+		"mp_cost": 30, "range": 3,
+		"description": "40 thunder. Electrify chain arcs to ALL connected wet tiles with no limit.",
+	},
+	"eidolon_drive": {
+		"id": "eidolon_drive", "display_name": "Eidolon Drive",
+		"type": "spell", "spell_type": "resonance", "base_power": 100,
+		"mp_cost": 70, "range": 3,
+		"description": "Unleash 100 resonance damage. Clears all terrain effects in a 3×3 area.",
+	},
+
+	# Void Knight
+	"void_shield": {
+		"id": "void_shield", "display_name": "Void Shield",
+		"type": "buff", "spell_type": "dark", "base_power": 0,
+		"mp_cost": 20, "range": 0,
+		"status_effect": {"id": "void_shield", "duration": 2, "magnitude": 80.0, "damage_type": "dark"},
+		"description": "80-HP void absorb shield for 2 turns. Absorbed damage restores Ether.",
+	},
+	"anchor_strike": {
+		"id": "anchor_strike", "display_name": "Anchor Strike",
+		"type": "attack", "spell_type": "dark", "base_power": 85,
+		"mp_cost": 25, "range": 1,
+		"description": "85 dark + physical damage. Deals triple damage to structures and anchors.",
+		"bonus_vs_anchor": 3.0,
+	},
+
 }
 
 
