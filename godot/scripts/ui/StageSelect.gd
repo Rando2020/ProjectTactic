@@ -360,6 +360,68 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 
 # ── Loot overlay ──────────────────────────────────────────────────────────────
 
+func _curse_card(curse: Dictionary) -> Button:
+	var accent := Color(0.92, 0.24, 0.24)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(620, 190)
+	_style_card(btn, accent)
+
+	var inner := _vbox(btn, false)
+	inner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	inner.add_theme_constant_override("margin_left", 18)
+	inner.add_theme_constant_override("margin_right", 18)
+	inner.add_theme_constant_override("margin_top", 16)
+	inner.add_theme_constant_override("margin_bottom", 16)
+	inner.add_theme_constant_override("separation", 5)
+
+	_lbl(inner, "CURSE TRADE", 10, accent, true)
+	_lbl(inner, "%s  %s" % [curse.get("icon", "!"), curse.get("name", "?")], 17, FG, true)
+	_space(inner, 4)
+	_lbl(inner, "Penalty: %s" % curse.get("penalty", ""), 11, Color(1.0, 0.66, 0.62))
+	_lbl(inner, "Unlock: %s" % curse.get("unlock", ""), 11, Color(0.82, 0.92, 1.0))
+	btn.pressed.connect(_on_curse_picked.bind(curse))
+	return btn
+
+
+func _on_curse_picked(curse: Dictionary) -> void:
+	if _gs and _gs.active_run:
+		_gs.active_run.active_curses.append(curse)
+	if _gs:
+		_gs.pending_boon_offers.clear()
+	if _gs and _gs.active_run:
+		_gs.active_run.complete_current_node()
+	_apply_between_battle_heal()
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+		_boon_overlay = null
+	_build_ui()
+
+
+func _show_wanderer_encounter(run: RunState) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(620, 0)
+	_lbl(vbox, "WANDERER", 11, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, "A traveler shares a technique.", 28, FG, true)
+	_space(vbox, 8)
+	_lbl(vbox, "Full encounter choices will come later. For now, the node is cleared.", 13, DIM, true)
+	_space(vbox, 22)
+	var cont := _btn("Continue", GOLD)
+	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont.pressed.connect(func() -> void:
+		run.complete_current_node()
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_build_ui())
+	vbox.add_child(cont)
+
+
 func _show_loot(items: Array) -> void:
 	if _loot_overlay: _loot_overlay.queue_free()
 	_loot_overlay = _overlay()
@@ -560,5 +622,5 @@ func _node_hint(ntype: String) -> String:
 
 func _guardian_label(g: String) -> String:
 	var labels := {"ignareth":"The Eternal Flame","nerevan":"The Tide Eternal",
-	               "torvahk":"The Storm Father","luminarch":"The Sacred Light","vaelthorn":"The Shadow That Was"}
+				   "torvahk":"The Storm Father","luminarch":"The Sacred Light","vaelthorn":"The Shadow That Was"}
 	return labels.get(g, g.capitalize())

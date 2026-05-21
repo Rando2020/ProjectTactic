@@ -930,6 +930,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 		active_unit_has_moved = true
 		is_resolving_action = false
 		command_hint_changed.emit("Move complete. Choose Attack, Ability, or Wait.")
+		_emit_action_state()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		# AoE abilities can be targeted on empty tiles
 		var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
