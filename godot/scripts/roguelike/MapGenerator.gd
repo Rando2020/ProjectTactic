@@ -165,10 +165,13 @@ func generate_floor(floor_num: int, run_seed: int) -> MapData:
 		# Flanking walls
 		tiles.append({"x": 4, "y": 0, "terrain": TERRAIN_HIGH_GROUND, "height": 2})
 		tiles.append({"x": 6, "y": 0, "terrain": TERRAIN_HIGH_GROUND, "height": 2})
-		# Approach water
+		# Approach water — electrifiable with Torvahk builds
 		tiles.append({"x": 4, "y": 1, "terrain": TERRAIN_WATER, "height": 0})
 		tiles.append({"x": 5, "y": 1, "terrain": TERRAIN_WATER, "height": 0})
 		tiles.append({"x": 6, "y": 1, "terrain": TERRAIN_WATER, "height": 0})
+		# Add burning ground on flanks
+		tiles.append({"x": 2, "y": 1, "terrain": TERRAIN_BURNING, "height": 0})
+		tiles.append({"x": 8, "y": 1, "terrain": TERRAIN_BURNING, "height": 0})
 
 	map.tile_overrides = tiles
 
@@ -218,8 +221,22 @@ func _generate_enemy_spawns(floor_num: int, count: int, map_w: int, _map_h: int,
 	var spawns: Array[Dictionary] = []
 	var used_positions: Array[Vector2i] = []
 
-	# Boss floor: force Void Golem as first enemy if available
+	# Boss floor: force Void Golem + Void Anchor
 	if is_boss:
+		# The Anchor — stationary, holy-weak, pulses dark damage every turn
+		spawns.append({
+			"unit_id": "void_anchor", "name": "The Sleeping Anchor",
+			"x": 5, "y": 0, "facing": "S",
+			"hp": 600, "mp": 0, "move": 0, "jump": 0, "speed": 1,
+			"physical": 0, "magic": 80, "max_temper": 0, "max_ether": 200,
+			"abilities": ["void_anchor_pulse"],
+			"affinities": {"holy": 2.5, "fire": 0.15, "thunder": 0.15,
+						   "water": 0.15, "dark": 0.0, "blizzard": 0.15},
+			"is_anchor": true, "is_anchor_guardian": true,
+			"cannot_move": true,
+		})
+		used_positions.append(Vector2i(5, 0))
+		# The Golem — guardian in front of the anchor
 		for e in ENEMY_POOL:
 			if e["id"] == "void_golem":
 				spawns.append(_make_spawn(e, Vector2i(5, 2)))

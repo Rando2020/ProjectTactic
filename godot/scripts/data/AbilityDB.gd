@@ -314,6 +314,16 @@ const ABILITIES: Dictionary = {
 		"description": "Copies and mirrors the last ability any enemy used, dark-typed at 60 power.",
 		"secret": true, "teacher": "shadow_of_vaelthorn",
 	},
+	# ── Void Anchor ──────────────────────────────────────────────────────────
+	"void_anchor_pulse": {
+		"id": "void_anchor_pulse", "display_name": "Void Pulse",
+		"type": "spell", "spell_type": "dark", "base_power": 0,
+		"mp_cost": 0, "range": 2, "aoe_radius": 2,
+		"description": "The Anchor pulses void energy — 30 dark damage to all units within 2 tiles. Cannot be silenced.",
+		"vfx_mode": "dark",
+		"is_anchor_ability": true,
+	},
+
 }
 
 

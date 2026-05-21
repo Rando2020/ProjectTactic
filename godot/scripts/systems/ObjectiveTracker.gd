@@ -13,7 +13,6 @@ signal objective_updated(progress_text: String)
 func initialize(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
 	units    = p_units
-	objective_updated.emit(get_progress_text())
 
 
 func is_victory() -> bool:
@@ -46,8 +45,11 @@ func is_defeat() -> bool:
 	return units.all(func(u: Unit) -> bool: return u.team != "player" or u.hp <= 0)
 
 
-func on_unit_defeated(_unit_id: String) -> void:
-	objective_updated.emit(get_progress_text())
+func on_unit_defeated(unit_id: String) -> void:
+	# Check if a void anchor guardian died (for destroy_anchor missions)
+	var u := units.filter(func(x: Unit) -> bool: return x.unit_data.id == unit_id)
+	if not u.is_empty() and map_data.objective_type == "destroy_anchor":
+		objective_updated.emit(get_progress_text())
 
 
 func on_turn_advanced() -> void:
@@ -59,25 +61,25 @@ func get_progress_text() -> String:
 	match map_data.objective_type:
 		"defeat_all":
 			var remaining := units.filter(func(u: Unit) -> bool: return u.team == "enemy" and u.hp > 0).size()
-			if remaining > 0:
-				return "Defeat all enemies - %d remaining." % remaining
-			return "All enemies defeated."
+			return "Defeat all enemies — %d remaining." % remaining if remaining > 0 else "✓ All enemies defeated."
 		"destroy_anchor":
-			if _anchor_destroyed():
-				return "Anchor destroyed!"
-			return "Destroy the Void Anchor - use a holy ability on it."
+			if _anchor_destroyed(): return "✓ The Anchor shatters!"
+			var anchors := units.filter(func(u: Unit) -> bool:
+				return u.team == "enemy" and u.unit_data != null and u.unit_data.id == "void_anchor" and u.hp > 0)
+			var golem := units.filter(func(u: Unit) -> bool:
+				return u.team == "enemy" and u.unit_data != null and u.unit_data.id == "void_golem" and u.hp > 0)
+			if golem.size() > 0:
+				return "Defeat the Void Golem, then destroy the Anchor with holy abilities."
+			if anchors.size() > 0:
+				return "Anchor HP: %d — Hit it with holy abilities!" % anchors[0].hp
+			return "Destroy the Void Anchor."
 		"reach_tile":
 			return "Reach tile (%d, %d)." % [int(_map_value("objective_tile_x", 0)), int(_map_value("objective_tile_y", 0))]
 		"protect_unit":
 			return "Defeat all enemies. Protect your unit."
 		"survive_turns":
 			var left := maxi(0, int(_map_value("survive_turns", 5)) - turns_elapsed)
-			if left == 0:
-				return "Survived."
-			var suffix := ""
-			if left != 1:
-				suffix = "s"
-			return "Survive %d more turn%s." % [left, suffix]
+			return "✓ Survived." if left == 0 else "Survive %d more turn%s." % [left, "s" if left != 1 else ""]
 		_:
 			return str(_map_value("objective_label", "Objective in progress."))
 
@@ -87,21 +89,22 @@ func _all_enemies_dead() -> bool:
 
 
 func _anchor_destroyed() -> bool:
-	# Anchor is destroyed if any surface state that WAS void_anchor is now gone
-	# We track this by checking if the map had an anchor tile and no anchor-type
-	# units/surfaces remain
 	if map_data.objective_type != "destroy_anchor": return false
-	# Check if any enemy tagged as anchor-guardian is still alive
-	var anchor_guardians := units.filter(func(u: Unit) -> bool:
-		return u.team == "enemy" and bool(u.unit_data.get("is_anchor_guardian")) and u.hp > 0)
-	if anchor_guardians.size() > 0: return false
-	return _all_enemies_dead()
+	# Victory when the void_anchor unit is at 0 HP
+	var anchor_units := units.filter(func(u: Unit) -> bool:
+		return u.team == "enemy" and (
+			(u.unit_data != null and u.unit_data.id == "void_anchor") or
+			(u.unit_data != null and bool(u.unit_data.get("is_anchor", false)))
+		))
+	if anchor_units.is_empty():
+		# No anchor unit found — fall back to all enemies dead
+		return _all_enemies_dead()
+	# All anchor units must be destroyed
+	return anchor_units.all(func(u: Unit) -> bool: return u.hp <= 0)
 
 
 func _map_value(property_name: String, fallback: Variant) -> Variant:
 	if not map_data:
 		return fallback
 	var value: Variant = map_data.get(property_name)
-	if value == null:
-		return fallback
-	return value
+	return fallback if value == null else value
