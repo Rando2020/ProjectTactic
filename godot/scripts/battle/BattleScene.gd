@@ -254,39 +254,42 @@ func _on_battle_won(rewards: Dictionary) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
-		# Award stage rewards (Soul Shards, Aether, Obsidian)
-		var rm: Node = get_node_or_null("/root/RunManager")
-		if rm and rm.is_run_active:
-			var floor_num: int = int(gs.active_run.current_floor) if gs.active_run else 1
-			var is_boss: bool = floor_num >= 10
-			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
-			rm.award_stage_reward(floor_num, has_elite, is_boss)
-			if is_boss:
-				rm.end_run(true)
-				await get_tree().create_timer(1.8).timeout
-				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
-				return
 
 		if gs.active_run:
-			# Generate loot, advance run, route to StageSelect
+			# Generate loot, show spoils, then route to the next run node.
 			var ls    := LootSystem.new()
 			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
-			gs.pending_loot = loot
-			# Accumulate into run inventory
+			gs.pending_loot.clear()
 			for item in loot: gs.run_inventory.append(item)
 			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
 			gs.active_run.elite_kills += elite_n
+
+			var rm: Node = get_node_or_null("/root/RunManager")
+			var floor_num: int = int(gs.active_run.current_floor)
+			var is_boss: bool = floor_num >= 10
+			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
+			if rm and rm.is_run_active:
+				rm.award_stage_reward(floor_num, has_elite, is_boss)
+
+			battle_ui.show_spoils(rewards, loot)
+			await battle_ui.spoils_continue_requested
+
+			if is_boss:
+				if rm and rm.is_run_active:
+					rm.end_run(true)
+				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+				return
+
 			gs.active_run.complete_current_node()
-			# If next node is boon_pick, generate offers
 			var next_nd: Dictionary = gs.active_run.get_current_node()
 			if next_nd.get("type","") == "boon_pick":
 				var bs := BoonSystem.new()
 				var owned: Array = gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
 				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
-			await get_tree().create_timer(1.5).timeout
 			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 			return
-	await get_tree().create_timer(2.2).timeout
+	battle_ui.show_spoils(rewards, [])
+	await battle_ui.spoils_continue_requested
 	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
 func _on_battle_lost() -> void:
 	_fade_battle_music()

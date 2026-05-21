@@ -1,6 +1,8 @@
 class_name BattleUI
 extends CanvasLayer
 
+signal spoils_continue_requested
+
 var battle_manager: BattleManager
 
 var _mission_label: Label
@@ -41,6 +43,7 @@ var _preview_crit_label: Label
 var _preview_note_label: Label
 var _intro_banner: PanelContainer
 var _intro_banner_style: StyleBoxFlat
+var _spoils_overlay: Control
 var _settings_overlay: Control
 var _game_slider: HSlider
 var _music_slider: HSlider
@@ -396,6 +399,138 @@ func _preview_label(parent: Control, text: String, font_size: int, color: Color,
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(lbl)
 	return lbl
+
+
+func show_spoils(rewards: Dictionary, items: Array) -> void:
+	if _spoils_overlay:
+		_spoils_overlay.queue_free()
+	_spoils_overlay = Control.new()
+	_spoils_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_spoils_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_spoils_overlay)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_spoils_overlay.add_child(dim)
+
+	var panel := PanelContainer.new()
+	panel.position = Vector2(260.0, 86.0)
+	panel.custom_minimum_size = Vector2(760.0, 540.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.035, 0.04, 0.06, 0.96)
+	st.border_color = Color(1.0, 0.78, 0.28, 0.9)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 2)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(corner, 8)
+	panel.add_theme_stylebox_override("panel", st)
+	_spoils_overlay.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	panel.add_child(box)
+
+	_spoils_label(box, "STAGE CLEAR", 30, Color(1.0, 0.88, 0.36), true)
+	_spoils_label(box, "Spoils recovered from the field", 13, Color(0.74, 0.78, 0.84), true)
+
+	var reward_row := HBoxContainer.new()
+	reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	reward_row.add_theme_constant_override("separation", 16)
+	box.add_child(reward_row)
+	_reward_chip(reward_row, "Gold", "%d" % rewards.get("gold", 0), Color(1.0, 0.78, 0.28))
+	_reward_chip(reward_row, "JP", "%d" % rewards.get("jp", 0), Color(0.58, 0.84, 1.0))
+	_reward_chip(reward_row, "Items", "%d" % items.size(), Color(0.75, 0.94, 0.62))
+
+	var item_title := "ITEMS"
+	if items.is_empty():
+		item_title = "ITEMS - none found"
+	_spoils_label(box, item_title, 12, Color(0.55, 0.60, 0.68), false)
+
+	var item_row := HBoxContainer.new()
+	item_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	item_row.add_theme_constant_override("separation", 10)
+	box.add_child(item_row)
+	if items.is_empty():
+		_spoils_label(item_row, "No gear dropped this time.", 14, Color(0.72, 0.76, 0.82), true)
+	else:
+		for i in range(min(items.size(), 3)):
+			item_row.add_child(_spoils_item_card(items[i]))
+
+	var cont := Button.new()
+	cont.text = "Continue"
+	cont.custom_minimum_size = Vector2(180.0, 42.0)
+	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont.pressed.connect(_on_spoils_continue)
+	box.add_child(cont)
+
+
+func _spoils_label(parent: Control, text: String, font_size: int, color: Color,
+		centered: bool) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if centered:
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	parent.add_child(lbl)
+	return lbl
+
+
+func _reward_chip(parent: Control, label: String, value: String, accent: Color) -> void:
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(150.0, 68.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.07, 0.08, 0.11, 0.92)
+	st.border_color = accent.lerp(Color.WHITE, 0.16)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(corner, 6)
+	chip.add_theme_stylebox_override("panel", st)
+	parent.add_child(chip)
+
+	var box := VBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	chip.add_child(box)
+	_spoils_label(box, label.to_upper(), 10, accent, true)
+	_spoils_label(box, value, 22, Color.WHITE, true)
+
+
+func _spoils_item_card(item: Dictionary) -> PanelContainer:
+	var accent: Color = item.get("color", Color(0.85, 0.82, 0.72))
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(210.0, 150.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.055, 0.06, 0.085, 0.96)
+	st.border_color = accent.lerp(Color.WHITE, 0.12)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(corner, 6)
+	card.add_theme_stylebox_override("panel", st)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	card.add_child(box)
+	_spoils_label(box, str(item.get("label", "")).to_upper(), 9, accent, true)
+	_spoils_label(box, str(item.get("icon", "")), 24, Color.WHITE, true)
+	_spoils_label(box, str(item.get("name", "?")), 13, Color(0.96, 0.94, 0.88), true)
+	_spoils_label(box, str(item.get("slot", "")).to_upper(), 9, Color(0.54, 0.58, 0.66), true)
+	var affixes: Array = item.get("affixes", [])
+	for i in range(min(affixes.size(), 2)):
+		var affix: Dictionary = affixes[i]
+		_spoils_label(box, "- " + str(affix.get("label", "")), 10, Color(0.78, 0.82, 0.88), false)
+	return card
+
+
+func _on_spoils_continue() -> void:
+	_play_sfx("ui_confirm")
+	if _spoils_overlay:
+		_spoils_overlay.queue_free()
+		_spoils_overlay = null
+	spoils_continue_requested.emit()
 
 
 func _build_settings_overlay() -> void:
