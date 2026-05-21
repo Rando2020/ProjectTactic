@@ -207,8 +207,8 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 
 	var lines: Dictionary = char_data.get("lines", {})
 	var death: Dictionary = gs.get("last_run_death") if gs else {}
-	var floor: int = int(gs.get("run_floor_reached")) if gs else 0
-	var runs:  int = int(gs.get("runs_completed")) if gs else 0
+	var reached_floor: int = int(gs.get("run_floor_reached")) if gs else 0
+	var runs: int = int(gs.get("runs_completed")) if gs else 0
 	var heat:  int = 0
 	var rm: Node = Engine.get_main_loop().root.get_node_or_null("/root/RunManager") if Engine.get_main_loop() else null
 	if rm: heat = rm.heat_level
@@ -219,21 +219,21 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 		active_boons  = gs.active_run.active_boons
 	# Check the PREVIOUS run's boons via last_run_death context
 	var had_curses: bool = active_curses.size() > 0 or (int(death.get("had_curses", 0)) > 0)
-	var was_complete: bool = (floor >= 10 and death.is_empty())
+	var was_complete: bool = (reached_floor >= 10 and death.is_empty())
 	var died_anchor: bool = bool(death.get("was_anchor", false))
 	var died_elite: bool = bool(death.get("was_elite", false)) and not died_anchor
 
 	# Priority selection
 	var category := "default"
-	if runs == 0 and floor == 0:      category = "first_run"
+	if runs == 0 and reached_floor == 0:      category = "first_run"
 	elif was_complete:                 category = "run_complete"
 	elif died_anchor:                  category = "died_to_anchor"
 	elif died_elite:                   category = "died_to_elite"
 	elif had_curses:                   category = "had_curses"
 	elif heat >= 2:                    category = "high_heat"
-	elif floor >= 7:                   category = "floor_7_9"
-	elif floor >= 4:                   category = "floor_4_6"
-	elif floor >= 1:                   category = "floor_1_3"
+	elif reached_floor >= 7:                   category = "floor_7_9"
+	elif reached_floor >= 4:                   category = "floor_4_6"
+	elif reached_floor >= 1:                   category = "floor_1_3"
 
 	# Fallback chain
 	var pool: Array = lines.get(category, lines.get("default", []))
@@ -242,7 +242,7 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 	var raw: String = pool[randi() % pool.size()]
 
 	# Template substitutions
-	raw = raw.replace("{floor}", str(floor))
+	raw = raw.replace("{floor}", str(reached_floor))
 	raw = raw.replace("{heat}", str(heat))
 	raw = raw.replace("{killer}", str(death.get("killer_name", "an enemy")))
 	var cc: int = int(death.get("had_curses", 0))
@@ -263,11 +263,11 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 ## Get lines from all four characters for the current run state.
 static func get_all_lines(gs: Node) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	var floor: int = int(gs.get("run_floor_reached")) if gs else 0
-	var runs:  int = int(gs.get("runs_completed")) if gs else 0
+	var reached_floor: int = int(gs.get("run_floor_reached")) if gs else 0
+	# runs not needed here
 	# Echo only appears on interesting runs
 	var last_death: Dictionary = gs.get("last_run_death") if gs else {}
-	var show_echo: bool = floor >= 7 or bool(last_death.get("was_anchor", false)) or \
+	var show_echo: bool = reached_floor >= 7 or bool(last_death.get("was_anchor", false)) or \
 		(gs and gs.get("active_run") and not gs.active_run.active_curses.is_empty())
 	for cid in ["sera","varn","volant"]:
 		var line := get_line(cid, gs)

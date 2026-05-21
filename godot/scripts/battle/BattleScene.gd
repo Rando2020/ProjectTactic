@@ -38,7 +38,7 @@ const SPRITE_PATHS := {
 	"void_cultist": "res://assets/sprites/units/void_cultist.png",
 }
 
-const DEFAULT_BATTLE_MUSIC: AudioStream = preload("res://assets/music/steel-march-echo-battle.wav")
+const DEFAULT_BATTLE_MUSIC_PATH := "res://assets/music/steel-march-echo-battle.wav"
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 
 var _battle_music_player: AudioStreamPlayer
@@ -93,8 +93,10 @@ func _ready() -> void:
 
 
 func _start_battle_music() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_battle_music_player = AudioStreamPlayer.new()
-	_battle_music_player.stream = DEFAULT_BATTLE_MUSIC
+	_battle_music_player.stream = load(DEFAULT_BATTLE_MUSIC_PATH)
 	_battle_music_player.bus = "Music"
 	_battle_music_player.volume_db = -8.0
 	_battle_music_player.finished.connect(_on_battle_music_finished)
@@ -116,7 +118,12 @@ func _fade_battle_music(target_db: float = -30.0, duration: float = 1.1) -> void
 
 func _exit_tree() -> void:
 	if _battle_music_player:
+		if _battle_music_player.finished.is_connected(_on_battle_music_finished):
+			_battle_music_player.finished.disconnect(_on_battle_music_finished)
 		_battle_music_player.stop()
+		_battle_music_player.stream = null
+		_battle_music_player.queue_free()
+		_battle_music_player = null
 
 
 func _setup_camera() -> void:
