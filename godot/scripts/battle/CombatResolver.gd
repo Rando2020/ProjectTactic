@@ -43,7 +43,11 @@ func resolve_attack(attacker: Unit, target: Unit,
 
 	var att_h: int = tile_attacker.get("height",0)
 	var tar_h: int = tile_target.get("height",0)
-	var height_m: float = 1.15 if att_h > tar_h else (0.9 if att_h < tar_h else 1.0)
+	var height_m: float = 1.0
+	if att_h > tar_h:
+		height_m = 1.15
+	elif att_h < tar_h:
+		height_m = 0.9
 	var flank_m: float  = _get_flank_multiplier(attacker, target)
 	var final_damage: int = int(round(raw * height_m * flank_m))
 
@@ -68,7 +72,11 @@ func resolve_attack(attacker: Unit, target: Unit,
 	# ── Elite on-hit effects ────────────────────────────────────────────
 	_apply_elite_on_hit(attacker, target, final_damage)
 
-	var flank_str := "back" if flank_m >= 1.25 else ("side" if flank_m > 1.0 else "front")
+	var flank_str := "front"
+	if flank_m >= 1.25:
+		flank_str = "back"
+	elif flank_m > 1.0:
+		flank_str = "side"
 	var should_counter := false
 	if not is_counter and vfx_mode != "arrow" and target.hp > 0:
 		var dist: int = abs(attacker.grid_pos.x - target.grid_pos.x) + abs(attacker.grid_pos.y - target.grid_pos.y)

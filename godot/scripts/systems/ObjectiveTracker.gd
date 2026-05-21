@@ -61,16 +61,25 @@ func get_progress_text() -> String:
 	match map_data.objective_type:
 		"defeat_all":
 			var remaining := units.filter(func(u: Unit) -> bool: return u.team == "enemy" and u.hp > 0).size()
-			return "Defeat all enemies — %d remaining." % remaining if remaining > 0 else "✓ All enemies defeated."
+			if remaining > 0:
+				return "Defeat all enemies - %d remaining." % remaining
+			return "All enemies defeated."
 		"destroy_anchor":
-			return "✓ Anchor destroyed!" if _anchor_destroyed() else "Destroy the Void Anchor — use a holy ability on it."
+			if _anchor_destroyed():
+				return "Anchor destroyed!"
+			return "Destroy the Void Anchor - use a holy ability on it."
 		"reach_tile":
 			return "Reach tile (%d, %d)." % [int(_map_value("objective_tile_x", 0)), int(_map_value("objective_tile_y", 0))]
 		"protect_unit":
 			return "Defeat all enemies. Protect your unit."
 		"survive_turns":
 			var left := maxi(0, int(_map_value("survive_turns", 5)) - turns_elapsed)
-			return "✓ Survived." if left == 0 else "Survive %d more turn%s." % [left, "s" if left != 1 else ""]
+			if left == 0:
+				return "Survived."
+			var suffix := ""
+			if left != 1:
+				suffix = "s"
+			return "Survive %d more turn%s." % [left, suffix]
 		_:
 			return str(_map_value("objective_label", "Objective in progress."))
 
@@ -95,4 +104,6 @@ func _map_value(property_name: String, fallback: Variant) -> Variant:
 	if not map_data:
 		return fallback
 	var value: Variant = map_data.get(property_name)
-	return fallback if value == null else value
+	if value == null:
+		return fallback
+	return value

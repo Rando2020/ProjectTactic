@@ -219,10 +219,10 @@ func _rng() -> float:
 
 ## Generate one curse offer for a floor.
 ## Returns null if no new curses are available.
-func generate_curse_offer(seed: int, floor: int, owned_ids: Array) -> Dictionary:
-	_s = seed & 0xffffffff; if _s == 0: _s = 1
+func generate_curse_offer(rng_seed: int, floor_num: int, owned_ids: Array) -> Dictionary:
+	_s = rng_seed & 0xffffffff; if _s == 0: _s = 1
 	var pool := CURSES.filter(func(c: Dictionary) -> bool:
-		return c["floor_min"] <= floor and not owned_ids.has(c["id"]))
+		return c["floor_min"] <= floor_num and not owned_ids.has(c["id"]))
 	if pool.is_empty(): return {}
 	return pool[int(_rng() * pool.size())]
 
@@ -263,14 +263,14 @@ func get_banned_guardian(active_curses: Array, run_seed: int) -> String:
 
 
 ## Check if a wanderer is guaranteed by an active curse.
-func get_guaranteed_wanderer(active_curses: Array, floor: int) -> String:
+func get_guaranteed_wanderer(active_curses: Array, floor_num: int) -> String:
 	for curse: Dictionary in active_curses:
 		var fx: Dictionary = curse.get("effect",{})
 		if fx.has("guarantee_wanderer"):
 			return fx["guarantee_wanderer"]
 		if fx.has("guarantee_wanderer_floor"):
 			var gw: Dictionary = fx["guarantee_wanderer_floor"]
-			if floor >= gw.get("floor",99):
+			if floor_num >= gw.get("floor",99):
 				return gw.get("wanderer","")
 	return ""
 

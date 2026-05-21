@@ -1071,13 +1071,23 @@ func _portrait_path(unit: Unit) -> String:
 
 
 func _on_unit_defeated(unit_id: String) -> void:
+	var defeated_unit: Unit = units.get(unit_id)
+	if defeated_unit:
+		tactical_grid.remove_unit_visual(unit_id, defeated_unit.grid_pos)
 	unit_defeated.emit(unit_id)
-	if units.has(unit_id):
-		log_message.emit("%s was defeated!" % units[unit_id].display_name)
+	if defeated_unit:
+		log_message.emit("%s was defeated!" % defeated_unit.display_name)
 	objective_tracker.on_unit_defeated(unit_id)
 	turn_order.remove_unit(unit_id)
-	# A unit dying mid-tick could end the battle — check objectives
-	if current_phase == Phase.TICK or current_phase == Phase.RESOLVE:
+	call_deferred("_check_objective_after_defeat")
+
+
+func _check_objective_after_defeat() -> void:
+	if current_phase in [Phase.VICTORY, Phase.DEFEAT, Phase.CHECK_OBJECTIVE]:
+		return
+	if is_resolving_action:
+		return
+	if objective_tracker.is_victory() or objective_tracker.is_defeat():
 		_set_phase(Phase.CHECK_OBJECTIVE)
 
 

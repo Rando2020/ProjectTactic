@@ -598,6 +598,18 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 		show_active_unit(to, active_unit_team)
 
 
+func remove_unit_visual(unit_id: String, grid_pos: Vector2i) -> void:
+	if unit_positions.get(grid_pos, "") == unit_id:
+		unit_positions.erase(grid_pos)
+	for pos in unit_positions.keys():
+		if unit_positions[pos] == unit_id:
+			unit_positions.erase(pos)
+	if active_unit_tile == grid_pos:
+		active_unit_tile = Vector2i(-1, -1)
+		active_unit_team = ""
+	_refresh_highlights()
+
+
 func get_unit_focus_position(grid_pos: Vector2i) -> Vector2:
 	return _unit_foot_pos(grid_pos)
 

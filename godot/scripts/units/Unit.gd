@@ -28,6 +28,7 @@ var ct: int = 0
 
 var has_acted: bool = false
 var has_moved: bool = false
+var is_defeated: bool = false
 
 var statuses: Array[StatusEffect] = []
 var current_job_id: String
@@ -165,6 +166,8 @@ func animate_death() -> void:
 	tween.set_parallel(true)
 	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.5)
 	tween.tween_property(self, "position:y", position.y - 12.0, 0.5)
+	tween.chain()
+	tween.tween_callback(queue_free)
 
 
 # ── Combat ────────────────────────────────────────────────────────────────────
@@ -193,7 +196,8 @@ func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
 	temper_changed.emit(unit_id, temper, unit_data.base_stats.max_temper)
 	_update_hp_bar()
-	if hp <= 0:
+	if hp <= 0 and not is_defeated:
+		is_defeated = true
 		result["defeated"] = true
 		unit_defeated.emit(unit_id)
 		animate_death()
@@ -242,7 +246,8 @@ func tick_statuses() -> void:
 			hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
 			_update_hp_bar()
 			status_tick.emit(unit_id, s.status_id, dmg)
-			if hp <= 0:
+			if hp <= 0 and not is_defeated:
+				is_defeated = true
 				unit_defeated.emit(unit_id)
 				animate_death()
 		s.duration -= 1
