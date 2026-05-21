@@ -144,6 +144,10 @@ func _build_ui() -> void:
 
 	_space(20)
 
+	# ── Hub characters ────────────────────────────────────────────────────
+	_root.add_child(_build_dialogue_panel())
+	_space(16)
+
 	# ── Bottom nav ────────────────────────────────────────────────────────
 	var nav := HBoxContainer.new()
 	nav.add_theme_constant_override("separation", 12)
@@ -295,6 +299,76 @@ func _flag_row(flag_id: String, label: String, desc: String,
 
 
 # ── Actions ───────────────────────────────────────────────────────────────────
+
+func _build_dialogue_panel() -> PanelContainer:
+	var pc := PanelContainer.new()
+	pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.06, 0.07, 0.10)
+	for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: st.set_border_width(side,1)
+	st.border_color = Color(1,1,1,0.07)
+	for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 12)
+	pc.add_theme_stylebox_override("panel", st)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("margin_left", 16)
+	hbox.add_theme_constant_override("margin_right", 16)
+	hbox.add_theme_constant_override("margin_top", 12)
+	hbox.add_theme_constant_override("margin_bottom", 12)
+	hbox.add_theme_constant_override("separation", 16)
+	pc.add_child(hbox)
+
+	var gs: Node = get_node_or_null("/root/GameState")
+	var lines := HubDialogue.get_all_lines(gs)
+
+	for line_data: Dictionary in lines:
+		var bubble := VBoxContainer.new()
+		bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bubble.add_theme_constant_override("separation", 4)
+		hbox.add_child(bubble)
+
+		# Name + portrait
+		var name_row := HBoxContainer.new()
+		name_row.add_theme_constant_override("separation", 6)
+		bubble.add_child(name_row)
+		var portrait := Label.new()
+		portrait.text = line_data.get("portrait","?")
+		portrait.add_theme_font_size_override("font_size", 18)
+		name_row.add_child(portrait)
+		var name_col := VBoxContainer.new()
+		name_row.add_child(name_col)
+		var nlbl := Label.new()
+		nlbl.text = line_data.get("name","?")
+		nlbl.add_theme_font_size_override("font_size", 12)
+		nlbl.add_theme_color_override("font_color", line_data.get("color", GOLD))
+		name_col.add_child(nlbl)
+		var tlbl := Label.new()
+		tlbl.text = line_data.get("title","")
+		tlbl.add_theme_font_size_override("font_size", 9)
+		tlbl.add_theme_color_override("font_color", DIM)
+		name_col.add_child(tlbl)
+
+		# Dialogue line
+		var dlbl := RichTextLabel.new()
+		dlbl.bbcode_enabled = false
+		dlbl.text = line_data.get("line","...")
+		dlbl.add_theme_font_size_override("normal_font_size", 12)
+		dlbl.add_theme_color_override("default_color", Color(0.88,0.85,0.80))
+		dlbl.custom_minimum_size = Vector2(0, 52)
+		dlbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		bubble.add_child(dlbl)
+
+	# Fallback if no lines
+	if lines.is_empty():
+		var fl := Label.new()
+		fl.text = "The Hearth is quiet."
+		fl.add_theme_font_size_override("font_size", 13)
+		fl.add_theme_color_override("font_color", DIM)
+		hbox.add_child(fl)
+
+	return pc
+
 
 func _buy_stat(stat_id: String, cost: Dictionary) -> void:
 	if not _meta or not _meta.spend(cost):

@@ -32,6 +32,12 @@ var story_flags:          Array[String] = []
 var pending_loot:         Array = []
 var pending_boon_offers:  Array = []
 
+## Last run death context — read by ResultsScreen + HubDialogue
+var last_run_death: Dictionary = {}
+## Run history — floors completed, used by hub dialogue
+var runs_completed: int = 0
+var best_floor_reached: int = 0
+
 ## Items accumulated during the current run
 var run_inventory:        Array = []
 ## Highest floor reached this run (for ResultsScreen)
