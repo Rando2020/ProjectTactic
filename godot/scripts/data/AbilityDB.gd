@@ -249,6 +249,15 @@ const ABILITIES: Dictionary = {
 		"jp_cost":      0,
 		"status_effect": {"id": "silence", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
+	"shadow_mend": {
+		"display_name": "Shadow Mend",
+		"spell_type":   "cure",
+		"mp_cost":      16,
+		"range":        0,
+		"base_power":   70,
+		"target_type":  "ally",
+		"jp_cost":      0,
+	},
 
 	# ── Secret Skills (learned from Wanderers only) ──────────────────────────
 	"resonance_fracture": {

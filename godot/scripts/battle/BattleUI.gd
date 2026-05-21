@@ -8,6 +8,9 @@ var battle_manager: BattleManager
 var _mission_label: Label
 var _phase_label: Label
 var _objective_label: Label
+var _enemy_intent_panel: PanelContainer
+var _enemy_intent_title: Label
+var _enemy_intent_body: Label
 var _unit_name: Label
 var _hp_label: Label
 var _mp_label: Label
@@ -74,6 +77,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.command_hint_changed.connect(_on_command_hint_changed)
 	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
 	battle_manager.action_state_changed.connect(_on_action_state_changed)
+	battle_manager.enemy_intent_changed.connect(_on_enemy_intent_changed)
 	if battle_manager.objective_tracker:
 		battle_manager.objective_tracker.objective_updated.connect(_on_objective_updated)
 
@@ -118,6 +122,33 @@ func _build_ui() -> void:
 	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_objective_label)
+
+	_enemy_intent_panel = PanelContainer.new()
+	_enemy_intent_panel.visible = false
+	var intent_style := StyleBoxFlat.new()
+	intent_style.bg_color = Color(0.05, 0.06, 0.085, 0.92)
+	intent_style.border_color = Color(1.0, 0.45, 0.22, 0.72)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		intent_style.set_border_width(side, 1)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		intent_style.set_corner_radius(corner, 6)
+	_enemy_intent_panel.add_theme_stylebox_override("panel", intent_style)
+	root.add_child(_enemy_intent_panel)
+
+	var intent_box := VBoxContainer.new()
+	intent_box.add_theme_constant_override("separation", 2)
+	_enemy_intent_panel.add_child(intent_box)
+	_enemy_intent_title = Label.new()
+	_enemy_intent_title.text = "ENEMY INTENT"
+	_enemy_intent_title.add_theme_font_size_override("font_size", 10)
+	_enemy_intent_title.add_theme_color_override("font_color", Color(1.0, 0.62, 0.36))
+	intent_box.add_child(_enemy_intent_title)
+	_enemy_intent_body = Label.new()
+	_enemy_intent_body.text = ""
+	_enemy_intent_body.add_theme_font_size_override("font_size", 12)
+	_enemy_intent_body.add_theme_color_override("font_color", Color(0.92, 0.90, 0.84))
+	_enemy_intent_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intent_box.add_child(_enemy_intent_body)
 
 	_tile_info_label = Label.new()
 	_tile_info_label.text = "Hover a tile"
@@ -748,6 +779,20 @@ func _on_objective_updated(text: String) -> void:
 	if _objective_label:
 		_objective_label.text = text
 
+
+func _on_enemy_intent_changed(intent: Dictionary) -> void:
+	if not _enemy_intent_panel:
+		return
+	if intent.is_empty():
+		_enemy_intent_panel.visible = false
+		return
+	_enemy_intent_panel.visible = true
+	var actor := str(intent.get("actor", "Enemy"))
+	var action := str(intent.get("action", "Act"))
+	var target := str(intent.get("target", "-"))
+	var note := str(intent.get("note", ""))
+	_enemy_intent_title.text = "ENEMY INTENT - %s" % actor.to_upper()
+	_enemy_intent_body.text = "%s -> %s\n%s" % [action, target, note]
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:

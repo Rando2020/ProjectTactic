@@ -56,18 +56,33 @@ func _ready() -> void:
 
 
 func _init_defaults() -> void:
+	# Zane — Arcanist path → Resonant
 	_reg("zane", "Zane",
-		["mighty_strike", "wind_slash"],
-		["dark_blade", "aero", "tremor"])
+		["fireball", "thunderstrike", "void_pulse"],
+		["blizzard", "dark_breath", "elemental_convergence"])
+	unit_registry["zane"]["current_job_id"] = "arcanist"
+	unit_registry["zane"]["job_jp"]         = { "arcanist": 0 }
+
+	# Mira — Arcanist → Luminary path
 	_reg("mira", "Mira Vey",
-		["fire", "thunder", "blizzard", "cure", "holy"],
-		["fira", "blizzara", "cura", "haste", "firaga"])
+		["fireball", "cure", "holy_strike"],
+		["blizzard", "luminous_barrier", "mass_cure"])
+	unit_registry["mira"]["current_job_id"] = "arcanist"
+	unit_registry["mira"]["job_jp"]         = { "arcanist": 0 }
+
+	# Kael — Squire → Warder → Void Knight path
 	_reg("kael", "Kael",
-		["mighty_strike"],
-		["wind_slash", "tremor", "dark_blade", "protect"])
+		["slash", "mighty_strike", "defend"],
+		["cover_ally", "iron_wall", "retribution"])
+	unit_registry["kael"]["current_job_id"] = "squire"
+	unit_registry["kael"]["job_jp"]         = { "squire": 0 }
+
+	# Lyra — Scout → Shadow path
 	_reg("lyra", "Lyra",
-		["pin_shot"],
-		["aimed_shot", "eagle_eye", "scatter_shot"])
+		["long_shot", "quickstep"],
+		["rain_of_arrows", "smoke_screen", "shadow_step"])
+	unit_registry["lyra"]["current_job_id"] = "scout"
+	unit_registry["lyra"]["job_jp"]         = { "scout": 0 }
 
 
 func _reg(uid: String, dname: String,

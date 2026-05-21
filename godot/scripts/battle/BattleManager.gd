@@ -16,6 +16,8 @@ signal tile_info_changed(text: String)
 signal battle_started(display_name: String, objective: String)
 signal command_hint_changed(text: String)
 signal action_preview_changed(preview: Dictionary)
+signal action_state_changed(can_move: bool, can_act: bool, has_pending: bool)
+signal enemy_intent_changed(intent: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
@@ -36,6 +38,7 @@ var selected_ability_id: String = ""
 var is_resolving_action: bool = false
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
+var _last_enemy_intents: Dictionary = {}
 
 
 func _ready() -> void:
@@ -93,6 +96,7 @@ func _begin_player_turn() -> void:
 	var unit_name := unit.display_name if unit else active_unit_id
 	log_message.emit("%s's turn." % unit_name)
 	command_hint_changed.emit("Choose Move, Attack, Ability, or Wait.")
+	_emit_action_state()
 
 
 func _begin_enemy_turn() -> void:
@@ -107,7 +111,7 @@ func _begin_enemy_turn() -> void:
 	turn_started.emit(active_unit_id, "enemy")
 
 	# ── Void Anchor: special behaviour ────────────────────────────────────
-	if unit.unit_data and unit.unit_data.get("is_anchor", false):
+	if unit.unit_data and bool(unit.unit_data.get("is_anchor")):
 		log_message.emit("⚠ The Anchor pulses with void energy!")
 		command_hint_changed.emit("VOID PULSE — take cover!")
 		await get_tree().create_timer(0.6).timeout
@@ -118,13 +122,12 @@ func _begin_enemy_turn() -> void:
 		return
 
 	log_message.emit("Enemy: %s acts." % unit.display_name)
-	command_hint_changed.emit("Enemy is acting...")
+	var intent := _evaluate_enemy_intent(unit)
+	_last_enemy_intents[unit.unit_id] = intent
+	enemy_intent_changed.emit(intent)
+	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
 	await get_tree().create_timer(0.50).timeout
-	var cast_spell := randf() < 0.45
-	if cast_spell and _try_enemy_spell(unit):
-		active_unit_has_acted = true
-	else:
-		await _run_enemy_ai(unit)
+	await _execute_enemy_intent(unit, intent)
 	unit.end_turn()
 	_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
@@ -233,6 +236,209 @@ func _run_enemy_ai(unit: Unit) -> void:
 		else:
 			log_message.emit("%s holds." % unit.display_name)
 
+func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
+	var hp_ratio := float(unit.hp) / float(max(unit.unit_data.base_stats.hp, 1))
+	var nearest := _nearest_player(unit)
+	if not nearest:
+		return _enemy_intent(unit, "hold", null, "Hold", "No targets remain.")
+	var heal_ability := _find_enemy_ability(unit, "cure", "ally")
+	if hp_ratio <= 0.35 and not heal_ability.is_empty() and unit.mp >= int(heal_ability.get("mp_cost", 0)):
+		return _enemy_intent(unit, "heal", unit, heal_ability.get("display_name", "Heal"), "Low HP - healing self.", heal_ability)
+	if hp_ratio <= 0.28:
+		var retreat_tile := _best_retreat_tile(unit, nearest)
+		if retreat_tile != unit.grid_pos:
+			return _enemy_intent(unit, "retreat", nearest, "Retreat", "Low HP - falling back.", {}, retreat_tile)
+	var kill_spell := _find_kill_spell(unit)
+	if not kill_spell.is_empty():
+		return kill_spell
+	var kill_target := _find_kill_attack(unit)
+	if kill_target:
+		return _enemy_intent(unit, "attack", kill_target, "Finish", "Can defeat %s." % kill_target.display_name)
+	var spell_intent := _find_best_spell_intent(unit)
+	if not spell_intent.is_empty():
+		return spell_intent
+	if GridSystem.manhattan(unit.grid_pos, nearest.grid_pos) <= unit.unit_data.base_stats.attack_range_max:
+		return _enemy_intent(unit, "attack", nearest, "Attack", "Basic attack on %s." % nearest.display_name)
+	var advance_tile := _best_advance_tile(unit, nearest)
+	if advance_tile != unit.grid_pos:
+		return _enemy_intent(unit, "advance", nearest, "Advance", "Moving toward %s." % nearest.display_name, {}, advance_tile)
+	return _enemy_intent(unit, "hold", nearest, "Hold", "No useful action.")
+
+
+func _enemy_intent(unit: Unit, kind: String, target: Unit, action_name: String, note: String,
+		ability: Dictionary = {}, move_to: Vector2i = Vector2i(-1, -1)) -> Dictionary:
+	var target_name := target.display_name if target else "-"
+	var summary := "%s intends to %s" % [unit.display_name, action_name.to_lower()]
+	if target:
+		summary += " -> %s" % target.display_name
+	return {"actor": unit.display_name, "kind": kind, "target_id": target.unit_id if target else "", "target": target_name, "action": action_name, "note": note, "summary": summary, "ability": ability, "move_to": move_to}
+
+
+func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
+	if not unit or unit.hp <= 0:
+		return
+	match str(intent.get("kind", "hold")):
+		"heal":
+			var heal_ability: Dictionary = intent.get("ability", {})
+			if not heal_ability.is_empty():
+				_execute_ability(unit, unit, heal_ability)
+				active_unit_has_acted = true
+		"retreat":
+			await _enemy_move_to(unit, intent.get("move_to", unit.grid_pos), "%s retreats to recover." % unit.display_name)
+		"spell":
+			var target: Unit = units.get(str(intent.get("target_id", "")))
+			var ability: Dictionary = intent.get("ability", {})
+			if target and target.hp > 0 and not ability.is_empty():
+				_execute_ability(unit, target, ability)
+				active_unit_has_acted = true
+		"attack":
+			var attack_target: Unit = units.get(str(intent.get("target_id", "")))
+			if attack_target and attack_target.hp > 0:
+				_enemy_attack(unit, attack_target)
+		"advance":
+			var chase_target: Unit = units.get(str(intent.get("target_id", "")))
+			await _enemy_move_to(unit, intent.get("move_to", unit.grid_pos), "%s advances." % unit.display_name)
+			if chase_target and chase_target.hp > 0 and GridSystem.manhattan(unit.grid_pos, chase_target.grid_pos) <= unit.unit_data.base_stats.attack_range_max:
+				_enemy_attack(unit, chase_target, true)
+		_:
+			log_message.emit("%s holds." % unit.display_name)
+
+
+func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
+	var tile_att := tactical_grid.get_tile(unit.grid_pos)
+	var tile_tar := tactical_grid.get_tile(target.grid_pos)
+	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar)
+	active_unit_has_acted = true
+	if result.get("missed", false):
+		log_message.emit("%s attacks but misses!" % unit.display_name)
+	else:
+		var verb := "moves in and hits" if after_move else "hits"
+		log_message.emit("%s %s %s for %d dmg!" % [unit.display_name, verb, target.display_name, result.get("hp_damage", 0)])
+	if result.get("counter", false):
+		get_tree().create_timer(0.6).timeout.connect(func() -> void: _execute_counter_attack(target, unit))
+
+
+func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
+	if pos == unit.grid_pos or not tactical_grid.tiles.has(pos):
+		return
+	var old_pos := unit.grid_pos
+	unit.grid_pos = pos
+	log_message.emit(message)
+	unit_moved.emit(unit.unit_id, old_pos, pos)
+	await tactical_grid.move_unit_visual(unit.unit_id, old_pos, pos)
+	await get_tree().create_timer(0.20).timeout
+	active_unit_has_moved = true
+
+
+func _nearest_player(unit: Unit) -> Unit:
+	var best: Unit = null
+	var best_dist := 9999
+	for uid in units:
+		var candidate: Unit = units[uid]
+		if candidate.team != "player" or candidate.hp <= 0:
+			continue
+		var dist := GridSystem.manhattan(unit.grid_pos, candidate.grid_pos)
+		if dist < best_dist:
+			best_dist = dist
+			best = candidate
+	return best
+
+
+func _find_enemy_ability(unit: Unit, spell_type: String, target_type: String = "") -> Dictionary:
+	for ab_id: String in unit.unit_data.abilities:
+		var ability := AbilityDB.get_ability(ab_id)
+		if ability.get("spell_type", "") != spell_type:
+			continue
+		if target_type != "" and ability.get("target_type", "enemy") != target_type:
+			continue
+		return ability
+	return {}
+
+
+func _find_kill_attack(unit: Unit) -> Unit:
+	for uid in units:
+		var target: Unit = units[uid]
+		if target.team != "player" or target.hp <= 0:
+			continue
+		if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > unit.unit_data.base_stats.attack_range_max:
+			continue
+		var amount := _predict_attack_damage(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+		if amount >= target.hp:
+			return target
+	return null
+
+
+func _find_kill_spell(unit: Unit) -> Dictionary:
+	for uid in units:
+		var target: Unit = units[uid]
+		if target.team != "player" or target.hp <= 0:
+			continue
+		for ab_id: String in unit.unit_data.abilities:
+			var ability := AbilityDB.get_ability(ab_id)
+			if ability.get("target_type", "enemy") != "enemy" or ability.get("spell_type", "") == "cure":
+				continue
+			if unit.mp < int(ability.get("mp_cost", 0)):
+				continue
+			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > int(ability.get("range", 1)):
+				continue
+			var amount := _predict_spell_damage(unit, target, ability)
+			if amount >= target.hp:
+				return _enemy_intent(unit, "spell", target, ability.get("display_name", ab_id), "Can defeat %s." % target.display_name, ability)
+	return {}
+
+
+func _find_best_spell_intent(unit: Unit) -> Dictionary:
+	var best_target: Unit = null
+	var best_ability: Dictionary = {}
+	var best_score := -1
+	for uid in units:
+		var target: Unit = units[uid]
+		if target.team != "player" or target.hp <= 0:
+			continue
+		for ab_id: String in unit.unit_data.abilities:
+			var ability := AbilityDB.get_ability(ab_id)
+			if ability.get("target_type", "enemy") != "enemy" or ability.get("spell_type", "") == "cure":
+				continue
+			if unit.mp < int(ability.get("mp_cost", 0)):
+				continue
+			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > int(ability.get("range", 1)):
+				continue
+			var score := _predict_spell_damage(unit, target, ability) + (target.unit_data.base_stats.hp - target.hp)
+			if score > best_score:
+				best_score = score
+				best_target = target
+				best_ability = ability
+	if best_target and not best_ability.is_empty():
+		return _enemy_intent(unit, "spell", best_target, best_ability.get("display_name", "Spell"), "Best spell target.", best_ability)
+	return {}
+
+
+func _best_advance_tile(unit: Unit, target: Unit) -> Vector2i:
+	return _best_reachable_tile(unit, target, false)
+
+
+func _best_retreat_tile(unit: Unit, target: Unit) -> Vector2i:
+	return _best_reachable_tile(unit, target, true)
+
+
+func _best_reachable_tile(unit: Unit, target: Unit, maximize_distance: bool) -> Vector2i:
+	var occupied: Array = []
+	for uid in units:
+		var other: Unit = units[uid]
+		if other.unit_id != unit.unit_id and other.hp > 0:
+			occupied.append(other.grid_pos)
+	var reachable := GridSystem.get_move_range(unit.grid_pos, unit.unit_data.base_stats.move, tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height, unit.unit_data.base_stats.jump)
+	var best_tile := unit.grid_pos
+	var best_dist := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
+	for tile_pos in reachable:
+		var dist := GridSystem.manhattan(tile_pos, target.grid_pos)
+		if maximize_distance and dist > best_dist:
+			best_dist = dist
+			best_tile = tile_pos
+		elif not maximize_distance and dist < best_dist:
+			best_dist = dist
+			best_tile = tile_pos
+	return best_tile
 
 func _resolve_turn() -> void:
 	_set_phase(Phase.CHECK_OBJECTIVE)
@@ -267,6 +473,23 @@ func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
 	if audio and audio.has_method("play_sfx"):
 		audio.play_sfx(sfx_id, volume_db)
 
+
+func _emit_action_state() -> void:
+	action_state_changed.emit(
+		current_phase == Phase.PLAYER_TURN and not active_unit_has_moved,
+		current_phase == Phase.PLAYER_TURN and not active_unit_has_acted,
+		false
+	)
+
+
+func confirm_pending_action() -> void:
+	_emit_action_state()
+
+
+func cancel_pending_action() -> void:
+	action_preview_changed.emit({})
+	command_hint_changed.emit("Cancelled. Choose Move, Attack, Ability, or Wait.")
+	_emit_action_state()
 
 func select_command(command: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:

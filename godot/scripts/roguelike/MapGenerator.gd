@@ -30,48 +30,53 @@ func _rb(chance: float) -> bool:
 ##   speed, physical, magic, max_temper, max_ether, abilities[], affinities{}
 
 const ENEMY_POOL: Array[Dictionary] = [
+	# Floor 1-6: Glass cannon caster — dies in 2-3 hits, hits hard if ignored
 	{
 		"id": "void_cultist", "name": "Void Cultist",
 		"floor_min": 1, "floor_max": 6,
-		"hp": 80, "mp": 80, "move": 3, "jump": 1, "speed": 7,
-		"physical": 20, "magic": 55, "temper": 40, "ether": 100,
+		"hp": 65, "mp": 80, "move": 3, "jump": 1, "speed": 7,
+		"physical": 18, "magic": 50, "temper": 30, "ether": 90,
 		"abilities": ["void_pulse", "dark_breath"],
 		"affinities": {"holy": 2.0, "dark": 0.0, "fire": 0.75},
 		"weight": 3,
 	},
+	# Floor 1-8: Tanky melee — takes 4-5 hits, punishes if you ignore positioning
 	{
 		"id": "null_drake", "name": "Null Drake",
 		"floor_min": 1, "floor_max": 8,
-		"hp": 120, "mp": 35, "move": 3, "jump": 1, "speed": 6,
-		"physical": 38, "magic": 30, "temper": 80, "ether": 60,
-		"abilities": ["dark_breath"],
+		"hp": 100, "mp": 35, "move": 3, "jump": 1, "speed": 5,
+		"physical": 35, "magic": 22, "temper": 65, "ether": 50,
+		"abilities": ["slash", "dark_breath"],
 		"affinities": {"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5},
 		"weight": 3,
 	},
+	# Floor 2-9: Fast flanker — slippery, punishes bad positioning
 	{
 		"id": "storm_imp", "name": "Storm Imp",
 		"floor_min": 2, "floor_max": 9,
-		"hp": 90, "mp": 50, "move": 4, "jump": 2, "speed": 9,
-		"physical": 25, "magic": 45, "temper": 50, "ether": 90,
+		"hp": 75, "mp": 50, "move": 4, "jump": 2, "speed": 10,
+		"physical": 22, "magic": 42, "temper": 40, "ether": 80,
 		"abilities": ["thunderstrike", "void_pulse"],
-		"affinities": {"thunder": 0.0, "blizzard": 1.75, "holy": 1.25},
+		"affinities": {"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "fire": 1.5},
 		"weight": 3,
 	},
+	# Floor 4-10: Durable bruiser — requires elemental thinking to kill efficiently
 	{
 		"id": "fen_wraith", "name": "Fen Wraith",
 		"floor_min": 4, "floor_max": 10,
-		"hp": 110, "mp": 60, "move": 3, "jump": 2, "speed": 8,
-		"physical": 32, "magic": 42, "temper": 45, "ether": 85,
-		"abilities": ["dark_breath", "void_pulse"],
+		"hp": 130, "mp": 60, "move": 3, "jump": 2, "speed": 7,
+		"physical": 38, "magic": 45, "temper": 55, "ether": 80,
+		"abilities": ["dark_breath", "void_pulse", "slash"],
 		"affinities": {"fire": 1.5, "dark": 0.0, "holy": 1.75, "water": 0.5},
 		"weight": 2,
 	},
+	# Floor 7-10: Boss-tier bruiser — slow but devastating, requires positioning
 	{
 		"id": "void_golem", "name": "Void Golem",
 		"floor_min": 7, "floor_max": 10,
-		"hp": 280, "mp": 20, "move": 2, "jump": 1, "speed": 4,
-		"physical": 65, "magic": 20, "temper": 120, "ether": 40,
-		"abilities": ["mighty_strike"],
+		"hp": 240, "mp": 20, "move": 2, "jump": 1, "speed": 3,
+		"physical": 60, "magic": 18, "temper": 100, "ether": 35,
+		"abilities": ["mighty_strike", "iron_wall"],
 		"affinities": {"holy": 2.0, "dark": 0.0, "fire": 0.5, "blizzard": 0.75},
 		"weight": 1,
 	},

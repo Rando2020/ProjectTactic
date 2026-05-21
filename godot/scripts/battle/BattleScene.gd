@@ -521,7 +521,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 			90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
 			{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
 		result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
-			80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath"],
+			80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath", "shadow_mend"],
 			{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
 
 	# Apply elite rolls when in a roguelike run

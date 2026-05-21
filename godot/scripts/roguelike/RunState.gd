@@ -25,7 +25,7 @@ static func create(p_seed: int) -> RunState:
 	var rs          := RunState.new()
 	rs.run_id       = "run_%s" % str(p_seed)
 	rs.seed         = p_seed
-	rs.started_at   = Time.get_unix_time_from_system()
+	rs.started_at   = int(Time.get_unix_time_from_system())
 
 	# Build 10-floor node sequence
 	for f in range(1, TOTAL_FLOORS + 1):
