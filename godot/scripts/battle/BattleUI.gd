@@ -3,7 +3,9 @@ extends CanvasLayer
 
 var battle_manager: BattleManager
 
+var _mission_label: Label
 var _phase_label: Label
+var _objective_label: Label
 var _unit_name: Label
 var _hp_label: Label
 var _mp_label: Label
@@ -38,6 +40,7 @@ var _preview_hit_label: Label
 var _preview_crit_label: Label
 var _preview_note_label: Label
 var _intro_banner: PanelContainer
+var _intro_banner_style: StyleBoxFlat
 var _settings_overlay: Control
 var _game_slider: HSlider
 var _music_slider: HSlider
@@ -68,6 +71,8 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.command_hint_changed.connect(_on_command_hint_changed)
 	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
 	battle_manager.action_state_changed.connect(_on_action_state_changed)
+	if battle_manager.objective_tracker:
+		battle_manager.objective_tracker.objective_updated.connect(_on_objective_updated)
 
 
 func _ready() -> void:
@@ -89,12 +94,12 @@ func _build_ui() -> void:
 	add_child(root)
 
 	# Mission header
-	var mission_lbl := Label.new()
-	mission_lbl.text = "ASHVALE ROAD"
-	mission_lbl.add_theme_font_size_override("font_size", 20)
-	mission_lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
-	mission_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(mission_lbl)
+	_mission_label = Label.new()
+	_mission_label.text = "ASHVALE ROAD"
+	_mission_label.add_theme_font_size_override("font_size", 20)
+	_mission_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
+	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(_mission_label)
 
 	_phase_label = Label.new()
 	_phase_label.text = "Initializing…"
@@ -102,6 +107,14 @@ func _build_ui() -> void:
 	_phase_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_phase_label)
+
+	_objective_label = Label.new()
+	_objective_label.text = "Objective pending"
+	_objective_label.add_theme_font_size_override("font_size", 12)
+	_objective_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.48))
+	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(_objective_label)
 
 	_tile_info_label = Label.new()
 	_tile_info_label.text = "Hover a tile"
@@ -236,6 +249,14 @@ func _build_intro_banner() -> void:
 	_intro_banner.visible = false
 	_intro_banner.position = Vector2(70.0, 36.0)
 	_intro_banner.custom_minimum_size = Vector2(500.0, 82.0)
+	_intro_banner_style = StyleBoxFlat.new()
+	_intro_banner_style.bg_color = Color(0.035, 0.038, 0.052, 0.92)
+	_intro_banner_style.border_color = Color(0.78, 0.66, 0.42, 0.86)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		_intro_banner_style.set_border_width(side, 1)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		_intro_banner_style.set_corner_radius(corner, 6)
+	_intro_banner.add_theme_stylebox_override("panel", _intro_banner_style)
 	add_child(_intro_banner)
 
 	var box := VBoxContainer.new()
@@ -588,6 +609,11 @@ func _on_command_hint_changed(text: String) -> void:
 		_command_hint_label.text = text
 
 
+func _on_objective_updated(text: String) -> void:
+	if _objective_label:
+		_objective_label.text = text
+
+
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
 		return
@@ -642,21 +668,33 @@ func _set_preview_portrait(rect: TextureRect, path: String) -> void:
 	rect.texture = load(path)
 
 
-func _on_battle_started(display_name: String, objective: String) -> void:
+func _show_status_banner(title_text: String, subtitle_text: String, accent: Color,
+		hold_time: float = 1.4) -> void:
 	if not _intro_banner:
 		return
 	var title := _intro_banner.get_node_or_null("VBoxContainer/Title") as Label
 	var subtitle := _intro_banner.get_node_or_null("VBoxContainer/Subtitle") as Label
 	if title:
-		title.text = display_name.to_upper()
+		title.text = title_text
+		title.add_theme_color_override("font_color", accent)
 	if subtitle:
-		subtitle.text = objective
+		subtitle.text = subtitle_text
+	if _intro_banner_style:
+		_intro_banner_style.border_color = accent.lerp(Color.WHITE, 0.12)
 	_intro_banner.modulate.a = 1.0
 	_intro_banner.visible = true
 	var tw := create_tween()
-	tw.tween_interval(1.4)
+	tw.tween_interval(hold_time)
 	tw.tween_property(_intro_banner, "modulate:a", 0.0, 0.45)
 	tw.tween_callback(func() -> void: _intro_banner.visible = false)
+
+
+func _on_battle_started(display_name: String, objective: String) -> void:
+	if _mission_label:
+		_mission_label.text = display_name.to_upper()
+	if _objective_label:
+		_objective_label.text = objective
+	_show_status_banner(display_name.to_upper(), objective, Color(1.0, 0.92, 0.62))
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
@@ -698,6 +736,14 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 func _on_battle_won(rewards: Dictionary) -> void:
 	_phase_label.text = "VICTORY!"
 	_result_label.text = "+%dg  +%dJP" % [rewards.get("gold", 0), rewards.get("jp", 0)]
+	if _objective_label:
+		_objective_label.text = "Objective complete"
+	_show_status_banner(
+		"VICTORY",
+		"+%dg  +%dJP" % [rewards.get("gold", 0), rewards.get("jp", 0)],
+		Color(1.0, 0.86, 0.22),
+		1.8
+	)
 	_is_player_turn = false
 	_has_pending_action = false
 	if _move_btn:    _move_btn.disabled    = true
@@ -711,6 +757,9 @@ func _on_battle_won(rewards: Dictionary) -> void:
 func _on_battle_lost() -> void:
 	_phase_label.text = "DEFEATED"
 	_result_label.text = "All units fallen."
+	if _objective_label:
+		_objective_label.text = "Party defeated"
+	_show_status_banner("DEFEATED", "Returning to the hub.", Color(1.0, 0.32, 0.26), 1.8)
 	_is_player_turn = false
 	_has_pending_action = false
 	if _move_btn:    _move_btn.disabled    = true

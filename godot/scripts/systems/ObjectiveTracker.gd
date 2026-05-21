@@ -13,6 +13,7 @@ signal objective_updated(progress_text: String)
 func initialize(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
 	units    = p_units
+	objective_updated.emit(get_progress_text())
 
 
 func is_victory() -> bool:
@@ -45,11 +46,8 @@ func is_defeat() -> bool:
 	return units.all(func(u: Unit) -> bool: return u.team != "player" or u.hp <= 0)
 
 
-func on_unit_defeated(unit_id: String) -> void:
-	# Check if a void anchor guardian died (for destroy_anchor missions)
-	var u := units.filter(func(x: Unit) -> bool: return x.unit_data.id == unit_id)
-	if not u.is_empty() and map_data.objective_type == "destroy_anchor":
-		objective_updated.emit(get_progress_text())
+func on_unit_defeated(_unit_id: String) -> void:
+	objective_updated.emit(get_progress_text())
 
 
 func on_turn_advanced() -> void:
