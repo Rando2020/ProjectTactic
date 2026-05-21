@@ -343,6 +343,15 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inner.add_child(desc)
 
+	var impact := _boon_impact_text(boon)
+	if impact != "":
+		var impact_lbl := Label.new()
+		impact_lbl.text = "NEXT FIGHT: " + impact
+		impact_lbl.add_theme_font_size_override("font_size", 11)
+		impact_lbl.add_theme_color_override("font_color", accent.lerp(Color.WHITE, 0.25))
+		impact_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inner.add_child(impact_lbl)
+
 	var flavour: String = boon.get("flavour","")
 	if flavour:
 		_space(inner, 4)
@@ -360,6 +369,47 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 
 # ── Loot overlay ──────────────────────────────────────────────────────────────
 
+func _boon_impact_text(boon: Dictionary) -> String:
+	var fx: Dictionary = boon.get("effect", {})
+	match fx.get("type", ""):
+		"stat_bonus":
+			var parts: Array[String] = []
+			if fx.get("stat", "") in ["move", "movement"]:
+				parts.append("party gains +%d Move" % int(fx.get("amount", 0)))
+			if fx.get("stat", "") in ["temper", "max_temper"]:
+				parts.append("party gains +%d Temper" % int(fx.get("amount", 0)))
+			if int(fx.get("move_bonus", 0)) != 0:
+				parts.append("party gains +%d Move" % int(fx.get("move_bonus", 0)))
+			return ", ".join(parts)
+		"elemental_bonus", "elemental_damage_bonus":
+			var el := str(fx.get("element", "elemental")).capitalize()
+			var pct := int(round(float(fx.get("bonus", 0.0)) * 100.0))
+			if int(fx.get("heal_bonus", 0)) > 0:
+				return "%s +%d%% damage, heals +%d HP" % [el, pct, int(fx.get("heal_bonus", 0))]
+			return "%s +%d%% damage" % [el, pct]
+		"between_battle_heal":
+			return "after battles, party restores %d%% HP" % int(round(float(fx.get("percent", 0.0)) * 100.0))
+		"jp_multiplier":
+			return "JP gains are x%.1f" % float(fx.get("mult", 1.0))
+		"on_elite_kill":
+			return "elite kills heal %d HP and %d Temper" % [int(fx.get("heal_hp", 0)), int(fx.get("heal_temper", 0))]
+		"battle_start":
+			if fx.get("trigger", "") == "vaelthorn_bargain":
+				return "party trades HP for +%d%% damage" % int(round(float(fx.get("damage_bonus", 0.0)) * 100.0))
+			if fx.get("trigger", "") in ["ignite_all_terrain", "ignite_all"]:
+				return "the battlefield starts burning"
+			if fx.get("trigger", "") == "summon_tide":
+				return "water rises in the center of the map"
+			if fx.get("trigger", "") in ["vaelthorn_curse_all", "curse_all"]:
+				return "all enemies start cursed"
+		"passive":
+			match fx.get("id", ""):
+				"brand": return "burning enemies take +%d%% physical damage" % int(round(float(fx.get("bonus", 0.0)) * 100.0))
+				"double_strike": return "basic attacks can strike twice"
+				"first_hit_guard": return "first lethal hit leaves the unit at 1 HP"
+				"luminarch_covenant": return "single hits cannot drop party below 1 HP"
+				"death_flare": return "enemy deaths splash holy damage"
+	return ""
 func _curse_card(curse: Dictionary) -> Button:
 	var accent := Color(0.92, 0.24, 0.24)
 	var btn := Button.new()

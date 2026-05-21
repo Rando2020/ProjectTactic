@@ -22,9 +22,11 @@ const BOONS: Array[Dictionary] = [
 	{"id":"vaelthorn_shadow", "name":"Vaelthorn's Shadow", "rarity":"common",  "icon":"💀","guardian":"vaelthorn",
 	 "desc":"Dark +20% dmg. Void Scar drains +20 Ether.", "effect":{"type":"elemental_bonus","element":"dark","bonus":0.20}},
 	{"id":"iron_temper",      "name":"Iron Temper",        "rarity":"common",  "icon":"🛡",
-	 "desc":"All party: +40 max Temper this run.", "effect":{"type":"stat_bonus","stat":"max_temper","amount":40}},
+	 "desc":"All party: +40 max Temper and +1 Move this run.", "effect":{"type":"stat_bonus","stat":"max_temper","amount":40,"move_bonus":1}},
 	{"id":"swift_recovery",   "name":"Swift Recovery",     "rarity":"common",  "icon":"💚",
 	 "desc":"After each battle, restore 25% max HP.", "effect":{"type":"between_battle_heal","percent":0.25}},
+	{"id":"windrunner_step",  "name":"Windrunner Step",   "rarity":"common",  "icon":"+",
+	 "desc":"All party: +1 Move this run. Repositioning feels better immediately.", "effect":{"type":"stat_bonus","stat":"move","amount":1}},
 	{"id":"surge_extend",     "name":"Resonant Surge",     "rarity":"common",  "icon":"⚡",
 	 "desc":"SURGE window +20% wider. SURGE bonus +35%.", "effect":{"type":"surge_boost","window_bonus":0.20,"damage_bonus":0.35}},
 	# Rare
@@ -65,7 +67,7 @@ const BOONS: Array[Dictionary] = [
 	{"id":"ignareth_unchained","name":"Ignareth Unchained","rarity":"unique",  "icon":"🔥","guardian":"ignareth",
 	 "desc":"All terrain ignites at battle start. Fire 2× damage. Party takes 8% HP fire/turn.",
 	 "flavour":"The Eternal Flame does not distinguish friend from kindling.",
-	 "effect":{"type":"battle_start","trigger":"ignite_all","fire_mult":2.0,"self_dmg":0.08}},
+	 "effect":{"type":"battle_start","trigger":"ignite_all_terrain","fire_mult":2.0,"self_dmg":0.08}},
 	{"id":"nerevan_veil",     "name":"Nerevan's Veil",     "rarity":"unique",  "icon":"🌊","guardian":"nerevan",
 	 "desc":"3×3 tide at battle start. Party heals 12% HP/turn on water.",
 	 "flavour":"The Mirefen does not flood. It remembers its original depth.",
@@ -81,7 +83,7 @@ const BOONS: Array[Dictionary] = [
 	{"id":"vaelthorn_unchained","name":"Vaelthorn Unchained","rarity":"unique","icon":"💀","guardian":"vaelthorn",
 	 "desc":"All enemies start Cursed (2t). Kills restore 25 Ether + 10 HP to attacker.",
 	 "flavour":"The Null Conclave did not corrupt Vaelthorn. Vaelthorn was waiting for them.",
-	 "effect":{"type":"battle_start","trigger":"curse_all","on_kill":{"ether":25,"hp":10}}},
+	 "effect":{"type":"battle_start","trigger":"vaelthorn_curse_all","on_kill":{"ether":25,"hp":10}}},
 ]
 
 var _s: int = 0

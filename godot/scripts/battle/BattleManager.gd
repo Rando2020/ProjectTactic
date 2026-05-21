@@ -1057,22 +1057,10 @@ func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
 		return {}
 	var tile_att := tactical_grid.get_tile(attacker.grid_pos)
 	var tile_tar := tactical_grid.get_tile(target.grid_pos)
-	var amount := _predict_attack_damage(attacker, target, tile_att, tile_tar)
-	var flank := _flank_label(attacker, target)
-	var counter := "Counter possible" if _target_can_counter(attacker, target) else "No counter"
-	return {
-		"visible": true,
-		"mode": "Attack",
-		"actor": attacker.display_name,
-		"actor_portrait": _portrait_path(attacker),
-		"target": target.display_name,
-		"target_portrait": _portrait_path(target),
-		"action": "Basic attack",
-		"amount_label": "%d damage" % amount,
-		"hit": "95%",
-		"crit": "10%",
-		"note": "%s | %s | HP %d -> %d" % [flank, counter, target.hp, max(target.hp - amount, 0)],
-	}
+	var fc := ForecastCalculator.attack(attacker, target, tile_att, tile_tar)
+	fc["actor_portrait"] = _portrait_path(attacker)
+	fc["target_portrait"] = _portrait_path(target)
+	return fc
 
 
 func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dictionary:
@@ -1080,45 +1068,30 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 	if not caster or grid_pos not in tactical_grid.ability_tiles:
 		return {}
 	var target := _unit_at_pos(grid_pos)
-	var target_name := "Area"
-	var amount_label := "Preview"
-	var note := "Targets tiles in the highlighted area."
+	if not target:
+		# AoE with no unit under cursor — show basic info
+		var fc := ForecastCalculator.quick_spell(caster, ability)
+		return {
+			"visible": true, "mode": "Ability",
+			"actor": caster.display_name, "actor_portrait": _portrait_path(caster),
+			"target": "Area (%d tiles)" % ability.get("aoe_radius",1),
+			"target_portrait": "",
+			"ability_name": ability.get("display_name","?"),
+			"element": fc["element"], "element_icon": fc["element_icon"],
+			"element_color": fc["element_color"],
+			"damage": fc["boosted_damage"], "damage_min": int(fc["boosted_damage"]*0.9),
+			"damage_max": int(fc["boosted_damage"]*1.1),
+			"affinity_label": "", "boon_bonus_pct": fc["boon_pct"],
+			"hp_before": 0, "hp_after": 0, "max_hp": 1,
+			"status_preview": "", "jp_gain": 6, "is_heal": false, "is_buff": false,
+		}
 	var target_type: String = ability.get("target_type", "enemy")
-	if target:
-		var valid_target := (target_type == "enemy" and target.team != caster.team) or \
-			(target_type == "ally" and target.team == caster.team)
-		if not valid_target:
-			return {}
-		target_name = target.display_name
-		var spell_type: String = ability.get("spell_type", "fire")
-		if spell_type == "cure":
-			var heal_amount: int = int(ability.get("base_power", 100))
-			amount_label = "%d heal" % heal_amount
-			note = "HP %d -> %d" % [target.hp, min(target.hp + heal_amount, target.unit_data.base_stats.hp)]
-		elif spell_type == "buff":
-			amount_label = "Status"
-			note = "Applies %s" % str(ability.get("status_effect", {}).get("id", "buff")).capitalize()
-		elif spell_type == "physical":
-			var amount := _predict_attack_damage(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
-			amount_label = "%d damage" % amount
-			note = "HP %d -> %d" % [target.hp, max(target.hp - amount, 0)]
-		else:
-			var amount := _predict_spell_damage(caster, target, ability)
-			amount_label = "%d damage" % amount
-			note = "%s affinity | HP %d -> %d" % [_affinity_label(target, spell_type), target.hp, max(target.hp - amount, 0)]
-	return {
-		"visible": true,
-		"mode": "Ability",
-		"actor": caster.display_name,
-		"actor_portrait": _portrait_path(caster),
-		"target": target_name,
-		"target_portrait": _portrait_path(target) if target else "",
-		"action": ability.get("display_name", selected_ability_id),
-		"amount_label": amount_label,
-		"hit": "100%",
-		"crit": "--",
-		"note": note,
-	}
+	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
+	if not valid: return {}
+	var fc := ForecastCalculator.spell(caster, target, ability)
+	fc["actor_portrait"] = _portrait_path(caster)
+	fc["target_portrait"] = _portrait_path(target)
+	return fc
 
 
 func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Dictionary, tile_target: Dictionary) -> int:

@@ -432,11 +432,24 @@ func _create_crypt_map() -> MapData:
 
 func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
+	var move_bonus: int = int(bonuses.get("move_bonus", 0))
+	var temper_bonus: int = int(bonuses.get("max_temper_bonus", 0))
+	var damage_mult: float = float(bonuses.get("battle_damage_mult", 1.0))
+	for unit in all_units:
+		if unit.team != "player" or not unit.unit_data:
+			continue
+		if move_bonus != 0:
+			unit.unit_data.base_stats.move = max(1, unit.unit_data.base_stats.move + move_bonus)
+		if temper_bonus != 0:
+			unit.unit_data.base_stats.max_temper += temper_bonus
+			unit.temper = min(unit.unit_data.base_stats.max_temper, unit.temper + temper_bonus)
+		if damage_mult > 1.0:
+			unit.set_meta("dmg_mult", damage_mult)
 	var effects: Array = bonuses.get("battle_start_effects", [])
 	for fx: Dictionary in effects:
 		match fx.get("trigger",""):
 
-			"ignite_all_terrain":
+			"ignite_all_terrain", "ignite_all":
 				# Ignareth Unchained — all natural terrain becomes burning
 				for pos in tactical_grid.tiles.keys():
 					var t: String = tactical_grid.tiles[pos].get("terrain","")
@@ -445,7 +458,7 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 				tactical_grid.redraw_base_tiles()
 				battle_manager.log_message.emit("Ignareth Unchained: all terrain ignites!")
 
-			"vaelthorn_curse_all":
+			"vaelthorn_curse_all", "curse_all":
 				# Vaelthorn Unchained — all enemies start Cursed (2t)
 				for unit in all_units:
 					if unit.team == "enemy" and unit.hp > 0:
@@ -471,6 +484,7 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 					if unit.team == "player":
 						var sacrifice: int = int(float(unit.unit_data.base_stats.hp) * cost)
 						unit.hp = max(1, unit.hp - sacrifice)
+						unit._update_hp_bar()
 				battle_manager.log_message.emit("Vaelthorn's Bargain: HP sacrificed for power!")
 
 

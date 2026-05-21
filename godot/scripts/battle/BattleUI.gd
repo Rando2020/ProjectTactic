@@ -11,7 +11,6 @@ var _objective_label: Label
 var _enemy_intent_panel: PanelContainer
 var _enemy_intent_title: Label
 var _enemy_intent_body: Label
-var _enemy_intent_effect: Label
 var _unit_name: Label
 var _hp_label: Label
 var _mp_label: Label
@@ -150,11 +149,6 @@ func _build_ui() -> void:
 	_enemy_intent_body.add_theme_color_override("font_color", Color(0.92, 0.90, 0.84))
 	_enemy_intent_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intent_box.add_child(_enemy_intent_body)
-	_enemy_intent_effect = Label.new()
-	_enemy_intent_effect.text = ""
-	_enemy_intent_effect.add_theme_font_size_override("font_size", 16)
-	_enemy_intent_effect.add_theme_color_override("font_color", Color(1.0, 0.86, 0.36))
-	intent_box.add_child(_enemy_intent_effect)
 
 	_tile_info_label = Label.new()
 	_tile_info_label.text = "Hover a tile"
@@ -797,14 +791,8 @@ func _on_enemy_intent_changed(intent: Dictionary) -> void:
 	var action := str(intent.get("action", "Act"))
 	var target := str(intent.get("target", "-"))
 	var note := str(intent.get("note", ""))
-	var result_note := str(intent.get("result_note", ""))
-	var amount := str(intent.get("amount_label", "--"))
-	var hit := str(intent.get("hit", "--"))
-	var crit := str(intent.get("crit", "--"))
 	_enemy_intent_title.text = "ENEMY INTENT - %s" % actor.to_upper()
 	_enemy_intent_body.text = "%s -> %s\n%s" % [action, target, note]
-	if _enemy_intent_effect:
-		_enemy_intent_effect.text = "%s    Hit %s    Crit %s\n%s" % [amount, hit, crit, result_note]
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
@@ -813,16 +801,87 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 		_preview_panel.visible = false
 		return
 	_preview_panel.visible = true
-	_preview_mode_label.text = str(preview.get("mode", "Forecast")).to_upper()
-	_preview_actor_label.text = "ACTOR\n%s" % preview.get("actor", "-")
-	_preview_action_label.text = "ACTION\n%s" % preview.get("action", "-")
-	_preview_target_label.text = "TARGET\n%s" % preview.get("target", "-")
-	_preview_amount_label.text = str(preview.get("amount_label", "--"))
-	_preview_hit_label.text = "Hit %s" % preview.get("hit", "--")
-	_preview_crit_label.text = "Crit %s" % preview.get("crit", "--")
-	_preview_note_label.text = str(preview.get("note", ""))
-	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait", "")))
-	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait", "")))
+
+	var el_color: Color = preview.get("element_color", Color(0.9, 0.85, 0.6))
+	var is_heal:  bool  = bool(preview.get("is_heal", false))
+	var is_buff:  bool  = bool(preview.get("is_buff", false))
+	var aff_lbl:  String = str(preview.get("affinity_label", ""))
+	var aff_col:  Color  = preview.get("affinity_color", Color.WHITE)
+
+	# Mode line: element icon + mode
+	var el_icon: String = str(preview.get("element_icon", ""))
+	var mode:    String = str(preview.get("mode", "Forecast")).to_upper()
+	_preview_mode_label.text = ("%s  %s" % [el_icon, mode]).strip_edges()
+	_preview_mode_label.add_theme_color_override("font_color", el_color)
+
+	# Actor label
+	_preview_actor_label.text = "ATTACKER\n%s" % str(preview.get("actor_name", preview.get("actor","-")))
+
+	# Action label — ability name + boon bonus if any
+	var ab_name: String = str(preview.get("ability_name", preview.get("action","—")))
+	var boon_pct: int   = int(preview.get("boon_bonus_pct", 0))
+	var ab_text: String = ab_name
+	if boon_pct > 0: ab_text += "\n✦ +%d%% boon" % boon_pct
+	_preview_action_label.text = ab_text
+	_preview_action_label.add_theme_color_override("font_color", el_color)
+
+	# Target label — name + HP bar (text version)
+	var t_name:  String = str(preview.get("target_name", preview.get("target","-")))
+	var hp_b:    int    = int(preview.get("hp_before", 0))
+	var hp_a:    int    = int(preview.get("hp_after",  0))
+	var max_hp:  int    = int(preview.get("max_hp", 1))
+	var hp_text: String = ""
+	if hp_b > 0:
+		hp_text = "\nHP %d → %d" % [hp_b, hp_a]
+		if hp_a <= 0: hp_text += "  ☠"
+	_preview_target_label.text = "TARGET\n%s%s" % [t_name, hp_text]
+	var t_color := Color(1.0,0.55,0.55) if hp_a <= 0 else Color(1.0,0.76,0.72)
+	_preview_target_label.add_theme_color_override("font_color", t_color)
+
+	# Main damage number
+	var dmg: int = int(preview.get("damage", 0))
+	var heal: int = int(preview.get("heal", 0))
+	if is_heal:
+		_preview_amount_label.text = "+%d HP" % heal
+		_preview_amount_label.add_theme_color_override("font_color", Color(0.45,0.95,0.55))
+	elif is_buff:
+		_preview_amount_label.text = "STATUS"
+		_preview_amount_label.add_theme_color_override("font_color", Color(0.55,0.75,1.0))
+	else:
+		var dmg_range: String = ""
+		var dmin: int = int(preview.get("damage_min", dmg))
+		var dmax: int = int(preview.get("damage_max", dmg))
+		if dmax > dmin: dmg_range = "  (%d–%d)" % [dmin, dmax]
+		_preview_amount_label.text = "%d%s" % [dmg, dmg_range]
+		_preview_amount_label.add_theme_color_override("font_color", el_color)
+
+	# Affinity badge (replaces Hit %)
+	if not aff_lbl.is_empty():
+		_preview_hit_label.text = "%s  %s" % [str(preview.get("element_icon","")), aff_lbl]
+		_preview_hit_label.add_theme_color_override("font_color", aff_col)
+	else:
+		var hit: int = int(preview.get("hit_pct", 100))
+		_preview_hit_label.text = "Hit %d%%" % hit
+		_preview_hit_label.add_theme_color_override("font_color", Color(0.75,0.95,0.85))
+
+	# JP gain (replaces Crit %)
+	var jp: int = int(preview.get("jp_gain", 6))
+	_preview_crit_label.text = "+%d JP" % jp
+	_preview_crit_label.add_theme_color_override("font_color", Color(0.48,0.86,1.0))
+
+	# Note line — status preview + flank + counter
+	var notes: Array[String] = []
+	var status_p: String = str(preview.get("status_preview",""))
+	if not status_p.is_empty(): notes.append(status_p)
+	var flank_l: String = str(preview.get("flank_label",""))
+	if not flank_l.is_empty(): notes.append(flank_l)
+	if bool(preview.get("can_counter",false)): notes.append("Counter possible")
+	var aoe_n: String = str(preview.get("aoe_note",""))
+	if not aoe_n.is_empty(): notes.append(aoe_n)
+	_preview_note_label.text = "  ·  ".join(notes)
+
+	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait","")))
+	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait","")))
 
 
 func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
@@ -973,11 +1032,20 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 	for ab_id in usable_ids:
 		var ab: Dictionary = AbilityDB.get_ability(ab_id)
 		var btn := Button.new()
-		var mp: int = ab.get("mp_cost", 0)
-		var rng: int = ab.get("range", 0)
-		btn.text = "%s  MP:%d  Rng:%d" % [ab.get("display_name", ab_id), mp, rng]
-		btn.custom_minimum_size = Vector2(0, 32)
+		btn.custom_minimum_size = Vector2(0, 36)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var ab_name: String = ab.get("display_name", ab_id)
+		var mp:  int    = ab.get("mp_cost", 0)
+		var rng: int    = ab.get("range", 0)
+		var el:  String = ab.get("spell_type", "")
+		var el_icon: String = ForecastCalculator.ELEMENT_ICONS.get(el, "") if el else ""
+		var el_col: Color  = ForecastCalculator.ELEMENT_COLORS.get(el, Color(0.85,0.82,0.77)) if el else Color(0.85,0.82,0.77)
+		# Format: [icon] Name   MP:12  ⬧3
+		var icon_part: String = (el_icon + " ") if not el_icon.is_empty() else ""
+		var mp_part:  String = ("  %dMP" % mp) if mp > 0 else ""
+		var rng_part: String = ("  ⬧%d" % rng) if rng > 0 else ""
+		btn.text = "%s%s%s%s" % [icon_part, ab_name, mp_part, rng_part]
+		btn.add_theme_color_override("font_color", el_col)
 		var captured_id: String = ab_id
 		btn.pressed.connect(func() -> void:
 			_play_sfx("ui_confirm")

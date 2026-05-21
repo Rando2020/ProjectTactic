@@ -207,8 +207,8 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 
 	var lines: Dictionary = char_data.get("lines", {})
 	var death: Dictionary = gs.get("last_run_death") if gs else {}
-	var floor: int = gs.get("run_floor_reached", 0) if gs else 0
-	var runs:  int = gs.get("runs_completed", 0) if gs else 0
+	var floor: int = int(gs.get("run_floor_reached")) if gs else 0
+	var runs:  int = int(gs.get("runs_completed")) if gs else 0
 	var heat:  int = 0
 	var rm: Node = Engine.get_main_loop().root.get_node_or_null("/root/RunManager") if Engine.get_main_loop() else null
 	if rm: heat = rm.heat_level
@@ -218,10 +218,10 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 		active_curses = gs.active_run.active_curses
 		active_boons  = gs.active_run.active_boons
 	# Check the PREVIOUS run's boons via last_run_death context
-	var had_curses := active_curses.size() > 0 or (death.get("had_curses",0) > 0)
-	var was_complete := (floor >= 10 and death.is_empty())
-	var died_anchor  := death.get("was_anchor", false)
-	var died_elite   := death.get("was_elite", false) and not died_anchor
+	var had_curses: bool = active_curses.size() > 0 or (int(death.get("had_curses", 0)) > 0)
+	var was_complete: bool = (floor >= 10 and death.is_empty())
+	var died_anchor: bool = bool(death.get("was_anchor", false))
+	var died_elite: bool = bool(death.get("was_elite", false)) and not died_anchor
 
 	# Priority selection
 	var category := "default"
@@ -244,8 +244,8 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 	# Template substitutions
 	raw = raw.replace("{floor}", str(floor))
 	raw = raw.replace("{heat}", str(heat))
-	raw = raw.replace("{killer}", death.get("killer_name","an enemy"))
-	var cc: int = death.get("had_curses",0)
+	raw = raw.replace("{killer}", str(death.get("killer_name", "an enemy")))
+	var cc: int = int(death.get("had_curses", 0))
 	raw = raw.replace("{curse_count}", str(cc))
 	raw = raw.replace("{plural}", "s" if cc != 1 else "")
 	raw = raw.replace("{boon_count}", str(active_boons.size()))
@@ -263,10 +263,11 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 ## Get lines from all four characters for the current run state.
 static func get_all_lines(gs: Node) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	var floor: int = gs.get("run_floor_reached", 0) if gs else 0
-	var runs:  int = gs.get("runs_completed", 0) if gs else 0
+	var floor: int = int(gs.get("run_floor_reached")) if gs else 0
+	var runs:  int = int(gs.get("runs_completed")) if gs else 0
 	# Echo only appears on interesting runs
-	var show_echo := floor >= 7 or (gs and gs.get("last_run_death",{}).get("was_anchor",false)) or \
+	var last_death: Dictionary = gs.get("last_run_death") if gs else {}
+	var show_echo: bool = floor >= 7 or bool(last_death.get("was_anchor", false)) or \
 		(gs and gs.get("active_run") and not gs.active_run.active_curses.is_empty())
 	for cid in ["sera","varn","volant"]:
 		var line := get_line(cid, gs)

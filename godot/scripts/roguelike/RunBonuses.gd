@@ -31,6 +31,8 @@ static func compute(active_boons: Array = []) -> Dictionary:
 		"vaelthorn_kill_hp":   0,
 		"vaelthorn_kill_ether":0,
 		"stun_drain":          0,
+		"move_bonus":          0,
+		"battle_damage_mult":  1.0,
 	}
 
 	for boon: Dictionary in active_boons:
@@ -54,6 +56,9 @@ static func compute(active_boons: Array = []) -> Dictionary:
 			"stat_bonus":
 				if fx.get("stat","") in ["temper","max_temper"]:
 					bonuses["max_temper_bonus"] += int(fx.get("amount", 0))
+				elif fx.get("stat","") in ["move", "movement"]:
+					bonuses["move_bonus"] += int(fx.get("amount", 0))
+				bonuses["move_bonus"] += int(fx.get("move_bonus", 0))
 
 			"reaction_echo":
 				bonuses["react_echo_chance"] += fx.get("chance", 0.0)
@@ -71,7 +76,9 @@ static func compute(active_boons: Array = []) -> Dictionary:
 
 			"battle_start":
 				bonuses["battle_start_effects"].append(fx)
-				if fx.get("trigger","") == "vaelthorn_curse_all":
+				if fx.has("damage_bonus"):
+					bonuses["battle_damage_mult"] *= 1.0 + float(fx.get("damage_bonus", 0.0))
+				if fx.get("trigger","") in ["vaelthorn_curse_all", "curse_all"]:
 					var ok = fx.get("on_kill", {})
 					bonuses["vaelthorn_kill_hp"]    += int(ok.get("hp", 0))
 					bonuses["vaelthorn_kill_ether"] += int(ok.get("ether", 0))
