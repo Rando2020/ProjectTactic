@@ -45,6 +45,7 @@ var ability_tiles: Array[Vector2i] = []
 var aoe_preview_tiles: Array[Vector2i] = []
 var path_preview_tiles: Array[Vector2i] = []
 var selected_tile: Vector2i = Vector2i(-1, -1)
+var target_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_team: String = ""
 
@@ -405,6 +406,18 @@ func show_path_preview(positions: Array[Vector2i]) -> void:
 	_refresh_highlights()
 
 
+func show_target_lock(pos: Vector2i) -> void:
+	target_tile = pos
+	_refresh_highlights()
+
+
+func clear_target_lock() -> void:
+	if target_tile == Vector2i(-1, -1):
+		return
+	target_tile = Vector2i(-1, -1)
+	_refresh_highlights()
+
+
 func clear_path_preview() -> void:
 	if path_preview_tiles.is_empty():
 		return
@@ -432,6 +445,7 @@ func clear_highlights() -> void:
 	aoe_preview_tiles.clear()
 	path_preview_tiles.clear()
 	selected_tile = Vector2i(-1, -1)
+	target_tile = Vector2i(-1, -1)
 	_refresh_highlights()
 
 
@@ -457,6 +471,8 @@ func _refresh_highlights() -> void:
 		_add_highlight(active_unit_tile, active_color, 1.04)
 	if _is_valid_pos(selected_tile):
 		_add_selected_tile_guidance()
+	if _is_valid_pos(target_tile):
+		_add_target_lock(target_tile)
 
 
 func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86) -> void:
@@ -492,6 +508,28 @@ func _add_selected_tile_guidance() -> void:
 	_add_highlight(selected_tile, color, 1.08)
 	if label != "":
 		_add_tile_badge(selected_tile, label, color)
+
+
+func _add_target_lock(pos: Vector2i) -> void:
+	var color := Color(1.0, 0.88, 0.18, 0.86)
+	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.28), 1.18)
+
+	var arrow := Polygon2D.new()
+	arrow.polygon = PackedVector2Array([
+		Vector2(0.0, 0.0),
+		Vector2(-9.0, -16.0),
+		Vector2(-3.0, -16.0),
+		Vector2(-3.0, -28.0),
+		Vector2(3.0, -28.0),
+		Vector2(3.0, -16.0),
+		Vector2(9.0, -16.0),
+	])
+	arrow.position = _grid_to_local(pos) + Vector2(0.0, -tile_size.y * 0.34)
+	arrow.color = color
+	arrow.z_index = _depth_for(pos) + 70
+	highlight_layer.add_child(arrow)
+
+	_add_tile_badge(pos, "TARGET", color)
 
 
 func _add_tile_badge(pos: Vector2i, text: String, color: Color) -> void:

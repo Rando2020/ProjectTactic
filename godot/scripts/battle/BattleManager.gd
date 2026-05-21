@@ -16,6 +16,7 @@ signal tile_info_changed(text: String)
 signal battle_started(display_name: String, objective: String)
 signal command_hint_changed(text: String)
 signal action_preview_changed(preview: Dictionary)
+signal action_state_changed(can_move: bool, can_act: bool, has_pending: bool)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
@@ -36,6 +37,7 @@ var selected_ability_id: String = ""
 var is_resolving_action: bool = false
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
+var pending_action: Dictionary = {}
 
 
 func _ready() -> void:
@@ -86,6 +88,7 @@ func _begin_player_turn() -> void:
 	var unit: Unit = units.get(active_unit_id)
 	active_unit_has_moved = false
 	active_unit_has_acted = false
+	pending_action.clear()
 	if unit:
 		unit.begin_turn()
 		tactical_grid.show_active_unit(unit.grid_pos, "player")
@@ -93,6 +96,7 @@ func _begin_player_turn() -> void:
 	var unit_name := unit.display_name if unit else active_unit_id
 	log_message.emit("%s's turn." % unit_name)
 	command_hint_changed.emit("Choose Move, Attack, Ability, or Wait.")
+	_emit_action_state()
 
 
 func _begin_enemy_turn() -> void:
@@ -103,10 +107,12 @@ func _begin_enemy_turn() -> void:
 	unit.begin_turn()
 	active_unit_has_moved = false
 	active_unit_has_acted = false
+	pending_action.clear()
 	tactical_grid.show_active_unit(unit.grid_pos, "enemy")
 	turn_started.emit(active_unit_id, "enemy")
 	log_message.emit("Enemy: %s acts." % unit.display_name)
 	command_hint_changed.emit("Enemy is acting...")
+	_emit_action_state()
 	await get_tree().create_timer(0.50).timeout
 	var cast_spell := randf() < 0.45
 	if cast_spell and _try_enemy_spell(unit):
@@ -222,6 +228,15 @@ func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
 		audio.play_sfx(sfx_id, volume_db)
 
 
+func _emit_action_state() -> void:
+	var is_player_turn := current_phase == Phase.PLAYER_TURN
+	action_state_changed.emit(
+		is_player_turn and not active_unit_has_moved,
+		is_player_turn and not active_unit_has_acted,
+		is_player_turn and not pending_action.is_empty()
+	)
+
+
 func select_command(command: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:
 		return
@@ -236,6 +251,10 @@ func select_command(command: String) -> void:
 		log_message.emit("%s has already acted." % unit.display_name)
 		command_hint_changed.emit("Choose Move or Wait.")
 		return
+	if not pending_action.is_empty():
+		pending_action.clear()
+		tactical_grid.clear_target_lock()
+		action_preview_changed.emit({})
 	active_command = command
 	match command:
 		"move":
@@ -661,6 +680,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 		active_unit_has_moved = true
 		is_resolving_action = false
 		command_hint_changed.emit("Move complete. Choose Attack, Ability, or Wait.")
+		_emit_action_state()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		# AoE abilities can be targeted on empty tiles
 		var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
@@ -668,9 +688,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 			return   # single-target abilities require clicking a unit
 		if grid_pos not in tactical_grid.ability_tiles:
 			return
-		_execute_aoe_ability(unit, grid_pos, ability)
-		active_unit_has_acted = true
-		_end_player_turn()
+		_queue_aoe(unit, grid_pos, ability)
 
 
 func _on_unit_clicked(unit_id: String) -> void:
@@ -692,24 +710,9 @@ func _on_unit_clicked(unit_id: String) -> void:
 				attacker.unit_data.base_stats.attack_range_max,
 			])
 			action_preview_changed.emit({})
+			tactical_grid.clear_target_lock()
 			return
-		var tile_att := tactical_grid.get_tile(attacker.grid_pos)
-		var tile_tar := tactical_grid.get_tile(target.grid_pos)
-		var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
-		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
-		tactical_grid.clear_highlights()
-		active_command = ""
-		if result.get("missed", false):
-			log_message.emit("%s swings but misses! (blind)" % attacker.display_name)
-		else:
-			var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
-				else (" [flank]" if result.get("flank","") == "side" else "")
-			log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
-		if result.get("counter", false):
-			get_tree().create_timer(0.6).timeout.connect(
-				func() -> void: _execute_counter_attack(target, attacker))
-		active_unit_has_acted = true
-		_end_player_turn()
+		_queue_attack(attacker, target)
 	elif active_command == "ability_target" and selected_ability_id != "":
 		var target: Unit = units.get(unit_id)
 		if not target or target.hp <= 0:
@@ -729,13 +732,136 @@ func _on_unit_clicked(unit_id: String) -> void:
 		if target.grid_pos not in tactical_grid.ability_tiles:
 			command_hint_changed.emit("%s is outside %s range." % [target.display_name, ability.get("display_name", selected_ability_id)])
 			action_preview_changed.emit({})
+			tactical_grid.clear_target_lock()
 			return
 		if ability.has("aoe_type"):
-			_execute_aoe_ability(caster, target.grid_pos, ability)
+			_queue_aoe(caster, target.grid_pos, ability)
 		else:
-			_execute_ability(caster, target, ability)
-		active_unit_has_acted = true
-		_end_player_turn()
+			_queue_ability(caster, target, ability)
+
+
+func confirm_pending_action() -> void:
+	if current_phase != Phase.PLAYER_TURN or is_resolving_action or pending_action.is_empty():
+		return
+	var kind := str(pending_action.get("kind", ""))
+	match kind:
+		"attack":
+			_resolve_pending_attack()
+		"ability":
+			_resolve_pending_ability()
+		"aoe":
+			_resolve_pending_aoe()
+
+
+func cancel_pending_action() -> void:
+	if pending_action.is_empty():
+		return
+	pending_action.clear()
+	tactical_grid.clear_target_lock()
+	action_preview_changed.emit({})
+	command_hint_changed.emit("Cancelled. Choose a target or another command.")
+	_emit_action_state()
+
+
+func _queue_attack(attacker: Unit, target: Unit) -> void:
+	pending_action = {
+		"kind": "attack",
+		"attacker_id": attacker.unit_id,
+		"target_id": target.unit_id,
+	}
+	tactical_grid.show_target_lock(target.grid_pos)
+	action_preview_changed.emit(_attack_preview_for_tile(target.grid_pos))
+	command_hint_changed.emit("Confirm attack or cancel.")
+	_emit_action_state()
+
+
+func _queue_ability(caster: Unit, target: Unit, ability: Dictionary) -> void:
+	pending_action = {
+		"kind": "ability",
+		"caster_id": caster.unit_id,
+		"target_id": target.unit_id,
+		"ability_id": selected_ability_id,
+	}
+	tactical_grid.show_target_lock(target.grid_pos)
+	action_preview_changed.emit(_ability_preview_for_tile(target.grid_pos, ability))
+	command_hint_changed.emit("Confirm %s or cancel." % ability.get("display_name", selected_ability_id))
+	_emit_action_state()
+
+
+func _queue_aoe(caster: Unit, center: Vector2i, ability: Dictionary) -> void:
+	pending_action = {
+		"kind": "aoe",
+		"caster_id": caster.unit_id,
+		"center": center,
+		"ability_id": selected_ability_id,
+	}
+	tactical_grid.show_target_lock(center)
+	action_preview_changed.emit(_ability_preview_for_tile(center, ability))
+	command_hint_changed.emit("Confirm %s or cancel." % ability.get("display_name", selected_ability_id))
+	_emit_action_state()
+
+
+func _resolve_pending_attack() -> void:
+	var attacker: Unit = units.get(str(pending_action.get("attacker_id", "")))
+	var target: Unit = units.get(str(pending_action.get("target_id", "")))
+	if not attacker or not target or target.hp <= 0:
+		cancel_pending_action()
+		return
+	is_resolving_action = true
+	var tile_att := tactical_grid.get_tile(attacker.grid_pos)
+	var tile_tar := tactical_grid.get_tile(target.grid_pos)
+	var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
+	var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
+	pending_action.clear()
+	tactical_grid.clear_target_lock()
+	tactical_grid.clear_highlights()
+	active_command = ""
+	if result.get("missed", false):
+		log_message.emit("%s swings but misses! (blind)" % attacker.display_name)
+	else:
+		var ftag := " [BACK ATTACK!]" if result.get("flank", "") == "back" \
+			else (" [flank]" if result.get("flank", "") == "side" else "")
+		log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
+	if result.get("counter", false):
+		get_tree().create_timer(0.6).timeout.connect(
+			func() -> void: _execute_counter_attack(target, attacker))
+	active_unit_has_acted = true
+	is_resolving_action = false
+	_end_player_turn()
+
+
+func _resolve_pending_ability() -> void:
+	var caster: Unit = units.get(str(pending_action.get("caster_id", "")))
+	var target: Unit = units.get(str(pending_action.get("target_id", "")))
+	var ability_id := str(pending_action.get("ability_id", ""))
+	var ability: Dictionary = AbilityDB.get_ability(ability_id)
+	if not caster or not target or target.hp <= 0 or ability.is_empty():
+		cancel_pending_action()
+		return
+	is_resolving_action = true
+	pending_action.clear()
+	tactical_grid.clear_target_lock()
+	_execute_ability(caster, target, ability)
+	active_unit_has_acted = true
+	is_resolving_action = false
+	_end_player_turn()
+
+
+func _resolve_pending_aoe() -> void:
+	var caster: Unit = units.get(str(pending_action.get("caster_id", "")))
+	var center: Vector2i = pending_action.get("center", Vector2i(-1, -1))
+	var ability_id := str(pending_action.get("ability_id", ""))
+	var ability: Dictionary = AbilityDB.get_ability(ability_id)
+	if not caster or ability.is_empty():
+		cancel_pending_action()
+		return
+	is_resolving_action = true
+	pending_action.clear()
+	tactical_grid.clear_target_lock()
+	_execute_aoe_ability(caster, center, ability)
+	active_unit_has_acted = true
+	is_resolving_action = false
+	_end_player_turn()
 
 
 func _end_player_turn() -> void:
@@ -746,11 +872,13 @@ func _end_player_turn() -> void:
 	turn_ended.emit(active_unit_id)
 	active_command = ""
 	selected_ability_id = ""
+	pending_action.clear()
 	active_unit_has_moved = false
 	active_unit_has_acted = false
 	action_preview_changed.emit({})
 	tactical_grid.clear_highlights()
 	command_hint_changed.emit("Resolving turn...")
+	_emit_action_state()
 	_set_phase(Phase.RESOLVE)
 
 

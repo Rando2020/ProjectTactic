@@ -17,10 +17,13 @@ var _move_btn: Button
 var _attack_btn: Button
 var _wait_btn: Button
 var _ability_btn: Button
+var _confirm_btn: Button
+var _cancel_btn: Button
 var _ability_panel: VBoxContainer
 var _ability_list: VBoxContainer
 var _result_label: Label
 var _status_label: Label
+var _action_state_label: Label
 var _tile_info_label: Label
 var _command_hint_label: Label
 var _preview_panel: PanelContainer
@@ -42,6 +45,10 @@ var _fx_slider: HSlider
 var _game_value_label: Label
 var _music_value_label: Label
 var _fx_value_label: Label
+var _is_player_turn: bool = false
+var _can_move_now: bool = false
+var _can_act_now: bool = false
+var _has_pending_action: bool = false
 
 const LOG_SIZE := 8
 const TIMELINE_SLOTS := 6
@@ -60,6 +67,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.battle_started.connect(_on_battle_started)
 	battle_manager.command_hint_changed.connect(_on_command_hint_changed)
 	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
+	battle_manager.action_state_changed.connect(_on_action_state_changed)
 
 
 func _ready() -> void:
@@ -145,6 +153,18 @@ func _build_ui() -> void:
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
 	_wait_btn   = _cmd_btn(btn_row, "Wait",   _on_wait)
 	_ability_btn = _cmd_btn(btn_row, "Ability", _on_ability)
+
+	var confirm_row := HBoxContainer.new()
+	confirm_row.add_theme_constant_override("separation", 6)
+	root.add_child(confirm_row)
+	_confirm_btn = _cmd_btn(confirm_row, "Confirm", _on_confirm)
+	_cancel_btn = _cmd_btn(confirm_row, "Cancel", _on_cancel)
+
+	_action_state_label = Label.new()
+	_action_state_label.text = "Move: ready    Action: ready"
+	_action_state_label.add_theme_font_size_override("font_size", 12)
+	_action_state_label.add_theme_color_override("font_color", Color(0.72, 0.84, 0.95))
+	root.add_child(_action_state_label)
 
 	_result_label = Label.new()
 	_result_label.text = ""
@@ -529,11 +549,8 @@ func _on_log(text: String) -> void:
 
 func _on_phase_changed(phase: String) -> void:
 	_phase_label.text = phase.replace("_", " ")
-	var is_player := phase == "PLAYER_TURN"
-	if _move_btn:    _move_btn.disabled    = not is_player
-	if _attack_btn:  _attack_btn.disabled  = not is_player
-	if _wait_btn:    _wait_btn.disabled    = not is_player
-	if _ability_btn: _ability_btn.disabled = not is_player
+	_is_player_turn = phase == "PLAYER_TURN"
+	_refresh_command_buttons()
 	if _ability_panel: _ability_panel.visible = false
 
 
@@ -588,6 +605,32 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	_preview_note_label.text = str(preview.get("note", ""))
 	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait", "")))
 	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait", "")))
+
+
+func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
+	_can_move_now = can_move
+	_can_act_now = can_act
+	_has_pending_action = has_pending
+	if _action_state_label:
+		var move_text := "Ready" if can_move else "Used"
+		var act_text := "Ready" if can_act else "Used"
+		_action_state_label.text = "Move: %s    Action: %s" % [move_text, act_text]
+	_refresh_command_buttons()
+
+
+func _refresh_command_buttons() -> void:
+	if _move_btn:
+		_move_btn.disabled = not _is_player_turn or not _can_move_now or _has_pending_action
+	if _attack_btn:
+		_attack_btn.disabled = not _is_player_turn or not _can_act_now or _has_pending_action
+	if _ability_btn:
+		_ability_btn.disabled = not _is_player_turn or not _can_act_now or _has_pending_action
+	if _wait_btn:
+		_wait_btn.disabled = not _is_player_turn or _has_pending_action
+	if _confirm_btn:
+		_confirm_btn.disabled = not _has_pending_action
+	if _cancel_btn:
+		_cancel_btn.disabled = not _has_pending_action
 
 
 func _set_preview_portrait(rect: TextureRect, path: String) -> void:
@@ -655,17 +698,27 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 func _on_battle_won(rewards: Dictionary) -> void:
 	_phase_label.text = "VICTORY!"
 	_result_label.text = "+%dg  +%dJP" % [rewards.get("gold", 0), rewards.get("jp", 0)]
+	_is_player_turn = false
+	_has_pending_action = false
 	if _move_btn:    _move_btn.disabled    = true
 	if _attack_btn:  _attack_btn.disabled  = true
 	if _ability_btn: _ability_btn.disabled = true
+	if _wait_btn:    _wait_btn.disabled    = true
+	if _confirm_btn: _confirm_btn.disabled = true
+	if _cancel_btn:  _cancel_btn.disabled  = true
 
 
 func _on_battle_lost() -> void:
 	_phase_label.text = "DEFEATED"
 	_result_label.text = "All units fallen."
+	_is_player_turn = false
+	_has_pending_action = false
 	if _move_btn:    _move_btn.disabled    = true
 	if _attack_btn:  _attack_btn.disabled  = true
 	if _ability_btn: _ability_btn.disabled = true
+	if _wait_btn:    _wait_btn.disabled    = true
+	if _confirm_btn: _confirm_btn.disabled = true
+	if _cancel_btn:  _cancel_btn.disabled  = true
 
 
 func _on_ability_mode_started(usable_ids: Array) -> void:
@@ -710,6 +763,16 @@ func _on_wait() -> void:
 func _on_ability() -> void:
 	_play_sfx("ui_confirm")
 	if battle_manager: battle_manager.select_command("ability")
+
+
+func _on_confirm() -> void:
+	_play_sfx("ui_confirm")
+	if battle_manager: battle_manager.confirm_pending_action()
+
+
+func _on_cancel() -> void:
+	_play_sfx("ui_confirm")
+	if battle_manager: battle_manager.cancel_pending_action()
 
 
 func _play_sfx(sfx_id: String) -> void:

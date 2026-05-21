@@ -8,6 +8,7 @@ const BG   := Color(0.04, 0.05, 0.08)
 const FG   := Color(0.97, 0.94, 0.87)
 const DIM  := Color(0.45, 0.42, 0.38)
 const GOLD := Color(0.79, 0.65, 0.34)
+const CurseSystemScript := preload("res://scripts/roguelike/CurseSystem.gd")
 
 const NODE_META: Dictionary = {
 	"battle":      {"icon":"⚔", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
@@ -292,7 +293,7 @@ func _show_boon_pick(offers: Array) -> void:
 
 	# ── Curse offer (Returnal-style tradeoff) ─────────────────────────────
 	if _gs and _gs.active_run:
-		var cs := CurseSystem.new()
+		var cs := CurseSystemScript.new()
 		var owned_curse_ids: Array = _gs.active_run.active_curses.map(
 			func(c: Dictionary) -> String: return c.get("id",""))
 		var curse_offer := cs.generate_curse_offer(
@@ -361,6 +362,45 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 
 
 # ── Loot overlay ──────────────────────────────────────────────────────────────
+
+func _curse_card(curse: Dictionary) -> Button:
+	var accent := Color(0.92, 0.24, 0.24)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(620, 190)
+	_style_card(btn, accent)
+
+	var inner := _vbox(btn, false)
+	inner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	inner.add_theme_constant_override("margin_left", 18)
+	inner.add_theme_constant_override("margin_right", 18)
+	inner.add_theme_constant_override("margin_top", 16)
+	inner.add_theme_constant_override("margin_bottom", 16)
+	inner.add_theme_constant_override("separation", 5)
+
+	_lbl(inner, "CURSE TRADE", 10, accent, true)
+	_lbl(inner, "%s  %s" % [curse.get("icon", "!"), curse.get("name", "?")], 17, FG, true)
+	_space(inner, 4)
+	_lbl(inner, "Penalty: %s" % curse.get("penalty", ""), 11, Color(1.0, 0.66, 0.62))
+	_lbl(inner, "Unlock: %s" % curse.get("unlock", ""), 11, Color(0.82, 0.92, 1.0))
+	_space(inner, 4)
+	_lbl(inner, str(curse.get("flavour", "")), 10, DIM, true)
+	btn.pressed.connect(_on_curse_picked.bind(curse))
+	return btn
+
+
+func _on_curse_picked(curse: Dictionary) -> void:
+	if _gs and _gs.active_run:
+		_gs.active_run.active_curses.append(curse)
+	if _gs:
+		_gs.pending_boon_offers.clear()
+	if _gs and _gs.active_run:
+		_gs.active_run.complete_current_node()
+	_apply_between_battle_heal()
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+		_boon_overlay = null
+	_build_ui()
+
 
 func _show_loot(items: Array) -> void:
 	if _loot_overlay: _loot_overlay.queue_free()
