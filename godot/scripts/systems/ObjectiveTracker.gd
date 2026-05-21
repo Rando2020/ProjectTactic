@@ -94,7 +94,7 @@ func _anchor_destroyed() -> bool:
 	var anchor_units := units.filter(func(u: Unit) -> bool:
 		return u.team == "enemy" and (
 			(u.unit_data != null and u.unit_data.id == "void_anchor") or
-			(u.unit_data != null and bool(u.unit_data.get("is_anchor")))
+			(u.unit_data != null and u.unit_data.get("is_anchor") == true)
 		))
 	if anchor_units.is_empty():
 		# No anchor unit found — fall back to all enemies dead

@@ -247,7 +247,7 @@ func _on_unit_visual_position_changed(_unit_id: String, world_pos: Vector2) -> v
 
 
 func _on_combat_resolved(result: Dictionary) -> void:
-	if bool(result.get("missed", false)):
+	if result.get("missed", false) == true:
 		_camera_shake(2.0, 0.10)
 		return
 	var amount := int(result.get("hp_damage", result.get("damage", 0)))

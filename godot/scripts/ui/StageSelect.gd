@@ -151,7 +151,7 @@ func _build_run_screen(run: RunState) -> void:
 	for idx in run.floor_plan.size():
 		var node: Dictionary = run.floor_plan[idx]
 		var is_cur: bool = idx == run.current_node
-		var is_done: bool = bool(node.get("completed", false))
+		var is_done: bool = node.get("completed", false) == true
 		var is_future: bool = idx > run.current_node
 		var ntype: String = str(node.get("type","battle"))
 		var meta: Dictionary = NODE_META.get(ntype, NODE_META["battle"])

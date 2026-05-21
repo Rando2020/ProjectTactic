@@ -111,7 +111,7 @@ func _begin_enemy_turn() -> void:
 	turn_started.emit(active_unit_id, "enemy")
 
 	# ── Void Anchor: special behaviour ────────────────────────────────────
-	if unit.unit_data and bool(unit.unit_data.get("is_anchor")):
+	if unit.unit_data and unit.unit_data.get("is_anchor") == true:
 		log_message.emit("⚠ The Anchor pulses with void energy!")
 		command_hint_changed.emit("VOID PULSE — take cover!")
 		await get_tree().create_timer(0.6).timeout
@@ -152,7 +152,7 @@ func _anchor_pulse(anchor: Unit) -> void:
 		if u.team == "player" and bonuses.get("min_hp_guard", false):
 			dmg = int(float(dmg) * 0.5)
 
-		var r := u.receive_damage(dmg, "magical")
+		u.receive_damage(dmg, "magical")
 		if vfx_n:
 			(vfx_n as VFXManager).play_dark(u.grid_pos)
 			await get_tree().create_timer(0.08).timeout
@@ -161,7 +161,7 @@ func _anchor_pulse(anchor: Unit) -> void:
 		# Phase 2: Anchor enrages below 50% HP — pulses twice
 		if anchor.hp < anchor.unit_data.base_stats.hp * 0.5 and dist <= 1:
 			await get_tree().create_timer(0.4).timeout
-			var r2 := u.receive_damage(int(dmg * 0.6), "magical")
+			u.receive_damage(int(dmg * 0.6), "magical")
 			if vfx_n:
 				(vfx_n as VFXManager).play_damage_number(u.grid_pos, int(dmg * 0.6), Color(0.8, 0.1, 1.0))
 
@@ -1070,28 +1070,28 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 	var target := _unit_at_pos(grid_pos)
 	if not target:
 		# AoE with no unit under cursor — show basic info
-		var fc := ForecastCalculator.quick_spell(caster, ability)
+		var area_fc := ForecastCalculator.quick_spell(caster, ability)
 		return {
 			"visible": true, "mode": "Ability",
 			"actor": caster.display_name, "actor_portrait": _portrait_path(caster),
 			"target": "Area (%d tiles)" % ability.get("aoe_radius",1),
 			"target_portrait": "",
 			"ability_name": ability.get("display_name","?"),
-			"element": fc["element"], "element_icon": fc["element_icon"],
-			"element_color": fc["element_color"],
-			"damage": fc["boosted_damage"], "damage_min": int(fc["boosted_damage"]*0.9),
-			"damage_max": int(fc["boosted_damage"]*1.1),
-			"affinity_label": "", "boon_bonus_pct": fc["boon_pct"],
+			"element": area_fc["element"], "element_icon": area_fc["element_icon"],
+			"element_color": area_fc["element_color"],
+			"damage": area_fc["boosted_damage"], "damage_min": int(area_fc["boosted_damage"]*0.9),
+			"damage_max": int(area_fc["boosted_damage"]*1.1),
+			"affinity_label": "", "boon_bonus_pct": area_fc["boon_pct"],
 			"hp_before": 0, "hp_after": 0, "max_hp": 1,
 			"status_preview": "", "jp_gain": 6, "is_heal": false, "is_buff": false,
 		}
 	var target_type: String = ability.get("target_type", "enemy")
 	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
 	if not valid: return {}
-	var fc := ForecastCalculator.spell(caster, target, ability)
-	fc["actor_portrait"] = _portrait_path(caster)
-	fc["target_portrait"] = _portrait_path(target)
-	return fc
+	var spell_fc := ForecastCalculator.spell(caster, target, ability)
+	spell_fc["actor_portrait"] = _portrait_path(caster)
+	spell_fc["target_portrait"] = _portrait_path(target)
+	return spell_fc
 
 
 func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Dictionary, tile_target: Dictionary) -> int:

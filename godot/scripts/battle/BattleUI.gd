@@ -797,14 +797,14 @@ func _on_enemy_intent_changed(intent: Dictionary) -> void:
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
 		return
-	if preview.is_empty() or not bool(preview.get("visible", false)):
+	if preview.is_empty() or preview.get("visible", false) != true:
 		_preview_panel.visible = false
 		return
 	_preview_panel.visible = true
 
 	var el_color: Color = preview.get("element_color", Color(0.9, 0.85, 0.6))
-	var is_heal:  bool  = bool(preview.get("is_heal", false))
-	var is_buff:  bool  = bool(preview.get("is_buff", false))
+	var is_heal:  bool  = preview.get("is_heal", false) == true
+	var is_buff:  bool  = preview.get("is_buff", false) == true
 	var aff_lbl:  String = str(preview.get("affinity_label", ""))
 	var aff_col:  Color  = preview.get("affinity_color", Color.WHITE)
 
@@ -875,7 +875,7 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not status_p.is_empty(): notes.append(status_p)
 	var flank_l: String = str(preview.get("flank_label",""))
 	if not flank_l.is_empty(): notes.append(flank_l)
-	if bool(preview.get("can_counter",false)): notes.append("Counter possible")
+	if preview.get("can_counter", false) == true: notes.append("Counter possible")
 	var aoe_n: String = str(preview.get("aoe_note",""))
 	if not aoe_n.is_empty(): notes.append(aoe_n)
 	_preview_note_label.text = "  ·  ".join(notes)
