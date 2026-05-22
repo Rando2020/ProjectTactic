@@ -157,7 +157,9 @@ func _anchor_pulse(anchor: Unit) -> void:
 	var vfx_n := get_node_or_null("/root/VFX")
 
 	for uid in units:
-		var u: Unit = units[uid]
+		var u: Unit = _living_unit(str(uid))
+		if not u:
+			continue
 		if u.hp <= 0: continue
 		var dist: int = GridSystem.manhattan(anchor.grid_pos, u.grid_pos)
 		if dist > 2: continue
@@ -188,7 +190,9 @@ func _run_enemy_ai(unit: Unit) -> void:
 	var closest_player: Unit = null
 	var closest_dist: int = 9999
 	for uid in units:
-		var u: Unit = units[uid]
+		var u: Unit = _living_unit(str(uid))
+		if not u:
+			continue
 		if u.team == "player" and u.hp > 0:
 			var dist := GridSystem.manhattan(unit.grid_pos, u.grid_pos)
 			if dist < closest_dist:
@@ -213,7 +217,9 @@ func _run_enemy_ai(unit: Unit) -> void:
 	else:
 		var occupied: Array = []
 		for uid in units:
-			var u: Unit = units[uid]
+			var u: Unit = _living_unit(str(uid))
+			if not u:
+				continue
 			if u.unit_id != unit.unit_id and u.hp > 0:
 				occupied.append(u.grid_pos)
 		var reachable := GridSystem.get_move_range(
@@ -373,7 +379,9 @@ func _find_enemy_ability(unit: Unit, spell_type: String, target_type: String = "
 
 func _find_kill_attack(unit: Unit) -> Unit:
 	for uid in units:
-		var target: Unit = units[uid]
+		var target: Unit = _living_unit(str(uid))
+		if not target:
+			continue
 		if target.team != "player" or target.hp <= 0:
 			continue
 		if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > unit.unit_data.base_stats.attack_range_max:
@@ -386,7 +394,9 @@ func _find_kill_attack(unit: Unit) -> Unit:
 
 func _find_kill_spell(unit: Unit) -> Dictionary:
 	for uid in units:
-		var target: Unit = units[uid]
+		var target: Unit = _living_unit(str(uid))
+		if not target:
+			continue
 		if target.team != "player" or target.hp <= 0:
 			continue
 		for ab_id: String in unit.unit_data.abilities:
@@ -408,7 +418,9 @@ func _find_best_spell_intent(unit: Unit) -> Dictionary:
 	var best_ability: Dictionary = {}
 	var best_score := -1
 	for uid in units:
-		var target: Unit = units[uid]
+		var target: Unit = _living_unit(str(uid))
+		if not target:
+			continue
 		if target.team != "player" or target.hp <= 0:
 			continue
 		for ab_id: String in unit.unit_data.abilities:
@@ -440,7 +452,9 @@ func _best_retreat_tile(unit: Unit, target: Unit) -> Vector2i:
 func _best_reachable_tile(unit: Unit, target: Unit, maximize_distance: bool) -> Vector2i:
 	var occupied: Array = []
 	for uid in units:
-		var other: Unit = units[uid]
+		var other: Unit = _living_unit(str(uid))
+		if not other:
+			continue
 		if other.unit_id != unit.unit_id and other.hp > 0:
 			occupied.append(other.grid_pos)
 	var reachable := GridSystem.get_move_range(unit.grid_pos, unit.unit_data.base_stats.move, tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height, unit.unit_data.base_stats.jump)
@@ -527,7 +541,9 @@ func select_command(command: String) -> void:
 			command_hint_changed.emit("Move: click a blue GO tile.")
 			var occupied: Array = []
 			for uid in units:
-				var u: Unit = units[uid]
+				var u: Unit = _living_unit(str(uid))
+				if not u:
+					continue
 				if u.unit_id != unit.unit_id and u.hp > 0:
 					occupied.append(u.grid_pos)
 			var move_range := GridSystem.get_move_range(
@@ -730,7 +746,9 @@ func _get_aoe_targets(center: Vector2i, ability: Dictionary, caster: Unit) -> Ar
 	if aoe_type == "radius":
 		var radius: int = ability.get("aoe_radius", 1)
 		for uid: String in units:
-			var u: Unit = units[uid]
+			var u: Unit = _living_unit(str(uid))
+			if not u:
+				continue
 			if u.hp <= 0:
 				continue
 			var dist := GridSystem.manhattan(u.grid_pos, center)
@@ -781,7 +799,10 @@ func _check_volatile_explosion(dead_unit: Unit) -> void:
 					 Vector2i(1,1),Vector2i(1,-1),Vector2i(-1,1),Vector2i(-1,-1)]
 		for d in dirs:
 			var nb: Vector2i = dead_unit.grid_pos + d
-			for u: Unit in units:
+			for uid: String in units.keys():
+				var u: Unit = _living_unit(uid)
+				if not u:
+					continue
 				if u.grid_pos == nb and u.hp > 0 and u != dead_unit:
 					var _damage_result := u.receive_damage(dmg, "magical")
 					var vfx_n := get_node_or_null("/root/VFX")
@@ -842,7 +863,9 @@ func _try_enemy_spell(unit: Unit) -> bool:
 			return true
 		var target_type: String = ab.get("target_type", "enemy")
 		for uid: String in units:
-			var target: Unit = units[uid]
+			var target: Unit = _living_unit(str(uid))
+			if not target:
+				continue
 			if target.hp <= 0:
 				continue
 			var is_valid := (target_type == "enemy" and target.team == "player") or \
@@ -877,7 +900,9 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 		if mover and grid_pos in tactical_grid.move_tiles:
 			var occupied: Array = []
 			for uid in units:
-				var u: Unit = units[uid]
+				var u: Unit = _living_unit(str(uid))
+				if not u:
+					continue
 				if u.unit_id != mover.unit_id and u.hp > 0:
 					occupied.append(u.grid_pos)
 			var path := GridSystem.find_path(
