@@ -1,5 +1,5 @@
 ## StageSelect.gd
-## 10-floor run map. Start Run → fight through procedurally generated floors.
+## 10-floor run map. Start Run â†’ fight through procedurally generated floors.
 
 class_name StageSelect
 extends Control
@@ -10,9 +10,11 @@ const DIM  := Color(0.45, 0.42, 0.38)
 const GOLD := Color(0.79, 0.65, 0.34)
 
 const NODE_META: Dictionary = {
-	"battle":      {"icon":"⚔", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
-	"boss":        {"icon":"💀", "color":Color(0.93,0.27,0.27), "label":"Boss"},
-	"boon_pick":   {"icon":"✦", "color":Color(0.79,0.65,0.34), "label":"Boon"},
+	"battle":      {"icon":"âš”", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
+	"elite":       {"icon":"E", "color":Color(1.0,0.50,0.18),  "label":"Elite"},
+	"mystery":     {"icon":"?", "color":Color(0.72,0.58,1.0),  "label":"?"},
+	"boss":        {"icon":"ðŸ’€", "color":Color(0.93,0.27,0.27), "label":"Boss"},
+	"boon_pick":   {"icon":"âœ¦", "color":Color(0.79,0.65,0.34), "label":"Boon"},
 	"wanderer":    {"icon":"?", "color":Color(0.53,0.94,0.67), "label":"Wanderer"},
 }
 
@@ -45,14 +47,14 @@ func _build_ui() -> void:
 		_build_run_screen(_gs.active_run)
 
 
-# ── Start screen ──────────────────────────────────────────────────────────────
+# â”€â”€ Start screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _build_start_screen() -> void:
 	var vbox := _vbox(self, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	vbox.custom_minimum_size = Vector2(460, 0)
 
-	_lbl(vbox, "VAELTHAR  ·  EIDOLON CHRONICLES", 12, DIM, true)
+	_lbl(vbox, "VAELTHAR  Â·  EIDOLON CHRONICLES", 12, DIM, true)
 	_space(vbox, 8)
 	_lbl(vbox, "The Roguelike Run", 34, FG, true)
 	_space(vbox, 6)
@@ -84,7 +86,7 @@ func _build_start_screen() -> void:
 		heat_row.add_child(less); heat_row.add_child(more)
 		_space(vbox, 8)
 
-	var btn := _btn("▶  Start New Run", GOLD)
+	var btn := _btn("â–¶  Start New Run", GOLD)
 	btn.custom_minimum_size = Vector2(300, 52)
 	btn.pressed.connect(func() -> void: _on_start_run(meta.selected_heat_level if meta else 0))
 	vbox.add_child(btn)
@@ -95,10 +97,10 @@ func _build_start_screen() -> void:
 
 	# Show meta currencies
 	if meta:
-		_lbl(vbox, "Soul Shards: %d  ·  Obsidian: %d" % [meta.get_currency(Currency.SOUL_SHARDS), meta.get_currency(Currency.OBSIDIAN)], 12, DIM, true)
+		_lbl(vbox, "Soul Shards: %d  Â·  Obsidian: %d" % [meta.get_currency(Currency.SOUL_SHARDS), meta.get_currency(Currency.OBSIDIAN)], 12, DIM, true)
 
 
-# ── Run screen ────────────────────────────────────────────────────────────────
+# â”€â”€ Run screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _build_run_screen(run: RunState) -> void:
 	var root := _vbox(self)
@@ -132,12 +134,12 @@ func _build_run_screen(run: RunState) -> void:
 		_lbl(br, "Boons:", 10, DIM)
 		_gap(br, 6)
 		for boon in run.active_boons:
-			_pill(br, boon.get("icon","✦") + " " + boon.get("name","?"), GOLD)
+			_pill(br, boon.get("icon","âœ¦") + " " + boon.get("name","?"), GOLD)
 			_gap(br, 4)
 
 	_space(root, 18)
 
-	# Floor node map — horizontal scroll
+	# Floor node map â€” horizontal scroll
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size.y = 160
@@ -150,27 +152,29 @@ func _build_run_screen(run: RunState) -> void:
 
 	for idx in run.floor_plan.size():
 		var node: Dictionary = run.floor_plan[idx]
-		var is_cur: bool = idx == run.current_node
+		var is_cur: bool = int(node.get("floor", 0)) == run.current_floor and node.get("completed", false) != true and node.get("skipped", false) != true
 		var is_done: bool = node.get("completed", false) == true
-		var is_future: bool = idx > run.current_node
+		var is_future: bool = int(node.get("floor", 0)) > run.current_floor
 		var ntype: String = str(node.get("type","battle"))
 		var meta: Dictionary = NODE_META.get(ntype, NODE_META["battle"])
 
-		var nc := _node_card(meta, is_cur, is_done, is_future, node.get("floor",1))
+		var is_skipped: bool = node.get("skipped", false) == true
+		var nc := _node_card(meta, is_cur, is_done, is_future, is_skipped, node)
 		if is_cur:
 			nc.pressed.connect(_on_enter_node.bind(node))
 		hmap.add_child(nc)
 
 		# Connector arrow (not after last node)
 		if idx < run.floor_plan.size() - 1:
-			var arr := _lbl_widget("→", 14, DIM if is_future else Color(0.4,0.4,0.4))
+			var arr := _lbl_widget("â†’", 14, DIM if is_future else Color(0.4,0.4,0.4))
 			hmap.add_child(arr)
 
 	_space(root, 16)
 
 	# Current node prompt
 	var cur := run.get_current_node()
-	if cur and not cur.get("completed", false):
+	var available := run.get_available_nodes()
+	if available.size() > 0:
 		var prompt := _panel(root, Color(0.10,0.11,0.08,0.9), Vector2(0, 76))
 		var ph     := _hbox(prompt)
 		ph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -181,17 +185,17 @@ func _build_run_screen(run: RunState) -> void:
 		_lbl(ph, nm["icon"], 24, nm["color"])
 		_gap(ph, 12)
 		var info := _vbox(ph)
-		_lbl(info, nm["label"], 15, FG)
-		_lbl(info, _node_hint(cur.get("type","")), 11, DIM)
+		_lbl(info, "Choose your route" if available.size() > 1 else nm["label"], 15, FG)
+		_lbl(info, _available_route_hint(available), 11, DIM)
 		_stretch(ph)
-		var eb := _btn("Enter  →", GOLD)
+		var eb := _btn("Enter  â†’", GOLD)
 		eb.custom_minimum_size = Vector2(130, 42)
-		eb.pressed.connect(_on_enter_node.bind(cur))
+		eb.pressed.connect(_on_enter_node.bind(available[0]))
 		ph.add_child(eb)
 		_gap(ph, 12)
 
 
-# ── Node entry ────────────────────────────────────────────────────────────────
+# â”€â”€ Node entry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _on_start_run(heat: int = 0) -> void:
 	if not _gs: return
@@ -206,8 +210,15 @@ func _on_start_run(heat: int = 0) -> void:
 
 func _on_enter_node(node: Dictionary) -> void:
 	if not _gs or not _gs.active_run: return
+	var node_id := str(node.get("id", ""))
+	if not node_id.is_empty():
+		_gs.active_run.select_node(node_id)
+	if node.get("type", "") == "mystery":
+		node = _gs.active_run.resolve_mystery_node(node_id)
+		_build_ui()
+		return
 	match node.get("type","battle"):
-		"battle", "boss":
+		"battle", "elite", "boss":
 			get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 		"boon_pick":
 			var owned: Array = _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
@@ -260,7 +271,7 @@ func _on_loot_continue() -> void:
 	_build_ui()
 
 
-# ── Boon pick overlay ─────────────────────────────────────────────────────────
+# â”€â”€ Boon pick overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _show_boon_pick(offers: Array) -> void:
 	if _boon_overlay: _boon_overlay.queue_free()
@@ -288,7 +299,7 @@ func _show_boon_pick(offers: Array) -> void:
 
 	_space(vbox, 16)
 
-	# ── Curse offer (Returnal-style tradeoff) ─────────────────────────────
+	# â”€â”€ Curse offer (Returnal-style tradeoff) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	if _gs and _gs.active_run:
 		var cs := CurseSystem.new()
 		var owned_curse_ids: Array = _gs.active_run.active_curses.map(
@@ -300,7 +311,7 @@ func _show_boon_pick(offers: Array) -> void:
 			var divider := HSeparator.new()
 			vbox.add_child(divider)
 			_space(vbox, 8)
-			_lbl(vbox, "— OR ACCEPT A CURSE —", 11, Color(0.65,0.25,0.25), true)
+			_lbl(vbox, "â€” OR ACCEPT A CURSE â€”", 11, Color(0.65,0.25,0.25), true)
 			_space(vbox, 8)
 			vbox.add_child(_curse_card(curse_offer))
 
@@ -325,13 +336,13 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	inner.add_theme_constant_override("separation", 6)
 
 	_lbl(inner, boon.get("rarity","?").to_upper(), 10, accent, true)
-	_lbl(inner, boon.get("icon","✦"), 36, accent, true)
+	_lbl(inner, boon.get("icon","âœ¦"), 36, accent, true)
 	_lbl(inner, boon.get("name","?"), 15, FG, true)
 	_space(inner, 4)
 
 	var guardian: String = str(boon.get("guardian",""))
 	if guardian:
-		_lbl(inner, guardian.capitalize() + " · " + _guardian_label(guardian), 9, accent.lerp(FG, 0.4), true)
+		_lbl(inner, guardian.capitalize() + " Â· " + _guardian_label(guardian), 9, accent.lerp(FG, 0.4), true)
 		_space(inner, 4)
 
 	var desc := RichTextLabel.new()
@@ -367,7 +378,7 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	return btn
 
 
-# ── Loot overlay ──────────────────────────────────────────────────────────────
+# â”€â”€ Loot overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _boon_impact_text(boon: Dictionary) -> String:
 	var fx: Dictionary = boon.get("effect", {})
@@ -495,7 +506,7 @@ func _show_loot(items: Array) -> void:
 		_lbl(vbox, "The enemies carried nothing of value.", 14, DIM, true)
 
 	_space(vbox, 20)
-	var cont := _btn("Continue  →", GOLD)
+	var cont := _btn("Continue  â†’", GOLD)
 	cont.custom_minimum_size = Vector2(200, 44)
 	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	cont.pressed.connect(_on_loot_continue)
@@ -520,11 +531,11 @@ func _item_card(item: Dictionary) -> PanelContainer:
 	_lbl(inner, item.get("slot","").to_upper(), 9, DIM, true)
 	_space(inner, 4)
 	for affix in item.get("affixes", []):
-		_lbl(inner, "• " + affix.get("label",""), 11, Color(0.85,0.82,0.77), false)
+		_lbl(inner, "â€¢ " + affix.get("label",""), 11, Color(0.85,0.82,0.77), false)
 	return pc
 
 
-# ── Widget helpers ────────────────────────────────────────────────────────────
+# â”€â”€ Widget helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 func _lbl(parent: Control, text: String, font_size: int, color: Color, centered: bool = false) -> Label:
 	var l := Label.new(); l.text = text
@@ -618,7 +629,7 @@ func _pill(parent: Control, text: String, color: Color) -> void:
 	l.add_theme_color_override("font_color", color)
 	pc.add_child(l); parent.add_child(pc)
 
-func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool, floor_num: int) -> Button:
+func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool, is_skipped: bool, node: Dictionary) -> Button:
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(82, 100)
 	var st := StyleBoxFlat.new()
@@ -630,6 +641,10 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool,
 		st.bg_color = Color(0.12, 0.16, 0.12, 0.7)
 		st.border_color = Color(0.3, 0.65, 0.3, 0.5)
 		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
+	elif is_skipped:
+		st.bg_color = Color(0.045, 0.045, 0.055, 0.45)
+		st.border_color = Color(1, 1, 1, 0.04)
+		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
 	else:
 		st.bg_color = Color(0.08, 0.09, 0.12, 0.5)
 		st.border_color = Color(1, 1, 1, 0.08)
@@ -640,18 +655,27 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool,
 	btn.disabled = not is_cur
 
 	var ic := Label.new()
-	ic.text = "✓" if is_done else meta["icon"]
+	ic.text = "OK" if is_done else ("X" if is_skipped else meta["icon"])
 	ic.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ic.add_theme_font_size_override("font_size", 22)
 	ic.add_theme_color_override("font_color",
-		Color(0.4,0.75,0.4) if is_done else (meta["color"] if is_cur else DIM.darkened(0.2)))
+		Color(0.4,0.75,0.4) if is_done else (DIM.darkened(0.35) if is_skipped else (meta["color"] if is_cur else DIM.darkened(0.2))))
 	ic.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	btn.add_child(ic)
 
+	var hint := Label.new()
+	hint.text = str(node.get("reward_hint", ""))
+	hint.add_theme_font_size_override("font_size", 8)
+	hint.add_theme_color_override("font_color", meta["color"] if is_cur else DIM.darkened(0.1))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	hint.offset_top = -34
+	btn.add_child(hint)
+
 	# Floor number badge at bottom
-	if meta["label"] in ["Battle","Boss"]:
+	if meta["label"] in ["Battle","Elite","Boss"]:
 		var fl := Label.new()
-		fl.text = "F%d" % floor_num
+		fl.text = "F%d" % int(node.get("floor", 1))
 		fl.add_theme_font_size_override("font_size", 9)
 		fl.add_theme_color_override("font_color", meta["color"] if is_cur else DIM)
 		fl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -664,10 +688,20 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool,
 
 func _node_hint(ntype: String) -> String:
 	match ntype:
-		"boss":      return "Final floor — all elite enemies."
+		"boss":      return "Final floor - all elite enemies."
+		"elite":     return "Hard fight, better loot odds."
+		"mystery":   return "Unknown event. Could be reward, danger, or help."
 		"boon_pick": return "Choose one Guardian boon."
 		"wanderer":  return "A named character waits here."
 		_:           return "Procedurally generated battle."
+
+
+func _available_route_hint(nodes: Array[Dictionary]) -> String:
+	var parts: Array[String] = []
+	for node in nodes:
+		var meta: Dictionary = NODE_META.get(node.get("type", "battle"), NODE_META["battle"])
+		parts.append("%s %s" % [meta.get("label", "Battle"), node.get("reward_hint", "")])
+	return "Pick one path: " + "  /  ".join(parts)
 
 
 func _guardian_label(g: String) -> String:

@@ -1,4 +1,3 @@
-## RunState.gd — RefCounted, tracks active roguelike run.
 class_name RunState
 extends RefCounted
 
@@ -20,54 +19,124 @@ var completed:     bool   = false
 var started_at:    int    = 0
 var heat_level:    int    = 0
 
-## Flat 10-battle node plan with boon picks every ~3 floors
+## Slay-the-Spire-style route map: every floor can offer multiple choices.
+## Choosing one node marks the other nodes on that floor as skipped, then the run
+## advances to the next floor's available route options.
 static func create(p_seed: int) -> RunState:
 	var rs          := RunState.new()
 	rs.run_id       = "run_%s" % str(p_seed)
 	rs.seed         = p_seed
 	rs.started_at   = int(Time.get_unix_time_from_system())
 
-	# Build 10-floor node sequence
 	for f in range(1, TOTAL_FLOORS + 1):
-		var is_boss := f == TOTAL_FLOORS
-		rs.floor_plan.append({
-			"floor":     f,
-			"type":      "boss" if is_boss else "battle",
-			"completed": false,
-		})
-		# Insert boon pick after floors 3, 6, 9
-		if f in [3, 6, 9]:
+		var options := _route_options_for_floor(f, p_seed)
+		for branch in range(options.size()):
+			var ntype: String = options[branch]
 			rs.floor_plan.append({
-				"floor":     f,
-				"type":      "boon_pick",
+				"id": "f%d_b%d" % [f, branch],
+				"floor": f,
+				"branch": branch,
+				"branch_count": options.size(),
+				"type": ntype,
 				"completed": false,
-			})
-		# Insert wanderer after floors 5, 8
-		if f in [5, 8]:
-			rs.floor_plan.append({
-				"floor":     f,
-				"type":      "wanderer",
-				"completed": false,
+				"skipped": false,
+				"revealed": ntype != "mystery",
+				"risk": _risk_for_node(ntype, f),
+				"reward_hint": _reward_for_node(ntype, f),
 			})
 	return rs
+
+static func _route_options_for_floor(floor_num: int, run_seed: int) -> Array[String]:
+	if floor_num == 1:
+		return ["battle"]
+	if floor_num >= TOTAL_FLOORS:
+		return ["boss"]
+
+	var patterns: Array[Array] = [
+		["battle", "mystery"],
+		["battle", "elite"],
+		["battle", "boon_pick", "mystery"],
+		["elite", "battle", "wanderer"],
+		["battle", "mystery", "elite"],
+	]
+	var pick: int = int(abs((run_seed + floor_num * 37 + floor_num * floor_num * 11) % patterns.size()))
+	var result: Array[String] = []
+	for item in patterns[pick]:
+		result.append(str(item))
+
+	if floor_num in [3, 6, 9] and not result.has("boon_pick"):
+		result[min(1, result.size() - 1)] = "boon_pick"
+	if floor_num in [5, 8] and not result.has("wanderer"):
+		result[result.size() - 1] = "wanderer"
+	return result
+
+static func _risk_for_node(ntype: String, _floor_num: int) -> String:
+	match ntype:
+		"boss": return "Final fight"
+		"elite": return "High risk"
+		"mystery": return "Unknown"
+		"boon_pick": return "Safe"
+		"wanderer": return "Story"
+		_: return "Standard"
+
+static func _reward_for_node(ntype: String, _floor_num: int) -> String:
+	match ntype:
+		"boss": return "Run clear"
+		"elite": return "+loot / +JP"
+		"mystery": return "?"
+		"boon_pick": return "Guardian boon"
+		"wanderer": return "Secret help"
+		_: return "+gold / +JP"
 
 func get_current_node() -> Dictionary:
 	if current_node >= floor_plan.size(): return {}
 	return floor_plan[current_node]
 
+func get_available_nodes() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for node in floor_plan:
+		if int(node.get("floor", 0)) == current_floor and node.get("completed", false) != true and node.get("skipped", false) != true:
+			result.append(node)
+	return result
+
+func select_node(node_id: String) -> void:
+	for i in range(floor_plan.size()):
+		if str(floor_plan[i].get("id", "")) == node_id:
+			current_node = i
+			current_floor = int(floor_plan[i].get("floor", current_floor))
+			return
+
+func resolve_mystery_node(node_id: String) -> Dictionary:
+	select_node(node_id)
+	var node: Dictionary = get_current_node()
+	if node.is_empty() or node.get("type", "") != "mystery":
+		return node
+	var options: Array[String] = ["battle", "elite", "boon_pick", "wanderer"]
+	var roll: int = int(abs((seed * 97 + current_floor * 53 + current_node * 17) % options.size()))
+	var resolved_type: String = options[roll]
+	floor_plan[current_node]["type"] = resolved_type
+	floor_plan[current_node]["revealed"] = true
+	floor_plan[current_node]["risk"] = _risk_for_node(resolved_type, current_floor)
+	floor_plan[current_node]["reward_hint"] = _reward_for_node(resolved_type, current_floor)
+	return floor_plan[current_node]
+
 func advance() -> void:
-	if current_node < floor_plan.size() - 1:
-		current_node += 1
-		# Sync current_floor to the floor of the next battle node
-		var node := get_current_node()
-		if node.get("type", "") in ["battle", "boss"]:
-			current_floor = node.get("floor", current_floor)
-	else:
-		completed = true
+	for i in range(floor_plan.size()):
+		var node: Dictionary = floor_plan[i]
+		if node.get("completed", false) == true or node.get("skipped", false) == true:
+			continue
+		current_node = i
+		current_floor = int(node.get("floor", current_floor))
+		return
+	completed = true
 
 func complete_current_node() -> void:
 	if current_node < floor_plan.size():
+		var chosen_floor: int = int(floor_plan[current_node].get("floor", current_floor))
 		floor_plan[current_node]["completed"] = true
+		for i in range(floor_plan.size()):
+			if i != current_node and int(floor_plan[i].get("floor", -1)) == chosen_floor:
+				floor_plan[i]["skipped"] = true
 	advance()
 
 func to_dict() -> Dictionary:
@@ -75,7 +144,7 @@ func to_dict() -> Dictionary:
 		"run_id": run_id, "seed": seed, "floor": current_floor,
 		"node": current_node, "floor_plan": floor_plan,
 		"active_boons": active_boons, "active_curses": active_curses, "banned_guardian": banned_guardian, "elite_kills": elite_kills,
-		"deaths": deaths, "completed": completed, "started_at": started_at,
+		"deaths": deaths, "completed": completed, "started_at": started_at, "heat_level": heat_level,
 	}
 
 static func from_dict(d: Dictionary) -> RunState:

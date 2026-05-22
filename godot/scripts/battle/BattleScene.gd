@@ -54,7 +54,13 @@ func _ready() -> void:
 	if gs and gs.active_run and not gs.active_run.completed:
 		var mg := MapGenerator.new()
 		var run: RunState = gs.active_run
+		var current_node: Dictionary = run.get_current_node()
 		_map_data = mg.generate_floor(run.current_floor, run.seed)
+		if current_node.get("type", "") == "elite":
+			_map_data.display_name += " - Elite Route"
+			_map_data.objective_label = "Defeat the elite patrol"
+			_map_data.reward_gold = int(float(_map_data.reward_gold) * 1.55)
+			_map_data.reward_jp = int(float(_map_data.reward_jp) * 1.45)
 		_elite_system = EliteSystem.new()
 	else:
 		# Hardcoded maps for editor / debug
@@ -592,6 +598,9 @@ func _spawn_enemy_units() -> Array[Unit]:
 		var heat: int = 0
 		var rm: Node = get_node_or_null("/root/RunManager")
 		if rm: heat = rm.get_heat_level()
+		var current_node: Dictionary = gs2.active_run.get_current_node()
+		if current_node.get("type", "") == "elite":
+			heat += 5
 		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor_num, heat)
 		for i in result.size():
 			var rolled_spawn: Dictionary = rolled[i]
