@@ -851,13 +851,15 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	var t_name:  String = str(preview.get("target_name", preview.get("target","-")))
 	var hp_b:    int    = int(preview.get("hp_before", 0))
 	var hp_a:    int    = int(preview.get("hp_after",  0))
-	var max_hp:  int    = int(preview.get("max_hp", 1))
+	var _max_hp: int = int(preview.get("max_hp", 1))
 	var hp_text: String = ""
 	if hp_b > 0:
 		hp_text = "\nHP %d → %d" % [hp_b, hp_a]
 		if hp_a <= 0: hp_text += "  ☠"
 	_preview_target_label.text = "TARGET\n%s%s" % [t_name, hp_text]
-	var t_color := Color(1.0,0.55,0.55) if hp_a <= 0 else Color(1.0,0.76,0.72)
+	var t_color: Color = Color(1.0,0.76,0.72)
+	if hp_a <= 0:
+		t_color = Color(1.0,0.55,0.55)
 	_preview_target_label.add_theme_color_override("font_color", t_color)
 
 	# Main damage number

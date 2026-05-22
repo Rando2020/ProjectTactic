@@ -42,6 +42,17 @@ var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
 var _last_enemy_intents: Dictionary = {}
 
+func _living_unit(uid: String) -> Unit:
+	var candidate: Variant = units.get(uid)
+	if candidate == null or not is_instance_valid(candidate):
+		units.erase(uid)
+		return null
+	var unit := candidate as Unit
+	if not unit or unit.hp <= 0:
+		return null
+	return unit
+
+
 func _timer(seconds: float) -> SceneTreeTimer:
 	return get_tree().create_timer(maxf(seconds * DEMO_PACE, MIN_WAIT))
 
@@ -338,9 +349,9 @@ func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
 func _nearest_player(unit: Unit) -> Unit:
 	var best: Unit = null
 	var best_dist := 9999
-	for uid in units:
-		var candidate: Unit = units[uid]
-		if candidate.team != "player" or candidate.hp <= 0:
+	for uid: String in units.keys():
+		var candidate := _living_unit(uid)
+		if not candidate or candidate.team != "player":
 			continue
 		var dist := GridSystem.manhattan(unit.grid_pos, candidate.grid_pos)
 		if dist < best_dist:
@@ -1029,9 +1040,9 @@ func _end_player_turn() -> void:
 
 
 func _unit_at_pos(grid_pos: Vector2i) -> Unit:
-	for uid in units:
-		var unit: Unit = units[uid]
-		if unit.grid_pos == grid_pos and unit.hp > 0:
+	for uid: String in units.keys():
+		var unit := _living_unit(uid)
+		if unit and unit.grid_pos == grid_pos:
 			return unit
 	return null
 
