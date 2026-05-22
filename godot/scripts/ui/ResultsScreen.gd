@@ -250,8 +250,12 @@ func _get_suggestions(death: Dictionary, gs: Node) -> Array[String]:
 		if elite_tier == "champion":
 			s.append("Champions have 2+ prefixes. Void Sight boon reveals affixes before the battle — no surprises.")
 		s.append("Champion's Grit boon turns elite kills into heals: each elite killed restores 30 HP to the attacker.")
-		if "null_resonance" in [c.get("id","") for c in (gs.active_run.active_curses if gs and gs.active_run else [])]:
-			s.append("The Null Resonance curse gave every enemy an extra affix — that's what made this elite hit harder.")
+		var curse_ids: Array[String] = []
+		if gs and gs.active_run:
+			for curse: Dictionary in gs.active_run.active_curses:
+				curse_ids.append(str(curse.get("id", "")))
+		if "null_resonance" in curse_ids:
+			s.append("The Null Resonance curse gave every enemy an extra affix - that's what made this elite hit harder.")
 	elif killer_type == "void_cultist":
 		s.append("Void Cultists drain Ether fast. Kill them first — their magic output drops to zero at 0 Ether.")
 	elif killer_type == "storm_imp":
