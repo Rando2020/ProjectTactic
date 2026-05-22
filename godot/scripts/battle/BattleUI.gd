@@ -273,10 +273,32 @@ func _build_ui() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
-		_toggle_settings_overlay()
-		get_viewport().set_input_as_handled()
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	match event.keycode:
+		KEY_ESCAPE:
+			_toggle_settings_overlay()
+			get_viewport().set_input_as_handled()
+		KEY_M:
+			_press_if_ready(_move_btn, _on_move)
+		KEY_A:
+			_press_if_ready(_attack_btn, _on_attack)
+		KEY_S:
+			_press_if_ready(_ability_btn, _on_ability)
+		KEY_W:
+			_press_if_ready(_wait_btn, _on_wait)
+		KEY_ENTER, KEY_SPACE:
+			_press_if_ready(_confirm_btn, _on_confirm)
+		KEY_Q, KEY_BACKSPACE:
+			_press_if_ready(_cancel_btn, _on_cancel)
 
+
+func _press_if_ready(button: Button, callback: Callable) -> void:
+	if _settings_overlay and _settings_overlay.visible:
+		return
+	if button and not button.disabled and button.visible:
+		callback.call()
+		get_viewport().set_input_as_handled()
 
 func _build_intro_banner() -> void:
 	_intro_banner = PanelContainer.new()

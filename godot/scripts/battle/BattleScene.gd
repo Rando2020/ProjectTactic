@@ -332,7 +332,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
 func _on_battle_lost() -> void:
 	_fade_battle_music()
-	await get_tree().create_timer(2.0).timeout
+	await get_tree().create_timer(0.85).timeout
 	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 
 

@@ -21,6 +21,8 @@ signal enemy_intent_changed(intent: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
+const DEMO_PACE := 0.45
+const MIN_WAIT := 0.03
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -39,6 +41,9 @@ var is_resolving_action: bool = false
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
 var _last_enemy_intents: Dictionary = {}
+
+func _timer(seconds: float) -> SceneTreeTimer:
+	return get_tree().create_timer(maxf(seconds * DEMO_PACE, MIN_WAIT))
 
 
 func _ready() -> void:
@@ -114,7 +119,7 @@ func _begin_enemy_turn() -> void:
 	if unit.unit_data and unit.unit_data.get("is_anchor") == true:
 		log_message.emit("⚠ The Anchor pulses with void energy!")
 		command_hint_changed.emit("VOID PULSE — take cover!")
-		await get_tree().create_timer(0.6).timeout
+		await _timer(0.6).timeout
 		await _anchor_pulse(unit)
 		unit.end_turn()
 		turn_ended.emit(active_unit_id)
@@ -126,7 +131,7 @@ func _begin_enemy_turn() -> void:
 	_last_enemy_intents[unit.unit_id] = intent
 	enemy_intent_changed.emit(intent)
 	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
-	await get_tree().create_timer(0.50).timeout
+	await _timer(0.50).timeout
 	await _execute_enemy_intent(unit, intent)
 	unit.end_turn()
 	_process_terrain_hazards(unit)
@@ -155,17 +160,17 @@ func _anchor_pulse(anchor: Unit) -> void:
 		u.receive_damage(dmg, "magical")
 		if vfx_n:
 			(vfx_n as VFXManager).play_dark(u.grid_pos)
-			await get_tree().create_timer(0.08).timeout
+			await _timer(0.08).timeout
 			(vfx_n as VFXManager).play_damage_number(u.grid_pos, dmg, Color(0.6, 0.2, 0.9))
 
 		# Phase 2: Anchor enrages below 50% HP — pulses twice
 		if anchor.hp < anchor.unit_data.base_stats.hp * 0.5 and dist <= 1:
-			await get_tree().create_timer(0.4).timeout
+			await _timer(0.4).timeout
 			u.receive_damage(int(dmg * 0.6), "magical")
 			if vfx_n:
 				(vfx_n as VFXManager).play_damage_number(u.grid_pos, int(dmg * 0.6), Color(0.8, 0.1, 1.0))
 
-	await get_tree().create_timer(0.3).timeout
+	await _timer(0.3).timeout
 
 
 func _run_enemy_ai(unit: Unit) -> void:
@@ -192,7 +197,7 @@ func _run_enemy_ai(unit: Unit) -> void:
 			log_message.emit("%s hits %s for %d dmg!%s" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0), ftag])
 		# Counter-attack
 		if result.get("counter", false):
-			get_tree().create_timer(0.6).timeout.connect(
+			_timer(0.6).timeout.connect(
 				func() -> void: _execute_counter_attack(closest_player, unit))
 	else:
 		var occupied: Array = []
@@ -218,7 +223,7 @@ func _run_enemy_ai(unit: Unit) -> void:
 			log_message.emit("%s advances." % unit.display_name)
 			unit_moved.emit(unit.unit_id, old_pos, best_tile)
 			await tactical_grid.move_unit_visual(unit.unit_id, old_pos, best_tile)
-			await get_tree().create_timer(0.20).timeout
+			await _timer(0.20).timeout
 			active_unit_has_moved = true
 			closest_dist = GridSystem.manhattan(unit.grid_pos, closest_player.grid_pos)
 			if closest_dist <= unit.unit_data.base_stats.attack_range_max:
@@ -231,7 +236,7 @@ func _run_enemy_ai(unit: Unit) -> void:
 				else:
 					log_message.emit("%s moves in and hits %s for %d dmg!" % [unit.display_name, closest_player.display_name, result2.get("hp_damage", 0)])
 				if result2.get("counter", false):
-					get_tree().create_timer(0.6).timeout.connect(
+					_timer(0.6).timeout.connect(
 						func() -> void: _execute_counter_attack(closest_player, unit))
 		else:
 			log_message.emit("%s holds." % unit.display_name)
@@ -315,7 +320,7 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 		var verb := "moves in and hits" if after_move else "hits"
 		log_message.emit("%s %s %s for %d dmg!" % [unit.display_name, verb, target.display_name, result.get("hp_damage", 0)])
 	if result.get("counter", false):
-		get_tree().create_timer(0.6).timeout.connect(func() -> void: _execute_counter_attack(target, unit))
+		_timer(0.6).timeout.connect(func() -> void: _execute_counter_attack(target, unit))
 
 
 func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
@@ -326,7 +331,7 @@ func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
 	log_message.emit(message)
 	unit_moved.emit(unit.unit_id, old_pos, pos)
 	await tactical_grid.move_unit_visual(unit.unit_id, old_pos, pos)
-	await get_tree().create_timer(0.20).timeout
+	await _timer(0.20).timeout
 	active_unit_has_moved = true
 
 
@@ -613,7 +618,7 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 				"protect": vfx.play_protect(target.grid_pos)
 				_:         vfx.play_aura(target.grid_pos, Color(0.6, 0.8, 1.0))
 		if not se_data.is_empty():
-			get_tree().create_timer(0.25).timeout.connect(
+			_timer(0.25).timeout.connect(
 				func() -> void: _try_apply_status(target, se_data))
 		if not skip_setup:
 			log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
@@ -638,12 +643,12 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 			else:
 				log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
 		if result.get("counter", false):
-			get_tree().create_timer(0.6).timeout.connect(
+			_timer(0.6).timeout.connect(
 				func() -> void: _execute_counter_attack(target, caster))
 		# Status after hit
 		var se_data: Dictionary = ability.get("status_effect", {})
 		if not se_data.is_empty():
-			get_tree().create_timer(0.3).timeout.connect(
+			_timer(0.3).timeout.connect(
 				func() -> void: _try_apply_status(target, se_data))
 		# JP award for physical ability
 		if not skip_setup:
@@ -685,7 +690,7 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 	# Status
 	var se_data2: Dictionary = ability.get("status_effect", {})
 	if not se_data2.is_empty():
-		get_tree().create_timer(0.3).timeout.connect(
+		_timer(0.3).timeout.connect(
 			func() -> void: _try_apply_status(target, se_data2))
 
 
@@ -926,7 +931,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 		log_message.emit("%s moved to %d,%d." % [unit.display_name, grid_pos.x, grid_pos.y])
 		unit_moved.emit(unit.unit_id, old_pos, grid_pos)
 		await tactical_grid.move_unit_visual(unit.unit_id, old_pos, grid_pos)
-		await get_tree().create_timer(0.20).timeout
+		await _timer(0.20).timeout
 		active_unit_has_moved = true
 		is_resolving_action = false
 		command_hint_changed.emit("Move complete. Choose Attack, Ability, or Wait.")
@@ -975,7 +980,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 				else (" [flank]" if result.get("flank","") == "side" else "")
 			log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
 		if result.get("counter", false):
-			get_tree().create_timer(0.6).timeout.connect(
+			_timer(0.6).timeout.connect(
 				func() -> void: _execute_counter_attack(target, attacker))
 		active_unit_has_acted = true
 		_end_player_turn()
