@@ -75,6 +75,10 @@ static func _risk_for_node(ntype: String, _floor_num: int) -> String:
 		"boss": return "Final fight"
 		"elite": return "High risk"
 		"mystery": return "Unknown"
+		"mystery_cache": return "Reward"
+		"mystery_training": return "Reward"
+		"mystery_shrine": return "Choice"
+		"mystery_ambush": return "Danger"
 		"boon_pick": return "Safe"
 		"wanderer": return "Story"
 		_: return "Standard"
@@ -84,6 +88,10 @@ static func _reward_for_node(ntype: String, _floor_num: int) -> String:
 		"boss": return "Run clear"
 		"elite": return "+loot / +JP"
 		"mystery": return "?"
+		"mystery_cache": return "+gold"
+		"mystery_training": return "+JP"
+		"mystery_shrine": return "Boon offer"
+		"mystery_ambush": return "+spoils"
 		"boon_pick": return "Guardian boon"
 		"wanderer": return "Secret help"
 		_: return "+gold / +JP"
@@ -111,7 +119,7 @@ func resolve_mystery_node(node_id: String) -> Dictionary:
 	var node: Dictionary = get_current_node()
 	if node.is_empty() or node.get("type", "") != "mystery":
 		return node
-	var options: Array[String] = ["battle", "elite", "boon_pick", "wanderer"]
+	var options: Array[String] = ["mystery_cache", "mystery_training", "mystery_shrine", "mystery_ambush"]
 	var roll: int = int(abs((seed * 97 + current_floor * 53 + current_node * 17) % options.size()))
 	var resolved_type: String = options[roll]
 	floor_plan[current_node]["type"] = resolved_type

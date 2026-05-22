@@ -1,5 +1,5 @@
 ## StageSelect.gd
-## 10-floor run map. Start Run â†’ fight through procedurally generated floors.
+## 10-floor run map. Start Run -> choose routes -> fight through procedurally generated floors.
 
 class_name StageSelect
 extends Control
@@ -10,11 +10,15 @@ const DIM  := Color(0.45, 0.42, 0.38)
 const GOLD := Color(0.79, 0.65, 0.34)
 
 const NODE_META: Dictionary = {
-	"battle":      {"icon":"âš”", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
+	"battle":      {"icon":"B", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
 	"elite":       {"icon":"E", "color":Color(1.0,0.50,0.18),  "label":"Elite"},
 	"mystery":     {"icon":"?", "color":Color(0.72,0.58,1.0),  "label":"?"},
-	"boss":        {"icon":"ðŸ’€", "color":Color(0.93,0.27,0.27), "label":"Boss"},
-	"boon_pick":   {"icon":"âœ¦", "color":Color(0.79,0.65,0.34), "label":"Boon"},
+	"mystery_cache": {"icon":"$", "color":Color(0.96,0.78,0.28),  "label":"Cache"},
+	"mystery_training": {"icon":"JP", "color":Color(0.48,0.86,1.0),  "label":"Training"},
+	"mystery_shrine": {"icon":"+", "color":Color(0.79,0.65,0.34),  "label":"Shrine"},
+	"mystery_ambush": {"icon":"!", "color":Color(0.93,0.27,0.27),  "label":"Ambush"},
+	"boss":        {"icon":"!", "color":Color(0.93,0.27,0.27), "label":"Boss"},
+	"boon_pick":   {"icon":"+", "color":Color(0.79,0.65,0.34), "label":"Boon"},
 	"wanderer":    {"icon":"?", "color":Color(0.53,0.94,0.67), "label":"Wanderer"},
 }
 
@@ -47,14 +51,14 @@ func _build_ui() -> void:
 		_build_run_screen(_gs.active_run)
 
 
-# â”€â”€ Start screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Start screen
 
 func _build_start_screen() -> void:
 	var vbox := _vbox(self, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	vbox.custom_minimum_size = Vector2(460, 0)
 
-	_lbl(vbox, "VAELTHAR  Â·  EIDOLON CHRONICLES", 12, DIM, true)
+	_lbl(vbox, "VAELTHAR / EIDOLON CHRONICLES", 12, DIM, true)
 	_space(vbox, 8)
 	_lbl(vbox, "The Roguelike Run", 34, FG, true)
 	_space(vbox, 6)
@@ -86,7 +90,7 @@ func _build_start_screen() -> void:
 		heat_row.add_child(less); heat_row.add_child(more)
 		_space(vbox, 8)
 
-	var btn := _btn("â–¶  Start New Run", GOLD)
+	var btn := _btn(">  Start New Run", GOLD)
 	btn.custom_minimum_size = Vector2(300, 52)
 	btn.pressed.connect(func() -> void: _on_start_run(meta.selected_heat_level if meta else 0))
 	vbox.add_child(btn)
@@ -97,10 +101,10 @@ func _build_start_screen() -> void:
 
 	# Show meta currencies
 	if meta:
-		_lbl(vbox, "Soul Shards: %d  Â·  Obsidian: %d" % [meta.get_currency(Currency.SOUL_SHARDS), meta.get_currency(Currency.OBSIDIAN)], 12, DIM, true)
+		_lbl(vbox, "Soul Shards: %d / Obsidian: %d" % [meta.get_currency(Currency.SOUL_SHARDS), meta.get_currency(Currency.OBSIDIAN)], 12, DIM, true)
 
 
-# â”€â”€ Run screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Run screen
 
 func _build_run_screen(run: RunState) -> void:
 	var root := _vbox(self)
@@ -134,12 +138,12 @@ func _build_run_screen(run: RunState) -> void:
 		_lbl(br, "Boons:", 10, DIM)
 		_gap(br, 6)
 		for boon in run.active_boons:
-			_pill(br, boon.get("icon","âœ¦") + " " + boon.get("name","?"), GOLD)
+			_pill(br, boon.get("icon","+") + " " + boon.get("name","?"), GOLD)
 			_gap(br, 4)
 
 	_space(root, 18)
 
-	# Floor node map â€” horizontal scroll
+	# Floor node map  horizontal scroll
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size.y = 160
@@ -166,7 +170,7 @@ func _build_run_screen(run: RunState) -> void:
 
 		# Connector arrow (not after last node)
 		if idx < run.floor_plan.size() - 1:
-			var arr := _lbl_widget("â†’", 14, DIM if is_future else Color(0.4,0.4,0.4))
+			var arr := _lbl_widget("->", 14, DIM if is_future else Color(0.4,0.4,0.4))
 			hmap.add_child(arr)
 
 	_space(root, 16)
@@ -188,14 +192,14 @@ func _build_run_screen(run: RunState) -> void:
 		_lbl(info, "Choose your route" if available.size() > 1 else nm["label"], 15, FG)
 		_lbl(info, _available_route_hint(available), 11, DIM)
 		_stretch(ph)
-		var eb := _btn("Enter  â†’", GOLD)
+		var eb := _btn("Enter  ->", GOLD)
 		eb.custom_minimum_size = Vector2(130, 42)
 		eb.pressed.connect(_on_enter_node.bind(available[0]))
 		ph.add_child(eb)
 		_gap(ph, 12)
 
 
-# â”€â”€ Node entry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Node entry
 
 func _on_start_run(heat: int = 0) -> void:
 	if not _gs: return
@@ -215,11 +219,15 @@ func _on_enter_node(node: Dictionary) -> void:
 		_gs.active_run.select_node(node_id)
 	if node.get("type", "") == "mystery":
 		node = _gs.active_run.resolve_mystery_node(node_id)
-		_build_ui()
+		_resolve_revealed_mystery(node)
 		return
 	match node.get("type","battle"):
-		"battle", "elite", "boss":
+		"battle", "elite", "boss", "mystery_ambush":
 			get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+		"mystery_cache", "mystery_training":
+			_show_mystery_event(node)
+		"mystery_shrine":
+			_show_mystery_shrine(node)
 		"boon_pick":
 			var owned: Array = _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
 			var floor_num: int = int(_gs.active_run.current_floor)
@@ -227,6 +235,88 @@ func _on_enter_node(node: Dictionary) -> void:
 			_show_boon_pick(offers)
 		"wanderer":
 			_show_wanderer_encounter(_gs.active_run)
+
+
+func _resolve_revealed_mystery(node: Dictionary) -> void:
+	match node.get("type", ""):
+		"mystery_ambush":
+			get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+		"mystery_shrine":
+			_show_mystery_shrine(node)
+		"mystery_cache", "mystery_training":
+			_show_mystery_event(node)
+		_:
+			_build_ui()
+
+
+func _show_mystery_shrine(_node: Dictionary) -> void:
+	if not _gs or not _gs.active_run:
+		return
+	var owned: Array = _gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id", ""))
+	var floor_num: int = int(_gs.active_run.current_floor)
+	var offers := _bs.generate_offers(_gs.active_run.seed * 29 + floor_num * 11 + _gs.active_run.current_node, floor_num, owned)
+	_show_boon_pick(offers)
+
+
+func _show_mystery_event(node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(620, 0)
+	var event_type: String = str(node.get("type", ""))
+	var is_cache := event_type == "mystery_cache"
+	var title := "Hidden Cache" if is_cache else "Training Shrine"
+	var body := "You find sealed coin and supplies tucked beneath old stone." if is_cache else "The party studies an old tactical mural. Everyone gains JP."
+	var reward := "+%dg" % _mystery_gold_reward() if is_cache else "+%d JP to each unit" % _mystery_jp_reward()
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, title, 30, FG, true)
+	_space(vbox, 8)
+	_lbl(vbox, body, 13, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, reward, 18, GOLD if is_cache else Color(0.48,0.86,1.0), true)
+	_space(vbox, 22)
+	var cont := _btn("Claim", GOLD)
+	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont.pressed.connect(func() -> void:
+		_apply_mystery_event(event_type)
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_build_ui())
+	vbox.add_child(cont)
+
+
+func _apply_mystery_event(event_type: String) -> void:
+	if not _gs or not _gs.active_run:
+		return
+	match event_type:
+		"mystery_cache":
+			_gs.gold += _mystery_gold_reward()
+		"mystery_training":
+			_grant_party_jp(_mystery_jp_reward())
+	_gs.active_run.complete_current_node()
+	_gs.save()
+
+
+func _mystery_gold_reward() -> int:
+	return 80 + int(_gs.active_run.current_floor) * 24 if _gs and _gs.active_run else 80
+
+
+func _mystery_jp_reward() -> int:
+	return 12 + int(_gs.active_run.current_floor) * 4 if _gs and _gs.active_run else 12
+
+
+func _grant_party_jp(amount: int) -> void:
+	if not _gs:
+		return
+	for uid in _gs.unit_registry:
+		var reg: Dictionary = _gs.unit_registry[uid]
+		reg["jp"] = int(reg.get("jp", 0)) + amount
+	_gs.run_jp_earned += amount
 
 func _on_abandon() -> void:
 	var rm: Node = get_node_or_null("/root/RunManager")
@@ -271,7 +361,7 @@ func _on_loot_continue() -> void:
 	_build_ui()
 
 
-# â”€â”€ Boon pick overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Boon pick overlay
 
 func _show_boon_pick(offers: Array) -> void:
 	if _boon_overlay: _boon_overlay.queue_free()
@@ -299,7 +389,7 @@ func _show_boon_pick(offers: Array) -> void:
 
 	_space(vbox, 16)
 
-	# â”€â”€ Curse offer (Returnal-style tradeoff) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	#  Curse offer (Returnal-style tradeoff)
 	if _gs and _gs.active_run:
 		var cs := CurseSystem.new()
 		var owned_curse_ids: Array = _gs.active_run.active_curses.map(
@@ -311,7 +401,7 @@ func _show_boon_pick(offers: Array) -> void:
 			var divider := HSeparator.new()
 			vbox.add_child(divider)
 			_space(vbox, 8)
-			_lbl(vbox, "â€” OR ACCEPT A CURSE â€”", 11, Color(0.65,0.25,0.25), true)
+			_lbl(vbox, "-- OR ACCEPT A CURSE --", 11, Color(0.65,0.25,0.25), true)
 			_space(vbox, 8)
 			vbox.add_child(_curse_card(curse_offer))
 
@@ -336,13 +426,13 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	inner.add_theme_constant_override("separation", 6)
 
 	_lbl(inner, boon.get("rarity","?").to_upper(), 10, accent, true)
-	_lbl(inner, boon.get("icon","âœ¦"), 36, accent, true)
+	_lbl(inner, boon.get("icon","+"), 36, accent, true)
 	_lbl(inner, boon.get("name","?"), 15, FG, true)
 	_space(inner, 4)
 
 	var guardian: String = str(boon.get("guardian",""))
 	if guardian:
-		_lbl(inner, guardian.capitalize() + " Â· " + _guardian_label(guardian), 9, accent.lerp(FG, 0.4), true)
+		_lbl(inner, guardian.capitalize() + " / " + _guardian_label(guardian), 9, accent.lerp(FG, 0.4), true)
 		_space(inner, 4)
 
 	var desc := RichTextLabel.new()
@@ -378,7 +468,7 @@ func _boon_card(boon: Dictionary, accent: Color) -> Button:
 	return btn
 
 
-# â”€â”€ Loot overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Loot overlay
 
 func _boon_impact_text(boon: Dictionary) -> String:
 	var fx: Dictionary = boon.get("effect", {})
@@ -506,7 +596,7 @@ func _show_loot(items: Array) -> void:
 		_lbl(vbox, "The enemies carried nothing of value.", 14, DIM, true)
 
 	_space(vbox, 20)
-	var cont := _btn("Continue  â†’", GOLD)
+	var cont := _btn("Continue  ->", GOLD)
 	cont.custom_minimum_size = Vector2(200, 44)
 	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	cont.pressed.connect(_on_loot_continue)
@@ -531,11 +621,11 @@ func _item_card(item: Dictionary) -> PanelContainer:
 	_lbl(inner, item.get("slot","").to_upper(), 9, DIM, true)
 	_space(inner, 4)
 	for affix in item.get("affixes", []):
-		_lbl(inner, "â€¢ " + affix.get("label",""), 11, Color(0.85,0.82,0.77), false)
+		_lbl(inner, "- " + affix.get("label",""), 11, Color(0.85,0.82,0.77), false)
 	return pc
 
 
-# â”€â”€ Widget helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+#  Widget helpers
 
 func _lbl(parent: Control, text: String, font_size: int, color: Color, centered: bool = false) -> Label:
 	var l := Label.new(); l.text = text
@@ -691,6 +781,10 @@ func _node_hint(ntype: String) -> String:
 		"boss":      return "Final floor - all elite enemies."
 		"elite":     return "Hard fight, better loot odds."
 		"mystery":   return "Unknown event. Could be reward, danger, or help."
+		"mystery_cache": return "Claim gold without a fight."
+		"mystery_training": return "Gain JP without a fight."
+		"mystery_shrine": return "Choose a surprise Guardian boon."
+		"mystery_ambush": return "Ambush battle with better spoils."
 		"boon_pick": return "Choose one Guardian boon."
 		"wanderer":  return "A named character waits here."
 		_:           return "Procedurally generated battle."

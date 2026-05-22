@@ -61,6 +61,11 @@ func _ready() -> void:
 			_map_data.objective_label = "Defeat the elite patrol"
 			_map_data.reward_gold = int(float(_map_data.reward_gold) * 1.55)
 			_map_data.reward_jp = int(float(_map_data.reward_jp) * 1.45)
+		elif current_node.get("type", "") == "mystery_ambush":
+			_map_data.display_name += " - Ambush"
+			_map_data.objective_label = "Survive the ambush"
+			_map_data.reward_gold = int(float(_map_data.reward_gold) * 1.35)
+			_map_data.reward_jp = int(float(_map_data.reward_jp) * 1.25)
 		_elite_system = EliteSystem.new()
 	else:
 		# Hardcoded maps for editor / debug
@@ -601,6 +606,8 @@ func _spawn_enemy_units() -> Array[Unit]:
 		var current_node: Dictionary = gs2.active_run.get_current_node()
 		if current_node.get("type", "") == "elite":
 			heat += 5
+		elif current_node.get("type", "") == "mystery_ambush":
+			heat += 3
 		var rolled := _elite_system.apply_to_floor(spawns_as_dicts, gs2.active_run.seed, floor_num, heat)
 		for i in result.size():
 			var rolled_spawn: Dictionary = rolled[i]
