@@ -102,7 +102,7 @@ func _run_tick() -> void:
 
 
 func _begin_player_turn() -> void:
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	active_unit_has_moved = false
 	active_unit_has_acted = false
 	if unit:
@@ -116,7 +116,7 @@ func _begin_player_turn() -> void:
 
 
 func _begin_enemy_turn() -> void:
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		_set_phase(Phase.RESOLVE)
 		return
@@ -510,7 +510,7 @@ func cancel_pending_action() -> void:
 func select_command(command: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:
 		return
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
 	if command == "move" and active_unit_has_moved:
@@ -555,7 +555,7 @@ func select_command(command: String) -> void:
 			if active_unit_has_acted:
 				return
 			command_hint_changed.emit("Ability: choose a spell, then click a purple CAST tile or target.")
-			var ab_unit: Unit = units.get(active_unit_id)
+			var ab_unit: Unit = _living_unit(active_unit_id)
 			if not ab_unit:
 				return
 			if ab_unit.has_status("silence"):
@@ -572,7 +572,7 @@ func select_command(command: String) -> void:
 func select_ability(ability_id: String) -> void:
 	if current_phase != Phase.PLAYER_TURN:
 		return
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
 	if active_unit_has_acted:
@@ -873,7 +873,7 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 		])
 	if active_command == "move":
 		action_preview_changed.emit(_move_preview(grid_pos))
-		var mover: Unit = units.get(active_unit_id)
+		var mover: Unit = _living_unit(active_unit_id)
 		if mover and grid_pos in tactical_grid.move_tiles:
 			var occupied: Array = []
 			for uid in units:
@@ -925,7 +925,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 		return
 	if is_resolving_action:
 		return
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
 	if active_command in ["attack", "ability_target"]:
@@ -964,8 +964,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 	if is_resolving_action:
 		return
 	if active_command == "attack":
-		var attacker: Unit = units.get(active_unit_id)
-		var target:   Unit = units.get(unit_id)
+		var attacker: Unit = _living_unit(active_unit_id)
+		var target:   Unit = _living_unit(unit_id)
 		if not attacker or not target or target.team == attacker.team or target.hp <= 0:
 			return
 		if target.grid_pos not in tactical_grid.attack_tiles:
@@ -1001,7 +1001,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 			return
 		var ability: Dictionary = AbilityDB.get_ability(selected_ability_id)
 		var target_type: String = ability.get("target_type", "enemy")
-		var caster: Unit = units.get(active_unit_id)
+		var caster: Unit = _living_unit(active_unit_id)
 		if not caster:
 			return
 		var valid_target := false
@@ -1024,7 +1024,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 
 
 func _end_player_turn() -> void:
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if unit:
 		unit.end_turn()
 		_process_terrain_hazards(unit)
@@ -1048,7 +1048,7 @@ func _unit_at_pos(grid_pos: Vector2i) -> Unit:
 
 
 func _move_preview(grid_pos: Vector2i) -> Dictionary:
-	var unit: Unit = units.get(active_unit_id)
+	var unit: Unit = _living_unit(active_unit_id)
 	if not unit or grid_pos not in tactical_grid.move_tiles:
 		return {}
 	return {
@@ -1067,7 +1067,7 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 
 
 func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
-	var attacker: Unit = units.get(active_unit_id)
+	var attacker: Unit = _living_unit(active_unit_id)
 	var target := _unit_at_pos(grid_pos)
 	if not attacker or not target or target.team == attacker.team or grid_pos not in tactical_grid.attack_tiles:
 		return {}
@@ -1080,7 +1080,7 @@ func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
 
 
 func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dictionary:
-	var caster: Unit = units.get(active_unit_id)
+	var caster: Unit = _living_unit(active_unit_id)
 	if not caster or grid_pos not in tactical_grid.ability_tiles:
 		return {}
 	var target := _unit_at_pos(grid_pos)
