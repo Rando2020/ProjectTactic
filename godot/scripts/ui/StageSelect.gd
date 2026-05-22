@@ -553,25 +553,72 @@ func _show_wanderer_encounter(run: RunState) -> void:
 		_boon_overlay.queue_free()
 	_boon_overlay = _overlay()
 	add_child(_boon_overlay)
+
+	var met_before: bool = _gs != null and _gs.story_flags.has("met_orren")
+	var title := "Orren of the Lower Stair" if not met_before else "Orren's Second Mark"
+	var body := "A lantern flickers beside a broken stair. Orren, a vault-runner with a silver map case, raises one hand before your party reaches for steel."
+	if met_before:
+		body = "Orren finds you again between two impossible doors. His map has changed since the last floor, and one route now burns gold-bright."
+
 	var vbox := _vbox(_boon_overlay, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	vbox.custom_minimum_size = Vector2(620, 0)
-	_lbl(vbox, "WANDERER", 11, DIM, true)
+	vbox.custom_minimum_size = Vector2(760, 0)
+	_lbl(vbox, "STORY ENCOUNTER", 11, Color(0.53,0.94,0.67), true)
 	_space(vbox, 8)
-	_lbl(vbox, "A traveler shares a technique.", 28, FG, true)
+	_lbl(vbox, title, 30, FG, true)
 	_space(vbox, 8)
-	_lbl(vbox, "Full encounter choices will come later. For now, the node is cleared.", 13, DIM, true)
-	_space(vbox, 22)
-	var cont := _btn("Continue", GOLD)
-	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	cont.pressed.connect(func() -> void:
-		run.complete_current_node()
-		if _boon_overlay:
-			_boon_overlay.queue_free()
-			_boon_overlay = null
-		_build_ui())
-	vbox.add_child(cont)
+	var story := RichTextLabel.new()
+	story.bbcode_enabled = false
+	story.text = body + "\n\n\"The Anchor rearranges the floors when it feels watched,\" he says. \"Let me mark one truth before it lies again.\""
+	story.add_theme_font_size_override("normal_font_size", 13)
+	story.add_theme_color_override("default_color", Color(0.82,0.80,0.76))
+	story.custom_minimum_size = Vector2(700, 112)
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(story)
+	_space(vbox, 16)
 
+	var choices := _hbox(vbox)
+	choices.add_theme_constant_override("separation", 14)
+	var map_btn := _btn("Trust His Map  +%dg" % _wanderer_gold_reward(), GOLD)
+	map_btn.custom_minimum_size = Vector2(260, 54)
+	map_btn.pressed.connect(_apply_wanderer_choice.bind("map", run))
+	choices.add_child(map_btn)
+	var train_btn := _btn("Train At The Stair  +%d JP" % _wanderer_jp_reward(), Color(0.48,0.86,1.0))
+	train_btn.custom_minimum_size = Vector2(260, 54)
+	train_btn.pressed.connect(_apply_wanderer_choice.bind("training", run))
+	choices.add_child(train_btn)
+
+	_space(vbox, 12)
+	_lbl(vbox, "Orren will remember which help you accepted.", 11, DIM, true)
+
+
+func _apply_wanderer_choice(choice_id: String, run: RunState) -> void:
+	if not _gs:
+		return
+	if not _gs.story_flags.has("met_orren"):
+		_gs.story_flags.append("met_orren")
+	var choice_flag := "orrens_%s" % choice_id
+	if not _gs.story_flags.has(choice_flag):
+		_gs.story_flags.append(choice_flag)
+	match choice_id:
+		"map":
+			_gs.gold += _wanderer_gold_reward()
+		"training":
+			_grant_party_jp(_wanderer_jp_reward())
+	run.complete_current_node()
+	_gs.save()
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+		_boon_overlay = null
+	_build_ui()
+
+
+func _wanderer_gold_reward() -> int:
+	return 70 + int(_gs.active_run.current_floor) * 30 if _gs and _gs.active_run else 100
+
+
+func _wanderer_jp_reward() -> int:
+	return 18 + int(_gs.active_run.current_floor) * 5 if _gs and _gs.active_run else 24
 
 func _show_loot(items: Array) -> void:
 	if _loot_overlay: _loot_overlay.queue_free()

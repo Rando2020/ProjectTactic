@@ -212,6 +212,10 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 	var heat:  int = 0
 	var rm: Node = Engine.get_main_loop().root.get_node_or_null("/root/RunManager") if Engine.get_main_loop() else null
 	if rm: heat = rm.heat_level
+	var story_flags: Array = []
+	if gs and gs.get("story_flags") != null:
+		story_flags = gs.story_flags
+	var met_wanderer := story_flags.has("met_orren")
 	var active_curses: Array = []
 	var active_boons:  Array = []
 	if gs and gs.get("active_run") and gs.active_run:
@@ -225,18 +229,40 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 
 	# Priority selection
 	var category := "default"
-	if runs == 0 and reached_floor == 0:      category = "first_run"
-	elif was_complete:                 category = "run_complete"
-	elif died_anchor:                  category = "died_to_anchor"
-	elif died_elite:                   category = "died_to_elite"
-	elif had_curses:                   category = "had_curses"
-	elif heat >= 2:                    category = "high_heat"
-	elif reached_floor >= 7:                   category = "floor_7_9"
-	elif reached_floor >= 4:                   category = "floor_4_6"
-	elif reached_floor >= 1:                   category = "floor_1_3"
-
+	if met_wanderer:
+		category = "met_wanderer"
+	elif runs == 0 and reached_floor == 0:
+		category = "first_run"
+	elif was_complete:
+		category = "run_complete"
+	elif died_anchor:
+		category = "died_to_anchor"
+	elif died_elite:
+		category = "died_to_elite"
+	elif had_curses:
+		category = "had_curses"
+	elif heat >= 2:
+		category = "high_heat"
+	elif reached_floor >= 7:
+		category = "floor_7_9"
+	elif reached_floor >= 4:
+		category = "floor_4_6"
+	elif reached_floor >= 1:
+		category = "floor_1_3"
 	# Fallback chain
-	var pool: Array = lines.get(category, lines.get("default", []))
+	var pool: Array = []
+	if category == "met_wanderer":
+		match character_id:
+			"sera":
+				pool = ["\"Orren found you, then. Keep his marks close. The lower stairs move when no one is looking.\""]
+			"varn":
+				pool = ["\"Orren is reckless, but his routes are good. If he says a door is safe, it is safe enough.\""]
+			"volant":
+				pool = ["\"You met Orren? Good. His maps are infuriatingly imprecise and usually correct.\""]
+			_:
+				pool = lines.get("default", [])
+	else:
+		pool = lines.get(category, lines.get("default", []))
 	if pool.is_empty(): return {}
 
 	var raw: String = pool[randi() % pool.size()]

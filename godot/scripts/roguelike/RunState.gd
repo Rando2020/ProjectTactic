@@ -49,6 +49,8 @@ static func create(p_seed: int) -> RunState:
 static func _route_options_for_floor(floor_num: int, run_seed: int) -> Array[String]:
 	if floor_num == 1:
 		return ["battle"]
+	if floor_num == 2:
+		return ["wanderer", "battle"]
 	if floor_num >= TOTAL_FLOORS:
 		return ["boss"]
 

@@ -189,6 +189,7 @@ func save() -> void:
 		"version":          SAVE_VERSION,
 		"gold":             gold,
 		"completed_stages": completed_stages.duplicate(),
+		"story_flags":      story_flags.duplicate(),
 		"unit_jp":          unit_jp,
 		"unit_learned":     unit_learned,
 	}
@@ -231,6 +232,10 @@ func load_save() -> bool:
 	for s: Variant in data.get("completed_stages", []):
 		completed_stages.append(str(s))
 
+	story_flags.clear()
+	for flag: Variant in data.get("story_flags", []):
+		story_flags.append(str(flag))
+
 	var saved_jp:      Dictionary = data.get("unit_jp", {})
 	var saved_learned: Dictionary = data.get("unit_learned", {})
 
@@ -255,6 +260,7 @@ func delete_save() -> void:
 			dir.remove("save.json")
 	gold = 0
 	completed_stages.clear()
+	story_flags.clear()
 	pending_rewards.clear()
 	unit_registry.clear()
 	_init_defaults()
