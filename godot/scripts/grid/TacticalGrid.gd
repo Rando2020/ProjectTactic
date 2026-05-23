@@ -208,7 +208,7 @@ func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> voi
 
 
 func _uses_art_tile(terrain: String) -> bool:
-	return terrain in ["burning", "ice", "frozen_water", "shrine", "cracked_stone", "scorched"]
+	return TERRAIN_TEXTURE_PATHS.has(terrain)
 
 
 func _texture_for_terrain(terrain: String) -> Texture2D:

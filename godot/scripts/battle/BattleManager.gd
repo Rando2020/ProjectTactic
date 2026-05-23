@@ -769,7 +769,9 @@ func _get_aoe_targets(center: Vector2i, ability: Dictionary, caster: Unit) -> Ar
 func _award_jp(unit: Unit, event_type: String) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if not gs: return
-	var uid: String = unit.unit_data.id if unit.unit_data else unit.name
+	var uid: String = unit.name
+	if unit.unit_data:
+		uid = unit.unit_data.id
 	if not gs.unit_registry.has(uid): return
 	var js := JobSystem.new()
 	var base_jp: int = js.get_jp_award(event_type)
