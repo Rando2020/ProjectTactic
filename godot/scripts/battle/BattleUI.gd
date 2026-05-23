@@ -3,6 +3,8 @@ extends CanvasLayer
 
 signal spoils_continue_requested
 
+const DISPLAY_FONT := preload("res://assets/fonts/TrajanPro-Regular.ttf")
+
 var battle_manager: BattleManager
 
 var _mission_label: Label
@@ -263,6 +265,7 @@ func _build_ui() -> void:
 		lbl.add_theme_font_size_override("font_size", 11)
 		lbl.add_theme_color_override("font_color", Color(0.75, 0.78, 0.82))
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		root.add_child(lbl)
 		_log_labels.append(lbl)
 
@@ -367,6 +370,7 @@ func _build_side_timeline() -> void:
 		lbl.add_theme_font_size_override("font_size", 10)
 		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.9))
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lbl.custom_minimum_size = Vector2(104.0, 28.0)
 		box.add_child(lbl)
 		_side_timeline_labels.append(lbl)
@@ -446,6 +450,7 @@ func _preview_label(parent: Control, text: String, font_size: int, color: Color,
 		align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
+	lbl.add_theme_font_override("font", DISPLAY_FONT)
 	lbl.horizontal_alignment = align
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.add_theme_color_override("font_color", color)
@@ -459,20 +464,30 @@ func show_spoils(rewards: Dictionary, items: Array) -> void:
 		_spoils_overlay.queue_free()
 	_spoils_overlay = Control.new()
 	_spoils_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_spoils_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_spoils_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_spoils_overlay)
 
 	var dim := ColorRect.new()
 	dim.color = Color(0.0, 0.0, 0.0, 0.62)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_spoils_overlay.add_child(dim)
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(260.0, 86.0)
-	panel.custom_minimum_size = Vector2(760.0, 540.0)
+	panel.custom_minimum_size = Vector2(900.0, 560.0)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -450.0
+	panel.offset_top = -280.0
+	panel.offset_right = 450.0
+	panel.offset_bottom = 280.0
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(0.035, 0.04, 0.06, 0.96)
 	st.border_color = Color(1.0, 0.78, 0.28, 0.9)
+	st.content_margin_left = 34.0
+	st.content_margin_right = 34.0
+	st.content_margin_top = 26.0
+	st.content_margin_bottom = 26.0
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
 		st.set_border_width(side, 2)
 	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
@@ -482,6 +497,7 @@ func show_spoils(rewards: Dictionary, items: Array) -> void:
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(box)
 
 	_spoils_label(box, "STAGE CLEAR", 30, Color(1.0, 0.88, 0.36), true)
@@ -503,9 +519,13 @@ func show_spoils(rewards: Dictionary, items: Array) -> void:
 	var item_row := HBoxContainer.new()
 	item_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	item_row.add_theme_constant_override("separation", 10)
+	item_row.custom_minimum_size = Vector2(820.0, 160.0)
+	item_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(item_row)
 	if items.is_empty():
-		_spoils_label(item_row, "No gear dropped this time.", 14, Color(0.72, 0.76, 0.82), true)
+		var empty := _spoils_label(item_row, "No gear dropped this time.", 16, Color(0.72, 0.76, 0.82), true)
+		empty.custom_minimum_size = Vector2(760.0, 120.0)
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	else:
 		for i in range(min(items.size(), 3)):
 			item_row.add_child(_spoils_item_card(items[i]))
@@ -514,6 +534,8 @@ func show_spoils(rewards: Dictionary, items: Array) -> void:
 	cont.text = "Continue"
 	cont.custom_minimum_size = Vector2(180.0, 42.0)
 	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont.add_theme_font_override("font", DISPLAY_FONT)
+	cont.add_theme_font_size_override("font_size", 14)
 	cont.pressed.connect(_on_spoils_continue)
 	box.add_child(cont)
 
@@ -522,9 +544,11 @@ func _spoils_label(parent: Control, text: String, font_size: int, color: Color,
 		centered: bool) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
+	lbl.add_theme_font_override("font", DISPLAY_FONT)
 	lbl.add_theme_font_size_override("font_size", font_size)
 	lbl.add_theme_color_override("font_color", color)
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if centered:
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(lbl)
@@ -595,7 +619,7 @@ func _build_settings_overlay() -> void:
 
 	var dim := ColorRect.new()
 	dim.color = Color(0.0, 0.0, 0.0, 0.58)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_settings_overlay.add_child(dim)
 
 	var panel := PanelContainer.new()
@@ -605,6 +629,7 @@ func _build_settings_overlay() -> void:
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(box)
 
 	var title := Label.new()
@@ -711,6 +736,7 @@ func _separator() -> HSeparator:
 func _section_label(text: String) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
+	lbl.add_theme_font_override("font", DISPLAY_FONT)
 	lbl.add_theme_font_size_override("font_size", 12)
 	lbl.add_theme_color_override("font_color", Color(0.5, 0.55, 0.65))
 	return lbl
@@ -743,6 +769,7 @@ func _timeline_slot(parent: Control) -> Label:
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	lbl.add_theme_font_size_override("font_size", 10)
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(lbl)
 	parent.add_child(panel)
 	return lbl
