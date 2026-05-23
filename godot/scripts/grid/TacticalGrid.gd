@@ -16,29 +16,31 @@ var tiles: Dictionary = {}           # Vector2i -> Dictionary
 var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
 var _tile_top_polys: Dictionary = {} # Vector2i -> Polygon2D, for mutation/art swap
 
-const TERRAIN_TEXTURES := {
-	"grass": preload("res://assets/tiles/grass.png"),
-	"grass_flowers": preload("res://assets/tiles/grass_flowers.png"),
-	"brush": preload("res://assets/tiles/brush.png"),
-	"road": preload("res://assets/tiles/road.png"),
-	"stone": preload("res://assets/tiles/stone.png"),
-	"cracked_stone": preload("res://assets/tiles/cracked_stone.png"),
-	"high_ground": preload("res://assets/tiles/cliff_grass.png"),
-	"shallow_water": preload("res://assets/tiles/shallow_water.png"),
-	"ice": preload("res://assets/tiles/frozen_water.png"),
-	"frozen_water": preload("res://assets/tiles/frozen_water.png"),
-	"burning": preload("res://assets/tiles/burning_grass.png"),
-	"scorched": preload("res://assets/tiles/scorched_dirt.png"),
-	"shrine": preload("res://assets/tiles/holy_shrine.png"),
+const TERRAIN_TEXTURE_PATHS := {
+	"grass": "res://assets/tiles/grass.png",
+	"grass_flowers": "res://assets/tiles/grass_flowers.png",
+	"brush": "res://assets/tiles/brush.png",
+	"road": "res://assets/tiles/road.png",
+	"stone": "res://assets/tiles/stone.png",
+	"cracked_stone": "res://assets/tiles/cracked_stone.png",
+	"high_ground": "res://assets/tiles/cliff_grass.png",
+	"shallow_water": "res://assets/tiles/shallow_water.png",
+	"ice": "res://assets/tiles/frozen_water.png",
+	"frozen_water": "res://assets/tiles/frozen_water.png",
+	"burning": "res://assets/tiles/burning_grass.png",
+	"scorched": "res://assets/tiles/scorched_dirt.png",
+	"shrine": "res://assets/tiles/holy_shrine.png",
 }
 
-const PROP_TEXTURES := {
-	"mossy_rock": preload("res://assets/props/mossy_rock.png"),
-	"leafy_bush": preload("res://assets/props/leafy_bush.png"),
-	"tree_stump": preload("res://assets/props/tree_stump.png"),
-	"ruin_block": preload("res://assets/props/ruin_block.png"),
+const PROP_TEXTURE_PATHS := {
+	"mossy_rock": "res://assets/props/mossy_rock.png",
+	"leafy_bush": "res://assets/props/leafy_bush.png",
+	"tree_stump": "res://assets/props/tree_stump.png",
+	"ruin_block": "res://assets/props/ruin_block.png",
 }
 
+var _terrain_texture_cache: Dictionary = {}
+var _prop_texture_cache: Dictionary = {}
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
@@ -130,9 +132,11 @@ func _draw_base_tiles() -> void:
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	var terrain: String = tiles[pos].get("terrain", "")
 	if _uses_art_tile(terrain):
-		_add_exposed_faces(pos, world, base_color)
-		_add_art_tile_top(pos, world, TERRAIN_TEXTURES[terrain])
-		return
+		var texture := _texture_for_terrain(terrain)
+		if texture:
+			_add_exposed_faces(pos, world, base_color)
+			_add_art_tile_top(pos, world, texture)
+			return
 
 	_add_exposed_faces(pos, world, base_color)
 	_add_procedural_top(pos, world, base_color)
@@ -206,6 +210,36 @@ func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> voi
 func _uses_art_tile(terrain: String) -> bool:
 	return terrain in ["burning", "ice", "frozen_water", "shrine", "cracked_stone", "scorched"]
 
+
+func _texture_for_terrain(terrain: String) -> Texture2D:
+	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
+
+
+func _texture_for_prop(prop_name: String) -> Texture2D:
+	return _texture_from_path(PROP_TEXTURE_PATHS.get(prop_name, ""), _prop_texture_cache)
+
+
+func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
+	if path.is_empty():
+		return null
+	if cache.has(path):
+		return cache[path]
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		cache[path] = null
+		return null
+	var bytes := file.get_buffer(file.get_length())
+	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
+		cache[path] = null
+		return null
+	var image := Image.new()
+	var err := image.load_png_from_buffer(bytes)
+	if err != OK:
+		cache[path] = null
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	cache[path] = texture
+	return texture
 
 ## Draw a glowing marker on void_anchor and high-value tiles
 func _add_tile_marker(pos: Vector2i, world: Vector2, terrain: String) -> void:
@@ -339,13 +373,16 @@ func _draw_props() -> void:
 		return
 	for prop_data: Dictionary in map_data.prop_overrides:
 		var prop_name: String = prop_data.get("prop", "")
-		if not PROP_TEXTURES.has(prop_name):
+		if not PROP_TEXTURE_PATHS.has(prop_name):
+			continue
+		var texture := _texture_for_prop(prop_name)
+		if not texture:
 			continue
 		var pos := Vector2i(prop_data.get("x", 0), prop_data.get("y", 0))
 		if not _is_valid_pos(pos):
 			continue
 		var sprite := Sprite2D.new()
-		sprite.texture = PROP_TEXTURES[prop_name]
+		sprite.texture = texture
 		sprite.centered = true
 		sprite.position = _grid_to_local(pos) + Vector2(
 			float(prop_data.get("offset_x", 0.0)),

@@ -940,8 +940,21 @@ func _set_preview_portrait(rect: TextureRect, path: String) -> void:
 	if path.is_empty():
 		rect.texture = null
 		return
-	rect.texture = load(path)
+	rect.texture = _texture_from_source(path)
 
+
+func _texture_from_source(path: String) -> Texture2D:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return null
+	var bytes := file.get_buffer(file.get_length())
+	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
+		return null
+	var image := Image.new()
+	var err := image.load_png_from_buffer(bytes)
+	if err != OK:
+		return null
+	return ImageTexture.create_from_image(image)
 
 func _show_status_banner(title_text: String, subtitle_text: String, accent: Color,
 		hold_time: float = 1.4) -> void:

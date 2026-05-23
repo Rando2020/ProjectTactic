@@ -644,8 +644,8 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	data.elemental_affinities = affinities
 
 	if SPRITE_PATHS.has(id):
-		var tex = load(SPRITE_PATHS[id])
-		if tex is Texture2D:
+		var tex := _texture_from_source(SPRITE_PATHS[id])
+		if tex:
 			data.sprite_sheet = tex
 
 	var unit: Unit = unit_scene.instantiate()
@@ -654,6 +654,19 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	unit.team = faction
 	return unit
 
+
+func _texture_from_source(path: String) -> Texture2D:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return null
+	var bytes := file.get_buffer(file.get_length())
+	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
+		return null
+	var image := Image.new()
+	var err := image.load_png_from_buffer(bytes)
+	if err != OK:
+		return null
+	return ImageTexture.create_from_image(image)
 
 func _to_string_array(values: Array) -> Array[String]:
 	var result: Array[String] = []
