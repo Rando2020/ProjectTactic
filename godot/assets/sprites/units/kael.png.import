@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dj5mjhjks0xis"
-path="res://.godot/imported/kael.png-19b3c9a9f3cb1818b59f70dc4480f758.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/kael.png"
-dest_files=["res://.godot/imported/kael.png-19b3c9a9f3cb1818b59f70dc4480f758.ctex"]
 
 [params]
 

@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://des2b7lv7p8cq"
-path="res://.godot/imported/ruin_block.png-40d7c3de1a613688041594d94e400d33.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/props/ruin_block.png"
-dest_files=["res://.godot/imported/ruin_block.png-40d7c3de1a613688041594d94e400d33.ctex"]
 
 [params]
 

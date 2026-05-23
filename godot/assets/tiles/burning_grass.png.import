@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bx2f55obggpva"
-path="res://.godot/imported/burning_grass.png-b48c2ae1bbdfeb3de03a81edda392b38.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/burning_grass.png"
-dest_files=["res://.godot/imported/burning_grass.png-b48c2ae1bbdfeb3de03a81edda392b38.ctex"]
 
 [params]
 

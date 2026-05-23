@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cy113hcsywuki"
-path="res://.godot/imported/scorched_dirt.png-414bd37ac40ecb62561a6b8e18d13ed6.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/scorched_dirt.png"
-dest_files=["res://.godot/imported/scorched_dirt.png-414bd37ac40ecb62561a6b8e18d13ed6.ctex"]
 
 [params]
 

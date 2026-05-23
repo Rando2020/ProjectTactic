@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dv2nyqdu1dl3c"
-path="res://.godot/imported/zane.png-d0f64b6bda96591f99a04bc6586458ee.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/zane.png"
-dest_files=["res://.godot/imported/zane.png-d0f64b6bda96591f99a04bc6586458ee.ctex"]
 
 [params]
 

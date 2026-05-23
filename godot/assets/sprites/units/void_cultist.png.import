@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://rkwgxd6ysvub"
-path="res://.godot/imported/void_cultist.png-cc716120b21f599410184d2b771e04b0.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/void_cultist.png"
-dest_files=["res://.godot/imported/void_cultist.png-cc716120b21f599410184d2b771e04b0.ctex"]
 
 [params]
 

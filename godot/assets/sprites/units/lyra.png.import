@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvo8ei5ucipjf"
-path="res://.godot/imported/lyra.png-8df8ebb38f308086043ec11ea5d88ca6.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/lyra.png"
-dest_files=["res://.godot/imported/lyra.png-8df8ebb38f308086043ec11ea5d88ca6.ctex"]
 
 [params]
 

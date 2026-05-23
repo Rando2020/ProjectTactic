@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c0oacvirqxmpt"
-path="res://.godot/imported/frozen_water.png-f51a3ae358cf34f897ec8260eb180311.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/frozen_water.png"
-dest_files=["res://.godot/imported/frozen_water.png-f51a3ae358cf34f897ec8260eb180311.ctex"]
 
 [params]
 

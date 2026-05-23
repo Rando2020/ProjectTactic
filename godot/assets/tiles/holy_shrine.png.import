@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm8dc8xustva0"
-path="res://.godot/imported/holy_shrine.png-0f42ba286472be9ce3f6957b786f8148.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/holy_shrine.png"
-dest_files=["res://.godot/imported/holy_shrine.png-0f42ba286472be9ce3f6957b786f8148.ctex"]
 
 [params]
 

@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cghab44xpvl6y"
-path="res://.godot/imported/brush.png-47ea1af30837daad0d27c44ddb0f357d.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/brush.png"
-dest_files=["res://.godot/imported/brush.png-47ea1af30837daad0d27c44ddb0f357d.ctex"]
 
 [params]
 

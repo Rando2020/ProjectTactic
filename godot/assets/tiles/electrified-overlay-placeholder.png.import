@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://3hyunif82ap6"
-path="res://.godot/imported/electrified-overlay-placeholder.png-2e9a949533f710265f46c811d1df0fbc.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/electrified-overlay-placeholder.png"
-dest_files=["res://.godot/imported/electrified-overlay-placeholder.png-2e9a949533f710265f46c811d1df0fbc.ctex"]
 
 [params]
 

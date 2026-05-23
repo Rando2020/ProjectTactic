@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bx4ulu5k875rp"
-path="res://.godot/imported/grass_flowers.png-eff15be76a4a523014b16a6567840a74.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/grass_flowers.png"
-dest_files=["res://.godot/imported/grass_flowers.png-eff15be76a4a523014b16a6567840a74.ctex"]
 
 [params]
 

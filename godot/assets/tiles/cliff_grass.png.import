@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cqb1lpxaw31jp"
-path="res://.godot/imported/cliff_grass.png-6bc64a23d1badfd85a7829e2a3cc93eb.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/cliff_grass.png"
-dest_files=["res://.godot/imported/cliff_grass.png-6bc64a23d1badfd85a7829e2a3cc93eb.ctex"]
 
 [params]
 

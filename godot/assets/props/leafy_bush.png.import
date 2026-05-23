@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://pff3vr3x331f"
-path="res://.godot/imported/leafy_bush.png-c1cc946bfc7fe3062eda826fadd07149.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/props/leafy_bush.png"
-dest_files=["res://.godot/imported/leafy_bush.png-c1cc946bfc7fe3062eda826fadd07149.ctex"]
 
 [params]
 

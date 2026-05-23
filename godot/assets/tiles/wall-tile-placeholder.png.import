@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c0j6hx0hn1uyn"
-path="res://.godot/imported/wall-tile-placeholder.png-14fb6985489a561e1ef8e9cd6bd8a330.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/wall-tile-placeholder.png"
-dest_files=["res://.godot/imported/wall-tile-placeholder.png-14fb6985489a561e1ef8e9cd6bd8a330.ctex"]
 
 [params]
 

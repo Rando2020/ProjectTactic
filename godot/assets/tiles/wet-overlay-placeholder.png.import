@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://j2426scqi75b"
-path="res://.godot/imported/wet-overlay-placeholder.png-eaef821a81c6b5b7346f6501eb0d919f.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/wet-overlay-placeholder.png"
-dest_files=["res://.godot/imported/wet-overlay-placeholder.png-eaef821a81c6b5b7346f6501eb0d919f.ctex"]
 
 [params]
 

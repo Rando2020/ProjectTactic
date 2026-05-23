@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bf7y0q0du5alu"
-path="res://.godot/imported/null_drake.png-561a7162661b7624b7dfcfce29f9be0c.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/null_drake.png"
-dest_files=["res://.godot/imported/null_drake.png-561a7162661b7624b7dfcfce29f9be0c.ctex"]
 
 [params]
 

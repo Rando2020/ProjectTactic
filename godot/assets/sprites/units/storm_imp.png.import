@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://chgqi3xaq4wva"
-path="res://.godot/imported/storm_imp.png-50bf0acf4efdb9b43b4182be882254b9.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/sprites/units/storm_imp.png"
-dest_files=["res://.godot/imported/storm_imp.png-50bf0acf4efdb9b43b4182be882254b9.ctex"]
 
 [params]
 

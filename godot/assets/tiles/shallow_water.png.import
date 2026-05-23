@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxp7em0d46igi"
-path="res://.godot/imported/shallow_water.png-13335371d87f4ad04c6b1e2ff23c59c4.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/tiles/shallow_water.png"
-dest_files=["res://.godot/imported/shallow_water.png-13335371d87f4ad04c6b1e2ff23c59c4.ctex"]
 
 [params]
 

@@ -140,11 +140,11 @@ const OVERLAYS := {
 }
 
 const HIGHLIGHTS := {
-	"selected": "res://assets/ui/tile-selected-diamond.png",
-	"move": "res://assets/ui/tile-move-diamond.png",
-	"attack": "res://assets/ui/tile-attack-diamond.png",
-	"ability": "res://assets/ui/tile-ability-diamond.png",
-	"blocked": "res://assets/ui/tile-blocked-diamond.png",
+	"selected": "res://assets/generated/ui/tile-selected-diamond.png",
+	"move": "res://assets/generated/ui/tile-move-diamond.png",
+	"attack": "res://assets/generated/ui/tile-attack-diamond.png",
+	"ability": "res://assets/generated/ui/tile-ability-diamond.png",
+	"blocked": "res://assets/generated/ui/tile-blocked-diamond.png",
 }
 
 const UNITS := {
@@ -247,104 +247,104 @@ const ENEMIES := {
 
 const UI := {
 	"panels": {
-		"dark_stone": "res://assets/ui/dark-stone-panel.png",
-		"command_bar": "res://assets/ui/command-bar-panel.png",
-		"turn_order_sidebar": "res://assets/ui/turn-order-sidebar-panel.png",
-		"hub_dark_gold": "res://assets/ui/hub-panel-dark-gold.png",
-		"guardian_shrine": "res://assets/ui/guardian-shrine-panel.png",
-		"job_reliquary": "res://assets/ui/job-reliquary-panel.png",
-		"heat_altar": "res://assets/ui/heat-altar-panel.png",
-		"reward_card": "res://assets/ui/reward-card-panel.png",
+		"dark_stone": "res://assets/generated/ui/dark-stone-panel.png",
+		"command_bar": "res://assets/generated/ui/command-bar-panel.png",
+		"turn_order_sidebar": "res://assets/generated/ui/turn-order-sidebar-panel.png",
+		"hub_dark_gold": "res://assets/generated/ui/hub-panel-dark-gold.png",
+		"guardian_shrine": "res://assets/generated/ui/guardian-shrine-panel.png",
+		"job_reliquary": "res://assets/generated/ui/job-reliquary-panel.png",
+		"heat_altar": "res://assets/generated/ui/heat-altar-panel.png",
+		"reward_card": "res://assets/generated/ui/reward-card-panel.png",
 	},
 	"backgrounds": {
 		"hub_last_hearth": "res://assets/backgrounds/hub-background-last-hearth.png",
 	},
 	"command_icons": {
-		"move": "res://assets/icons/command-move-icon.png",
-		"attack": "res://assets/icons/command-attack-icon.png",
-		"ability": "res://assets/icons/command-ability-icon.png",
-		"item": "res://assets/icons/command-item-icon.png",
-		"wait": "res://assets/icons/command-wait-icon.png",
+		"move": "res://assets/generated/icons/command-move-icon.png",
+		"attack": "res://assets/generated/icons/command-attack-icon.png",
+		"ability": "res://assets/generated/icons/command-ability-icon.png",
+		"item": "res://assets/generated/icons/command-item-icon.png",
+		"wait": "res://assets/generated/icons/command-wait-icon.png",
 	},
 	"bars": {
-		"hp": "res://assets/ui/hp-bar-frame.png",
-		"temper": "res://assets/ui/temper-bar-frame.png",
-		"ether": "res://assets/ui/ether-bar-frame.png",
+		"hp": "res://assets/generated/ui/hp-bar-frame.png",
+		"temper": "res://assets/generated/ui/temper-bar-frame.png",
+		"ether": "res://assets/generated/ui/ether-bar-frame.png",
 	},
 }
 
 const CURRENCIES := {
-	"soul_shards": "res://assets/icons/currency-soul-shards-icon.png",
-	"obsidian": "res://assets/icons/currency-obsidian-icon.png",
-	"glyphs": "res://assets/icons/currency-glyphs-icon.png",
-	"boss_tokens": "res://assets/icons/currency-boss-tokens-icon.png",
-	"phoenix_sigils": "res://assets/icons/currency-phoenix-sigils-icon.png",
-	"titan_sigils": "res://assets/icons/currency-titan-sigils-icon.png",
+	"soul_shards": "res://assets/generated/icons/currency-soul-shards-icon.png",
+	"obsidian": "res://assets/generated/icons/currency-obsidian-icon.png",
+	"glyphs": "res://assets/generated/icons/currency-glyphs-icon.png",
+	"boss_tokens": "res://assets/generated/icons/currency-boss-tokens-icon.png",
+	"phoenix_sigils": "res://assets/generated/icons/currency-phoenix-sigils-icon.png",
+	"titan_sigils": "res://assets/generated/icons/currency-titan-sigils-icon.png",
 }
 
 const RUN_NODES := {
-	"battle": "res://assets/icons/run-node-battle-icon.png",
-	"elite": "res://assets/icons/run-node-elite-icon.png",
-	"boon": "res://assets/icons/run-node-boon-icon.png",
-	"wanderer": "res://assets/icons/run-node-wanderer-icon.png",
-	"boss": "res://assets/icons/run-node-boss-icon.png",
-	"shop": "res://assets/icons/run-node-shop-icon.png",
+	"battle": "res://assets/generated/icons/run-node-battle-icon.png",
+	"elite": "res://assets/generated/icons/run-node-elite-icon.png",
+	"boon": "res://assets/generated/icons/run-node-boon-icon.png",
+	"wanderer": "res://assets/generated/icons/run-node-wanderer-icon.png",
+	"boss": "res://assets/generated/icons/run-node-boss-icon.png",
+	"shop": "res://assets/generated/icons/run-node-shop-icon.png",
 }
 
 const BOONS := {
-	"phoenix_heart": "res://assets/icons/boon-phoenix-heart-icon.png",
-	"ember_reprisal": "res://assets/icons/boon-ember-reprisal-icon.png",
-	"titan_bulwark": "res://assets/icons/boon-titan-bulwark-icon.png",
-	"stone_oath": "res://assets/icons/boon-stone-oath-icon.png",
-	"storm_quickening": "res://assets/icons/boon-storm-quickening-icon.png",
-	"void_bargain": "res://assets/icons/boon-void-bargain-icon.png",
+	"phoenix_heart": "res://assets/generated/icons/boon-phoenix-heart-icon.png",
+	"ember_reprisal": "res://assets/generated/icons/boon-ember-reprisal-icon.png",
+	"titan_bulwark": "res://assets/generated/icons/boon-titan-bulwark-icon.png",
+	"stone_oath": "res://assets/generated/icons/boon-stone-oath-icon.png",
+	"storm_quickening": "res://assets/generated/icons/boon-storm-quickening-icon.png",
+	"void_bargain": "res://assets/generated/icons/boon-void-bargain-icon.png",
 }
 
 const STATUS_ICONS := {
-	"burn": "res://assets/icons/status-burn-icon.png",
-	"freeze": "res://assets/icons/status-freeze-icon.png",
-	"slow": "res://assets/icons/status-slow-icon.png",
-	"curse": "res://assets/icons/status-curse-icon.png",
-	"bleed": "res://assets/icons/status-bleed-icon.png",
-	"shield": "res://assets/icons/status-shield-icon.png",
+	"burn": "res://assets/generated/icons/status-burn-icon.png",
+	"freeze": "res://assets/generated/icons/status-freeze-icon.png",
+	"slow": "res://assets/generated/icons/status-slow-icon.png",
+	"curse": "res://assets/generated/icons/status-curse-icon.png",
+	"bleed": "res://assets/generated/icons/status-bleed-icon.png",
+	"shield": "res://assets/generated/icons/status-shield-icon.png",
 }
 
 const AFFIX_ICONS := {
-	"volatile": "res://assets/icons/affix-volatile-icon.png",
-	"fortified": "res://assets/icons/affix-fortified-icon.png",
-	"vampiric": "res://assets/icons/affix-vampiric-icon.png",
-	"of_frost": "res://assets/icons/affix-of-frost-icon.png",
-	"of_flames": "res://assets/icons/affix-of-flames-icon.png",
-	"of_void": "res://assets/icons/affix-of-void-icon.png",
+	"volatile": "res://assets/generated/icons/affix-volatile-icon.png",
+	"fortified": "res://assets/generated/icons/affix-fortified-icon.png",
+	"vampiric": "res://assets/generated/icons/affix-vampiric-icon.png",
+	"of_frost": "res://assets/generated/icons/affix-of-frost-icon.png",
+	"of_flames": "res://assets/generated/icons/affix-of-flames-icon.png",
+	"of_void": "res://assets/generated/icons/affix-of-void-icon.png",
 }
 
 const JOBS := {
-	"knight": "res://assets/icons/job-knight-icon.png",
-	"mage": "res://assets/icons/job-mage-icon.png",
-	"cleric": "res://assets/icons/job-cleric-icon.png",
-	"rogue": "res://assets/icons/job-rogue-icon.png",
-	"archer": "res://assets/icons/job-archer-icon.png",
-	"guardian": "res://assets/icons/job-guardian-icon.png",
+	"knight": "res://assets/generated/icons/job-knight-icon.png",
+	"mage": "res://assets/generated/icons/job-mage-icon.png",
+	"cleric": "res://assets/generated/icons/job-cleric-icon.png",
+	"rogue": "res://assets/generated/icons/job-rogue-icon.png",
+	"archer": "res://assets/generated/icons/job-archer-icon.png",
+	"guardian": "res://assets/generated/icons/job-guardian-icon.png",
 }
 
 const VFX := {
-	"fire_impact": "res://assets/vfx/fire-impact-vfx-sheet.png",
-	"ice_impact": "res://assets/vfx/ice-impact-vfx-sheet.png",
-	"lightning_impact": "res://assets/vfx/lightning-impact-vfx-sheet.png",
-	"earth_impact": "res://assets/vfx/earth-impact-vfx-sheet.png",
-	"wind_impact": "res://assets/vfx/wind-impact-vfx-sheet.png",
-	"dark_impact": "res://assets/vfx/dark-impact-vfx-sheet.png",
-	"holy_impact": "res://assets/vfx/holy-impact-vfx-sheet.png",
-	"heal": "res://assets/vfx/heal-vfx-sheet.png",
-	"buff": "res://assets/vfx/buff-vfx-sheet.png",
-	"damage_numbers": "res://assets/vfx/damage-number-floats.png",
+	"fire_impact": "res://assets/generated/vfx/fire-impact-vfx-sheet.png",
+	"ice_impact": "res://assets/generated/vfx/ice-impact-vfx-sheet.png",
+	"lightning_impact": "res://assets/generated/vfx/lightning-impact-vfx-sheet.png",
+	"earth_impact": "res://assets/generated/vfx/earth-impact-vfx-sheet.png",
+	"wind_impact": "res://assets/generated/vfx/wind-impact-vfx-sheet.png",
+	"dark_impact": "res://assets/generated/vfx/dark-impact-vfx-sheet.png",
+	"holy_impact": "res://assets/generated/vfx/holy-impact-vfx-sheet.png",
+	"heal": "res://assets/generated/vfx/heal-vfx-sheet.png",
+	"buff": "res://assets/generated/vfx/buff-vfx-sheet.png",
+	"damage_numbers": "res://assets/generated/vfx/damage-number-floats.png",
 }
 
 const GUARDIANS := {
-	"phoenix": "res://assets/icons/guardian-phoenix-sigil.png",
-	"titan": "res://assets/icons/guardian-titan-sigil.png",
-	"storm": "res://assets/icons/guardian-storm-sigil.png",
-	"void": "res://assets/icons/guardian-void-sigil.png",
+	"phoenix": "res://assets/generated/icons/guardian-phoenix-sigil.png",
+	"titan": "res://assets/generated/icons/guardian-titan-sigil.png",
+	"storm": "res://assets/generated/icons/guardian-storm-sigil.png",
+	"void": "res://assets/generated/icons/guardian-void-sigil.png",
 }
 
 static func get_tile(tile_id: String) -> Dictionary:
