@@ -652,6 +652,7 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	unit.unit_data = data
 	unit.grid_pos = pos
 	unit.team = faction
+	unit._initialize_from_data(data)
 	return unit
 
 

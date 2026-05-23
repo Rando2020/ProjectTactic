@@ -39,7 +39,7 @@ var _sprite: Sprite2D
 
 
 func _ready() -> void:
-	if unit_data:
+	if unit_data and unit_id.is_empty():
 		_initialize_from_data(unit_data)
 
 
