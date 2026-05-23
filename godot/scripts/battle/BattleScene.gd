@@ -27,6 +27,7 @@ const CAMERA_ZOOM_STEP := 0.08
 var _map_data: MapData
 var _defeated_enemies: Array[Dictionary] = []
 var _elite_system:     EliteSystem = null
+var _enemy_instance_seq: int = 0
 
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.png",
@@ -72,6 +73,7 @@ func _ready() -> void:
 		if gs: map_index = gs.selected_map_index
 		_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 
+	_enemy_instance_seq = 0
 	tactical_grid.initialize_from_map(_map_data)
 
 	_frame_battlefield_camera()
@@ -653,6 +655,13 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	unit.grid_pos = pos
 	unit.team = faction
 	unit._initialize_from_data(data)
+	unit.set_meta("archetype_id", id)
+	if faction == "enemy":
+		_enemy_instance_seq += 1
+		unit.unit_id = "Enemy_%d" % _enemy_instance_seq
+		unit.name = unit.unit_id
+	else:
+		unit.name = id
 	return unit
 
 

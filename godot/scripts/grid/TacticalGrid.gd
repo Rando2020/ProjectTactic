@@ -14,22 +14,25 @@ signal unit_visual_position_changed(unit_id: String, world_pos: Vector2)
 
 var tiles: Dictionary = {}           # Vector2i -> Dictionary
 var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
-var _tile_top_polys: Dictionary = {} # Vector2i -> Polygon2D, for mutation/art swap
+var _tile_top_polys: Dictionary = {} # Vector2i -> CanvasItem, for mutation/art swap
 
 const TERRAIN_TEXTURE_PATHS := {
-	"grass": "res://assets/tiles/grass.png",
-	"grass_flowers": "res://assets/tiles/grass_flowers.png",
-	"brush": "res://assets/tiles/brush.png",
-	"road": "res://assets/tiles/road.png",
-	"stone": "res://assets/tiles/stone.png",
-	"cracked_stone": "res://assets/tiles/cracked_stone.png",
-	"high_ground": "res://assets/tiles/cliff_grass.png",
-	"shallow_water": "res://assets/tiles/shallow_water.png",
-	"ice": "res://assets/tiles/frozen_water.png",
-	"frozen_water": "res://assets/tiles/frozen_water.png",
-	"burning": "res://assets/tiles/burning_grass.png",
-	"scorched": "res://assets/tiles/scorched_dirt.png",
-	"shrine": "res://assets/tiles/holy_shrine.png",
+	"grass": "res://assets/ui/tiles/grass.png",
+	"grass_flowers": "res://assets/ui/tiles/grass.png",
+	"brush": "res://assets/ui/tiles/grass.png",
+	"road": "res://assets/ui/tiles/road.png",
+	"stone": "res://assets/ui/tiles/stone.png",
+	"cracked_stone": "res://assets/ui/tiles/stone.png",
+	"high_ground": "res://assets/ui/tiles/high_ground.png",
+	"shallow_water": "res://assets/ui/tiles/shallow_water.png",
+	"deep_water": "res://assets/ui/tiles/deep_water.png",
+	"ice": "res://assets/ui/tiles/ice.png",
+	"frozen_water": "res://assets/ui/tiles/ice.png",
+	"burning": "res://assets/ui/tiles/burning.png",
+	"scorched": "res://assets/ui/tiles/dirt.png",
+	"shrine": "res://assets/ui/tiles/shrine.png",
+	"wall": "res://assets/ui/tiles/wall.png",
+	"void_anchor": "res://assets/ui/tiles/void_anchor.png",
 }
 
 const PROP_TEXTURE_PATHS := {
@@ -194,17 +197,13 @@ func _add_procedural_top(pos: Vector2i, world: Vector2, base_color: Color) -> vo
 
 func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
 	var depth := _depth_for(pos)
-	var top := Polygon2D.new()
-	top.polygon = _diamond_polygon()
+	var top := Sprite2D.new()
 	top.texture = texture
-	top.texture_offset = Vector2(-tile_size.x * 0.5, -tile_size.y * 0.5)
-	top.color = Color.WHITE
+	top.centered = true
 	top.position = world
 	top.z_index = depth + 2
 	add_child(top)
 	_tile_top_polys[pos] = top
-
-	_add_soft_terrain_tint(pos, world, _terrain_color(tiles[pos].terrain, _height_at(pos)), depth)
 
 
 func _uses_art_tile(terrain: String) -> bool:
