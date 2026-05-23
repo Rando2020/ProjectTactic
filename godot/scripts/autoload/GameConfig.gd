@@ -1,4 +1,5 @@
 extends Node
+class_name GameConfig
 # ============================================================
 #  THE APPOINTED: AS ABOVE
 #  GameConfig.gd — Global constants, tier definitions, palette
@@ -175,10 +176,10 @@ const SIN_VIRTUE_MAP = {
 
 # ── Helper Functions ─────────────────────────────────────────
 
-func get_tier_label(tier: int) -> String:
+static func get_tier_label(tier: int) -> String:
 	return TIER_LABELS.get(tier, "Unknown")
 
-func get_tier_color(tier: int) -> Color:
+static func get_tier_color(tier: int) -> Color:
 	match tier:
 		1: return PALETTE.TIER_1
 		2: return PALETTE.TIER_2
@@ -187,11 +188,11 @@ func get_tier_color(tier: int) -> Color:
 		5: return PALETTE.TIER_5
 		_: return Color.WHITE
 
-func get_sin_color(sin: String) -> Color:
+static func get_sin_color(sin: String) -> Color:
 	var data = SIN_VIRTUE_MAP.get(sin, {})
 	return data.get("color", Color.WHITE)
 
-func calculate_tier_from_points(points: int) -> int:
+static func calculate_tier_from_points(points: int) -> int:
 	var tier = 1
 	for t in [5, 4, 3, 2, 1]:
 		if points >= TIER_THRESHOLDS[t]:
