@@ -99,6 +99,14 @@ func _reg(uid: String, dname: String,
 		"base_abilities":      base,
 		"learned_abilities":   [],
 		"learnable_abilities": learnable,
+		"equipped_abilities":  base.slice(0, min(base.size(), 4)),
+		"equipment": {
+			"main_hand": "Training Blade",
+			"off_hand": "Buckler",
+			"head": "Cloth Cap",
+			"body": "Traveling Garb",
+			"accessory": "Copper Ring",
+		},
 	}
 
 
@@ -109,6 +117,14 @@ func get_all_abilities(unit_id: String) -> Array[String]:
 	if not unit_registry.has(unit_id):
 		return []
 	var reg: Dictionary = unit_registry[unit_id]
+	var equipped: Array = reg.get("equipped_abilities", [])
+	if not equipped.is_empty():
+		var chosen: Array[String] = []
+		for ab: Variant in equipped:
+			if knows_ability(unit_id, str(ab)) and str(ab) not in chosen:
+				chosen.append(str(ab))
+		if not chosen.is_empty():
+			return chosen
 	var result: Array[String] = []
 	result.append_array(reg.get("base_abilities", []))
 	for ab: String in reg.get("learned_abilities", []):
@@ -148,6 +164,35 @@ func get_jp(unit_id: String) -> int:
 	return unit_registry[unit_id].get("jp", 0)
 
 
+func set_current_job(unit_id: String, job_id: String) -> void:
+	if not unit_registry.has(unit_id):
+		return
+	var reg: Dictionary = unit_registry[unit_id]
+	reg["current_job_id"] = job_id
+	if not reg.has("job_jp"):
+		reg["job_jp"] = {}
+	if not reg["job_jp"].has(job_id):
+		reg["job_jp"][job_id] = 0
+	var job := JobTreeData.get_job(job_id)
+	if not job.is_empty():
+		reg["learnable_abilities"] = job.get("abilities", [])
+	save()
+
+
+func set_equipped_abilities(unit_id: String, ability_ids: Array) -> void:
+	if not unit_registry.has(unit_id):
+		return
+	var equipped: Array[String] = []
+	for ab: Variant in ability_ids:
+		var ab_id := str(ab)
+		if knows_ability(unit_id, ab_id) and ab_id not in equipped:
+			equipped.append(ab_id)
+		if equipped.size() >= 4:
+			break
+	unit_registry[unit_id]["equipped_abilities"] = equipped
+	save()
+
+
 # ── Battle results ────────────────────────────────────────────────────────────
 
 ## Called by BattleScene on victory.  Awards JP to surviving player units.
@@ -178,12 +223,20 @@ func has_save() -> bool:
 
 ## Writes current state to disk.  Silent on failure.
 func save() -> void:
-	var unit_jp:      Dictionary = {}
-	var unit_learned: Dictionary = {}
+	var unit_jp:        Dictionary = {}
+	var unit_learned:   Dictionary = {}
+	var unit_jobs:      Dictionary = {}
+	var unit_job_jp:    Dictionary = {}
+	var unit_equipped:  Dictionary = {}
+	var unit_equipment: Dictionary = {}
 	for uid in unit_registry:
 		var reg: Dictionary = unit_registry[uid]
-		unit_jp[uid]      = reg.get("jp", 0)
-		unit_learned[uid] = reg.get("learned_abilities", []).duplicate()
+		unit_jp[uid]        = reg.get("jp", 0)
+		unit_learned[uid]   = reg.get("learned_abilities", []).duplicate()
+		unit_jobs[uid]      = reg.get("current_job_id", "")
+		unit_job_jp[uid]    = reg.get("job_jp", {}).duplicate()
+		unit_equipped[uid]  = reg.get("equipped_abilities", []).duplicate()
+		unit_equipment[uid] = reg.get("equipment", {}).duplicate()
 
 	var data: Dictionary = {
 		"version":          SAVE_VERSION,
@@ -192,6 +245,10 @@ func save() -> void:
 		"story_flags":      story_flags.duplicate(),
 		"unit_jp":          unit_jp,
 		"unit_learned":     unit_learned,
+		"unit_jobs":        unit_jobs,
+		"unit_job_jp":      unit_job_jp,
+		"unit_equipped":    unit_equipped,
+		"unit_equipment":   unit_equipment,
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -236,8 +293,12 @@ func load_save() -> bool:
 	for flag: Variant in data.get("story_flags", []):
 		story_flags.append(str(flag))
 
-	var saved_jp:      Dictionary = data.get("unit_jp", {})
-	var saved_learned: Dictionary = data.get("unit_learned", {})
+	var saved_jp:        Dictionary = data.get("unit_jp", {})
+	var saved_learned:   Dictionary = data.get("unit_learned", {})
+	var saved_jobs:      Dictionary = data.get("unit_jobs", {})
+	var saved_job_jp:    Dictionary = data.get("unit_job_jp", {})
+	var saved_equipped:  Dictionary = data.get("unit_equipped", {})
+	var saved_equipment: Dictionary = data.get("unit_equipment", {})
 
 	for uid: String in unit_registry:
 		if saved_jp.has(uid):
@@ -248,6 +309,17 @@ func load_save() -> bool:
 			for ab: Variant in raw:
 				typed.append(str(ab))
 			unit_registry[uid]["learned_abilities"] = typed
+		if saved_jobs.has(uid):
+			unit_registry[uid]["current_job_id"] = str(saved_jobs[uid])
+		if saved_job_jp.has(uid) and saved_job_jp[uid] is Dictionary:
+			unit_registry[uid]["job_jp"] = (saved_job_jp[uid] as Dictionary).duplicate()
+		if saved_equipped.has(uid) and saved_equipped[uid] is Array:
+			var eq: Array[String] = []
+			for ab: Variant in saved_equipped[uid]:
+				eq.append(str(ab))
+			unit_registry[uid]["equipped_abilities"] = eq
+		if saved_equipment.has(uid) and saved_equipment[uid] is Dictionary:
+			unit_registry[uid]["equipment"] = (saved_equipment[uid] as Dictionary).duplicate()
 
 	return true
 
