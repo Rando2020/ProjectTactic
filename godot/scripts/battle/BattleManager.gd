@@ -23,6 +23,8 @@ const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
 const DEMO_PACE := 0.45
 const MIN_WAIT := 0.03
+const AUTO_BATTLE_TEST_MODE := true
+const AUTO_BATTLE_TEST_SPEED := 2.0
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -40,6 +42,8 @@ var selected_ability_id: String = ""
 var is_resolving_action: bool = false
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
+var auto_battle_enabled: bool = AUTO_BATTLE_TEST_MODE
+var battle_speed_multiplier: float = AUTO_BATTLE_TEST_SPEED
 var _last_enemy_intents: Dictionary = {}
 
 func _living_unit(uid: String) -> Unit:
@@ -57,6 +61,11 @@ func _timer(seconds: float) -> SceneTreeTimer:
 	return get_tree().create_timer(maxf(seconds * DEMO_PACE, MIN_WAIT))
 
 
+func _exit_tree() -> void:
+	if auto_battle_enabled:
+		Engine.time_scale = 1.0
+
+
 func _ready() -> void:
 	tactical_grid.tile_clicked.connect(_on_tile_clicked)
 	tactical_grid.unit_clicked.connect(_on_unit_clicked)
@@ -65,6 +74,10 @@ func _ready() -> void:
 
 func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
+	if auto_battle_enabled:
+		Engine.time_scale = battle_speed_multiplier
+	else:
+		Engine.time_scale = 1.0
 	for unit in p_units:
 		units[unit.unit_id] = unit
 		unit.unit_defeated.connect(_on_unit_defeated)
@@ -113,6 +126,9 @@ func _begin_player_turn() -> void:
 	log_message.emit("%s's turn." % unit_name)
 	command_hint_changed.emit("Choose Move, Attack, Ability, or Wait.")
 	_emit_action_state()
+	if auto_battle_enabled:
+		command_hint_changed.emit("AUTO-BATTLE x%.1f: planning %s's turn..." % [battle_speed_multiplier, unit_name])
+		_run_auto_player_turn.call_deferred(active_unit_id)
 
 
 func _begin_enemy_turn() -> void:
@@ -469,6 +485,132 @@ func _best_reachable_tile(unit: Unit, target: Unit, maximize_distance: bool) -> 
 			best_dist = dist
 			best_tile = tile_pos
 	return best_tile
+
+
+func _run_auto_player_turn(unit_id: String) -> void:
+	await _timer(0.18).timeout
+	if not auto_battle_enabled or current_phase != Phase.PLAYER_TURN or active_unit_id != unit_id:
+		return
+	var unit := _living_unit(unit_id)
+	if not unit:
+		return
+	log_message.emit("AUTO: %s takes the fastest useful action." % unit.display_name)
+	if await _auto_try_attack(unit):
+		return
+	var target := _nearest_enemy(unit)
+	if target and not active_unit_has_moved:
+		var move_to := _best_auto_move_tile(unit, target)
+		if move_to != unit.grid_pos:
+			select_command("move")
+			await _timer(0.10).timeout
+			if current_phase != Phase.PLAYER_TURN or active_unit_id != unit_id:
+				return
+			await _on_tile_clicked(move_to)
+			await _timer(0.14).timeout
+			unit = _living_unit(unit_id)
+			if not unit or current_phase != Phase.PLAYER_TURN or active_unit_id != unit_id:
+				return
+	if await _auto_try_attack(unit):
+		return
+	select_command("wait")
+
+
+func _auto_try_attack(unit: Unit) -> bool:
+	if not unit or active_unit_has_acted:
+		return false
+	select_command("attack")
+	await _timer(0.08).timeout
+	if current_phase != Phase.PLAYER_TURN or active_unit_id != unit.unit_id:
+		return true
+	var target := _best_auto_attack_target(unit)
+	if not target:
+		active_command = ""
+		tactical_grid.clear_highlights()
+		return false
+	action_preview_changed.emit(_attack_preview_for_tile(target.grid_pos))
+	await _timer(0.10).timeout
+	await _on_unit_clicked(target.unit_id)
+	return true
+
+
+func _best_auto_attack_target(unit: Unit) -> Unit:
+	var best: Unit = null
+	var best_score := -999999.0
+	for uid: String in units.keys():
+		var target := _living_unit(uid)
+		if not target or target.team == unit.team:
+			continue
+		var dist := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
+		if dist < unit.unit_data.base_stats.attack_range_min or dist > unit.unit_data.base_stats.attack_range_max:
+			continue
+		var damage := _predict_attack_damage(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+		var score := float(damage) + float(target.unit_data.base_stats.hp - target.hp) * 0.15
+		if damage >= target.hp:
+			score += 1000.0
+		score -= float(dist) * 2.0
+		if score > best_score:
+			best_score = score
+			best = target
+	return best
+
+
+func _nearest_enemy(unit: Unit) -> Unit:
+	var best: Unit = null
+	var best_dist := 999999
+	for uid: String in units.keys():
+		var target := _living_unit(uid)
+		if not target or target.team == unit.team:
+			continue
+		var dist := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
+		if dist < best_dist:
+			best_dist = dist
+			best = target
+	return best
+
+
+func _best_auto_move_tile(unit: Unit, target: Unit) -> Vector2i:
+	var occupied: Array = []
+	for uid: String in units.keys():
+		var other := _living_unit(uid)
+		if other and other.unit_id != unit.unit_id:
+			occupied.append(other.grid_pos)
+	var reachable := GridSystem.get_move_range(
+		unit.grid_pos, unit.unit_data.base_stats.move,
+		tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
+		unit.unit_data.base_stats.jump
+	)
+	var best_tile := unit.grid_pos
+	var best_score := -999999.0
+	for tile_pos: Vector2i in reachable:
+		var nearest_after := _nearest_enemy_from_tile(unit, tile_pos)
+		if not nearest_after:
+			continue
+		var dist := GridSystem.manhattan(tile_pos, nearest_after.grid_pos)
+		var in_range := dist >= unit.unit_data.base_stats.attack_range_min and dist <= unit.unit_data.base_stats.attack_range_max
+		var score := -float(dist) * 10.0
+		if in_range:
+			score += 500.0
+			score += float(_predict_attack_damage(unit, nearest_after, tactical_grid.get_tile(tile_pos), tactical_grid.get_tile(nearest_after.grid_pos)))
+		var tile: Dictionary = tactical_grid.get_tile(tile_pos)
+		score += float(tile.get("height", 0)) * 2.0
+		if score > best_score:
+			best_score = score
+			best_tile = tile_pos
+	return best_tile
+
+
+func _nearest_enemy_from_tile(unit: Unit, tile_pos: Vector2i) -> Unit:
+	var best: Unit = null
+	var best_dist := 999999
+	for uid: String in units.keys():
+		var target := _living_unit(uid)
+		if not target or target.team == unit.team:
+			continue
+		var dist := GridSystem.manhattan(tile_pos, target.grid_pos)
+		if dist < best_dist:
+			best_dist = dist
+			best = target
+	return best
 
 func _resolve_turn() -> void:
 	_set_phase(Phase.CHECK_OBJECTIVE)
