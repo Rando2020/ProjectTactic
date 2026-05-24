@@ -300,9 +300,13 @@ func _on_unit_defeated(unit_id: String) -> void:
 
 func _on_battle_won(rewards: Dictionary) -> void:
 	var player_ids: Array[String] = []
-	for uid in battle_manager.units:
-		var u: Unit = battle_manager.units[uid]
-		if u.team == "player": player_ids.append(uid)
+	if battle_manager and is_instance_valid(battle_manager):
+		for uid in battle_manager.units.keys():
+			var unit_ref = battle_manager.units.get(uid)
+			if not is_instance_valid(unit_ref):
+				continue
+			if unit_ref is Unit and unit_ref.team == "player":
+				player_ids.append(str(uid))
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.apply_victory(_map_data.id, rewards, player_ids)
