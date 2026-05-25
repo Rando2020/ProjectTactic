@@ -183,7 +183,7 @@ func _begin_enemy_turn() -> void:
 		return
 
 	log_message.emit("Enemy: %s acts." % unit.display_name)
-	var intent := _evaluate_enemy_intent(unit)
+	var intent: Dictionary = _evaluate_enemy_intent(unit)
 	_last_enemy_intents[unit.unit_id] = intent
 	enemy_intent_changed.emit(intent)
 	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
@@ -445,7 +445,7 @@ func _emit_enemy_intent_board() -> void:
 		var enemy := _living_unit(str(uid))
 		if not enemy or enemy.team != "enemy":
 			continue
-		var intent := _evaluate_enemy_intent(enemy)
+		var intent: Dictionary = _evaluate_enemy_intent(enemy)
 		_last_enemy_intents[enemy.unit_id] = intent
 		rows.append(intent)
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -471,6 +471,10 @@ func _intent_sort_score(intent: Dictionary) -> int:
 func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 	if not unit or unit.hp <= 0:
 		return
+	intent = _validated_enemy_intent(unit, intent)
+	_last_enemy_intents[unit.unit_id] = intent
+	enemy_intent_changed.emit(intent)
+	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
 	match str(intent.get("kind", "hold")):
 		"heal":
 			var heal_ability: Dictionary = intent.get("ability", {})
@@ -478,7 +482,7 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 				_execute_ability(unit, unit, heal_ability)
 				active_unit_has_acted = true
 		"retreat":
-			await _enemy_move_to(unit, intent.get("move_to", unit.grid_pos), "%s retreats to recover." % unit.display_name)
+			await _enemy_move_to(unit, _intent_move_to(intent, unit.grid_pos), "%s retreats to recover." % unit.display_name)
 		"spell":
 			var target: Unit = units.get(str(intent.get("target_id", "")))
 			var ability: Dictionary = intent.get("ability", {})
@@ -492,11 +496,84 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 				_enemy_attack(unit, attack_target)
 		"advance":
 			var chase_target: Unit = units.get(str(intent.get("target_id", "")))
-			await _enemy_move_to(unit, intent.get("move_to", unit.grid_pos), "%s advances." % unit.display_name)
+			var moved: bool = await _enemy_move_to(unit, _intent_move_to(intent, unit.grid_pos), "%s advances." % unit.display_name)
 			if chase_target and chase_target.hp > 0 and GridSystem.manhattan(unit.grid_pos, chase_target.grid_pos) <= unit.unit_data.base_stats.attack_range_max:
 				_enemy_attack(unit, chase_target, true)
+			elif moved:
+				log_message.emit("%s cannot reach an attack after advancing." % unit.display_name)
 		_:
 			log_message.emit("%s holds." % unit.display_name)
+
+
+func _validated_enemy_intent(unit: Unit, intent: Dictionary) -> Dictionary:
+	if _enemy_intent_is_valid(unit, intent):
+		intent["validated"] = true
+		return intent
+	var replanned: Dictionary = _evaluate_enemy_intent(unit)
+	if not _enemy_intent_is_valid(unit, replanned):
+		replanned = _enemy_intent(unit, "hold", null, "Hold", "No valid action after reassessing.")
+	replanned["replanned"] = true
+	replanned["previous_kind"] = str(intent.get("kind", ""))
+	log_message.emit("%s reassesses the battlefield." % unit.display_name)
+	return replanned
+
+
+func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
+	if not unit or unit.hp <= 0:
+		return false
+	var kind: String = str(intent.get("kind", "hold"))
+	match kind:
+		"hold":
+			return true
+		"heal":
+			var heal_ability: Dictionary = intent.get("ability", {})
+			var max_hp: int = unit.unit_data.base_stats.hp if unit.unit_data else unit.hp
+			return not heal_ability.is_empty() and unit.mp >= int(heal_ability.get("mp_cost", 0)) and unit.hp > 0 and unit.hp < max_hp
+		"retreat":
+			var retreat_pos: Vector2i = _intent_move_to(intent, unit.grid_pos)
+			var retreat_max_hp: int = unit.unit_data.base_stats.hp if unit.unit_data else unit.hp
+			var hp_ratio: float = float(unit.hp) / float(max(retreat_max_hp, 1))
+			return hp_ratio <= 0.28 and _enemy_move_tile_is_valid(unit, retreat_pos)
+		"attack":
+			var attack_target: Unit = units.get(str(intent.get("target_id", "")))
+			return attack_target != null and attack_target.hp > 0 and attack_target.team == "player" \
+				and GridSystem.manhattan(unit.grid_pos, attack_target.grid_pos) <= unit.unit_data.base_stats.attack_range_max
+		"advance":
+			var chase_target: Unit = units.get(str(intent.get("target_id", "")))
+			var advance_pos: Vector2i = _intent_move_to(intent, unit.grid_pos)
+			return chase_target != null and chase_target.hp > 0 and chase_target.team == "player" \
+				and _enemy_move_tile_is_valid(unit, advance_pos)
+		"spell":
+			var spell_target: Unit = units.get(str(intent.get("target_id", "")))
+			var ability: Dictionary = intent.get("ability", {})
+			if not spell_target or spell_target.hp <= 0 or spell_target.team != "player" or ability.is_empty():
+				return false
+			if unit.mp < int(ability.get("mp_cost", 0)):
+				return false
+			return GridSystem.manhattan(unit.grid_pos, spell_target.grid_pos) <= int(ability.get("range", 1))
+	return false
+
+
+func _intent_move_to(intent: Dictionary, fallback: Vector2i) -> Vector2i:
+	var raw: Variant = intent.get("move_to", fallback)
+	if raw is Vector2i:
+		return raw
+	return fallback
+
+
+func _enemy_move_tile_is_valid(unit: Unit, pos: Vector2i) -> bool:
+	if pos == unit.grid_pos:
+		return true
+	if not tactical_grid.tiles.has(pos):
+		return false
+	var tile: Dictionary = tactical_grid.get_tile(pos)
+	if bool(tile.get("blocks_movement", false)):
+		return false
+	for uid in units:
+		var other: Unit = _living_unit(str(uid))
+		if other and other.unit_id != unit.unit_id and other.hp > 0 and other.grid_pos == pos:
+			return false
+	return true
 
 
 func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
@@ -515,9 +592,12 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 		_timer(0.6).timeout.connect(func() -> void: _execute_counter_attack(target, unit))
 
 
-func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
+func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> bool:
 	if pos == unit.grid_pos or not tactical_grid.tiles.has(pos):
-		return
+		return false
+	if not _enemy_move_tile_is_valid(unit, pos):
+		log_message.emit("%s cannot move to the planned tile." % unit.display_name)
+		return false
 	var old_pos := unit.grid_pos
 	unit.move_to(pos)
 	log_message.emit(message)
@@ -525,6 +605,7 @@ func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> void:
 	await tactical_grid.move_unit_visual(unit.unit_id, old_pos, pos)
 	await _timer(0.20).timeout
 	active_unit_has_moved = true
+	return true
 
 
 func _nearest_player(unit: Unit) -> Unit:
