@@ -142,6 +142,105 @@ export const ABILITIES = {
     target: 'objective',
     timingProfile: 'holy',
     effects: [{ type: 'shatter_void_anchor' }]
+  },
+  // Healer abilities
+  protect: {
+    id: 'protect',
+    name: 'Protect',
+    type: 'support',
+    element: 'guard',
+    mpCost: 20,
+    power: 0,
+    range: { min: 0, max: 4, shape: 'single', heightTolerance: 3 },
+    target: 'ally',
+    timingProfile: 'none',
+    effects: [{ type: 'status', status: 'protected', turns: 2 }]
+  },
+  mend: {
+    id: 'mend',
+    name: 'Mend',
+    type: 'heal',
+    element: 'holy',
+    mpCost: 14,
+    power: 60,
+    range: { min: 0, max: 3, shape: 'single', heightTolerance: 2 },
+    target: 'ally',
+    timingProfile: 'holy',
+    effects: [{ type: 'heal_hp', amount: 60 }]
+  },
+  // Physical DPS abilities
+  double_strike: {
+    id: 'double_strike',
+    name: 'Double Strike',
+    type: 'physical',
+    element: 'none',
+    mpCost: 0,
+    power: 110,
+    range: { min: 1, max: 1, shape: 'single', heightTolerance: 1 },
+    target: 'enemy',
+    timingProfile: 'none',
+    effects: [{ type: 'status', status: 'bleed', chance: 0.4, turns: 2 }]
+  },
+  // Elemental spells for casters
+  firaga: {
+    id: 'firaga',
+    name: 'Firaga',
+    type: 'magic',
+    element: 'fire',
+    mpCost: 30,
+    power: 120,
+    range: { min: 1, max: 5, shape: 'single', heightTolerance: 3 },
+    target: 'enemy',
+    timingProfile: 'fire',
+    effects: [{ type: 'status', status: 'burning', chance: 0.45, turns: 3 }]
+  },
+  inferno: {
+    id: 'inferno',
+    name: 'Inferno',
+    type: 'magic',
+    element: 'fire',
+    mpCost: 45,
+    power: 160,
+    range: { min: 2, max: 4, shape: 'aoe', aoeRadius: 1, heightTolerance: 2 },
+    target: 'enemy',
+    timingProfile: 'fire',
+    effects: [{ type: 'status', status: 'burning', chance: 0.55, turns: 3 }]
+  },
+  flare: {
+    id: 'flare',
+    name: 'Flare',
+    type: 'magic',
+    element: 'fire',
+    mpCost: 60,
+    power: 200,
+    range: { min: 1, max: 6, shape: 'single', heightTolerance: 3 },
+    target: 'enemy',
+    timingProfile: 'fire',
+    effects: [{ type: 'status', status: 'burning', chance: 0.6, turns: 4 }]
+  },
+  thunderbolt: {
+    id: 'thunderbolt',
+    name: 'Thunderbolt',
+    type: 'magic',
+    element: 'thunder',
+    mpCost: 28,
+    power: 110,
+    range: { min: 1, max: 5, shape: 'single', heightTolerance: 3 },
+    target: 'enemy',
+    timingProfile: 'thunder',
+    effects: [{ type: 'terrain_reaction', element: 'thunder' }]
+  },
+  blizzaga: {
+    id: 'blizzaga',
+    name: 'Blizzaga',
+    type: 'magic',
+    element: 'ice',
+    mpCost: 32,
+    power: 125,
+    range: { min: 1, max: 5, shape: 'single', heightTolerance: 3 },
+    target: 'enemy',
+    timingProfile: 'ice',
+    effects: [{ type: 'terrain_reaction', element: 'ice' }]
   }
 }
 
