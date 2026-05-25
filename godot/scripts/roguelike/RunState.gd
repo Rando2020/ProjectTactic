@@ -18,6 +18,14 @@ var deaths:        int    = 0
 var completed:     bool   = false
 var started_at:    int    = 0
 var heat_level:    int    = 0
+var inventory:     Array  = []   ## LootSystem item Dictionaries collected this run
+var run_deployment: Array = []   ## Persistent player formation for this run
+var equipped_vow_id: String = VowSigilSystem.DEFAULT_VOW_ID
+var equipped_vow_level: int = 1
+var equipped_vow_xp: int = 0
+var equipped_sigil_id: String = VowSigilSystem.DEFAULT_SIGIL_ID
+var equipped_sigil_level: int = 1
+var equipped_sigil_xp: int = 0
 
 ## Slay-the-Spire-style route map: every floor can offer multiple choices.
 ## Choosing one node marks the other nodes on that floor as skipped, then the run
@@ -149,12 +157,26 @@ func complete_current_node() -> void:
 				floor_plan[i]["skipped"] = true
 	advance()
 
+func get_loadout_bonus() -> Dictionary:
+	return VowSigilSystem.loadout_bonus(equipped_vow_id, equipped_vow_level, equipped_sigil_id, equipped_sigil_level)
+
+func grant_loadout_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	equipped_vow_xp += amount
+	equipped_sigil_xp += amount
+	equipped_vow_level = VowSigilSystem.level_for_xp(equipped_vow_xp)
+	equipped_sigil_level = VowSigilSystem.level_for_xp(equipped_sigil_xp)
+
 func to_dict() -> Dictionary:
 	return {
 		"run_id": run_id, "seed": seed, "floor": current_floor,
 		"node": current_node, "floor_plan": floor_plan,
 		"active_boons": active_boons, "active_curses": active_curses, "banned_guardian": banned_guardian, "elite_kills": elite_kills,
 		"deaths": deaths, "completed": completed, "started_at": started_at, "heat_level": heat_level,
+		"equipped_vow_id": equipped_vow_id, "equipped_vow_level": equipped_vow_level, "equipped_vow_xp": equipped_vow_xp,
+		"equipped_sigil_id": equipped_sigil_id, "equipped_sigil_level": equipped_sigil_level, "equipped_sigil_xp": equipped_sigil_xp,
+		"run_deployment": run_deployment,
 	}
 
 static func from_dict(d: Dictionary) -> RunState:
@@ -172,4 +194,11 @@ static func from_dict(d: Dictionary) -> RunState:
 	rs.completed     = d.get("completed", false)
 	rs.started_at    = d.get("started_at", 0)
 	rs.heat_level    = d.get("heat_level", 0)
+	rs.equipped_vow_id = d.get("equipped_vow_id", VowSigilSystem.DEFAULT_VOW_ID)
+	rs.equipped_vow_level = int(d.get("equipped_vow_level", 1))
+	rs.equipped_vow_xp = int(d.get("equipped_vow_xp", 0))
+	rs.equipped_sigil_id = d.get("equipped_sigil_id", VowSigilSystem.DEFAULT_SIGIL_ID)
+	rs.equipped_sigil_level = int(d.get("equipped_sigil_level", 1))
+	rs.equipped_sigil_xp = int(d.get("equipped_sigil_xp", 0))
+	rs.run_deployment = d.get("run_deployment", [])
 	return rs

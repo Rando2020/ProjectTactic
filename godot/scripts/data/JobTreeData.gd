@@ -1,8 +1,8 @@
 ## JobTreeData.gd
 ## Complete FF Tactics-inspired job tree.
-## 3 tiers — Basic → Advanced → Ascended.
+## 3 tiers  Basic  Advanced  Ascended.
 ## Prerequisites enforce the progression path.
-## Pure data — no scene dependencies.
+## Pure data  no scene dependencies.
 
 class_name JobTreeData
 extends RefCounted
@@ -12,12 +12,12 @@ const TIER_BASIC    := 1
 const TIER_ADVANCED := 2
 const TIER_ASCENDED := 3
 
-## JP required per level [0→1, 1→2, 2→3, 3→4, 4→5, 5→Master]
+## JP required per level [01, 12, 23, 34, 45, 5Master]
 const JP_PER_LEVEL: Array[int] = [30, 90, 180, 320, 520, 800]
 
 const JOBS: Dictionary = {
 
-	# ── TIER 1 — BASIC (no prerequisites) ────────────────────────────────
+	#  TIER 1  BASIC (no prerequisites)
 
 	"squire": {
 		"id":          "squire",
@@ -76,7 +76,7 @@ const JOBS: Dictionary = {
 		"flavour": "They see the battlefield before the battle begins.",
 	},
 
-	# ── TIER 2 — ADVANCED (requires 1 Basic job at level 2+) ──────────────
+	#  TIER 2  ADVANCED (requires 1 Basic job at level 2+)
 
 	"warder": {
 		"id":          "warder",
@@ -135,7 +135,7 @@ const JOBS: Dictionary = {
 		"flavour": "The Null Conclave did not invent the Shadow. They just gave it a name.",
 	},
 
-	# ── TIER 3 — ASCENDED (requires 2 Advanced jobs at level 3+) ──────────
+	#  TIER 3  ASCENDED (requires 2 Advanced jobs at level 3+)
 
 	"resonant": {
 		"id":          "resonant",
@@ -177,14 +177,14 @@ const JOBS: Dictionary = {
 }
 
 
-# ── Prerequisite checking ─────────────────────────────────────────────────────
+#  Prerequisite checking
 
 ## Returns true if a unit's job_jp meets the requirements for a job.
 static func meets_prerequisites(job_id: String, unit_job_jp: Dictionary) -> bool:
 	var job: Dictionary = JOBS.get(job_id, {})
 	if job.is_empty(): return false
 	var prereqs: Dictionary = job.get("prerequisites", {})
-	if prereqs.is_empty(): return true   # Tier 1 — always available
+	if prereqs.is_empty(): return true   # Tier 1  always available
 
 	for req_job: String in prereqs:
 		var required_level: int = prereqs[req_job]

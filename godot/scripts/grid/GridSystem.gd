@@ -220,12 +220,12 @@ static func has_line_of_sight(from: Vector2i, to: Vector2i, tiles_dict: Dictiona
 	return true
 
 
-## Grid → world pixel (tile centre)
+## Grid  world pixel (tile centre)
 static func grid_to_world(grid_pos: Vector2i, tile_size: Vector2i) -> Vector2:
 	return Vector2(grid_pos.x * tile_size.x + tile_size.x * 0.5,
 				   grid_pos.y * tile_size.y + tile_size.y * 0.5)
 
 
-## World pixel → grid position
+## World pixel  grid position
 static func world_to_grid(world_pos: Vector2, tile_size: Vector2i) -> Vector2i:
 	return Vector2i(int(world_pos.x / tile_size.x), int(world_pos.y / tile_size.y))

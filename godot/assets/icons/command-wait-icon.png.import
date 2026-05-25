@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d38on2ahfc6a6"
-path="res://.godot/imported/command-wait-icon.png-fe034fa00180a4b8ed7c36dc4046a90c.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/command-wait-icon.png"
-dest_files=["res://.godot/imported/command-wait-icon.png-fe034fa00180a4b8ed7c36dc4046a90c.ctex"]
 
 [params]
 

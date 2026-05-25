@@ -1,4 +1,4 @@
-## GameState.gd  —  Autoload singleton.
+## GameState.gd    Autoload singleton.
 ## Persists player progress (JP, gold, learned abilities, completed stages)
 ## across scene transitions.  Never freed between battles.
 ##
@@ -11,6 +11,7 @@
 extends Node
 
 const AbilityDBScript := preload("res://scripts/data/AbilityDB.gd")
+const VowSigilDefs := preload("res://scripts/roguelike/VowSigilSystem.gd")
 const SAVE_PATH    := "user://save.json"
 const SAVE_VERSION := 1
 
@@ -23,7 +24,7 @@ var gold: int = 0
 ## Stages the player has beaten at least once
 var completed_stages: Array[String] = []
 
-## Rewards from the most recent victory — read by ResultsScreen
+## Rewards from the most recent victory  read by ResultsScreen
 var pending_rewards: Dictionary = {}
 
 ## Roguelike run state
@@ -32,14 +33,25 @@ var story_flags:          Array[String] = []
 var pending_loot:         Array = []
 var pending_boon_offers:  Array = []
 
-## Last run death context — read by ResultsScreen + HubDialogue
+## Last run death context  read by ResultsScreen + HubDialogue
 var last_run_death: Dictionary = {}
-## Run history — floors completed, used by hub dialogue
+## Run history  floors completed, used by hub dialogue
 var runs_completed: int = 0
 var best_floor_reached: int = 0
 
-## Items accumulated during the current run
+## Items accumulated during the current run (mirrors active_run.inventory)
 var run_inventory:        Array = []
+var vow_progress:         Dictionary = {}
+var sigil_progress:       Dictionary = {}
+
+## Retrieve and clear the pending deployment array written by DeploymentScreen.
+## Call from BattleScene._ready() to get the player's chosen unit positions.
+func pop_pending_deployment() -> Array:
+	if active_run == null or not active_run.has_meta("pending_deployment"):
+		return []
+	var dep: Array = active_run.get_meta("pending_deployment", [])
+	active_run.remove_meta("pending_deployment")
+	return dep
 ## Highest floor reached this run (for ResultsScreen)
 var run_floor_reached:    int   = 0
 ## Total JP earned this run (for ResultsScreen)
@@ -62,33 +74,93 @@ func _ready() -> void:
 
 
 func _init_defaults() -> void:
-	# Zane — Arcanist path → Resonant
+	# Zane  Arcanist path  Resonant
 	_reg("zane", "Zane",
 		["fireball", "thunderstrike", "void_pulse"],
 		["blizzard", "dark_breath", "elemental_convergence"])
 	unit_registry["zane"]["current_job_id"] = "arcanist"
 	unit_registry["zane"]["job_jp"]         = { "arcanist": 0 }
 
-	# Mira — Arcanist → Luminary path
+	# Mira  Arcanist  Luminary path
 	_reg("mira", "Mira Vey",
 		["fireball", "cure", "holy_strike"],
 		["blizzard", "luminous_barrier", "mass_cure"])
 	unit_registry["mira"]["current_job_id"] = "arcanist"
 	unit_registry["mira"]["job_jp"]         = { "arcanist": 0 }
 
-	# Kael — Squire → Warder → Void Knight path
+	# Kael  Squire  Warder  Void Knight path
 	_reg("kael", "Kael",
 		["slash", "mighty_strike", "defend"],
 		["cover_ally", "iron_wall", "retribution"])
 	unit_registry["kael"]["current_job_id"] = "squire"
 	unit_registry["kael"]["job_jp"]         = { "squire": 0 }
 
-	# Lyra — Scout → Shadow path
+	# Lyra  Scout  Shadow path
 	_reg("lyra", "Lyra",
 		["long_shot", "quickstep"],
 		["rain_of_arrows", "smoke_screen", "shadow_step"])
 	unit_registry["lyra"]["current_job_id"] = "scout"
 	unit_registry["lyra"]["job_jp"]         = { "scout": 0 }
+	_init_loadout_progress_defaults()
+
+
+func _init_loadout_progress_defaults() -> void:
+	for vow: Dictionary in VowSigilDefs.VOWS:
+		var vow_id := str(vow.get("id", ""))
+		if not vow_id.is_empty() and not vow_progress.has(vow_id):
+			vow_progress[vow_id] = 0
+	for sigil: Dictionary in VowSigilDefs.SIGILS:
+		var sigil_id := str(sigil.get("id", ""))
+		if not sigil_id.is_empty() and not sigil_progress.has(sigil_id):
+			sigil_progress[sigil_id] = 0
+
+
+func get_vow_xp(vow_id: String) -> int:
+	return int(vow_progress.get(vow_id, 0))
+
+
+func get_sigil_xp(sigil_id: String) -> int:
+	return int(sigil_progress.get(sigil_id, 0))
+
+
+func seed_run_loadout(run: RunState) -> void:
+	if not run:
+		return
+	_init_loadout_progress_defaults()
+	run.equipped_vow_xp = get_vow_xp(run.equipped_vow_id)
+	run.equipped_vow_level = VowSigilDefs.level_for_xp(run.equipped_vow_xp)
+	run.equipped_sigil_xp = get_sigil_xp(run.equipped_sigil_id)
+	run.equipped_sigil_level = VowSigilDefs.level_for_xp(run.equipped_sigil_xp)
+
+
+func apply_loadout_xp(amount: int, reason: String = "") -> Dictionary:
+	if amount <= 0 or active_run == null:
+		return {}
+	_init_loadout_progress_defaults()
+	var vow_id := active_run.equipped_vow_id
+	var sigil_id := active_run.equipped_sigil_id
+	var before_vow_level := VowSigilDefs.level_for_xp(get_vow_xp(vow_id))
+	var before_sigil_level := VowSigilDefs.level_for_xp(get_sigil_xp(sigil_id))
+	vow_progress[vow_id] = get_vow_xp(vow_id) + amount
+	sigil_progress[sigil_id] = get_sigil_xp(sigil_id) + amount
+	seed_run_loadout(active_run)
+	var result := {
+		"amount": amount,
+		"reason": reason,
+		"vow_id": vow_id,
+		"vow_level_before": before_vow_level,
+		"vow_level_after": active_run.equipped_vow_level,
+		"vow_leveled": active_run.equipped_vow_level > before_vow_level,
+		"sigil_id": sigil_id,
+		"sigil_level_before": before_sigil_level,
+		"sigil_level_after": active_run.equipped_sigil_level,
+		"sigil_leveled": active_run.equipped_sigil_level > before_sigil_level,
+	}
+	pending_rewards["loadout_xp"] = int(pending_rewards.get("loadout_xp", 0)) + amount
+	pending_rewards["loadout_xp_reason"] = reason
+	pending_rewards["loadout_progress"] = result
+	save()
+	return result
 
 
 func _reg(uid: String, dname: String,
@@ -110,7 +182,7 @@ func _reg(uid: String, dname: String,
 	}
 
 
-# ── Ability queries ───────────────────────────────────────────────────────────
+#  Ability queries
 
 ## Full ability list for a unit: base + every JP-purchased ability.
 func get_all_abilities(unit_id: String) -> Array[String]:
@@ -193,7 +265,7 @@ func set_equipped_abilities(unit_id: String, ability_ids: Array) -> void:
 	save()
 
 
-# ── Battle results ────────────────────────────────────────────────────────────
+#  Battle results
 
 ## Called by BattleScene on victory.  Awards JP to surviving player units.
 func apply_victory(map_id: String, rewards: Dictionary,
@@ -201,6 +273,7 @@ func apply_victory(map_id: String, rewards: Dictionary,
 	var gld: int = rewards.get("gold", 0)
 	var jp_gain: int = rewards.get("jp", 0)
 	gold += gld
+	run_jp_earned += jp_gain
 	for uid in player_unit_ids:
 		if unit_registry.has(uid):
 			unit_registry[uid]["jp"] = unit_registry[uid].get("jp", 0) + jp_gain
@@ -215,7 +288,7 @@ func apply_victory(map_id: String, rewards: Dictionary,
 	save()   # auto-save on every victory
 
 
-# ── Persistence ───────────────────────────────────────────────────────────────
+#  Persistence
 
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
@@ -249,6 +322,8 @@ func save() -> void:
 		"unit_job_jp":      unit_job_jp,
 		"unit_equipped":    unit_equipped,
 		"unit_equipment":   unit_equipment,
+		"vow_progress":     vow_progress.duplicate(),
+		"sigil_progress":   sigil_progress.duplicate(),
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -277,7 +352,7 @@ func load_save() -> bool:
 
 	var data: Dictionary = parsed as Dictionary
 	if data.get("version", 0) != SAVE_VERSION:
-		push_warning("GameState.load_save: version mismatch — starting fresh.")
+		push_warning("GameState.load_save: version mismatch  starting fresh.")
 		return false
 
 	# Populate registry with defaults first so learnable/base lists are intact
@@ -299,6 +374,15 @@ func load_save() -> bool:
 	var saved_job_jp:    Dictionary = data.get("unit_job_jp", {})
 	var saved_equipped:  Dictionary = data.get("unit_equipped", {})
 	var saved_equipment: Dictionary = data.get("unit_equipment", {})
+	var saved_vow_progress: Variant = data.get("vow_progress", {})
+	var saved_sigil_progress: Variant = data.get("sigil_progress", {})
+	vow_progress = {}
+	if saved_vow_progress is Dictionary:
+		vow_progress = (saved_vow_progress as Dictionary).duplicate()
+	sigil_progress = {}
+	if saved_sigil_progress is Dictionary:
+		sigil_progress = (saved_sigil_progress as Dictionary).duplicate()
+	_init_loadout_progress_defaults()
 
 	for uid: String in unit_registry:
 		if saved_jp.has(uid):
@@ -334,5 +418,7 @@ func delete_save() -> void:
 	completed_stages.clear()
 	story_flags.clear()
 	pending_rewards.clear()
+	vow_progress.clear()
+	sigil_progress.clear()
 	unit_registry.clear()
 	_init_defaults()

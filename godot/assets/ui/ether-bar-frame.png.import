@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ci0str0k8n3vs"
-path="res://.godot/imported/ether-bar-frame.png-fce6624a1f0f06399aa437ee71434539.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/ether-bar-frame.png"
-dest_files=["res://.godot/imported/ether-bar-frame.png-fce6624a1f0f06399aa437ee71434539.ctex"]
 
 [params]
 

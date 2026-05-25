@@ -145,8 +145,66 @@ export const BOONS = [
     icon:'🔥', description:'Once per battle, the first party member at 0 HP survives at 1 HP instead.',
     flavour:'Not every flame goes out when you stop feeding it.',
     effect:{ type:'once_per_battle', trigger:'fatal_hit', outcome:'survive_at_1_hp' } },
+  // ── Movement Boons ──
+  { id:'windrunner_step',   name:'Windrunner Step',    element:null,     rarity:'common',
+    icon:'💨', description:'All party members gain +1 Move this run. Repositioning feels better immediately.',
+    flavour:'The wind remembers every dancer.',
+    effect:{ type:'stat_bonus', stat:'move', amount:1, target:'party' }, lane:'movement' },
+  { id:'battle_fury',       name:'Battle Fury',        element:null,     rarity:'rare',
+    icon:'⚔️', description:'Moving before attacking this turn adds +30% bonus damage to that strike.',
+    flavour:'"The hunt rewards the swift." — Ashvale doctrine',
+    effect:{ type:'tactical', id:'battle_fury', bonus:0.30 }, lane:'movement' },
+  { id:'reaping_step',      name:'Reaping Step',       element:null,     rarity:'legendary',
+    icon:'🌪️', description:'Killing an enemy grants a free move of up to 3 tiles.',
+    flavour:'The earth remembers every footfall. Especially the last one.',
+    effect:{ type:'tactical', id:'reaping_step', range:3 }, lane:'movement' },
 ]
 
 export const getBoon             = (id)   => BOONS.find(b => b.id === id)
 export const getBoonsByRarity    = (r)    => BOONS.filter(b => b.rarity === r)
 export const getBoonsByGuardian  = (g)    => BOONS.filter(b => b.guardian === g)
+
+// Movement boon detection (mirrors BoonSystem.boon_lane in GDScript)
+const MOVEMENT_TACTICAL_IDS = ['battle_fury', 'iron_momentum', 'reaping_step']
+
+export function getBoonLane(boon) {
+  if (!boon) return ''
+
+  // Explicit lane property
+  if (boon.lane) return boon.lane
+
+  const effect = boon.effect || {}
+
+  // Stat bonus for movement
+  if (effect.type === 'stat_bonus' && ['move', 'movement'].includes(effect.stat)) {
+    return 'movement'
+  }
+
+  // Move bonus in effect
+  if ((effect.move_bonus ?? 0) > 0) {
+    return 'movement'
+  }
+
+  // Tactical movement abilities
+  if (effect.type === 'tactical' && MOVEMENT_TACTICAL_IDS.includes(effect.id)) {
+    return 'movement'
+  }
+
+  return ''
+}
+
+export const BOON_LANE_LIMITS = {
+  'movement': 2,
+}
+
+export function getBoonsInLane(activeBoons, lane) {
+  if (!lane) return []
+  return activeBoons.filter(b => getBoonLane(b) === lane)
+}
+
+export function needsLaneReplacement(activeBoons, incomingBoon) {
+  const lane = getBoonLane(incomingBoon)
+  if (!lane) return false
+  const limit = BOON_LANE_LIMITS[lane] ?? 999
+  return getBoonsInLane(activeBoons, lane).length >= limit
+}

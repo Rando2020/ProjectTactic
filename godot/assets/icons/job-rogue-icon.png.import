@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ejwall7mhwf"
-path="res://.godot/imported/job-rogue-icon.png-797ef96027af925dfe35e2ae3683d59f.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-rogue-icon.png"
-dest_files=["res://.godot/imported/job-rogue-icon.png-797ef96027af925dfe35e2ae3683d59f.ctex"]
 
 [params]
 

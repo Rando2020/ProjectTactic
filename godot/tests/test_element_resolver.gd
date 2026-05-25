@@ -10,15 +10,15 @@ func _run_tests()->void:
 	var es:=ElementalSystem.new()
 	_eq(es.apply_element(Vector2i(0,0),"void",[]),"","no reaction unknown element")
 	_eq(es.get_surface_state(Vector2i(0,0)),"","state unchanged")
-	_eq(es.apply_element(Vector2i(1,0),"water",[]),"apply_wet","water→apply_wet")
+	_eq(es.apply_element(Vector2i(1,0),"water",[]),"apply_wet","waterapply_wet")
 	_eq(es.get_surface_state(Vector2i(1,0)),"wet","state=wet")
 	es.surface_states[Vector2i(2,0)]="wet"
-	_eq(es.apply_element(Vector2i(2,0),"ice",[]),"freeze","ice on wet→freeze")
+	_eq(es.apply_element(Vector2i(2,0),"ice",[]),"freeze","ice on wetfreeze")
 	es.surface_states[Vector2i(3,0)]="frozen"
-	_eq(es.apply_element(Vector2i(3,0),"thunder",[]),"shatter","thunder on frozen→shatter")
+	_eq(es.apply_element(Vector2i(3,0),"thunder",[]),"shatter","thunder on frozenshatter")
 	_eq(es.get_surface_state(Vector2i(3,0)),"","shatter clears state")
 	es.surface_states[Vector2i(5,5)]="wet"
-	_eq(es.apply_element(Vector2i(5,5),"thunder",[]),"electrify_chain","thunder on wet→chain")
+	_eq(es.apply_element(Vector2i(5,5),"thunder",[]),"electrify_chain","thunder on wetchain")
 	_eq(es.get_surface_state(Vector2i(5,5)),"electrified","origin=electrified")
 	es.free()
 func _eq(got,exp,label)->void:

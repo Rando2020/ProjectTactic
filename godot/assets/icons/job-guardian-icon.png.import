@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://nvtrxvjkcked"
-path="res://.godot/imported/job-guardian-icon.png-c7db0e57d2691ee64256dd82a8cf8055.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-guardian-icon.png"
-dest_files=["res://.godot/imported/job-guardian-icon.png-c7db0e57d2691ee64256dd82a8cf8055.ctex"]
 
 [params]
 

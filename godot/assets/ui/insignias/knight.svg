@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Knight insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-knight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#8c6f2a"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-knight)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#8c6f2a" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#d4af37"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M24 24 L40 24 L40 38 Q40 46 32 50 Q24 46 24 38 Z" stroke-width="1.8" stroke-linejoin="round"></path>
+      
+      <path d="M27 34 L32 30 L37 34" stroke-width="1.4"></path>
+      
+      <line x1="14" y1="14" x2="50" y2="50" stroke-width="1.6"></line>
+      
+      <path d="M50 50 L48 44 L52 46 Z" fill="currentColor" stroke="none"></path>
+    </g></g>
+</svg>

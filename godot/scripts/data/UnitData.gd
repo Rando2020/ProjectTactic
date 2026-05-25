@@ -14,5 +14,5 @@ extends Resource
 ## Elemental affinity multipliers applied to incoming spell damage.
 ## Keys: "fire" "blizzard" "thunder" "wind" "holy" "dark"
 ## Values: 2.0=very weak  1.5=weak  1.0=neutral  0.5=resist  0.0=immune
-## Not @exported — bare Dictionary @export is a parse error in Godot 4.6.
+## Not @exported  bare Dictionary @export is a parse error in Godot 4.6.
 var elemental_affinities: Dictionary = {}

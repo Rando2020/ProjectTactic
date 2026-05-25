@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://de6pexom6ry53"
-path="res://.godot/imported/siren-guardian-summon.png-bc67713d322bfd251d52d28ff262948d.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/characters/siren-guardian-summon.png"
-dest_files=["res://.godot/imported/siren-guardian-summon.png-bc67713d322bfd251d52d28ff262948d.ctex"]
 
 [params]
 

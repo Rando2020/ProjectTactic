@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Bell</title>
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <circle cx="12" cy="12" r="2"></circle>
+    <circle cx="12" cy="12" r="5" opacity="0.6"></circle>
+    <circle cx="12" cy="12" r="8" opacity="0.3"></circle>
+  </g>
+</svg>

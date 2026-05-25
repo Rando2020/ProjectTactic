@@ -12,7 +12,7 @@ var run_aether: int = 0
 var active_boons: Array[Dictionary] = []
 var rng := RandomNumberGenerator.new()
 
-func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1) -> void:
+func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: String = "", sigil_id: String = "") -> void:
 	is_run_active = true
 	current_stage = 0
 	heat_level = max(p_heat_level, 0)
@@ -30,12 +30,30 @@ func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
 		gs.active_run = RunState.create(run_seed)
+		if not vow_id.is_empty():
+			gs.active_run.equipped_vow_id = vow_id
+		if not sigil_id.is_empty():
+			gs.active_run.equipped_sigil_id = sigil_id
+		if gs.has_method("seed_run_loadout"):
+			gs.seed_run_loadout(gs.active_run)
 		gs.active_run.heat_level = heat_level
+		# Initialize run state tracking
+		gs.unit_registry.clear()
+		gs.run_floor_reached = 1
+		gs.run_jp_earned = 0
+		gs.pending_rewards.clear()
+		gs.pending_loot.clear()
+		gs.run_inventory.clear()
+		gs.last_run_death.clear()
 
 	run_started.emit(run_seed, heat_level)
 
 func end_run(victory: bool) -> void:
 	is_run_active = false
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.active_run and gs.has_method("apply_loadout_xp"):
+		var end_xp := VowSigilSystem.xp_for_run_end(gs.active_run.current_floor, victory, heat_level)
+		gs.apply_loadout_xp(end_xp, "run_complete" if victory else "run_end")
 	var meta: Node = get_node_or_null("/root/MetaProgression")
 	if meta and run_aether > 0:
 		meta.add_currency(Currency.SOUL_SHARDS, floori(float(run_aether) / 10.0))
@@ -45,7 +63,6 @@ func end_run(victory: bool) -> void:
 			meta.add_currency(Currency.BOSS_TOKENS, 1)
 		meta.save()
 	# Clear run state
-	var gs: Node = get_node_or_null("/root/GameState")
 	if gs: gs.active_run = null
 	run_ended.emit(victory)
 
@@ -83,7 +100,7 @@ func add_boon(boon: Dictionary) -> void:
 func get_reward_multiplier() -> float:
 	return 1.0 + float(heat_level) * 0.12
 
-## Returns heat_level — used by EliteSystem to scale difficulty
+## Returns heat_level  used by EliteSystem to scale difficulty
 func get_heat_level() -> int:
 	return heat_level
 

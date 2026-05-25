@@ -1,0 +1,68 @@
+/* preview/_card.css — shared shell for every Design System preview card.
+   Cards are rendered ~700×var(--h) in an iframe; keep them edge-to-edge,
+   skip titles (the asset name renders OUTSIDE the card). */
+
+@import url('../colors_and_type.css');
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--surface-0);
+  color: var(--fg-1);
+  font: var(--type-body);
+  /* parchment grain over candlelit void */
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.06), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(155,35,53,0.05), transparent 50%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
+}
+
+.card {
+  padding: 20px 22px;
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.row    { display: flex; gap: 10px; align-items: center; }
+.col    { display: flex; flex-direction: column; gap: 8px; }
+.grow   { flex: 1 1 auto; min-width: 0; }
+.spacer { flex: 1 1 auto; }
+
+/* swatch primitives shared by color cards */
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.chip {
+  height: 64px;
+  border: 1px solid rgba(0,0,0,0.6);
+  box-shadow: var(--inset-deep);
+  position: relative;
+  overflow: hidden;
+}
+.chip.tall { height: 88px; }
+.chip.short { height: 40px; }
+.swatch .name {
+  font: var(--type-label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.swatch .val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* sacred frame border — used a few cards over */
+.frame-sacred {
+  border: 1px solid var(--line-hot);
+  box-shadow: var(--inset-deep), 0 0 0 4px rgba(0,0,0,0.4);
+}

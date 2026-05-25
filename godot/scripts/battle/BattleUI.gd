@@ -46,6 +46,9 @@ var _preview_amount_label: Label
 var _preview_hit_label: Label
 var _preview_crit_label: Label
 var _preview_note_label: Label
+var _loadout_panel: PanelContainer
+var _loadout_items_box: HBoxContainer
+var _loadout_detail_label: Label
 var _intro_banner: PanelContainer
 var _intro_banner_style: StyleBoxFlat
 var _spoils_overlay: Control
@@ -61,8 +64,8 @@ var _can_move_now: bool = false
 var _can_act_now: bool = false
 var _has_pending_action: bool = false
 
-const LOG_SIZE := 8
-const TIMELINE_SLOTS := 6
+const LOG_SIZE := 5
+const TIMELINE_SLOTS := 5
 
 
 func setup(manager: BattleManager) -> void:
@@ -82,6 +85,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.enemy_intent_changed.connect(_on_enemy_intent_changed)
 	if battle_manager.objective_tracker:
 		battle_manager.objective_tracker.objective_updated.connect(_on_objective_updated)
+	_refresh_loadout_strip()
 
 
 func _ready() -> void:
@@ -91,27 +95,27 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Dark background panel on right half
 	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.10, 0.14)
-	bg.position = Vector2(640, 0)
-	bg.size = Vector2(640, 720)
+	bg.color = Color(0.035, 0.045, 0.065, 0.82)
+	bg.position = Vector2(908, 8)
+	bg.size = Vector2(360, 704)
 	add_child(bg)
 
 	var root := VBoxContainer.new()
-	root.position = Vector2(648, 8)
-	root.size = Vector2(624, 704)
-	root.add_theme_constant_override("separation", 10)
+	root.position = Vector2(916, 14)
+	root.size = Vector2(344, 690)
+	root.add_theme_constant_override("separation", 6)
 	add_child(root)
 
 	# Mission header
 	_mission_label = Label.new()
 	_mission_label.text = "ASHVALE ROAD"
-	_mission_label.add_theme_font_size_override("font_size", 20)
+	_mission_label.add_theme_font_size_override("font_size", 15)
 	_mission_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
 	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_mission_label)
 
 	_phase_label = Label.new()
-	_phase_label.text = "Initializing…"
+	_phase_label.text = "Initializing"
 	_phase_label.add_theme_font_size_override("font_size", 13)
 	_phase_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -161,7 +165,7 @@ func _build_ui() -> void:
 
 	_command_hint_label = Label.new()
 	_command_hint_label.text = "Choose a command"
-	_command_hint_label.add_theme_font_size_override("font_size", 14)
+	_command_hint_label.add_theme_font_size_override("font_size", 12)
 	_command_hint_label.add_theme_color_override("font_color", Color(0.25, 0.95, 1.0))
 	_command_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_command_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -173,8 +177,8 @@ func _build_ui() -> void:
 	root.add_child(_section_label("ACTIVE UNIT"))
 
 	_unit_name = Label.new()
-	_unit_name.text = "—"
-	_unit_name.add_theme_font_size_override("font_size", 22)
+	_unit_name.text = ""
+	_unit_name.add_theme_font_size_override("font_size", 18)
 	_unit_name.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	root.add_child(_unit_name)
 
@@ -234,7 +238,7 @@ func _build_ui() -> void:
 	root.add_child(_ability_panel)
 
 	var ab_header := Label.new()
-	ab_header.text = "── SELECT SPELL ──"
+	ab_header.text = " SELECT SPELL "
 	ab_header.add_theme_font_size_override("font_size", 11)
 	ab_header.add_theme_color_override("font_color", Color(0.7, 0.6, 1.0))
 	ab_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -271,6 +275,7 @@ func _build_ui() -> void:
 
 	_build_intro_banner()
 	_build_side_timeline()
+	_build_loadout_strip()
 	_build_action_preview_panel()
 	_build_settings_overlay()
 
@@ -337,7 +342,7 @@ func _build_intro_banner() -> void:
 	box.add_child(subtitle)
 
 
-# ── Builder helpers ───────────────────────────────────────────────────────────
+#  Builder helpers
 
 func _build_side_timeline() -> void:
 	var panel := PanelContainer.new()
@@ -367,7 +372,7 @@ func _build_side_timeline() -> void:
 	for i in range(TIMELINE_SLOTS):
 		var lbl := Label.new()
 		lbl.text = "%d  -" % (i + 1)
-		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_font_size_override("font_size", 9)
 		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.9))
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -376,11 +381,130 @@ func _build_side_timeline() -> void:
 		_side_timeline_labels.append(lbl)
 
 
+func _build_loadout_strip() -> void:
+	_loadout_panel = PanelContainer.new()
+	_loadout_panel.position = Vector2(12.0, 396.0)
+	_loadout_panel.custom_minimum_size = Vector2(330.0, 112.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.03, 0.04, 0.06, 0.86)
+	st.border_color = Color(0.78, 0.66, 0.34, 0.58)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 6)
+	_loadout_panel.add_theme_stylebox_override("panel", st)
+	add_child(_loadout_panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	_loadout_panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "VOW / SIGIL / BOONS"
+	title.add_theme_font_size_override("font_size", 10)
+	title.add_theme_color_override("font_color", Color(0.92, 0.78, 0.46))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	_loadout_items_box = HBoxContainer.new()
+	_loadout_items_box.add_theme_constant_override("separation", 4)
+	box.add_child(_loadout_items_box)
+
+	_loadout_detail_label = Label.new()
+	_loadout_detail_label.text = "Hover or select an icon."
+	_loadout_detail_label.add_theme_font_size_override("font_size", 10)
+	_loadout_detail_label.add_theme_color_override("font_color", Color(0.78, 0.82, 0.86))
+	_loadout_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_loadout_detail_label.custom_minimum_size = Vector2(312.0, 42.0)
+	box.add_child(_loadout_detail_label)
+	_refresh_loadout_strip()
+
+
+func _refresh_loadout_strip() -> void:
+	if not _loadout_items_box:
+		return
+	for child in _loadout_items_box.get_children():
+		child.queue_free()
+	var gs: Node = get_node_or_null("/root/GameState")
+	if not gs or not gs.get("active_run"):
+		_loadout_detail_label.text = "No active run loadout."
+		return
+	var run: RunState = gs.get("active_run") as RunState
+	if not run:
+		_loadout_detail_label.text = "No active run loadout."
+		return
+	var vow: Dictionary = VowSigilSystem.get_vow(str(run.equipped_vow_id))
+	var sigil: Dictionary = VowSigilSystem.get_sigil(str(run.equipped_sigil_id))
+	_add_loadout_item("V", Color(0.95, 0.68, 0.28), _loadout_vow_text(vow, int(run.equipped_vow_level)))
+	_add_loadout_item("S", Color(0.45, 0.84, 1.0), _loadout_sigil_text(sigil, int(run.equipped_sigil_level)))
+	var shown := 0
+	for boon_variant in run.active_boons:
+		if shown >= 7:
+			break
+		var boon_dict: Dictionary = boon_variant as Dictionary
+		var icon := str(boon_dict.get("icon", "+"))
+		if icon.length() > 2:
+			icon = str(boon_dict.get("name", "?")).left(1).to_upper()
+		_add_loadout_item(icon, _boon_color(boon_dict), _loadout_boon_text(boon_dict))
+		shown += 1
+	if run.active_boons.size() > shown:
+		_add_loadout_item("+%d" % (run.active_boons.size() - shown), Color(0.8, 0.8, 0.8), "More boons are active. Open the route screen for the full list.")
+
+
+func _add_loadout_item(label: String, color: Color, detail: String) -> void:
+	var btn := Button.new()
+	btn.text = label
+	btn.custom_minimum_size = Vector2(30.0, 30.0)
+	btn.tooltip_text = detail
+	btn.add_theme_font_size_override("font_size", 11)
+	btn.add_theme_color_override("font_color", color)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(color.r * 0.14, color.g * 0.14, color.b * 0.14, 0.92)
+	st.border_color = color
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 1)
+	btn.add_theme_stylebox_override("normal", st)
+	var hover := st.duplicate() as StyleBoxFlat
+	hover.bg_color = Color(color.r * 0.22, color.g * 0.22, color.b * 0.22, 0.96)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.mouse_entered.connect(_show_loadout_detail.bind(detail, color))
+	btn.pressed.connect(_show_loadout_detail.bind(detail, color))
+	_loadout_items_box.add_child(btn)
+
+
+func _show_loadout_detail(detail: String, color: Color) -> void:
+	if not _loadout_detail_label:
+		return
+	_loadout_detail_label.text = detail
+	_loadout_detail_label.add_theme_color_override("font_color", color.lightened(0.24))
+
+
+func _loadout_vow_text(vow: Dictionary, level: int) -> String:
+	return "Vow: %s Lv.%d - %s" % [str(vow.get("name", "Vow")), level, str(vow.get("theme", ""))]
+
+
+func _loadout_sigil_text(sigil: Dictionary, level: int) -> String:
+	return "Sigil: %s Lv.%d - %s" % [str(sigil.get("name", "Sigil")), level, str(sigil.get("theme", ""))]
+
+
+func _loadout_boon_text(boon: Dictionary) -> String:
+	return "%s: %s" % [str(boon.get("name", "Boon")), str(boon.get("desc", ""))]
+
+
+func _boon_color(boon: Dictionary) -> Color:
+	var rarity := str(boon.get("rarity", "common"))
+	if BoonSystem.RARITIES.has(rarity):
+		var rarity_data: Dictionary = BoonSystem.RARITIES[rarity]
+		return rarity_data.get("color", Color(0.9, 0.8, 0.5))
+	return Color(0.9, 0.8, 0.5)
+
+
 func _build_action_preview_panel() -> void:
 	_preview_panel = PanelContainer.new()
 	_preview_panel.visible = false
-	_preview_panel.position = Vector2(64.0, 552.0)
-	_preview_panel.custom_minimum_size = Vector2(560.0, 140.0)
+	_preview_panel.position = Vector2(238.0, 520.0)
+	_preview_panel.custom_minimum_size = Vector2(820.0, 168.0)
+	_preview_panel.size = Vector2(820.0, 168.0)
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(0.035, 0.038, 0.052, 0.92)
 	st.border_color = Color(0.78, 0.66, 0.42, 0.85)
@@ -396,7 +520,7 @@ func _build_action_preview_panel() -> void:
 	_preview_panel.add_child(root)
 
 	var combat_row := HBoxContainer.new()
-	combat_row.add_theme_constant_override("separation", 12)
+	combat_row.add_theme_constant_override("separation", 18)
 	root.add_child(combat_row)
 	_preview_actor_portrait = _portrait_column(combat_row, true)
 	var center := VBoxContainer.new()
@@ -416,7 +540,7 @@ func _build_action_preview_panel() -> void:
 	var result_row := HBoxContainer.new()
 	result_row.add_theme_constant_override("separation", 18)
 	center.add_child(result_row)
-	_preview_amount_label = _preview_label(result_row, "--", 28, Color(1.0, 0.92, 0.35))
+	_preview_amount_label = _preview_label(result_row, "--", 34, Color(1.0, 0.92, 0.35))
 	_preview_hit_label = _preview_label(result_row, "Hit --", 12, Color(0.75, 0.95, 0.85))
 	_preview_crit_label = _preview_label(result_row, "Crit --", 12, Color(0.9, 0.75, 1.0))
 
@@ -744,7 +868,7 @@ func _section_label(text: String) -> Label:
 
 func _stat_label(parent: Control, prefix: String) -> Label:
 	var lbl := Label.new()
-	lbl.text = "%s: —" % prefix
+	lbl.text = "%s: " % prefix
 	lbl.add_theme_font_size_override("font_size", 12)
 	parent.add_child(lbl)
 	return lbl
@@ -762,12 +886,12 @@ func _cmd_btn(parent: Control, label: String, callback: Callable) -> Button:
 
 func _timeline_slot(parent: Control) -> Label:
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(88, 52)
+	panel.custom_minimum_size = Vector2(62, 42)
 	var lbl := Label.new()
-	lbl.text = "—"
+	lbl.text = ""
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_font_size_override("font_size", 9)
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_child(lbl)
@@ -775,7 +899,7 @@ func _timeline_slot(parent: Control) -> Label:
 	return lbl
 
 
-# ── Signal handlers ───────────────────────────────────────────────────────────
+#  Signal handlers
 
 func _on_log(text: String) -> void:
 	for i in range(LOG_SIZE - 1, 0, -1):
@@ -836,12 +960,142 @@ func _on_enemy_intent_changed(intent: Dictionary) -> void:
 		_enemy_intent_panel.visible = false
 		return
 	_enemy_intent_panel.visible = true
+	if str(intent.get("kind", "")) == "board":
+		_enemy_intent_title.text = "ENEMY PLANS"
+		_enemy_intent_title.add_theme_color_override("font_color", Color(1.0, 0.62, 0.36))
+		_enemy_intent_body.text = _format_enemy_intent_board(intent.get("rows", []))
+		_enemy_intent_body.add_theme_color_override("font_color", Color(0.92, 0.90, 0.84))
+		_style_enemy_intent_panel("normal")
+		return
 	var actor := str(intent.get("actor", "Enemy"))
 	var action := str(intent.get("action", "Act"))
 	var target := str(intent.get("target", "-"))
 	var note := str(intent.get("note", ""))
+	var details: Dictionary = intent.get("details", {})
+	var damage := int(details.get("damage", 0))
+	var danger := str(intent.get("danger", "normal"))
+	var danger_color := Color(0.92, 0.90, 0.84)
+	if danger == "lethal":
+		danger_color = Color(1.0, 0.35, 0.35)
+	elif danger == "high":
+		danger_color = Color(1.0, 0.65, 0.2)
+	elif damage > 0:
+		danger_color = Color(1.0, 0.88, 0.4)
 	_enemy_intent_title.text = "ENEMY INTENT - %s" % actor.to_upper()
-	_enemy_intent_body.text = "%s -> %s\n%s" % [action, target, note]
+	_enemy_intent_title.add_theme_color_override("font_color", Color(1.0, 0.62, 0.36))
+	var body_parts: Array[String] = []
+	body_parts.append("%s -> %s" % [action, target])
+	var detail_text := _format_enemy_intent_details(intent, details)
+	if not detail_text.is_empty():
+		body_parts.append(detail_text)
+	if not note.is_empty():
+		body_parts.append(note)
+	_enemy_intent_body.text = "\n".join(body_parts)
+	_enemy_intent_body.add_theme_color_override("font_color", danger_color)
+
+	_style_enemy_intent_panel(danger)
+
+
+func _style_enemy_intent_panel(danger: String) -> void:
+	if _enemy_intent_panel:
+		var panel_style := StyleBoxFlat.new()
+		panel_style.content_margin_left = 8.0
+		panel_style.content_margin_right = 8.0
+		panel_style.content_margin_top = 6.0
+		panel_style.content_margin_bottom = 6.0
+
+		match danger:
+			"lethal":
+				panel_style.bg_color = Color(0.12, 0.04, 0.04, 0.92)
+				panel_style.border_color = Color(1.0, 0.2, 0.2, 0.9)
+				for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+					panel_style.set_border_width(side, 2)
+			"high":
+				panel_style.bg_color = Color(0.12, 0.08, 0.04, 0.92)
+				panel_style.border_color = Color(1.0, 0.55, 0.2, 0.9)
+				for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+					panel_style.set_border_width(side, 2)
+			"medium":
+				panel_style.bg_color = Color(0.06, 0.08, 0.10, 0.92)
+				panel_style.border_color = Color(1.0, 0.75, 0.3, 0.7)
+				for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+					panel_style.set_border_width(side, 1)
+			_:
+				panel_style.bg_color = Color(0.05, 0.06, 0.085, 0.92)
+				panel_style.border_color = Color(0.4, 0.6, 0.8, 0.6)
+				for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+					panel_style.set_border_width(side, 1)
+
+		for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+			panel_style.set_corner_radius(corner, 6)
+		_enemy_intent_panel.add_theme_stylebox_override("panel", panel_style)
+
+
+func _format_enemy_intent_board(rows_variant: Variant) -> String:
+	var rows: Array = []
+	if rows_variant is Array:
+		rows = rows_variant
+	if rows.is_empty():
+		return "No enemies remain."
+	var lines: Array[String] = []
+	var max_rows := mini(rows.size(), 4)
+	for i in range(max_rows):
+		var row: Dictionary = rows[i]
+		var actor := str(row.get("actor", "Enemy"))
+		var target := str(row.get("target", "-"))
+		var danger := str(row.get("danger", "normal")).to_upper()
+		var details: Dictionary = row.get("details", {})
+		var dmg := int(details.get("damage", 0))
+		var hp_after := int(details.get("target_hp_after", -1))
+		var suffix := ""
+		if dmg > 0:
+			suffix = "  %d dmg" % dmg
+			if hp_after >= 0:
+				suffix += ", leaves %d HP" % hp_after
+		elif dmg < 0:
+			suffix = "  heals %d" % abs(dmg)
+		var move_label := str(details.get("move_label", ""))
+		if not move_label.is_empty():
+			suffix += "  " + move_label
+		lines.append("%s: %s -> %s%s" % [danger, actor, target, suffix])
+	if rows.size() > max_rows:
+		lines.append("+%d more enemy plan(s)" % (rows.size() - max_rows))
+	return "\n".join(lines)
+
+
+func _format_enemy_intent_details(intent: Dictionary, details: Dictionary) -> String:
+	var parts: Array[String] = []
+	var dmg := int(details.get("damage", 0))
+	if dmg > 0:
+		var line := "%d dmg" % dmg
+		var hp_after := int(details.get("target_hp_after", -1))
+		if hp_after >= 0:
+			line += ", target HP %d" % hp_after
+		if bool(details.get("can_ko", false)):
+			line += " - KO threat"
+		parts.append(line)
+	elif dmg < 0:
+		parts.append("Heals %d HP" % abs(dmg))
+	if dmg > 0:
+		parts.append("Hit %d%%" % int(details.get("hit_pct", 100)))
+		var crit := int(details.get("crit_pct", 0))
+		if crit > 0:
+			parts.append("Crit %d%%" % crit)
+	var move_label := str(details.get("move_label", ""))
+	if not move_label.is_empty():
+		parts.append(move_label)
+	var intent_range := int(details.get("range", 0))
+	if intent_range > 0:
+		parts.append("Range %d" % intent_range)
+	var affinity := str(details.get("affinity_label", ""))
+	if not affinity.is_empty():
+		parts.append(affinity)
+	var danger := str(intent.get("danger", ""))
+	if danger == "lethal":
+		parts.append("Priority: lethal")
+	elif danger == "high":
+		parts.append("Priority: high")
+	return "    ".join(parts)
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
@@ -852,88 +1106,139 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	_preview_panel.visible = true
 
 	var el_color: Color = preview.get("element_color", Color(0.9, 0.85, 0.6))
-	var is_heal:  bool  = preview.get("is_heal", false) == true
-	var is_buff:  bool  = preview.get("is_buff", false) == true
-	var aff_lbl:  String = str(preview.get("affinity_label", ""))
-	var aff_col:  Color  = preview.get("affinity_color", Color.WHITE)
+	var is_heal: bool = preview.get("is_heal", false) == true
+	var is_buff: bool = preview.get("is_buff", false) == true
+	var aff_lbl: String = str(preview.get("affinity_label", ""))
+	var aff_col: Color = preview.get("affinity_color", Color.WHITE)
 
-	# Mode line: element icon + mode
 	var el_icon: String = str(preview.get("element_icon", ""))
-	var mode:    String = str(preview.get("mode", "Forecast")).to_upper()
+	var mode: String = str(preview.get("mode", "Forecast")).to_upper()
 	_preview_mode_label.text = ("%s  %s" % [el_icon, mode]).strip_edges()
 	_preview_mode_label.add_theme_color_override("font_color", el_color)
 
-	# Actor label
-	_preview_actor_label.text = "ATTACKER\n%s" % str(preview.get("actor_name", preview.get("actor","-")))
+	_preview_actor_label.text = "ATTACKER\n%s" % str(preview.get("actor_name", preview.get("actor", "-")))
 
-	# Action label — ability name + boon bonus if any
-	var ab_name: String = str(preview.get("ability_name", preview.get("action","—")))
-	var boon_pct: int   = int(preview.get("boon_bonus_pct", 0))
+	var ab_name: String = str(preview.get("ability_name", preview.get("action", "")))
+	var boon_pct: int = int(preview.get("boon_bonus_pct", 0))
 	var ab_text: String = ab_name
-	if boon_pct > 0: ab_text += "\n✦ +%d%% boon" % boon_pct
+	if boon_pct > 0:
+		ab_text += "\n+%d%% boon" % boon_pct
 	_preview_action_label.text = ab_text
 	_preview_action_label.add_theme_color_override("font_color", el_color)
 
-	# Target label — name + HP bar (text version)
-	var t_name:  String = str(preview.get("target_name", preview.get("target","-")))
-	var hp_b:    int    = int(preview.get("hp_before", 0))
-	var hp_a:    int    = int(preview.get("hp_after",  0))
-	var _max_hp: int = int(preview.get("max_hp", 1))
-	var hp_text: String = ""
+	var t_name: String = str(preview.get("target_name", preview.get("target", "-")))
+	var hp_b: int = int(preview.get("hp_before", 0))
+	var hp_a: int = int(preview.get("hp_after", 0))
+	var max_hp: int = int(preview.get("max_hp", 1))
+	var hp_text := ""
 	if hp_b > 0:
-		hp_text = "\nHP %d → %d" % [hp_b, hp_a]
-		if hp_a <= 0: hp_text += "  ☠"
+		hp_text = "\nHP %d -> %d" % [hp_b, hp_a]
+		if hp_a <= 0:
+			hp_text += "  KO"
 	_preview_target_label.text = "TARGET\n%s%s" % [t_name, hp_text]
-	var t_color: Color = Color(1.0,0.76,0.72)
-	if hp_a <= 0:
-		t_color = Color(1.0,0.55,0.55)
-	_preview_target_label.add_theme_color_override("font_color", t_color)
+	_preview_target_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.55) if hp_a <= 0 and hp_b > 0 else Color(1.0, 0.76, 0.72))
 
-	# Main damage number
 	var dmg: int = int(preview.get("damage", 0))
 	var heal: int = int(preview.get("heal", 0))
 	if is_heal:
 		_preview_amount_label.text = "+%d HP" % heal
-		_preview_amount_label.add_theme_color_override("font_color", Color(0.45,0.95,0.55))
+		_preview_amount_label.add_theme_color_override("font_color", Color(0.45, 0.95, 0.55))
 	elif is_buff:
-		_preview_amount_label.text = "STATUS"
-		_preview_amount_label.add_theme_color_override("font_color", Color(0.55,0.75,1.0))
+		_preview_amount_label.text = "BUFF"
+		_preview_amount_label.add_theme_color_override("font_color", Color(0.55, 0.75, 1.0))
+	elif preview.has("amount_label"):
+		_preview_amount_label.text = str(preview.get("amount_label", ""))
+		_preview_amount_label.add_theme_color_override("font_color", el_color)
 	else:
-		var dmg_range: String = ""
 		var dmin: int = int(preview.get("damage_min", dmg))
 		var dmax: int = int(preview.get("damage_max", dmg))
-		if dmax > dmin: dmg_range = "  (%d–%d)" % [dmin, dmax]
-		_preview_amount_label.text = "%d%s" % [dmg, dmg_range]
+		_preview_amount_label.text = "%d-%d" % [dmin, dmax] if dmax > dmin else str(dmg)
 		_preview_amount_label.add_theme_color_override("font_color", el_color)
 
-	# Affinity badge (replaces Hit %)
 	if not aff_lbl.is_empty():
-		_preview_hit_label.text = "%s  %s" % [str(preview.get("element_icon","")), aff_lbl]
+		var aff_display := "%s  %s" % [str(preview.get("element_icon", "")), aff_lbl]
+		var affinity_val: float = float(preview.get("affinity", 1.0))
+		if affinity_val >= 2.0:
+			aff_display += " !!"
+		elif affinity_val > 1.0:
+			aff_display += " !"
+		_preview_hit_label.text = aff_display
 		_preview_hit_label.add_theme_color_override("font_color", aff_col)
 	else:
 		var hit: int = int(preview.get("hit_pct", 100))
-		_preview_hit_label.text = "Hit %d%%" % hit
-		_preview_hit_label.add_theme_color_override("font_color", Color(0.75,0.95,0.85))
+		var hit_confidence := ""
+		if hit >= 95:
+			hit_confidence = " high"
+		elif hit >= 75:
+			hit_confidence = " steady"
+		elif hit >= 50:
+			hit_confidence = " risky"
+		else:
+			hit_confidence = " poor"
+		_preview_hit_label.text = "Hit %d%%%s" % [hit, hit_confidence]
+		_preview_hit_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.85))
 
-	# JP gain (replaces Crit %)
 	var jp: int = int(preview.get("jp_gain", 6))
-	_preview_crit_label.text = "+%d JP" % jp
-	_preview_crit_label.add_theme_color_override("font_color", Color(0.48,0.86,1.0))
+	var crit_pct: int = int(preview.get("crit_pct", 0))
+	var crit_text := "+%d JP" % jp
+	if crit_pct > 0:
+		crit_text = "Crit %d%%  +%d JP" % [crit_pct, jp]
+	if hp_b > 0 and hp_a <= 0:
+		crit_text += "  KO"
+	elif hp_b > 0 and max_hp > 0 and float(hp_a) / float(max_hp) < 0.25:
+		crit_text += "  Low HP"
+	_preview_crit_label.text = crit_text
+	_preview_crit_label.add_theme_color_override("font_color", Color(0.48, 0.86, 1.0))
 
-	# Note line — status preview + flank + counter
-	var notes: Array[String] = []
-	var status_p: String = str(preview.get("status_preview",""))
-	if not status_p.is_empty(): notes.append(status_p)
-	var flank_l: String = str(preview.get("flank_label",""))
-	if not flank_l.is_empty(): notes.append(flank_l)
-	if preview.get("can_counter", false) == true: notes.append("Counter possible")
-	var aoe_n: String = str(preview.get("aoe_note",""))
-	if not aoe_n.is_empty(): notes.append(aoe_n)
-	_preview_note_label.text = "  ·  ".join(notes)
+	# Organize notes by priority for better readability
+	var critical_notes: Array[String] = []
+	var tactical_notes: Array[String] = []
+	var detail_notes: Array[String] = []
 
-	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait","")))
-	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait","")))
+	# Critical effects first (status, danger)
+	var status_p: String = str(preview.get("status_preview", ""))
+	if not status_p.is_empty():
+		critical_notes.append("Status: " + status_p)
+	if preview.get("can_counter", false) == true:
+		critical_notes.append("Counter possible")
 
+	# Tactical advantages second (flank, height, facing)
+	var flank_l: String = str(preview.get("flank_label", ""))
+	if not flank_l.is_empty():
+		tactical_notes.append("Facing: " + flank_l)
+	var height_rule: String = str(preview.get("height_rule_label", ""))
+	if not height_rule.is_empty():
+		tactical_notes.append(height_rule)
+	var facing_rule: String = str(preview.get("facing_rule_label", ""))
+	if not facing_rule.is_empty():
+		tactical_notes.append(facing_rule)
+	var run_bonus_notes: Array = preview.get("run_bonus_notes", []) as Array
+	for bonus_note_variant in run_bonus_notes:
+		tactical_notes.append(str(bonus_note_variant))
+
+	# Details last (range, formula explanations)
+	var range_l: String = str(preview.get("range_label", ""))
+	if not range_l.is_empty():
+		detail_notes.append(range_l)
+	var height_l: String = str(preview.get("height_label", ""))
+	if not height_l.is_empty():
+		detail_notes.append(height_l)
+	var aoe_n: String = str(preview.get("aoe_note", ""))
+	if not aoe_n.is_empty():
+		detail_notes.append(aoe_n)
+	var formula_explain: Array = preview.get("formula_explain", [])
+	if not formula_explain.is_empty():
+		detail_notes.append("Formula: " + " / ".join(formula_explain))
+	var note: String = str(preview.get("note", ""))
+	if not note.is_empty():
+		detail_notes.append(note)
+
+	var notes: Array[String] = critical_notes + tactical_notes + detail_notes
+	_preview_note_label.text = " | ".join(notes)
+	_preview_note_label.add_theme_color_override("font_color", Color(0.88, 0.88, 0.82))
+
+	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait", "")))
+	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait", "")))
 
 func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
 	_can_move_now = can_move
@@ -1045,7 +1350,7 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 		else:
 			if i < _side_timeline_labels.size():
 				_side_timeline_labels[i].text = "%d  -" % (i + 1)
-			_timeline_labels[i].text = "—"
+			_timeline_labels[i].text = ""
 
 
 func _on_battle_won(rewards: Dictionary) -> void:
@@ -1095,21 +1400,104 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 	_ability_panel.visible = true
 	for ab_id in usable_ids:
 		var ab: Dictionary = AbilityDB.get_ability(ab_id)
+		var el:       String = ab.get("spell_type", "")
+		var el_icon:  String = ForecastCalculator.ELEMENT_ICONS.get(el, "")
+		var el_col:   Color  = ForecastCalculator.ELEMENT_COLORS.get(el, Color(0.85,0.82,0.77))
+		var aoe_type: String = ab.get("aoe_type", "")
+		var shape_icon:  String = ForecastCalculator.AOE_SHAPE_ICONS.get(aoe_type, "")
+		var shape_label: String = ForecastCalculator.AOE_SHAPE_LABELS.get(aoe_type, "")
+		var mp:  int = ab.get("mp_cost", 0)
+		var rng: int = ab.get("range", 0)
+
+		# Outer button  transparent clickable container.
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(0, 36)
-		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var ab_name: String = ab.get("display_name", ab_id)
-		var mp:  int    = ab.get("mp_cost", 0)
-		var rng: int    = ab.get("range", 0)
-		var el:  String = ab.get("spell_type", "")
-		var el_icon: String = ForecastCalculator.ELEMENT_ICONS.get(el, "") if el else ""
-		var el_col: Color  = ForecastCalculator.ELEMENT_COLORS.get(el, Color(0.85,0.82,0.77)) if el else Color(0.85,0.82,0.77)
-		# Format: [icon] Name   MP:12  ⬧3
-		var icon_part: String = (el_icon + " ") if not el_icon.is_empty() else ""
-		var mp_part:  String = ("  %dMP" % mp) if mp > 0 else ""
-		var rng_part: String = ("  ⬧%d" % rng) if rng > 0 else ""
-		btn.text = "%s%s%s%s" % [icon_part, ab_name, mp_part, rng_part]
-		btn.add_theme_color_override("font_color", el_col)
+		btn.custom_minimum_size = Vector2(0, 44)
+		btn.flat = true
+		var st_btn := StyleBoxFlat.new()
+		st_btn.bg_color = el_col.darkened(0.82)
+		st_btn.border_color = el_col.darkened(0.35)
+		st_btn.set_border_width_all(1)
+		st_btn.set_corner_radius_all(0)
+		st_btn.content_margin_left  = 4
+		st_btn.content_margin_right = 4
+		st_btn.content_margin_top   = 3
+		st_btn.content_margin_bottom = 3
+		btn.add_theme_stylebox_override("normal", st_btn)
+		var st_hover := st_btn.duplicate() as StyleBoxFlat
+		st_hover.bg_color = el_col.darkened(0.55)
+		btn.add_theme_stylebox_override("hover", st_hover)
+		var st_press := st_btn.duplicate() as StyleBoxFlat
+		st_press.bg_color = el_col.darkened(0.30)
+		btn.add_theme_stylebox_override("pressed", st_press)
+
+		# Layout inside button.
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(row)
+
+		# Element icon badge (colored square, 3232).
+		var badge := PanelContainer.new()
+		badge.custom_minimum_size = Vector2(32, 32)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var st_badge := StyleBoxFlat.new()
+		st_badge.bg_color = el_col.darkened(0.4)
+		st_badge.set_border_width_all(0)
+		st_badge.set_corner_radius_all(0)
+		badge.add_theme_stylebox_override("panel", st_badge)
+		var badge_lbl := Label.new()
+		badge_lbl.text = el_icon
+		badge_lbl.add_theme_font_size_override("font_size", 18)
+		badge_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		badge_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+		badge_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.add_child(badge_lbl)
+		row.add_child(badge)
+
+		# Name + stats column.
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_theme_constant_override("separation", 1)
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(col)
+
+		var name_lbl := Label.new()
+		name_lbl.text = ab.get("display_name", ab_id)
+		name_lbl.add_theme_font_size_override("font_size", 13)
+		name_lbl.add_theme_color_override("font_color", Color(0.97, 0.94, 0.87))
+		name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(name_lbl)
+
+		var stat_row := HBoxContainer.new()
+		stat_row.add_theme_constant_override("separation", 6)
+		stat_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(stat_row)
+
+		var mp_lbl := Label.new()
+		mp_lbl.text = ("%dMP" % mp) if mp > 0 else "free"
+		mp_lbl.add_theme_font_size_override("font_size", 10)
+		mp_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
+		mp_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stat_row.add_child(mp_lbl)
+
+		if rng > 0:
+			var rng_lbl := Label.new()
+			rng_lbl.text = "%d" % rng
+			rng_lbl.add_theme_font_size_override("font_size", 10)
+			rng_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+			rng_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			stat_row.add_child(rng_lbl)
+
+		# Shape badge  right-aligned.
+		if not shape_label.is_empty():
+			var shape_lbl := Label.new()
+			shape_lbl.text = "%s %s" % [shape_icon, shape_label]
+			shape_lbl.add_theme_font_size_override("font_size", 10)
+			shape_lbl.add_theme_color_override("font_color", el_col.lightened(0.25))
+			shape_lbl.size_flags_horizontal = Control.SIZE_SHRINK_END
+			shape_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			stat_row.add_child(shape_lbl)
+
 		var captured_id: String = ab_id
 		btn.pressed.connect(func() -> void:
 			_play_sfx("ui_confirm")
@@ -1119,7 +1507,7 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		_ability_list.add_child(btn)
 
 
-# ── Button callbacks ──────────────────────────────────────────────────────────
+#  Button callbacks
 
 func _on_move() -> void:
 	_play_sfx("ui_confirm")

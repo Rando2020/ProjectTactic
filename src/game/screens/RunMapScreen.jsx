@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { getBattleMap } from '../data/maps.js'
 import { getCurrentNode } from '../systems/floorGenerator.js'
+import { MYSTERY_EVENT_TYPES } from '../data/mysteryEvents.js'
 
 const NODE_LABELS = {
   battle: 'Battle',
@@ -7,13 +9,21 @@ const NODE_LABELS = {
   boss: 'Boss',
   boon_pick: 'Guardian Boon',
   wanderer: 'Wanderer',
+  mystery: 'Mystery',
   event: 'Event',
 }
 
-function nodeTitle(node) {
+function nodeTitle(node, showMysteryDetails = false) {
   if (!node) return 'Unknown'
   if (node.mapId) return getBattleMap(node.mapId)?.name ?? NODE_LABELS[node.type] ?? node.type
   if (node.wanderer) return node.wanderer.name
+  if (node.type === 'mystery') {
+    if (showMysteryDetails && node.eventId) {
+      const event = MYSTERY_EVENT_TYPES[node.eventId]
+      return event?.name ?? '?'
+    }
+    return '?'
+  }
   return NODE_LABELS[node.type] ?? node.type
 }
 
@@ -24,6 +34,7 @@ function nodeTone(node, isCurrent) {
   if (node?.type === 'elite_battle') return s.eliteNode
   if (node?.type === 'boon_pick') return s.boonNode
   if (node?.type === 'wanderer') return s.wandererNode
+  if (node?.type === 'mystery') return s.mysteryNode
   return s.node
 }
 
@@ -31,6 +42,7 @@ export default function RunMapScreen({ gameState, onStartRun, onEnterRunNode, se
   const run = gameState.activeRun
   const currentNode = run ? getCurrentNode(run) : null
   const activeBoons = run?.activeBoons ?? []
+  const [showMysteryDebug, setShowMysteryDebug] = useState(true) // Toggle to show event names during testing
 
   if (!run) {
     return (
@@ -58,6 +70,9 @@ export default function RunMapScreen({ gameState, onStartRun, onEnterRunNode, se
         <div style={s.actions}>
           {!run.completed && <button style={s.primaryBtn} onClick={onEnterRunNode}>Enter Node</button>}
           {run.completed && <button style={s.primaryBtn} onClick={() => setScreen('results')}>View Results</button>}
+          <button style={{ ...s.primaryBtn, background: showMysteryDebug ? 'rgba(168,85,247,.3)' : 'rgba(201,167,86,.2)' }} onClick={() => setShowMysteryDebug(!showMysteryDebug)}>
+            {showMysteryDebug ? 'Mystery Debug ON' : 'Mystery Debug OFF'}
+          </button>
         </div>
       </div>
 
@@ -86,7 +101,7 @@ export default function RunMapScreen({ gameState, onStartRun, onEnterRunNode, se
                 return (
                   <div key={`${floor.floor}-${index}`} style={nodeTone(node, isCurrent)}>
                     <span style={s.nodeType}>{NODE_LABELS[node.type] ?? node.type}</span>
-                    <strong style={s.nodeName}>{nodeTitle(node)}</strong>
+                    <strong style={s.nodeName}>{nodeTitle(node, showMysteryDebug)}</strong>
                     {node.completed && <span style={s.nodeHint}>Complete</span>}
                     {isCurrent && <span style={s.nodeHint}>Ready</span>}
                   </div>
@@ -153,6 +168,7 @@ const s = {
   eliteNode: { ...baseNode, borderColor: 'rgba(251,191,36,.45)', background: 'rgba(251,191,36,.08)' },
   boonNode: { ...baseNode, borderColor: 'rgba(168,85,247,.5)', background: 'rgba(168,85,247,.1)' },
   wandererNode: { ...baseNode, borderColor: 'rgba(56,189,248,.45)', background: 'rgba(56,189,248,.08)' },
+  mysteryNode: { ...baseNode, borderColor: 'rgba(168,85,247,.5)', background: 'rgba(168,85,247,.1)' },
   nodeType: { color: 'rgba(247,240,223,.48)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 800 },
   nodeName: { fontSize: 13, lineHeight: 1.35 },
   nodeHint: { color: 'rgba(247,240,223,.5)', fontSize: 11 },

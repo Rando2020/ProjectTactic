@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://7wpt54wfg0dd"
-path="res://.godot/imported/job-mage-icon.png-b5ed8e611e4994127127217920c0cb47.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-mage-icon.png"
-dest_files=["res://.godot/imported/job-mage-icon.png-b5ed8e611e4994127127217920c0cb47.ctex"]
 
 [params]
 

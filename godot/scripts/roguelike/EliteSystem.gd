@@ -1,4 +1,4 @@
-## EliteSystem.gd — Pure RefCounted. Floor-scaled elite rolls.
+## EliteSystem.gd  Pure RefCounted. Floor-scaled elite rolls.
 class_name EliteSystem
 extends RefCounted
 
@@ -49,7 +49,7 @@ func _rng() -> float:
 	return float(_s & 0xffffffff) / 4294967296.0
 
 ## Get elite spawn rates for a floor, scaled by heat level.
-## heat_level 0 = base, each +1 shifts 3% from normal → champion.
+## heat_level 0 = base, each +1 shifts 3% from normal  champion.
 func get_rates(floor_num: int, heat_level: int = 0) -> Dictionary:
 	var base := FLOOR_RATES[clamp(floor_num - 1, 0, FLOOR_RATES.size() - 1)].duplicate()
 	if heat_level <= 0: return base

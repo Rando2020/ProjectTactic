@@ -5,6 +5,7 @@ import { applyMissionRewards } from './state/progressionReducer.js'
 import { getBattleMap } from './data/maps.js'
 import { completeCurrentNode, generateRun, getCurrentNode } from './systems/floorGenerator.js'
 import { generateBattleLoot } from './systems/lootSystem.js'
+import { needsLaneReplacement, getBoonsInLane, getBoonLane } from './data/boons.js'
 import MainMenu             from './screens/MainMenu.jsx'
 import WorldMapScreen       from './screens/WorldMapScreen.jsx'
 import TownScreen           from './screens/TownScreen.jsx'
@@ -14,6 +15,7 @@ import CharacterSheetScreen from './screens/CharacterSheetScreen.jsx'
 import JobTreeScreen        from './screens/JobTreeScreen.jsx'
 import RunMapScreen         from './screens/RunMapScreen.jsx'
 import BoonPickScreen       from './screens/BoonPickScreen.jsx'
+import BoonReplacementModal from './screens/BoonReplacementModal.jsx'
 import LootScreen           from './screens/LootScreen.jsx'
 import WandererScreen       from './screens/WandererScreen.jsx'
 import DeploymentScreen     from './components/DeploymentScreen.jsx'
@@ -43,6 +45,7 @@ export default function GameShell() {
   const [gameState, setGameState] = useState(() => loadGame() ?? createInitialGameState())
   const [notice, setNotice] = useState('')
   const [deploymentSlots, setDeploymentSlots] = useState(null)
+  const [pendingBoonReplacement, setPendingBoonReplacement] = useState(null)
   const activeMission = useMemo(() => getBattleMap(gameState.activeMissionId), [gameState.activeMissionId])
 
   function setScreen(s) { setGameState(g => ({ ...g, currentScreen: s })) }
@@ -130,6 +133,21 @@ export default function GameShell() {
   }
 
   function chooseRunBoon(boon) {
+    // Check if this boon would exceed a lane limit
+    const activeBoons = gameState.activeRun?.activeBoons ?? []
+    if (needsLaneReplacement(activeBoons, boon)) {
+      // Show replacement modal
+      const lane = getBoonLane(boon)
+      const existingInLane = getBoonsInLane(activeBoons, lane)
+      setPendingBoonReplacement({ incomingBoon: boon, existingBoons: existingInLane })
+      return
+    }
+
+    // No replacement needed, add the boon normally
+    addBoonToRun(boon)
+  }
+
+  function addBoonToRun(boon) {
     setGameState(g => {
       if (!g.activeRun) return { ...g, currentScreen: 'runMap' }
       const runWithBoon = {
@@ -143,6 +161,33 @@ export default function GameShell() {
       }
     })
     setNotice(`${boon.name} added to the run.`)
+  }
+
+  function confirmBoonReplacement(incomingBoon, replacedBoonId) {
+    setGameState(g => {
+      if (!g.activeRun) return { ...g, currentScreen: 'runMap' }
+      // Replace the old boon with the new one
+      const newBoons = (g.activeRun.activeBoons ?? [])
+        .filter(b => b.id !== replacedBoonId)
+        .concat(incomingBoon)
+      const runWithBoon = {
+        ...g.activeRun,
+        activeBoons: newBoons,
+      }
+      return {
+        ...g,
+        activeRun: completeCurrentNode(runWithBoon),
+        currentScreen: 'runMap',
+      }
+    })
+    const replacedBoon = (gameState.activeRun?.activeBoons ?? []).find(b => b.id === replacedBoonId)
+    const replacedName = replacedBoon?.name ?? 'old boon'
+    setNotice(`Replaced ${replacedName} with ${incomingBoon.name}.`)
+    setPendingBoonReplacement(null)
+  }
+
+  function cancelBoonReplacement() {
+    setPendingBoonReplacement(null)
   }
 
   function claimLoot() {
@@ -250,6 +295,14 @@ export default function GameShell() {
         {currentScreen==='jobBoard'        && <JobBoard {...p}/>}
         {currentScreen==='inn'             && <InnScreen {...p}/>}
       </div>
+      {pendingBoonReplacement && (
+        <BoonReplacementModal
+          incomingBoon={pendingBoonReplacement.incomingBoon}
+          existingBoons={pendingBoonReplacement.existingBoons}
+          onConfirm={confirmBoonReplacement}
+          onCancel={cancelBoonReplacement}
+        />
+      )}
     </div>
   )
 }

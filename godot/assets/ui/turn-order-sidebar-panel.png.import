@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://conh6syfyxqij"
-path="res://.godot/imported/turn-order-sidebar-panel.png-367b2b1468863af28edd3e2137a3de18.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/turn-order-sidebar-panel.png"
-dest_files=["res://.godot/imported/turn-order-sidebar-panel.png-367b2b1468863af28edd3e2137a3de18.ctex"]
 
 [params]
 

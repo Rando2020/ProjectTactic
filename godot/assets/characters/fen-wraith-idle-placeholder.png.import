@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bi6104h11twx8"
-path="res://.godot/imported/fen-wraith-idle-placeholder.png-374ba6b71bf280d77c1bb14ac9fdc271.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/characters/fen-wraith-idle-placeholder.png"
-dest_files=["res://.godot/imported/fen-wraith-idle-placeholder.png-374ba6b71bf280d77c1bb14ac9fdc271.ctex"]
 
 [params]
 

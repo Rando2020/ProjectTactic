@@ -36,6 +36,11 @@ var current_job_id: String
 var _hp_bar: ColorRect
 var _body_rect: ColorRect
 var _sprite: Sprite2D
+var _facing_arrow: Polygon2D
+var _facing_arrow_shadow: Polygon2D
+var _selection_ring: Line2D
+var _selection_glow: Polygon2D
+var _status_icons_container: Node2D
 
 
 func _ready() -> void:
@@ -54,12 +59,13 @@ func _initialize_from_data(data: UnitData) -> void:
 	ether = data.base_stats.max_ether
 	ct = 0
 	_draw_unit()
+	_apply_unit_scale()
 
 
 func _draw_unit() -> void:
 	var is_player := team == "player"
 
-	# ── Isometric ground shadow (ellipse at feet level = y 0) ───────────────
+	#  Isometric ground shadow (ellipse at feet level = y 0)
 	# This flat oval sells the "standing on the tile" look.
 	var shadow := Polygon2D.new()
 	var shadow_pts: PackedVector2Array = []
@@ -72,7 +78,7 @@ func _draw_unit() -> void:
 	shadow.z_index = 8
 	add_child(shadow)
 
-	# ── Sprite or coloured-square fallback ──────────────────────────────────
+	#  Sprite or coloured-square fallback
 	# IMPORTANT: the unit's world origin represents the character's FEET.
 	# All sprites and rects are offset upward so their bottom sits at y = 0.
 	if unit_data and unit_data.sprite_sheet:
@@ -80,7 +86,7 @@ func _draw_unit() -> void:
 		_sprite.texture = unit_data.sprite_sheet
 		var tex_size := unit_data.sprite_sheet.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
-			var target_size: float = 62.0 if is_player else 70.0
+			var target_size: float = 80.0 if is_player else 95.0
 			var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
 			_sprite.scale = Vector2(sprite_scale, sprite_scale)
 		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
@@ -90,43 +96,58 @@ func _draw_unit() -> void:
 	else:
 		# Plain coloured pillar used when no sprite texture is assigned
 		_body_rect = ColorRect.new()
-		_body_rect.size = Vector2(28, 42)
-		_body_rect.position = Vector2(-14, -42)   # bottom at y = 0
+		_body_rect.size = Vector2(36, 56)
+		_body_rect.position = Vector2(-18, -56)   # bottom at y = 0
 		_body_rect.color = Color(0.18, 0.38, 0.85) if is_player else Color(0.82, 0.18, 0.18)
 		_body_rect.z_index = 10
 		add_child(_body_rect)
 
 		var stripe := ColorRect.new()
-		stripe.size = Vector2(28, 5)
-		stripe.position = Vector2(-14, -14)   # near the base
+		stripe.size = Vector2(36, 7)
+		stripe.position = Vector2(-18, -18)   # near the base
 		stripe.color = Color(0.7, 0.9, 1.0) if is_player else Color(1.0, 0.8, 0.3)
 		stripe.z_index = 11
 		add_child(stripe)
 
-	# ── Team-colour dot (top-right, above sprite head) ────────────────────
+	#  Team-colour indicator (larger, more visible)
 	var dot := ColorRect.new()
-	dot.size = Vector2(7, 7)
-	dot.position = Vector2(12, -60)
+	dot.size = Vector2(10, 10)
+	dot.position = Vector2(14, -63)
 	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
 	dot.z_index = 14
 	add_child(dot)
+	# Add bright outline for contrast
+	var dot_outline := ColorRect.new()
+	dot_outline.size = Vector2(12, 12)
+	dot_outline.position = Vector2(13, -64)
+	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
+	dot_outline.z_index = 13
+	add_child(dot_outline)
 
-	# ── HP bar (floats just above the sprite head) ────────────────────────
+	#  HP bar (floats just above the sprite head) - enlarged and more visible
 	var hp_bg := ColorRect.new()
-	hp_bg.size = Vector2(40, 4)
-	hp_bg.position = Vector2(-20, -62)
-	hp_bg.color = Color(0.08, 0.08, 0.08)
+	hp_bg.size = Vector2(50, 6)
+	hp_bg.position = Vector2(-25, -66)
+	hp_bg.color = Color(0.04, 0.04, 0.04)
 	hp_bg.z_index = 14
 	add_child(hp_bg)
 
+	# HP bar background outline for better visibility
+	var hp_border := ColorRect.new()
+	hp_border.size = Vector2(52, 8)
+	hp_border.position = Vector2(-26, -67)
+	hp_border.color = Color(0.0, 0.0, 0.0, 0.5)
+	hp_border.z_index = 13
+	add_child(hp_border)
+
 	_hp_bar = ColorRect.new()
-	_hp_bar.size = Vector2(40, 4)
-	_hp_bar.position = Vector2(-20, -62)
+	_hp_bar.size = Vector2(50, 6)
+	_hp_bar.position = Vector2(-25, -66)
 	_hp_bar.color = Color(0.2, 0.85, 0.3)
 	_hp_bar.z_index = 15
 	add_child(_hp_bar)
 
-	# ── Name label (above HP bar) ─────────────────────────────────────────
+	#  Name label (above HP bar)
 	var lbl := Label.new()
 	lbl.text = display_name.left(6)
 	lbl.add_theme_font_size_override("font_size", 8)
@@ -138,6 +159,68 @@ func _draw_unit() -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.z_index = 15
 	add_child(lbl)
+
+	_draw_facing_arrow()
+	_create_selection_outline()
+	_create_status_icons_container()
+
+
+func _apply_unit_scale() -> void:
+	"""
+	Scale units based on their max HP relative to baseline.
+	Baseline is 50 HP. Units scale from 0.75x to 1.35x.
+	Visually creates hierarchy: weaker units look smaller, stronger units look larger.
+	"""
+	if not unit_data:
+		return
+
+	var max_hp := float(unit_data.base_stats.hp)
+	var baseline_hp := 50.0
+	var power_ratio := max_hp / baseline_hp
+
+	# Logarithmic scale: subtle changes for similar units, more dramatic for extremes
+	# Formula: 0.75 + 0.6 * log2(power_ratio + 0.5), clamped to [0.75, 1.35]
+	var scale_mult := 0.75 + 0.6 * log(power_ratio + 0.5) / log(2.0)
+	scale_mult = clamp(scale_mult, 0.75, 1.35)
+
+	# Apply scale to all children (sprite, body_rect, etc)
+	scale = Vector2(scale_mult, scale_mult)
+
+
+func _create_selection_outline() -> void:
+	# Glow ring (behind the line for depth)
+	_selection_glow = Polygon2D.new()
+	var glow_poly: PackedVector2Array = []
+	for i in range(32):
+		var angle := TAU * float(i) / 32.0
+		var radius := 55.0
+		glow_poly.append(Vector2(cos(angle) * radius, sin(angle) * radius))
+	_selection_glow.polygon = glow_poly
+	_selection_glow.color = Color(0.3, 0.8, 1.0, 0.0) if team == "player" else Color(1.0, 0.4, 0.2, 0.0)
+	_selection_glow.z_index = 9
+	_selection_glow.visible = false
+	add_child(_selection_glow)
+
+	# Selection ring (bright outline)
+	_selection_ring = Line2D.new()
+	var ring_poly: PackedVector2Array = []
+	for i in range(32):
+		var angle := TAU * float(i) / 32.0
+		var radius := 52.0
+		ring_poly.append(Vector2(cos(angle) * radius, sin(angle) * radius))
+	ring_poly.append(ring_poly[0])  # Close the loop
+	_selection_ring.points = ring_poly
+	_selection_ring.width = 3.5
+	_selection_ring.default_color = Color(0.2, 1.0, 1.0, 0.0) if team == "player" else Color(1.0, 0.5, 0.2, 0.0)
+	_selection_ring.z_index = 12
+	_selection_ring.visible = false
+	add_child(_selection_ring)
+
+
+func _create_status_icons_container() -> void:
+	_status_icons_container = Node2D.new()
+	_status_icons_container.z_index = 20
+	add_child(_status_icons_container)
 
 
 func _update_hp_bar() -> void:
@@ -155,22 +238,32 @@ func _update_hp_bar() -> void:
 
 ## Flash red on hit, restore normal colour.
 func animate_hit() -> void:
+	var start_pos := position
 	var tween := create_tween()
-	tween.tween_property(self, "modulate", Color(1.0, 0.2, 0.2, 1.0), 0.06)
-	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.25)
+	tween.set_parallel(true)
+	tween.tween_property(self, "modulate", Color(1.0, 0.34, 0.30, 1.0), 0.06)
+	tween.tween_property(self, "position", start_pos + Vector2(5.0, -3.0), 0.05)
+	tween.chain()
+	tween.set_parallel(true)
+	tween.tween_property(self, "position", start_pos + Vector2(-3.0, 2.0), 0.06)
+	tween.tween_property(self, "modulate", Color(1.0, 0.78, 0.68, 1.0), 0.08)
+	tween.chain()
+	tween.set_parallel(true)
+	tween.tween_property(self, "position", start_pos, 0.12)
+	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.16)
 
 
 ## Flash white and drift upward slightly on death.
 func animate_death() -> void:
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.5)
-	tween.tween_property(self, "position:y", position.y - 12.0, 0.5)
+	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.65).set_delay(0.18)
+	tween.tween_property(self, "position:y", position.y - 14.0, 0.65).set_delay(0.18)
 	tween.chain()
 	tween.tween_callback(queue_free)
 
 
-# ── Combat ────────────────────────────────────────────────────────────────────
+#  Combat
 
 func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
@@ -220,16 +313,18 @@ func restore_ether(amount: int) -> void:
 	ether_changed.emit(unit_id, ether, unit_data.base_stats.max_ether)
 
 
-# ── Status effects ────────────────────────────────────────────────────────────
+#  Status effects
 
 func apply_status(status: StatusEffect) -> void:
 	statuses.append(status)
 	status_applied.emit(unit_id, status.status_id)
+	_update_status_icons()
 
 
 func remove_status(status_id: String) -> void:
 	statuses = statuses.filter(func(s): return s.status_id != status_id)
 	status_removed.emit(unit_id, status_id)
+	_update_status_icons()
 
 
 func has_status(status_id: String) -> bool:
@@ -257,7 +352,7 @@ func tick_statuses() -> void:
 		remove_status(sid)
 
 
-# ── Movement ──────────────────────────────────────────────────────────────────
+#  Movement
 
 func move_to(new_pos: Vector2i) -> void:
 	var old_pos := grid_pos
@@ -273,10 +368,106 @@ func move_to(new_pos: Vector2i) -> void:
 
 
 func set_facing(new_facing: String) -> void:
+	if new_facing not in ["N", "E", "S", "W"]:
+		return
 	facing = new_facing
+	_update_facing_arrow()
 
 
-# ── Turn lifecycle ────────────────────────────────────────────────────────────
+func _draw_facing_arrow() -> void:
+	# Glow ring behind arrow (larger, transparent)
+	var glow_points := PackedVector2Array([
+		Vector2(0.0, -14.0),
+		Vector2(12.0, 10.0),
+		Vector2(0.0, 5.0),
+		Vector2(-12.0, 10.0),
+	])
+	var glow := Polygon2D.new()
+	glow.polygon = glow_points
+	glow.color = Color(0.42, 0.82, 1.0, 0.25) if team == "player" else Color(1.0, 0.42, 0.30, 0.25)
+	glow.z_index = 15
+	add_child(glow)
+
+	# Shadow
+	var shadow_points := PackedVector2Array([
+		Vector2(0.0, -12.0),
+		Vector2(10.0, 10.0),
+		Vector2(0.0, 5.0),
+		Vector2(-10.0, 10.0),
+	])
+	_facing_arrow_shadow = Polygon2D.new()
+	_facing_arrow_shadow.polygon = shadow_points
+	_facing_arrow_shadow.color = Color(0.0, 0.0, 0.0, 0.70)
+	_facing_arrow_shadow.z_index = 16
+	add_child(_facing_arrow_shadow)
+
+	# Main arrow (larger and more visible)
+	_facing_arrow = Polygon2D.new()
+	_facing_arrow.polygon = PackedVector2Array([
+		Vector2(0.0, -10.0),
+		Vector2(8.0, 8.0),
+		Vector2(0.0, 3.0),
+		Vector2(-8.0, 8.0),
+	])
+	_facing_arrow.color = Color(0.42, 0.82, 1.0, 1.0) if team == "player" else Color(1.0, 0.42, 0.30, 1.0)
+	_facing_arrow.z_index = 17
+	add_child(_facing_arrow)
+	_update_facing_arrow()
+
+
+func _update_facing_arrow() -> void:
+	if not _facing_arrow or not _facing_arrow_shadow:
+		return
+	var dir := _facing_screen_direction(facing)
+	var marker_pos := dir * 22.0 + Vector2(0.0, -8.0)
+	var marker_rotation := dir.angle() + PI * 0.5
+	_facing_arrow.position = marker_pos
+	_facing_arrow.rotation = marker_rotation
+	_facing_arrow_shadow.position = marker_pos + Vector2(1.0, 2.0)
+	_facing_arrow_shadow.rotation = marker_rotation
+
+
+func _facing_screen_direction(value: String) -> Vector2:
+	match value:
+		"N":
+			return Vector2(0.9, -0.45).normalized()
+		"E":
+			return Vector2(0.9, 0.45).normalized()
+		"W":
+			return Vector2(-0.9, -0.45).normalized()
+		_:
+			return Vector2(-0.9, 0.45).normalized()
+
+## Highlight this unit as the active/selected unit
+func set_active(is_active: bool) -> void:
+	if is_active:
+		# Slight unit brightening
+		modulate = Color(1.15, 1.15, 1.15, 1.0)
+		# Show and animate selection ring
+		if _selection_ring and _selection_glow:
+			_selection_ring.visible = true
+			_selection_glow.visible = true
+			var player_color := Color(0.2, 1.0, 1.0, 1.0)
+			var enemy_color := Color(1.0, 0.5, 0.2, 1.0)
+			var ring_color := player_color if team == "player" else enemy_color
+			var glow_color := Color(ring_color.r, ring_color.g, ring_color.b, 0.45)
+			_selection_glow.color = glow_color
+
+			var tween := create_tween()
+			tween.set_loops()
+			tween.tween_property(_selection_ring, "default_color", ring_color, 0.6)
+			tween.tween_property(_selection_ring, "default_color", Color(ring_color.r, ring_color.g, ring_color.b, 0.4), 0.6)
+	else:
+		modulate = Color(1.0, 1.0, 1.0, 1.0)
+		# Hide selection ring
+		if _selection_ring and _selection_glow:
+			_selection_ring.visible = false
+			_selection_glow.visible = false
+			# Kill any active tweens on the ring
+			_selection_ring.modulate = Color.WHITE
+
+
+#  Turn lifecycle
 
 func begin_turn() -> void:
 	has_acted = false
@@ -306,3 +497,38 @@ func can_act() -> bool:
 
 func can_move() -> bool:
 	return not has_moved and hp > 0 and not has_status("immobilize") and not has_status("petrify")
+
+
+func _update_status_icons() -> void:
+	if not _status_icons_container:
+		return
+	# Clear old icons
+	for child in _status_icons_container.get_children():
+		child.queue_free()
+
+	# Status effect icons and colors
+	var status_displays := {
+		"haste": {"icon": "H", "color": Color(0.9, 0.8, 0.2, 1.0)},
+		"slow": {"icon": "S", "color": Color(0.3, 0.8, 1.0, 1.0)},
+		"protect": {"icon": "P", "color": Color(0.4, 0.9, 0.7, 1.0)},
+		"stun": {"icon": "!", "color": Color(1.0, 0.9, 0.1, 1.0)},
+		"petrify": {"icon": "R", "color": Color(0.7, 0.7, 0.7, 1.0)},
+		"immobilize": {"icon": "I", "color": Color(0.8, 0.5, 0.8, 1.0)},
+		"blessed": {"icon": "+", "color": Color(1.0, 0.85, 0.3, 1.0)},
+		"cursed": {"icon": "X", "color": Color(0.6, 0.2, 0.6, 1.0)},
+	}
+
+	var icon_idx := 0
+	for status in statuses:
+		var display: Dictionary = status_displays.get(status.status_id, {
+			"icon": "*",
+			"color": Color(0.8, 0.8, 0.8, 1.0)
+		}) as Dictionary
+		var icon := Label.new()
+		icon.text = str(display["icon"])
+		icon.add_theme_font_size_override("font_size", 14)
+		icon.add_theme_color_override("font_color", display["color"] as Color)
+		icon.position = Vector2(icon_idx * 16 - 16, -82)  # Row of icons above HP bar
+		icon.z_index = 20
+		_status_icons_container.add_child(icon)
+		icon_idx += 1

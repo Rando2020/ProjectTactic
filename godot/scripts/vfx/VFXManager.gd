@@ -17,7 +17,7 @@ func _ready() -> void:
 	z_as_relative = false
 
 
-# ── Coordinate helper ──────────────────────────────────────────────────────────
+#  Coordinate helper
 
 func gp(grid_pos: Vector2i) -> Vector2:
 	var height := _height_for(grid_pos)
@@ -34,12 +34,13 @@ func _height_for(grid_pos: Vector2i) -> int:
 	return 0
 
 
-# ── Physical attack ────────────────────────────────────────────────────────────
+#  Physical attack
 
 func play_attack(from_grid: Vector2i, to_grid: Vector2i, damage: int,
 		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
 	var fw := gp(from_grid)
 	var tw := gp(to_grid)
+	play_target_ping(to_grid, Color(1.0, 0.76, 0.20, 0.9))
 	_play_slash(fw, tw)
 	# Slight delay so slash arrives before impact
 	await get_tree().create_timer(0.12).timeout
@@ -74,6 +75,7 @@ func play_arrow(from_grid: Vector2i, to_grid: Vector2i, damage: int,
 		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
 	var fw := gp(from_grid)
 	var tw := gp(to_grid)
+	play_target_ping(to_grid, Color(1.0, 0.76, 0.20, 0.9))
 	_play_arrow_shaft(fw, tw)
 	await get_tree().create_timer(0.18).timeout
 	_play_impact_sparks(tw)
@@ -133,7 +135,7 @@ func _play_impact_sparks(world_pos: Vector2) -> void:
 	_screen_flash(world_pos, Color(1.0, 0.9, 0.6, 0.55), 0.14)
 
 
-# ── Floating damage / heal numbers ────────────────────────────────────────────
+#  Floating damage / heal numbers
 
 func play_damage_number(grid_pos: Vector2i, amount: int,
 		color: Color = Color.WHITE) -> void:
@@ -157,7 +159,67 @@ func play_heal_number(grid_pos: Vector2i, amount: int) -> void:
 	play_damage_number(grid_pos, amount, Color(0.35, 1.0, 0.55))
 
 
-# ── Spell VFX ─────────────────────────────────────────────────────────────────
+func play_combat_text(grid_pos: Vector2i, text: String, color: Color,
+		font_size: int = 18, rise: float = 42.0) -> void:
+	var world := gp(grid_pos) + Vector2(-30.0, -54.0)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", font_size)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.add_theme_color_override("font_outline_color", Color(0.03, 0.03, 0.03))
+	lbl.add_theme_constant_override("outline_size", 5)
+	lbl.position = world
+	lbl.size = Vector2(96.0, 26.0)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_spawn(lbl)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", world.y - rise, 0.68).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "scale", Vector2(1.18, 1.18), 0.14)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.68).set_delay(0.26)
+	tw.chain().tween_callback(lbl.queue_free)
+
+
+func play_miss(grid_pos: Vector2i) -> void:
+	play_combat_text(grid_pos, "MISS", Color(0.72, 0.78, 0.86), 18, 34.0)
+
+
+func play_ko(grid_pos: Vector2i) -> void:
+	play_combat_text(grid_pos, "KO", Color(1.0, 0.18, 0.10), 28, 56.0)
+	_screen_flash(gp(grid_pos), Color(1.0, 0.12, 0.06, 0.45), 0.18)
+
+
+func play_tactical_tag(grid_pos: Vector2i, text: String, color: Color) -> void:
+	play_combat_text(grid_pos, text, color, 14, 30.0)
+
+
+func play_target_ping(grid_pos: Vector2i, color: Color) -> void:
+	var world := gp(grid_pos)
+	for i in range(2):
+		var ring := Line2D.new()
+		var radius_scale := 0.68 + float(i) * 0.18
+		var half_w := TILE_SIZE.x * 0.5 * radius_scale
+		var half_h := TILE_SIZE.y * 0.5 * radius_scale
+		ring.points = PackedVector2Array([
+			Vector2(0.0, -half_h),
+			Vector2(half_w, 0.0),
+			Vector2(0.0, half_h),
+			Vector2(-half_w, 0.0),
+			Vector2(0.0, -half_h),
+		])
+		ring.width = 2.5
+		ring.default_color = Color(color.r, color.g, color.b, color.a - float(i) * 0.24)
+		ring.position = world
+		_spawn(ring)
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_interval(float(i) * 0.04)
+		tw.tween_property(ring, "scale", Vector2(1.22, 1.22), 0.28)
+		tw.tween_property(ring, "modulate:a", 0.0, 0.28)
+		tw.chain().tween_callback(ring.queue_free)
+
+
+#  Spell VFX
 
 ## Fire / Fira / Firaga
 func play_fire(grid_pos: Vector2i) -> void:
@@ -273,7 +335,7 @@ func play_cure(grid_pos: Vector2i) -> void:
 	# Rising green crosses
 	for i in range(10):
 		var cross := Label.new()
-		cross.text = "✦"
+		cross.text = ""
 		cross.add_theme_font_size_override("font_size", 16)
 		cross.add_theme_color_override("font_color",
 			Color(0.3 + randf_range(0.0, 0.2), 1.0, 0.45 + randf_range(0.0, 0.3)))
@@ -370,11 +432,11 @@ func play_dark(grid_pos: Vector2i) -> void:
 		tw.chain().tween_callback(shard.queue_free)
 
 
-# ── Death VFX ─────────────────────────────────────────────────────────────────
+#  Death VFX
 
 func play_death(grid_pos: Vector2i) -> void:
 	var world := gp(grid_pos)
-	# Soul rising — white/grey particles drifting upward
+	# Soul rising  white/grey particles drifting upward
 	var particles := CPUParticles2D.new()
 	particles.position          = world
 	particles.emitting          = true
@@ -397,7 +459,7 @@ func play_death(grid_pos: Vector2i) -> void:
 	get_tree().create_timer(2.0).timeout.connect(particles.queue_free)
 
 
-# ── Move trail ────────────────────────────────────────────────────────────────
+#  Move trail
 
 func play_step(grid_pos: Vector2i) -> void:
 	var world := gp(grid_pos)
@@ -411,9 +473,9 @@ func play_step(grid_pos: Vector2i) -> void:
 	tw.tween_callback(dot.queue_free)
 
 
-# ── Aura / Dark Breath ────────────────────────────────────────────────────────
+#  Aura / Dark Breath
 
-## Expanding aura ring — used for War Cry, buffs, etc.
+## Expanding aura ring  used for War Cry, buffs, etc.
 func play_aura(grid_pos: Vector2i, color: Color) -> void:
 	var world := gp(grid_pos)
 	for i in range(3):
@@ -431,7 +493,7 @@ func play_aura(grid_pos: Vector2i, color: Color) -> void:
 		tw.chain().tween_callback(ring.queue_free)
 
 
-## Haste — golden speed streaks shooting upward
+## Haste  golden speed streaks shooting upward
 func play_haste(grid_pos: Vector2i) -> void:
 	var world := gp(grid_pos)
 	_screen_flash(world, Color(1.0, 0.88, 0.1, 0.4), 0.14)
@@ -451,7 +513,7 @@ func play_haste(grid_pos: Vector2i) -> void:
 		tw.chain().tween_callback(line.queue_free)
 
 
-## Protect — blue-silver shield rings expanding outward
+## Protect  blue-silver shield rings expanding outward
 func play_protect(grid_pos: Vector2i) -> void:
 	var world := gp(grid_pos)
 	_screen_flash(world, Color(0.3, 0.55, 1.0, 0.45), 0.18)
@@ -485,7 +547,7 @@ func play_protect(grid_pos: Vector2i) -> void:
 		tw.chain().tween_callback(dot.queue_free)
 
 
-## Dark breath — sweeping cone of void energy
+## Dark breath  sweeping cone of void energy
 func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
 	var fw := gp(from_grid)
 	var tw_world := gp(to_grid)
@@ -508,7 +570,7 @@ func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
 		tw2.tween_callback(line.queue_free)
 
 
-# ── Utility ────────────────────────────────────────────────────────────────────
+#  Utility
 
 ## Adds a VFX node as a child and ensures it renders above everything.
 func _spawn(node: CanvasItem) -> void:

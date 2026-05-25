@@ -1,26 +1,26 @@
 ## CurseSystem.gd
 ## Returnal/Saros-style negative boons with tradeoffs.
 ## Each curse has a clear penalty AND unlocks something that
-## couldn't be obtained otherwise — making them genuine decisions.
+## couldn't be obtained otherwise  making them genuine decisions.
 ##
 ## Design rules:
 ##   1. Every curse changes HOW you play, not just how hard it is
 ##   2. Every curse unlocks something specific
 ##   3. Curses interact differently depending on your job/boons
-##   4. Multiple curses can stack — some combos are secretly good
+##   4. Multiple curses can stack  some combos are secretly good
 
 class_name CurseSystem
 extends RefCounted
 
 const CURSES: Array[Dictionary] = [
 
-	# ── Fire / Ignareth ──────────────────────────────────────────────────
+	#  Fire / Ignareth
 	{
 		"id":       "ignareth_debt",
 		"name":     "Ignareth's Debt",
 		"element":  "fire",
 		"guardian": "ignareth",
-		"icon":     "🔥",
+		"icon":"*",
 		"rarity":   "curse",
 		"penalty":  "Your party takes 12% of all fire damage you deal.",
 		"unlock":   "Legendary fire boons appear twice as often.",
@@ -37,13 +37,13 @@ const CURSES: Array[Dictionary] = [
 		"floor_min": 1,
 	},
 
-	# ── Water / Nerevan ──────────────────────────────────────────────────
+	#  Water / Nerevan
 	{
 		"id":       "tides_price",
 		"name":     "The Tide's Price",
 		"element":  "water",
 		"guardian": "nerevan",
-		"icon":     "🌊",
+		"icon":"*",
 		"penalty":  "Party cannot recover HP between floors. Between-battle heals do nothing.",
 		"unlock":   "Nerevan Unique boons can appear. Nerevan's Veil floor minimum removed.",
 		"flavour":  '"The tide gives. But not twice."',
@@ -57,13 +57,13 @@ const CURSES: Array[Dictionary] = [
 		"floor_min": 1,
 	},
 
-	# ── Thunder / Torvahk ────────────────────────────────────────────────
+	#  Thunder / Torvahk
 	{
 		"id":       "storm_debt",
 		"name":     "Storm Debt",
 		"element":  "thunder",
 		"guardian": "torvahk",
-		"icon":     "⚡",
+		"icon":"*",
 		"penalty":  "SURGE window is 60% narrower. Missing SURGE costs 10 HP.",
 		"unlock":   "Torvahk Unique boons can appear. Arc Counter taught free by first wanderer.",
 		"flavour":  '"The gap still exists. You just have to be faster."',
@@ -78,13 +78,13 @@ const CURSES: Array[Dictionary] = [
 		"floor_min": 1,
 	},
 
-	# ── Holy / Luminarch ────────────────────────────────────────────────
+	#  Holy / Luminarch
 	{
 		"id":       "sacred_tithe",
 		"name":     "The Sacred Tithe",
 		"element":  "holy",
 		"guardian": "luminarch",
-		"icon":     "✨",
+		"icon":"*",
 		"penalty":  "All heals are halved. Luminarch's Grace Blessed effect lasts only 1 turn.",
 		"unlock":   "Luminarch Unique boons can appear. Chaplain Aldis appears guaranteed next ?.",
 		"flavour":  '"Luminarch asks that you trust the light without leaning on it."',
@@ -99,13 +99,13 @@ const CURSES: Array[Dictionary] = [
 		"floor_min": 1,
 	},
 
-	# ── Dark / Vaelthorn ────────────────────────────────────────────────
+	#  Dark / Vaelthorn
 	{
 		"id":       "vaelthorns_echo_curse",
 		"name":     "Vaelthorn's Hunger",
 		"element":  "dark",
 		"guardian": "vaelthorn",
-		"icon":     "💀",
+		"icon":"*",
 		"penalty":  "Every time a party member takes damage, they lose 8 Ether. Ether cannot regenerate naturally.",
 		"unlock":   "Vaelthorn Unique boons can appear. Shadow of Vaelthorn appears on Floor 6.",
 		"flavour":  '"The void does not take what you have. It takes what you need."',
@@ -121,11 +121,11 @@ const CURSES: Array[Dictionary] = [
 		"floor_min": 2,
 	},
 
-	# ── Neutral / Run-shaping ────────────────────────────────────────────
+	#  Neutral / Run-shaping
 	{
 		"id":       "null_resonance",
 		"name":     "The Null Resonance",
-		"icon":     "💠",
+		"icon":"*",
 		"element":  null,
 		"penalty":  "All enemies gain one random extra affix at battle start.",
 		"unlock":   "The Wandering Null appears on the next ? node. Resonance Fracture teachable.",
@@ -135,14 +135,14 @@ const CURSES: Array[Dictionary] = [
 			"enemy_extra_affix":   1,
 			"guarantee_wanderer":  "the_wandering_null",
 		},
-		"job_notes": "Every class feels this — suddenly every enemy is elite.",
+		"job_notes": "Every class feels this  suddenly every enemy is elite.",
 		"combo_notes": "Champion's Grit (elite kills heal you) turns this into a healing engine.",
 		"floor_min": 2,
 	},
 	{
 		"id":       "bellkeepers_toll",
 		"name":     "The Bellkeeper's Toll",
-		"icon":     "🔔",
+		"icon":"*",
 		"element":  null,
 		"penalty":  "JP gain is halved this run.",
 		"unlock":   "Archive Mage Volant appears guaranteed next ?. Teaches Leyline Burst for free.",
@@ -159,10 +159,10 @@ const CURSES: Array[Dictionary] = [
 	{
 		"id":       "void_hunger",
 		"name":     "Void Hunger",
-		"icon":     "🕳️",
+		"icon":"*",
 		"element":  null,
 		"penalty":  "After each battle, one random party member permanently loses 15 max HP for this run.",
-		"unlock":   "Resonant-tier items drop from elites at 3× rate.",
+		"unlock":   "Resonant-tier items drop from elites at 3 rate.",
 		"flavour":  '"The void feeds on potential. You just have to decide whose."',
 		"effect": {
 			"type":              "curse",
@@ -176,7 +176,7 @@ const CURSES: Array[Dictionary] = [
 	{
 		"id":       "guardians_absence",
 		"name":     "Guardian's Absence",
-		"icon":     "👁️",
+		"icon":"*",
 		"element":  null,
 		"penalty":  "One randomly chosen Guardian's boons are removed from the pool entirely this run.",
 		"unlock":   "All remaining Guardian boons each gain +1 offer slot per pick.",
@@ -186,14 +186,14 @@ const CURSES: Array[Dictionary] = [
 			"ban_random_guardian": true,
 			"remaining_weight_bonus": 1,
 		},
-		"job_notes": "If your build depends on fire and fire is banned — run ends here.",
+		"job_notes": "If your build depends on fire and fire is banned  run ends here.",
 		"combo_notes": "If you're already committed to one element, losing others costs almost nothing.",
 		"floor_min": 2,
 	},
 	{
 		"id":       "weight_of_iron",
 		"name":     "The Weight of Iron",
-		"icon":     "⚔️",
+		"icon":"*",
 		"element":  null,
 		"penalty":  "All party movement reduced by 1. Units cannot jump elevated terrain.",
 		"unlock":   "Warder mastery abilities available without level prerequisite. Iron Duelist Garek guaranteed.",

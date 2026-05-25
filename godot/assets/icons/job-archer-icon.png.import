@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://880ilqnfmktd"
-path="res://.godot/imported/job-archer-icon.png-8af4bf89f9b93f90b9b500b33892eafa.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-archer-icon.png"
-dest_files=["res://.godot/imported/job-archer-icon.png-8af4bf89f9b93f90b9b500b33892eafa.ctex"]
 
 [params]
 

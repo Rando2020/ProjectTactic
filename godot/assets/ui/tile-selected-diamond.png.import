@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxeeetagjhd7p"
-path="res://.godot/imported/tile-selected-diamond.png-4311f3ff309ab4be7247a0d61d0878a0.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/tile-selected-diamond.png"
-dest_files=["res://.godot/imported/tile-selected-diamond.png-4311f3ff309ab4be7247a0d61d0878a0.ctex"]
 
 [params]
 

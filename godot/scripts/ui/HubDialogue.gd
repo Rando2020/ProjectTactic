@@ -3,10 +3,10 @@
 ## Hades-style: they remember what happened and say something specific.
 ##
 ## Characters:
-##   Sera       — The Hearth keeper. Warm, observant, practical.
-##   Varn       — Watch veteran. Blunt, tactical, dry.
-##   Volant     — Bellkeeper Archivist. Academic, precise, quietly amazed.
-##   The Echo   — Appears rarely. Cryptic. Possibly Vaelthorn's voice.
+##   Sera        The Hearth keeper. Warm, observant, practical.
+##   Varn        Watch veteran. Blunt, tactical, dry.
+##   Volant      Bellkeeper Archivist. Academic, precise, quietly amazed.
+##   The Echo    Appears rarely. Cryptic. Possibly Vaelthorn's voice.
 
 class_name HubDialogue
 extends RefCounted
@@ -16,7 +16,7 @@ const CHARACTERS: Dictionary = {
 	"sera": {
 		"name":    "Sera",
 		"title":   "Keeper of the Last Hearth",
-		"portrait":"🕯️",
+		"portrait":"?",
 		"color":   Color(0.98, 0.82, 0.55),
 		"lines": {
 			"first_run": [
@@ -33,11 +33,11 @@ const CHARACTERS: Dictionary = {
 			"floor_4_6": [
 				'"Floor {floor}. You\'re past the first wall now. That means something."',
 				'"The Void Golems start appearing around there. They know you\'re coming."',
-				'"Halfway. The second half is different — the enemies know the terrain better than you do."',
+				'"Halfway. The second half is different  the enemies know the terrain better than you do."',
 			],
 			"floor_7_9": [
 				'"Floor {floor}. You almost touched it. I could feel the resonance shift."',
-				'"That\'s close. That\'s really close. Whatever you had — it nearly worked."',
+				'"That\'s close. That\'s really close. Whatever you had  it nearly worked."',
 				'"The Thornspire knows your name now. That\'s not a comfort, but it\'s true."',
 			],
 			"run_complete": [
@@ -46,12 +46,12 @@ const CHARACTERS: Dictionary = {
 				'"Every run I watch people leave through that door. Not many come back having done what you just did."',
 			],
 			"died_to_elite": [
-				'"An elite. {killer}. Those affixes — they compound. Next time, read them before the first move."',
+				'"An elite. {killer}. Those affixes  they compound. Next time, read them before the first move."',
 				'"Champion-tier on that floor? That\'s the Null Resonance doing its work."',
 				'"Elites are the Void\'s way of saying it noticed you. Take that as a compliment, then dodge next time."',
 			],
 			"died_to_anchor": [
-				'"The Anchor\'s pulse. You got close — so close that it started enraging. That\'s actually progress."',
+				'"The Anchor\'s pulse. You got close  so close that it started enraging. That\'s actually progress."',
 				'"It pulses harder below half health. You needed a few more holy hits before it shifted phases."',
 			],
 			"had_curses": [
@@ -72,7 +72,7 @@ const CHARACTERS: Dictionary = {
 	"varn": {
 		"name":    "Varn",
 		"title":   "Last of the Ashvale Watch",
-		"portrait":"⚔️",
+		"portrait":"?",
 		"color":   Color(0.65, 0.78, 0.95),
 		"lines": {
 			"first_run": [
@@ -81,13 +81,13 @@ const CHARACTERS: Dictionary = {
 				'"Don\'t let floor one fool you. The Null Drakes at floor seven are the same creature with different numbers."',
 			],
 			"floor_1_3": [
-				'"Floor {floor}. The Cultists are the ones to watch — they die fast but they\'ll drain your Ether if you let them cast."',
+				'"Floor {floor}. The Cultists are the ones to watch  they die fast but they\'ll drain your Ether if you let them cast."',
 				'"You\'re reading the terrain wrong. Water plus thunder. That\'s the opening move on every wet-terrain floor."',
 				'"Storm Imps move four tiles. Keep your Arcanist out of their range or you\'re spending heals before you need to."',
 			],
 			"floor_4_6": [
 				'"Floor {floor}. The Fen Wraiths start there. Holy\'s the answer. If Mira\'s at full Ether, they\'re not a problem."',
-				'"You made it past the first boon pick. Whatever you chose — it\'s shaping the run now."',
+				'"You made it past the first boon pick. Whatever you chose  it\'s shaping the run now."',
 				'"The second half demands you stop reacting and start positioning. Wall of Iron, then advance."',
 			],
 			"floor_7_9": [
@@ -100,12 +100,12 @@ const CHARACTERS: Dictionary = {
 				'"The Watch cleared three Anchors in six months. You just matched the pace. I\'ll note that."',
 			],
 			"died_to_elite": [
-				'"That affix. {killer}. You saw it coming — the Void Sight boon would have shown you the affix before the fight."',
+				'"That affix. {killer}. You saw it coming  the Void Sight boon would have shown you the affix before the fight."',
 				'"Volatile. Classic. The explosion radius is two tiles. Keep your units spread and it\'s a non-event."',
 				'"Champion-tier this early means the Null Resonance curse has been active. Check the curse stack before you commit."',
 			],
 			"died_to_anchor": [
-				'"The pulse hits everything within two tiles. The solution is ranged holy — Mira from three tiles out, Kael holds the Golem."',
+				'"The pulse hits everything within two tiles. The solution is ranged holy  Mira from three tiles out, Kael holds the Golem."',
 				'"Phase two fires twice on adjacent tiles. You need to back off at fifty percent or you lose your tank."',
 			],
 			"had_curses": [
@@ -114,7 +114,7 @@ const CHARACTERS: Dictionary = {
 			],
 			"default": [
 				'"Keep moving. The Anchor doesn\'t wait."',
-				'"What went wrong is fixable. What went right — remember that."',
+				'"What went wrong is fixable. What went right  remember that."',
 				'"The run that kills you is the one where you stopped adapting. Don\'t stop adapting."',
 			],
 		},
@@ -123,7 +123,7 @@ const CHARACTERS: Dictionary = {
 	"volant": {
 		"name":    "Archive Mage Volant",
 		"title":   "Bellkeeper Researcher",
-		"portrait":"🔔",
+		"portrait":"?",
 		"color":   Color(0.53, 0.94, 0.67),
 		"lines": {
 			"first_run": [
@@ -138,19 +138,19 @@ const CHARACTERS: Dictionary = {
 			"floor_7_9": [
 				'"Floor {floor}. The record for a first-month incursion is floor nine. You matched it. I\'ll update my projections."',
 				'"The Void Golem\'s movement pattern is predictable once you\'ve seen it six times. You\'ve seen it once. That\'s the gap."',
-				'"Extraordinary. The elemental reactions at this depth are — I\'m getting ahead of myself. Come back and I\'ll share the data."',
+				'"Extraordinary. The elemental reactions at this depth are  I\'m getting ahead of myself. Come back and I\'ll share the data."',
 			],
 			"run_complete": [
 				'"The Anchor is shattered. I\'ve waited twelve years to write that sentence. Thank you."',
 				'"I need to update every model I\'ve built. This changes the resonance field entirely. Remarkable."',
 			],
 			"died_to_elite": [
-				'"The {killer} prefix combination — I\'ve documented fourteen encounters with that specific pairing. Eleven of them ended similarly. The counter is elemental disruption before engagement."',
+				'"The {killer} prefix combination  I\'ve documented fourteen encounters with that specific pairing. Eleven of them ended similarly. The counter is elemental disruption before engagement."',
 				'"An elite at that floor is statistically within normal parameters. What\'s interesting is the affix interaction. I\'d like to discuss it when you have time."',
 			],
 			"boon_observation": [
 				'"You selected {boon_count} boon{plural} from the Guardian pool. The resonance signature from Ignareth\'s boons is particularly strong this run."',
-				'"The curse-boon interaction data from your run is invaluable. Champion\'s Grit against the Null Resonance curse specifically — I\'ve been waiting for that dataset."',
+				'"The curse-boon interaction data from your run is invaluable. Champion\'s Grit against the Null Resonance curse specifically  I\'ve been waiting for that dataset."',
 			],
 			"died_to_anchor": [
 				'"The phase transition at fifty percent HP is documented but the timing varies by three-point-seven seconds based on terrain state. That variance matters at close range."',
@@ -167,7 +167,7 @@ const CHARACTERS: Dictionary = {
 	"the_echo": {
 		"name":    "The Echo",
 		"title":   "Origin Unknown",
-		"portrait":"💀",
+		"portrait":"?",
 		"color":   Color(0.66, 0.33, 0.97),
 		"lines": {
 			"first_run": [

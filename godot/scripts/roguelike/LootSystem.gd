@@ -1,4 +1,4 @@
-## LootSystem.gd — Diablo-style item generation. Pure RefCounted.
+## LootSystem.gd  Diablo-style item generation. Pure RefCounted.
 class_name LootSystem
 extends RefCounted
 
@@ -10,13 +10,13 @@ const RARITIES := {
 }
 
 const BASES := [
-	{"id":"blade",   "name":"Blade",   "slot":"weapon",    "icon":"⚔"},
-	{"id":"staff",   "name":"Staff",   "slot":"weapon",    "icon":"🪄"},
-	{"id":"tome",    "name":"Tome",    "slot":"weapon",    "icon":"📖"},
-	{"id":"talisman","name":"Talisman","slot":"accessory", "icon":"🔮"},
-	{"id":"ring",    "name":"Ring",    "slot":"accessory", "icon":"💍"},
-	{"id":"ward",    "name":"Ward",    "slot":"charm",     "icon":"🛡"},
-	{"id":"rune",    "name":"Rune",    "slot":"charm",     "icon":"🪨"},
+	{"id":"blade",   "name":"Blade",   "slot":"weapon",    "icon":"*"},
+	{"id":"staff",   "name":"Staff",   "slot":"weapon",    "icon":"*"},
+	{"id":"tome",    "name":"Tome",    "slot":"weapon",    "icon":"*"},
+	{"id":"talisman","name":"Talisman","slot":"accessory", "icon":"*"},
+	{"id":"ring",    "name":"Ring",    "slot":"accessory", "icon":"*"},
+	{"id":"ward",    "name":"Ward",    "slot":"charm",     "icon":"*"},
+	{"id":"rune",    "name":"Rune",    "slot":"charm",     "icon":"*"},
 ]
 
 const ADJS := {

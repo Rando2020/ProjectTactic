@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dp5hifohf2kvm"
-path="res://.godot/imported/command-ability-icon.png-11004bff8dd12452a8529ea22d0d2332.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/command-ability-icon.png"
-dest_files=["res://.godot/imported/command-ability-icon.png-11004bff8dd12452a8529ea22d0d2332.ctex"]
 
 [params]
 

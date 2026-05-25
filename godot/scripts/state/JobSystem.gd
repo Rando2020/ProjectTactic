@@ -1,4 +1,4 @@
-## JobSystem.gd — Pure RefCounted. JP thresholds and level calculations.
+## JobSystem.gd  Pure RefCounted. JP thresholds and level calculations.
 class_name JobSystem
 extends RefCounted
 

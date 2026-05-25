@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmvhvio8w5ttx"
-path="res://.godot/imported/wind-impact-vfx-sheet.png-b6741e326d82b3743b1bbe4da63fa2a9.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/vfx/wind-impact-vfx-sheet.png"
-dest_files=["res://.godot/imported/wind-impact-vfx-sheet.png-b6741e326d82b3743b1bbe4da63fa2a9.ctex"]
 
 [params]
 

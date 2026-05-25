@@ -1,5 +1,5 @@
 ## HubManager.gd
-## "The Last Hearth" — between-run upgrade hub.
+## "The Last Hearth"  between-run upgrade hub.
 ## Currency spend, permanent upgrades, Guardian boon unlocks, heat, secret skills.
 
 class_name HubManager
@@ -53,7 +53,7 @@ func _build_ui() -> void:
 	_root.add_theme_constant_override("margin_top", 0)
 	scroll.add_child(_root)
 
-	# ── Header ────────────────────────────────────────────────────────────
+	#  Header
 	var hdr := _panel_solid(Color(0.07, 0.08, 0.11), Vector2(0, 82))
 	var hh  := HBoxContainer.new()
 	hh.add_theme_constant_override("margin_left", 32)
@@ -88,7 +88,7 @@ func _build_ui() -> void:
 
 	_space(16)
 
-	# ── Main grid ─────────────────────────────────────────────────────────
+	#  Main grid
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 14)
@@ -110,7 +110,7 @@ func _build_ui() -> void:
 
 	# Heat Altar
 	grid.add_child(_upgrade_panel(
-		"Heat Altar", "Optional difficulty — higher heat, better rewards.",
+		"Heat Altar", "Optional difficulty  higher heat, better rewards.",
 		Color(1.0, 0.57, 0.20),
 		[
 			_flag_row("guardian-heat-1", "Unlock Heat I",   "Enemies gain HP. +12% reward multiplier.",
@@ -122,7 +122,7 @@ func _build_ui() -> void:
 		]
 	))
 
-	# Guardian Shrine — one upgrade per Guardian
+	# Guardian Shrine  one upgrade per Guardian
 	grid.add_child(_guardian_panel())
 
 	# Job Reliquary
@@ -144,23 +144,35 @@ func _build_ui() -> void:
 
 	_space(20)
 
-	# ── Hub characters ────────────────────────────────────────────────────
+	#  Hub characters
 	_root.add_child(_build_dialogue_panel())
 	_space(16)
 
-	# ── Bottom nav ────────────────────────────────────────────────────────
+	#  Bottom nav
 	var nav := HBoxContainer.new()
 	nav.add_theme_constant_override("separation", 12)
 	nav.add_theme_constant_override("margin_left", 28)
 	_root.add_child(nav)
 
-	var desc_btn := _nav_btn("▶  Begin Descent", GOLD, 200, 52)
+	var desc_btn := _nav_btn("  Begin Descent", GOLD, 200, 52)
 	desc_btn.pressed.connect(_start_descent)
 	nav.add_child(desc_btn)
 
 	var jobs_btn := _nav_btn("Manage Jobs", ACCENT, 150, 52)
 	jobs_btn.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/CharacterScreen.tscn"))
 	nav.add_child(jobs_btn)
+
+	var inn_btn := _nav_btn("The Inn", Color(0.831, 0.686, 0.275), 130, 44)
+	inn_btn.pressed.connect(_open_inn)
+	nav.add_child(inn_btn)
+
+	var inv_btn := _nav_btn("Inventory", Color(0.22, 0.74, 1.0), 130, 44)
+	inv_btn.pressed.connect(_open_inventory)
+	nav.add_child(inv_btn)
+
+	var codex_btn := _nav_btn("Codex", Color(0.66, 0.33, 0.97), 110, 44)
+	codex_btn.pressed.connect(_open_codex)
+	nav.add_child(codex_btn)
 
 	var stage_btn := _nav_btn("Run Map (Debug)", DIM, 150, 40)
 	stage_btn.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/StageSelect.tscn"))
@@ -169,7 +181,7 @@ func _build_ui() -> void:
 	_space(32)
 
 
-# ── Panel builders ────────────────────────────────────────────────────────────
+#  Panel builders
 
 func _upgrade_panel(title: String, desc: String, accent: Color,
 		rows: Array[Dictionary]) -> PanelContainer:
@@ -262,15 +274,15 @@ func _purchase_row(row: Dictionary, accent: Color) -> HBoxContainer:
 		level   = _meta.get_upgrade(row["stat_id"]) if _meta else 0
 		can_buy = _meta != null and _meta.can_spend(row["cost"])
 		var cost_str := _fmt_cost(row["cost"])
-		btn.text        = "%-28s  Lv%d  •  %s" % [row["label"], level, cost_str]
+		btn.text        = "%-28s  Lv%d    %s" % [row["label"], level, cost_str]
 		btn.tooltip_text = row["desc"]
 		btn.pressed.connect(func() -> void: _buy_stat(row["stat_id"], row["cost"]))
 	else:
 		already  = _meta != null and _meta.has_unlock(row["flag_id"])
 		can_buy  = not already and _meta != null and _meta.can_spend(row["cost"])
 		var cost_str := _fmt_cost(row["cost"])
-		var prefix := "✓  " if already else "   "
-		btn.text         = "%s%-28s  •  %s" % [prefix, row["label"], cost_str]
+		var prefix := "  " if already else "   "
+		btn.text         = "%s%-28s    %s" % [prefix, row["label"], cost_str]
 		btn.tooltip_text = row["desc"]
 		btn.disabled     = already
 		if not already:
@@ -284,7 +296,7 @@ func _purchase_row(row: Dictionary, accent: Color) -> HBoxContainer:
 	return hbox
 
 
-# ── Row def helpers ───────────────────────────────────────────────────────────
+#  Row def helpers
 
 func _stat_row(stat_id: String, label: String, desc: String,
 		currency: String, base_cost: int) -> Dictionary:
@@ -298,7 +310,7 @@ func _flag_row(flag_id: String, label: String, desc: String,
 	return {"type":"flag", "flag_id":flag_id, "label":label, "desc":desc, "cost":cost}
 
 
-# ── Actions ───────────────────────────────────────────────────────────────────
+#  Actions
 
 func _build_dialogue_panel() -> PanelContainer:
 	var pc := PanelContainer.new()
@@ -400,7 +412,28 @@ func _start_descent() -> void:
 	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 
 
-# ── Currency display ──────────────────────────────────────────────────────────
+func _open_inn() -> void:
+	var inn := preload("res://scripts/ui/InnScreen.gd").new()
+	inn.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	inn.back_pressed.connect(func() -> void: inn.queue_free())
+	get_tree().current_scene.add_child(inn)
+
+
+func _open_inventory() -> void:
+	var inv := preload("res://scripts/ui/InventoryScreen.gd").new()
+	inv.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	inv.back_pressed.connect(func() -> void: inv.queue_free())
+	get_tree().current_scene.add_child(inv)
+
+
+func _open_codex() -> void:
+	var cdx := preload("res://scripts/ui/CodexScreen.gd").new()
+	cdx.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cdx.back_pressed.connect(func() -> void: cdx.queue_free())
+	get_tree().current_scene.add_child(cdx)
+
+
+#  Currency display
 
 func _rebuild_currencies() -> void:
 	for c in _cur_row.get_children(): c.queue_free()
@@ -433,7 +466,7 @@ func _currency_chip(currency_name: String, amount: int) -> PanelContainer:
 	return pc
 
 
-# ── Widget helpers ────────────────────────────────────────────────────────────
+#  Widget helpers
 
 func _lbl(parent: Control, text: String, font_size: int, color: Color,
 		centered: bool = false) -> Label:

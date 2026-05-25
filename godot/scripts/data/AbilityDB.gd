@@ -5,15 +5,17 @@ extends RefCounted
 ## jp_cost: JP required to learn this ability on the character screen
 
 const ABILITIES: Dictionary = {
-	# ── Player starting abilities ─────────────────────────────────────────
+	#  Player starting abilities
 	"fire": {
 		"display_name": "Fire",
 		"spell_type":   "fire",
 		"mp_cost":      12,
 		"range":        3,
-		"base_power":   110,
+		"base_power":   100,
 		"target_type":  "enemy",
 		"jp_cost":      100,
+		"aoe_type":     "fan",   # sweeps 3 tiles wide  primary + 1 each side
+		"fan_width":    1,
 		"status_effect": {"id": "burn", "duration": 2, "magnitude": 0.07, "damage_type": "fire"},
 	},
 	"blizzard": {
@@ -21,9 +23,11 @@ const ABILITIES: Dictionary = {
 		"spell_type":   "blizzard",
 		"mp_cost":      12,
 		"range":        3,
-		"base_power":   100,
+		"base_power":   95,
 		"target_type":  "enemy",
 		"jp_cost":      100,
+		"aoe_type":     "cross",  # primary + 4 cardinal tiles  punishes clustered groups
+		"cross_arm":    1,
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"thunder": {
@@ -31,10 +35,13 @@ const ABILITIES: Dictionary = {
 		"spell_type":   "thunder",
 		"mp_cost":      15,
 		"range":        4,
-		"base_power":   120,
+		"base_power":   130,
 		"target_type":  "enemy",
 		"jp_cost":      120,
-		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
+		"aoe_type":     "chain",  # arcs to one nearby enemy at -40% power
+		"chain_range":  2,
+		"chain_count":  1,
+		"chain_falloff":0.40,
 	},
 	"cure": {
 		"display_name": "Cure",
@@ -59,10 +66,11 @@ const ABILITIES: Dictionary = {
 		"display_name": "Wind Slash",
 		"spell_type":   "wind",
 		"mp_cost":      10,
-		"range":        2,
-		"base_power":   90,
+		"range":        3,
+		"base_power":   85,
 		"target_type":  "enemy",
 		"jp_cost":      100,
+		"aoe_type":     "line",   # pierces straight through  hits everything in a column
 		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"mighty_strike": {
@@ -74,25 +82,29 @@ const ABILITIES: Dictionary = {
 		"target_type":  "enemy",
 		"jp_cost":      100,
 	},
-	# ── Learnable player abilities ────────────────────────────────────────
+	#  Learnable player abilities
 	"fira": {
 		"display_name": "Fira",
 		"spell_type":   "fire",
 		"mp_cost":      18,
-		"range":        3,
-		"base_power":   155,
+		"range":        4,
+		"base_power":   140,
 		"target_type":  "enemy",
 		"jp_cost":      200,
+		"aoe_type":     "fan",   # wider fan  primary + 2 each side (5 tiles wide)
+		"fan_width":    2,
 		"status_effect": {"id": "burn", "duration": 3, "magnitude": 0.08, "damage_type": "fire"},
 	},
 	"blizzara": {
 		"display_name": "Blizzara",
 		"spell_type":   "blizzard",
 		"mp_cost":      18,
-		"range":        3,
-		"base_power":   145,
+		"range":        4,
+		"base_power":   130,
 		"target_type":  "enemy",
 		"jp_cost":      200,
+		"aoe_type":     "cross",  # longer arms  2 tiles out each direction (9 tiles total)
+		"cross_arm":    2,
 		"status_effect": {"id": "slow", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"cura": {
@@ -130,13 +142,14 @@ const ABILITIES: Dictionary = {
 		"display_name": "Aero",
 		"spell_type":   "wind",
 		"mp_cost":      15,
-		"range":        4,
-		"base_power":   110,
+		"range":        5,
+		"base_power":   105,
 		"target_type":  "enemy",
 		"jp_cost":      180,
+		"aoe_type":     "line",   # longer range line  threatens the whole column
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
-	# ── Lyra's bow abilities ──────────────────────────────────────────────
+	#  Lyra's bow abilities
 	"pin_shot": {
 		"display_name": "Pin Shot",
 		"spell_type":   "physical",
@@ -185,7 +198,7 @@ const ABILITIES: Dictionary = {
 		"aoe_type":     "radius",   # hits all enemies within 1 tile of target tile
 		"aoe_radius":   1,
 	},
-	# ── Buff / support abilities ───────────────────────────────────────────
+	#  Buff / support abilities
 	"haste": {
 		"display_name": "Haste",
 		"spell_type":   "buff",
@@ -210,15 +223,16 @@ const ABILITIES: Dictionary = {
 		"display_name": "Firaga",
 		"spell_type":   "fire",
 		"mp_cost":      26,
-		"range":        3,
-		"base_power":   195,
+		"range":        4,
+		"base_power":   175,
 		"target_type":  "enemy",
 		"jp_cost":      300,
-		"aoe_type":     "radius",   # explodes in a 1-tile burst around the target
-		"aoe_radius":   1,
+		"aoe_type":     "fan",   # max-tier fan: 3 wide + 1 row deep behind target (6 tiles)
+		"fan_width":    1,
+		"fan_depth":    1,
 		"status_effect": {"id": "burn", "duration": 3, "magnitude": 0.09, "damage_type": "fire"},
 	},
-	# ── Enemy abilities ───────────────────────────────────────────────────
+	#  Enemy abilities
 	"dark_breath": {
 		"display_name": "Dark Breath",
 		"spell_type":   "dark",
@@ -237,7 +251,10 @@ const ABILITIES: Dictionary = {
 		"base_power":   105,
 		"target_type":  "enemy",
 		"jp_cost":      0,
-		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
+		"aoe_type":     "chain",
+		"chain_range":  2,
+		"chain_count":  1,
+		"chain_falloff":0.40,
 	},
 	"void_pulse": {
 		"display_name": "Void Pulse",
@@ -259,20 +276,21 @@ const ABILITIES: Dictionary = {
 		"jp_cost":      0,
 	},
 
-	# ── Secret Skills (learned from Wanderers only) ──────────────────────────
+	#  Secret Skills (learned from Wanderers only)
 	"resonance_fracture": {
 		"id": "resonance_fracture", "display_name": "Resonance Fracture",
 		"type": "spell", "spell_type": "dark", "base_power": 90,
-		"mp_cost": 60, "range": 5, "aoe_radius": 3,
+		"mp_cost": 60, "range": 0,  # self-cast  erupts from the caster
+		"aoe_type": "nova", "aoe_radius": 3,
 		"vfx_mode": "dark",
-		"description": "Fractures the resonant field — 90 dmg to all enemies + strips one status each.",
+		"description": "Detonate the field from within  nova hits all enemies within 3 tiles of YOU.",
 		"secret": true, "teacher": "the_wandering_null",
 	},
 	"null_break": {
 		"id": "null_break", "display_name": "Null-Break",
 		"type": "spell", "spell_type": "dark", "base_power": 45,
 		"mp_cost": 35, "range": 2,
-		"description": "Disrupts target — 45 dmg and removes one elite prefix for this battle.",
+		"description": "Disrupts target  45 dmg and removes one elite prefix for this battle.",
 		"status_effect": {"id": "null_broken", "duration": 99, "magnitude": 0.0, "damage_type": "dark"},
 		"secret": true, "teacher": "void_scholar_thresh",
 	},
@@ -281,7 +299,7 @@ const ABILITIES: Dictionary = {
 		"type": "spell", "spell_type": "holy", "base_power": 55,
 		"mp_cost": 40, "range": 3, "aoe_radius": 1,
 		"vfx_mode": "holy",
-		"description": "Taps the ley network — 55 holy+fire dmg in a 3×3 area. Ignites terrain.",
+		"description": "Taps the ley network  55 holy+fire dmg in a 3x3 area. Ignites terrain.",
 		"secret": true, "teacher": "archive_mage_volant",
 	},
 	"last_rites": {
@@ -323,17 +341,17 @@ const ABILITIES: Dictionary = {
 		"description": "Copies and mirrors the last ability any enemy used, dark-typed at 60 power.",
 		"secret": true, "teacher": "shadow_of_vaelthorn",
 	},
-	# ── Void Anchor ──────────────────────────────────────────────────────────
+	#  Void Anchor
 	"void_anchor_pulse": {
 		"id": "void_anchor_pulse", "display_name": "Void Pulse",
 		"type": "spell", "spell_type": "dark", "base_power": 0,
 		"mp_cost": 0, "range": 2, "aoe_radius": 2,
-		"description": "The Anchor pulses void energy — 30 dark damage to all units within 2 tiles. Cannot be silenced.",
+		"description": "The Anchor pulses void energy  30 dark damage to all units within 2 tiles. Cannot be silenced.",
 		"vfx_mode": "dark",
 		"is_anchor_ability": true,
 	},
 
-	# ── Job-tree abilities ───────────────────────────────────────────────────
+	#  Job-tree abilities
 
 	# Squire / Warder
 	"defend": {
@@ -341,7 +359,7 @@ const ABILITIES: Dictionary = {
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 0, "range": 0,
 		"status_effect": {"id": "defending", "duration": 1, "magnitude": 0.5, "damage_type": "physical"},
-		"description": "Brace — take 50% less damage until your next turn.",
+		"description": "Brace  take 50% less damage until your next turn.",
 	},
 	"cover_ally": {
 		"id": "cover_ally", "display_name": "Cover",
@@ -368,7 +386,7 @@ const ABILITIES: Dictionary = {
 		"type": "buff", "spell_type": "holy", "base_power": 0,
 		"mp_cost": 20, "range": 3,
 		"status_effect": {"id": "rallied", "duration": 2, "magnitude": 1.25, "damage_type": "physical"},
-		"description": "Inspire an ally — they deal 25% more damage for 2 turns.",
+		"description": "Inspire an ally  they deal 25% more damage for 2 turns.",
 	},
 
 	# Scout
@@ -382,7 +400,7 @@ const ABILITIES: Dictionary = {
 		"id": "rain_of_arrows", "display_name": "Rain of Arrows",
 		"type": "attack", "spell_type": "physical", "base_power": 40,
 		"mp_cost": 20, "range": 4, "aoe_radius": 1,
-		"description": "Fires into a 3×3 area — 40 power to all units in range. Friendly fire possible.",
+		"description": "Fires into a 3x3 area  40 power to all units in range. Friendly fire possible.",
 	},
 	"quickstep": {
 		"id": "quickstep", "display_name": "Quickstep",
@@ -396,7 +414,7 @@ const ABILITIES: Dictionary = {
 		"type": "spell", "spell_type": "wind", "base_power": 0,
 		"mp_cost": 15, "range": 3, "aoe_radius": 1,
 		"status_effect": {"id": "blind", "duration": 2, "magnitude": 1.0, "damage_type": "wind"},
-		"description": "Applies Blind (2t) to all units in target area — miss chance 35%.",
+		"description": "Applies Blind (2t) to all units in target area  miss chance 35%.",
 	},
 
 	# Luminary
@@ -411,14 +429,14 @@ const ABILITIES: Dictionary = {
 		"id": "mass_cure", "display_name": "Mass Cure",
 		"type": "heal", "spell_type": "holy", "base_power": 60,
 		"mp_cost": 40, "range": 3, "aoe_radius": 2,
-		"description": "Heals all allies within a 5×5 area for 60 power.",
+		"description": "Heals all allies within a 55 area for 60 power.",
 	},
 	"consecrate": {
 		"id": "consecrate", "display_name": "Consecrate",
 		"type": "spell", "spell_type": "holy", "base_power": 55,
 		"mp_cost": 30, "range": 4,
 		"status_effect": {"id": "burn", "duration": 1, "magnitude": 0.0, "damage_type": "holy"},
-		"description": "Holy fire — 55 holy damage, removes one negative status from caster.",
+		"description": "Holy fire  55 holy damage, removes one negative status from caster.",
 	},
 
 	# Shadow
@@ -434,7 +452,7 @@ const ABILITIES: Dictionary = {
 		"type": "spell", "spell_type": "dark", "base_power": 25,
 		"mp_cost": 12, "range": 2,
 		"status_effect": {"id": "exposed", "duration": 2, "magnitude": 0.25, "damage_type": "dark"},
-		"description": "25 dark damage and applies Exposed (2t) — target takes 25% more damage.",
+		"description": "25 dark damage and applies Exposed (2t)  target takes 25% more damage.",
 	},
 	"vanish": {
 		"id": "vanish", "display_name": "Vanish",
@@ -455,13 +473,17 @@ const ABILITIES: Dictionary = {
 		"id": "chain_resonance", "display_name": "Chain Resonance",
 		"type": "spell", "spell_type": "thunder", "base_power": 40,
 		"mp_cost": 30, "range": 3,
-		"description": "40 thunder. Electrify chain arcs to ALL connected wet tiles with no limit.",
+		"aoe_type":     "chain",  # chains to ALL enemies in range with no hop limit
+		"chain_range":  3,
+		"chain_count":  12,       # effectively unlimited
+		"chain_falloff":0.15,     # only slight falloff  resonance sustains itself
+		"description": "40 thunder. Chain arcs to ALL enemies within reach  minimal falloff.",
 	},
 	"eidolon_drive": {
 		"id": "eidolon_drive", "display_name": "Eidolon Drive",
 		"type": "spell", "spell_type": "resonance", "base_power": 100,
 		"mp_cost": 70, "range": 3,
-		"description": "Unleash 100 resonance damage. Clears all terrain effects in a 3×3 area.",
+		"description": "Unleash 100 resonance damage. Clears all terrain effects in a 3x3 area.",
 	},
 
 	# Void Knight

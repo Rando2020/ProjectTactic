@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3d67fr5d0bh6"
-path="res://.godot/imported/command-attack-icon.png-3bf2c72c9b9d38e920d28375da8dbf16.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/command-attack-icon.png"
-dest_files=["res://.godot/imported/command-attack-icon.png-3bf2c72c9b9d38e920d28375da8dbf16.ctex"]
 
 [params]
 

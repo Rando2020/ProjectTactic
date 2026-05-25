@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b0lgwe3bi4apc"
-path="res://.godot/imported/titan-guardian-summon.png-4937dd1db028d0813e1283211c7b26a1.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/characters/titan-guardian-summon.png"
-dest_files=["res://.godot/imported/titan-guardian-summon.png-4937dd1db028d0813e1283211c7b26a1.ctex"]
 
 [params]
 

@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bm0qyuatiqyw0"
-path="res://.godot/imported/command-move-icon.png-ab0c8cb3e09779181d7f4498d0d237e4.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/command-move-icon.png"
-dest_files=["res://.godot/imported/command-move-icon.png-ab0c8cb3e09779181d7f4498d0d237e4.ctex"]
 
 [params]
 

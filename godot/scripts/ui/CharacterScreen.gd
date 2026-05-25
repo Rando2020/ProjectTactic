@@ -398,7 +398,7 @@ func _learn_row(ab_id: String, ab: Dictionary) -> Control:
 	var btn := _button("Learn %d JP" % cost, Color(0.88, 0.80, 0.48) if jp >= cost else Color(0.40, 0.38, 0.34))
 	btn.custom_minimum_size = Vector2(190, 48)
 	btn.disabled = jp < cost
-	btn.pressed.connect(_on_learn.bind(ab_id))	
+	btn.pressed.connect(_on_learn.bind(ab_id))
 	row.add_child(btn)
 	return row
 

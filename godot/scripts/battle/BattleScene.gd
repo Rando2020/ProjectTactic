@@ -16,8 +16,8 @@ var _camera_shake_strength: float = 0.0
 var _camera_shake_timer: float = 0.0
 
 const CAMERA_PAN_SPEED := 560.0
-const CAMERA_MIN_ZOOM := 0.55
-const CAMERA_MAX_ZOOM := 1.40
+const CAMERA_MIN_ZOOM := 0.60
+const CAMERA_MAX_ZOOM := 1.50
 const CAMERA_ZOOM_STEP := 0.08
 
 ## Set via GameState.selected_map_index before loading this scene.
@@ -28,6 +28,7 @@ var _map_data: MapData
 var _defeated_enemies: Array[Dictionary] = []
 var _elite_system:     EliteSystem = null
 var _enemy_instance_seq: int = 0
+var _last_death_info:  Dictionary = {}
 
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane.png",
@@ -56,7 +57,7 @@ func _ready() -> void:
 		var mg := MapGenerator.new()
 		var run: RunState = gs.active_run
 		var current_node: Dictionary = run.get_current_node()
-		_map_data = mg.generate_floor(run.current_floor, run.seed)
+		_map_data = mg.generate_floor(run.current_floor, run.seed, run.heat_level)
 		if current_node.get("type", "") == "elite":
 			_map_data.display_name += " - Elite Route"
 			_map_data.objective_label = "Defeat the elite patrol"
@@ -150,14 +151,14 @@ func _setup_camera() -> void:
 func _frame_battlefield_camera() -> void:
 	if not _battle_camera:
 		return
-	var bounds := tactical_grid.get_board_bounds().grow(72.0)
+	var bounds := tactical_grid.get_board_bounds().grow(48.0)
 	_camera_bounds = bounds.grow(260.0)
-	var play_area := Vector2(620.0, 700.0)
+	var play_area := Vector2(1020.0, 590.0)
 	var zoom_x: float = play_area.x / max(bounds.size.x, 1.0)
 	var zoom_y: float = play_area.y / max(bounds.size.y, 1.0)
-	_camera_zoom_value = clamp(min(zoom_x, zoom_y), 0.72, 1.15)
+	_camera_zoom_value = clamp(min(zoom_x, zoom_y), 1.02, 1.60)
 	_camera_base_position = bounds.get_center()
-	_camera_base_position.x += 26.0
+	_camera_base_position.y -= 12.0
 	_battle_camera.position = _camera_base_position
 	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
 	_clamp_camera_to_board()
@@ -296,6 +297,36 @@ func _on_unit_defeated(unit_id: String) -> void:
 			"elite_tier": u.get_meta("elite_tier","") if u.has_meta("elite_tier") else "",
 			"jp_mult":    float(u.get_meta("jp_mult", 1.0)) if u.has_meta("jp_mult") else 1.0,
 		})
+	elif u and u.team == "player":
+		# Record who killed this player unit for the death screen.
+		var killer_unit: Unit = null
+		if battle_manager.active_unit_id != "":
+			killer_unit = battle_manager.units.get(battle_manager.active_unit_id)
+		var killer_name: String = "an enemy"
+		var killer_type: String = ""
+		var was_elite:   bool   = false
+		var elite_tier:  String = ""
+		var was_anchor:  bool   = false
+		if killer_unit and is_instance_valid(killer_unit):
+			killer_name = killer_unit.unit_data.display_name if killer_unit.unit_data else killer_unit.unit_id
+			killer_type = killer_unit.unit_id
+			was_elite   = killer_unit.has_meta("elite_tier") and killer_unit.get_meta("elite_tier","") != ""
+			elite_tier  = killer_unit.get_meta("elite_tier","") if killer_unit.has_meta("elite_tier") else ""
+			was_anchor  = killer_unit.unit_id.begins_with("anchor")
+		var gs: Node = get_node_or_null("/root/GameState")
+		var curse_count: int = 0
+		if gs and gs.active_run:
+			curse_count = gs.active_run.active_curses.size()
+		_last_death_info = {
+			"victim_name":  u.unit_data.display_name if u.unit_data else unit_id,
+			"killer_name":  killer_name,
+			"killer_type":  killer_type,
+			"ability_used": battle_manager.last_ability_used if battle_manager.get("last_ability_used") else "an attack",
+			"was_elite":    was_elite,
+			"elite_tier":   elite_tier,
+			"was_anchor":   was_anchor,
+			"had_curses":   curse_count,
+		}
 
 
 func _on_battle_won(rewards: Dictionary) -> void:
@@ -309,6 +340,20 @@ func _on_battle_won(rewards: Dictionary) -> void:
 				player_ids.append(str(uid))
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
+		# Save surviving player units' state for next battle
+		if gs.unit_registry and battle_manager and is_instance_valid(battle_manager):
+			for uid in player_ids:
+				var unit_ref = battle_manager.units.get(uid)
+				if unit_ref is Unit:
+					gs.unit_registry[uid] = {
+						"base_hp": unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0,
+						"current_hp": unit_ref.hp,
+						"current_mp": unit_ref.mp,
+						"current_temper": unit_ref.temper,
+						"current_ether": unit_ref.ether,
+					}
+		# Track JP earned this run
+		gs.run_jp_earned += rewards.get("jp", 0)
 		gs.apply_victory(_map_data.id, rewards, player_ids)
 
 		if gs.active_run:
@@ -330,6 +375,14 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			battle_ui.show_spoils(rewards, loot)
 			await battle_ui.spoils_continue_requested
 
+			var completed_node: Dictionary = gs.active_run.get_current_node()
+			var node_type := str(completed_node.get("type", "battle"))
+			var loadout_xp: int = VowSigilSystem.xp_for_floor_clear(gs.active_run.current_floor, node_type)
+			if gs.has_method("apply_loadout_xp"):
+				gs.apply_loadout_xp(loadout_xp, node_type)
+			else:
+				gs.active_run.grant_loadout_xp(loadout_xp)
+
 			if is_boss:
 				if rm and rm.is_run_active:
 					rm.end_run(true)
@@ -341,7 +394,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			if next_nd.get("type","") == "boon_pick":
 				var bs := BoonSystem.new()
 				var owned: Array = gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
-				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned)
+				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned, gs.active_run.get_loadout_bonus())
 			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 			return
 	battle_ui.show_spoils(rewards, [])
@@ -350,10 +403,21 @@ func _on_battle_won(rewards: Dictionary) -> void:
 func _on_battle_lost() -> void:
 	_fade_battle_music()
 	await get_tree().create_timer(0.85).timeout
-	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.active_run:
+		# Populate death context so ResultsScreen can show what killed you.
+		gs.last_run_death = _last_death_info.duplicate()
+		# End the run via RunManager if available.
+		var rm: Node = get_node_or_null("/root/RunManager")
+		if rm and rm.is_run_active:
+			rm.end_run(false)
+		get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+	else:
+		# Outside a run (standalone battle test)  just go back to stage select.
+		get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 
 
-# ── Map data ──────────────────────────────────────────────────────────────────
+#  Map data
 
 func _create_ashvale_map() -> MapData:
 	var map := MapData.new()
@@ -452,7 +516,7 @@ func _create_crypt_map() -> MapData:
 	return map
 
 
-# ── Unit spawning ─────────────────────────────────────────────────────────────
+#  Unit spawning
 
 func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
@@ -474,7 +538,7 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 		match fx.get("trigger",""):
 
 			"ignite_all_terrain", "ignite_all":
-				# Ignareth Unchained — all natural terrain becomes burning
+				# Ignareth Unchained  all natural terrain becomes burning
 				for pos in tactical_grid.tiles.keys():
 					var t: String = tactical_grid.tiles[pos].get("terrain","")
 					if t in ["grass","road","brush"]:
@@ -483,14 +547,14 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 				battle_manager.log_message.emit("Ignareth Unchained: all terrain ignites!")
 
 			"vaelthorn_curse_all", "curse_all":
-				# Vaelthorn Unchained — all enemies start Cursed (2t)
+				# Vaelthorn Unchained  all enemies start Cursed (2t)
 				for unit in all_units:
 					if unit.team == "enemy" and unit.hp > 0:
 						unit.apply_status(_make_status("burn", "Burn", 2, 0.0, "fire"))
 				battle_manager.log_message.emit("Vaelthorn Unchained: all enemies are cursed!")
 
 			"summon_tide":
-				# Nerevan's Veil — 3x3 water at centre
+				# Nerevan's Veil  3x3 water at centre
 				var cx: int = floori(float(tactical_grid.map_data.map_width) / 2.0)
 				var cy: int = floori(float(tactical_grid.map_data.map_height) / 2.0)
 				for dx in range(-1, 2):
@@ -502,7 +566,7 @@ func _apply_boon_battle_start_effects(_gs: Node, all_units: Array[Unit]) -> void
 				battle_manager.log_message.emit("Nerevan's Veil: a tide rises!")
 
 			"vaelthorn_bargain":
-				# Vaelthorn's Bargain — sacrifice HP for damage bonus
+				# Vaelthorn's Bargain  sacrifice HP for damage bonus
 				var cost: float = fx.get("hp_cost", 0.2)
 				for unit in all_units:
 					if unit.team == "player":
@@ -538,6 +602,7 @@ func _spawn_player_units() -> Array[Unit]:
 		240, 70, 4, 2, 9, 52, 18, 55, 65,
 		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
 		{}, 2, 4))
+	_apply_pending_deployment(result, gs)
 	# Apply curse move penalty
 	var bonuses := RunBonuses.for_current_run()
 	var move_pen: int = bonuses.get("curse_move_penalty", 0)
@@ -555,13 +620,47 @@ func _spawn_player_units() -> Array[Unit]:
 				unit.unit_data.base_stats.magic    += mag_bonus
 			if move_pen != 0:
 				unit.unit_data.base_stats.movement = max(1, unit.unit_data.base_stats.movement + move_pen)
+
+	# Restore HP from previous battles in this run
+	if gs and gs.unit_registry:
+		for unit in result:
+			var reg: Dictionary = gs.unit_registry.get(unit.unit_id, {})
+			if not reg.is_empty():
+				unit.hp = reg.get("current_hp", unit.hp)
+				unit.mp = reg.get("current_mp", unit.mp)
+				unit.temper = reg.get("current_temper", unit.temper)
+				unit.ether = reg.get("current_ether", unit.ether)
+
 	return result
 
 
+func _apply_pending_deployment(units: Array[Unit], gs: Node) -> void:
+	if not gs or not gs.has_method("pop_pending_deployment"):
+		return
+	var deployment: Array = gs.pop_pending_deployment()
+	if deployment.is_empty():
+		return
+	var by_id: Dictionary = {}
+	for unit: Unit in units:
+		by_id[unit.unit_id] = unit
+	var occupied: Dictionary = {}
+	for slot: Dictionary in deployment:
+		var unit_id: String = str(slot.get("unit_id", ""))
+		if not by_id.has(unit_id):
+			continue
+		var pos := Vector2i(int(slot.get("x", 0)), int(slot.get("y", 0)))
+		if tactical_grid and tactical_grid.get_tile(pos) == {}:
+			continue
+		if occupied.has(pos):
+			continue
+		var unit: Unit = by_id[unit_id]
+		unit.grid_pos = pos
+		unit.set_facing(str(slot.get("facing", unit.facing)))
+		occupied[pos] = true
 func _spawn_enemy_units() -> Array[Unit]:
 	var result: Array[Unit] = []
 
-	# ── Procedural spawns from MapGenerator ─────────────────────────────────
+	#  Procedural spawns from MapGenerator
 	if _map_data and _map_data.enemy_spawns.size() > 0:
 		for spawn in _map_data.enemy_spawns:
 			var unit := _make_unit(
@@ -583,7 +682,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 			)
 			result.append(unit)
 	else:
-		# ── Hardcoded fallback for editor / debug ────────────────────────────
+		#  Hardcoded fallback for editor / debug
 		result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
 			120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
 			{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))

@@ -1,0 +1,203 @@
+; ============================================================
+;  THE APPOINTED · STARTER THEME
+;  ------------------------------------------------------------
+;  Drop-in Theme resource that ports the design system's core
+;  Button / Label / Panel styles to Godot. Reference this from
+;  any Control node's `theme` property, or set it globally via
+;  Project Settings → Gui → Theme → Custom.
+;
+;  Fonts: drop the .ttf files into res://assets/fonts/ before
+;  loading this resource (the file paths are referenced below).
+;  ------------------------------------------------------------
+;  Tip — to extend a style for a single control, override only
+;  the theme items you need via the node's `theme_override_*`
+;  properties; the rest will inherit from here.
+; ============================================================
+
+[gd_resource type="Theme" load_steps=22 format=3]
+
+; ===== Font assets =========================================
+[ext_resource type="FontFile" path="res://assets/fonts/TrajanPro-Regular.ttf" id="font_display"]
+[ext_resource type="FontFile" path="res://assets/fonts/TrajanPro-Bold.otf" id="font_display_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/Cinzel-Bold.ttf" id="font_header"]
+[ext_resource type="FontFile" path="res://assets/fonts/IMFellEnglish-Regular.ttf" id="font_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/CormorantGaramond-Regular.ttf" id="font_ui"]
+
+; ===== Button styles =======================================
+; Iron secondary button (default)
+[sub_resource type="StyleBoxFlat" id="btn_iron"]
+bg_color = Color(0.145, 0.125, 0.102, 1)        ; #25201a
+border_color = Color(0.239, 0.208, 0.188, 1)    ; #3d3530
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_left = 0
+corner_radius_bottom_right = 0
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="btn_iron_hover"]
+bg_color = Color(0.239, 0.208, 0.188, 1)
+border_color = Color(0.784, 0.663, 0.431, 1)    ; --hub-warm
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="btn_iron_pressed"]
+bg_color = Color(0.067, 0.063, 0.047, 1)
+border_color = Color(0.784, 0.663, 0.431, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 18.0
+content_margin_top = 11.0
+content_margin_right = 18.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxFlat" id="btn_disabled"]
+bg_color = Color(0.067, 0.063, 0.047, 1)
+border_color = Color(0.102, 0.086, 0.063, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+
+; ===== Sacred primary button (the run-begin CTA) ==========
+[sub_resource type="StyleBoxFlat" id="btn_sacred"]
+bg_color = Color(0.831, 0.659, 0.251, 1)        ; #d4af40-ish
+border_color = Color(0.549, 0.435, 0.165, 1)    ; #8c6f2a
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 22.0
+content_margin_top = 11.0
+content_margin_right = 22.0
+content_margin_bottom = 11.0
+shadow_color = Color(0.831, 0.686, 0.286, 0.32)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="btn_sacred_hover"]
+bg_color = Color(0.957, 0.851, 0.522, 1)
+border_color = Color(0.831, 0.686, 0.286, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 22.0
+content_margin_top = 11.0
+content_margin_right = 22.0
+content_margin_bottom = 11.0
+shadow_color = Color(1, 0.847, 0.42, 0.55)
+shadow_size = 30
+
+; ===== Panel — generic content surface ====================
+[sub_resource type="StyleBoxFlat" id="panel_iron"]
+bg_color = Color(0.067, 0.063, 0.047, 1)        ; --surface-1
+border_color = Color(0.165, 0.145, 0.125, 1)    ; #2a2520
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+
+; ===== Panel — sacred frame (Tier 4+ surfaces) ============
+[sub_resource type="StyleBoxFlat" id="panel_sacred"]
+bg_color = Color(0.067, 0.063, 0.047, 1)
+border_color = Color(0.831, 0.686, 0.275, 0.55) ; --line-hot
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+shadow_color = Color(0.831, 0.686, 0.275, 0.18)
+shadow_size = 32
+
+; ===== LineEdit (text input) — recessed iron =============
+[sub_resource type="StyleBoxFlat" id="input_recess"]
+bg_color = Color(0.039, 0.031, 0.024, 1)        ; #0a0806
+border_color = Color(0.165, 0.145, 0.125, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+
+; ===== ProgressBar (HP / TMP / ETH tracks) ================
+[sub_resource type="StyleBoxFlat" id="progress_track"]
+bg_color = Color(0.039, 0.031, 0.024, 1)
+border_color = Color(0.102, 0.078, 0.063, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+
+[sub_resource type="StyleBoxFlat" id="progress_fill_hp"]
+bg_color = Color(0.298, 0.82, 0.4, 1)           ; --hp
+
+; ===== Resource body — wire all of the above ==============
+[resource]
+default_font = ExtResource("font_body")
+default_font_size = 17
+
+; --- Button
+Button/styles/normal = SubResource("btn_iron")
+Button/styles/hover = SubResource("btn_iron_hover")
+Button/styles/pressed = SubResource("btn_iron_pressed")
+Button/styles/disabled = SubResource("btn_disabled")
+Button/styles/focus = SubResource("btn_iron_hover")
+Button/colors/font_color = Color(0.941, 0.91, 0.816, 1)        ; --fg-1
+Button/colors/font_hover_color = Color(0.941, 0.91, 0.816, 1)
+Button/colors/font_pressed_color = Color(0.831, 0.686, 0.275, 1)
+Button/colors/font_disabled_color = Color(0.353, 0.322, 0.278, 1)
+Button/fonts/font = ExtResource("font_display")
+Button/font_sizes/font_size = 12
+Button/constants/character_spacing = 2
+
+; --- Label
+Label/colors/font_color = Color(0.941, 0.91, 0.816, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 0.4)
+Label/font_sizes/font_size = 17
+
+; --- PanelContainer / Panel
+Panel/styles/panel = SubResource("panel_iron")
+PanelContainer/styles/panel = SubResource("panel_iron")
+
+; --- LineEdit
+LineEdit/styles/normal = SubResource("input_recess")
+LineEdit/styles/focus = SubResource("input_recess")
+LineEdit/colors/font_color = Color(0.941, 0.91, 0.816, 1)
+LineEdit/colors/caret_color = Color(0.831, 0.686, 0.275, 1)
+LineEdit/fonts/font = ExtResource("font_body")
+LineEdit/font_sizes/font_size = 17
+
+; --- ProgressBar (used as HP bar — override fill colour per-instance)
+ProgressBar/styles/background = SubResource("progress_track")
+ProgressBar/styles/fill = SubResource("progress_fill_hp")

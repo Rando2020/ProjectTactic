@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d2qhygyvfy7jl"
-path="res://.godot/imported/earth-impact-vfx-sheet.png-2c589dd5535b521b27c34113a704f077.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/vfx/earth-impact-vfx-sheet.png"
-dest_files=["res://.godot/imported/earth-impact-vfx-sheet.png-2c589dd5535b521b27c34113a704f077.ctex"]
 
 [params]
 

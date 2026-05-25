@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbeabepjc2mjf"
-path="res://.godot/imported/temper-bar-frame.png-95601fa4cf150c5fa344298d63aba622.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/temper-bar-frame.png"
-dest_files=["res://.godot/imported/temper-bar-frame.png-95601fa4cf150c5fa344298d63aba622.ctex"]
 
 [params]
 

@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://tsc31tkdhb8v"
-path="res://.godot/imported/job-cleric-icon.png-ae19a19886448bded78ca4dc1b3ba957.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-cleric-icon.png"
-dest_files=["res://.godot/imported/job-cleric-icon.png-ae19a19886448bded78ca4dc1b3ba957.ctex"]
 
 [params]
 

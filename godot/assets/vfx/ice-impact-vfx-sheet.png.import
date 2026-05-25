@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dhn1h51y6xrfb"
-path="res://.godot/imported/ice-impact-vfx-sheet.png-1516e7bc452a79368ab2d4e3226ec3b3.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/vfx/ice-impact-vfx-sheet.png"
-dest_files=["res://.godot/imported/ice-impact-vfx-sheet.png-1516e7bc452a79368ab2d4e3226ec3b3.ctex"]
 
 [params]
 

@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b0oyuxgxfbte7"
-path="res://.godot/imported/command-bar-panel.png-6415115a207a3115b44839614ed24add.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/command-bar-panel.png"
-dest_files=["res://.godot/imported/command-bar-panel.png-6415115a207a3115b44839614ed24add.ctex"]
 
 [params]
 

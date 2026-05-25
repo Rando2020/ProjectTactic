@@ -1,7 +1,7 @@
 ## RunBonuses.gd
 ## Pure RefCounted. Reads active_boons from the current run,
 ## returns a flat bonuses dict that CombatResolver and BattleManager consume.
-## Call RunBonuses.compute() once per battle — cache the result.
+## Call RunBonuses.compute() once per battle  cache the result.
 
 class_name RunBonuses
 extends RefCounted
@@ -33,6 +33,20 @@ static func compute(active_boons: Array = []) -> Dictionary:
 		"stun_drain":          0,
 		"move_bonus":          0,
 		"battle_damage_mult":  1.0,
+		## Tactical boon fields  attack shape-changers
+		"cleave":                   false,  # hit 3 tiles wide on every attack
+		"piercing_line":            false,  # pierce through to unit behind target
+		"knockback_chance":         0.0,    # % chance to push target 1 tile back
+		"echo_strike_chance":       0.0,    # % chance to hit same target a second time
+		"battle_fury_bonus":        0.0,    # bonus damage % when attacker moved first
+		"coup_de_grace_threshold":  0.0,    # HP% threshold for CdG bonus (0 = off)
+		"coup_de_grace_bonus":      0.0,    # bonus damage % vs low-HP targets
+		"sundering_amount":         0,      # flat max-Temper reduction per hit
+		"bloodthirst_pct":          0.0,    # % of damage dealt returned as HP
+		"ruinous_field_interval":   0,      # ignite tile every N hits (0 = off)
+		"reaping_step_range":       0,      # free-move tiles on kill (0 = off)
+		"iron_momentum_min_move":   0,      # min tiles moved to prime iron momentum (0 = off)
+		"wrath_crescendo_per_kill": 0.0,    # damage% bonus per kill this battle
 	}
 
 	for boon: Dictionary in active_boons:
@@ -91,6 +105,49 @@ static func compute(active_boons: Array = []) -> Dictionary:
 					"luminarch_covenant": bonuses["min_hp_guard"]    = true
 					"death_flare":  bonuses["death_flare_damage"]   += int(fx.get("damage", 28))
 					"torvahk_fury": bonuses["stun_drain"]           += int(fx.get("stun_drain", 20))
+
+			"tactical":
+				match fx.get("id",""):
+					"cleave":
+						bonuses["cleave"] = true
+					"piercing_line":
+						bonuses["piercing_line"] = true
+					"knockback":
+						bonuses["knockback_chance"] += fx.get("chance", 0.0)
+					"echo_strike":
+						bonuses["echo_strike_chance"] += fx.get("chance", 0.0)
+					"battle_fury":
+						bonuses["battle_fury_bonus"] += fx.get("bonus", 0.0)
+					"coup_de_grace":
+						# Use the highest threshold (most forgiving), stack the bonus
+						bonuses["coup_de_grace_threshold"] = maxf(
+							bonuses["coup_de_grace_threshold"], fx.get("threshold", 0.0))
+						bonuses["coup_de_grace_bonus"] += fx.get("bonus", 0.0)
+					"sundering":
+						bonuses["sundering_amount"] += int(fx.get("amount", 0))
+					"bloodthirst":
+						bonuses["bloodthirst_pct"] += fx.get("percent", 0.0)
+					"ruinous_field":
+						var rf_interval: int = int(fx.get("interval", 3))
+						if bonuses["ruinous_field_interval"] == 0:
+							bonuses["ruinous_field_interval"] = rf_interval
+						else:
+							# Shorter interval = more frequent = better
+							bonuses["ruinous_field_interval"] = mini(
+								bonuses["ruinous_field_interval"], rf_interval)
+					"reaping_step":
+						bonuses["reaping_step_range"] = maxi(
+							bonuses["reaping_step_range"], int(fx.get("range", 3)))
+					"iron_momentum":
+						var im_min: int = int(fx.get("min_move", 3))
+						if bonuses["iron_momentum_min_move"] == 0:
+							bonuses["iron_momentum_min_move"] = im_min
+						else:
+							# Lower threshold = easier to trigger = better
+							bonuses["iron_momentum_min_move"] = mini(
+								bonuses["iron_momentum_min_move"], im_min)
+					"wrath_crescendo":
+						bonuses["wrath_crescendo_per_kill"] += fx.get("per_kill", 0.0)
 	return bonuses
 
 

@@ -53,7 +53,7 @@ func _build_ui() -> void:
 	root.add_theme_constant_override("margin_top", 36)
 	scroll.add_child(root)
 
-	# ── Header ─────────────────────────────────────────────────────────────
+	#  Header
 	if is_complete:
 		_lbl(root, "THE VAULT FALLS SILENT", 13, DIM)
 		_space(root, 4)
@@ -63,7 +63,7 @@ func _build_ui() -> void:
 	elif is_defeat:
 		_lbl(root, "FALLEN", 13, DIM)
 		_space(root, 4)
-		_lbl(root, "Floor %d — The party falls." % floor, 38, RED)
+		_lbl(root, "Floor %d  The party falls." % floor, 38, RED)
 	else:
 		_lbl(root, "BATTLE COMPLETE", 13, DIM)
 		_space(root, 4)
@@ -73,7 +73,7 @@ func _build_ui() -> void:
 	_separator(root)
 	_space(root, 18)
 
-	# ── DEATH SCREEN ───────────────────────────────────────────────────────
+	#  DEATH SCREEN
 	if is_defeat and is_run_end:
 		# How you fell
 		var fell_panel := _bordered_panel(root, RED.darkened(0.6), RED.darkened(0.3))
@@ -113,7 +113,7 @@ func _build_ui() -> void:
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation",8)
 			fell_box.add_child(row)
-			_lbl_widget(row, "→", 13, GREEN)
+			_lbl_widget(row, "", 13, GREEN)
 			var lbl := Label.new()
 			lbl.text = s
 			lbl.add_theme_font_size_override("font_size", 13)
@@ -130,12 +130,12 @@ func _build_ui() -> void:
 			curse_row.add_theme_constant_override("separation",8)
 			fell_box.add_child(curse_row)
 			for curse in _gs.active_run.active_curses:
-				var chip := _chip(curse.get("icon","⚠") + " " + curse.get("name","?"), Color(0.85,0.3,0.3))
+				var chip := _chip(curse.get("icon","") + " " + curse.get("name","?"), Color(0.85,0.3,0.3))
 				curse_row.add_child(chip)
 
 		_space(root, 16)
 
-	# ── RUN STATS GRID ─────────────────────────────────────────────────────
+	#  RUN STATS GRID
 	if is_run_end:
 		var boons: Array  = (_gs.active_run.active_boons if _gs.active_run else []) if _gs else []
 		var items: Array  = (_gs.run_inventory if _gs else [])
@@ -167,7 +167,7 @@ func _build_ui() -> void:
 			root.add_child(brow)
 			for boon in boons:
 				brow.add_child(_chip(
-					boon.get("icon","✦") + "  " + boon.get("name","?"),
+					boon.get("icon","") + "  " + boon.get("name","?"),
 					GUARDIAN_COLORS.get(boon.get("guardian",""), GOLD)))
 
 		# Items row
@@ -179,8 +179,34 @@ func _build_ui() -> void:
 			irow.add_theme_constant_override("separation",8)
 			root.add_child(irow)
 			for item in items:
-				irow.add_child(_chip(item.get("icon","📦") + "  " + item.get("name","?"),
+				irow.add_child(_chip(item.get("icon","") + "  " + item.get("name","?"),
 					item.get("color", DIM)))
+
+		var loadout_progress: Dictionary = rewards.get("loadout_progress", {})
+		if not loadout_progress.is_empty():
+			_space(root, 12)
+			_lbl(root, "Vow / Sigil Progress", 13, DIM)
+			_space(root, 8)
+			var xp_amount := int(loadout_progress.get("amount", rewards.get("loadout_xp", 0)))
+			var vow_id := str(loadout_progress.get("vow_id", ""))
+			var sigil_id := str(loadout_progress.get("sigil_id", ""))
+			var vow := VowSigilSystem.get_vow(vow_id)
+			var sigil := VowSigilSystem.get_sigil(sigil_id)
+			var loadout_row := HBoxContainer.new()
+			loadout_row.add_theme_constant_override("separation", 8)
+			root.add_child(loadout_row)
+			loadout_row.add_child(_chip("+%d XP" % xp_amount, GOLD))
+			loadout_row.add_child(_chip("%s Lv.%d" % [
+				vow.get("short_name", "Vow"),
+				int(loadout_progress.get("vow_level_after", 1)),
+			], GOLD))
+			loadout_row.add_child(_chip("%s Lv.%d" % [
+				sigil.get("short_name", "Sigil"),
+				int(loadout_progress.get("sigil_level_after", 1)),
+			], Color(0.48,0.86,1.0)))
+			if bool(loadout_progress.get("vow_leveled", false)) or bool(loadout_progress.get("sigil_leveled", false)):
+				_space(root, 6)
+				_lbl(root, "New attunement unlocked. Future boon offers are now more strongly weighted.", 13, GOLD)
 
 		# Soul Shards earned
 		var rm: Node = get_node_or_null("/root/RunManager")
@@ -193,13 +219,13 @@ func _build_ui() -> void:
 	_separator(root)
 	_space(root, 20)
 
-	# ── Continue button ─────────────────────────────────────────────────────
+	#  Continue button
 	var btn_text: String
 	var btn_col:  Color
 	var btn_dest: String
 
 	if is_complete:
-		btn_text = "Return to the Hearth  →"
+		btn_text = "Return to the Hearth  "
 		btn_col  = GOLD
 		btn_dest = "res://scenes/HubScene.tscn"
 		if _gs:
@@ -214,9 +240,11 @@ func _build_ui() -> void:
 		if _gs:
 			_gs.run_floor_reached = 0; _gs.run_jp_earned = 0
 			_gs.run_inventory.clear()
+			_gs.last_run_death.clear()
 			_gs.best_floor_reached = max(_gs.best_floor_reached, floor)
+			_gs.active_run = null
 	else:
-		btn_text = "Continue  →"
+		btn_text = "Continue  "
 		btn_col  = Color(0.48,0.86,1.0)
 		btn_dest = "res://scenes/CharacterScreen.tscn"
 
@@ -227,7 +255,7 @@ func _build_ui() -> void:
 	_space(root, 48)
 
 
-# ── Suggestion engine ─────────────────────────────────────────────────────────
+#  Suggestion engine
 
 func _get_suggestions(death: Dictionary, gs: Node) -> Array[String]:
 	var s: Array[String] = []
@@ -242,13 +270,13 @@ func _get_suggestions(death: Dictionary, gs: Node) -> Array[String]:
 		boon_ids = gs.active_run.active_boons.map(func(b: Dictionary)->String: return b.get("id",""))
 
 	if was_anchor:
-		s.append("Luminarch's Covenant boon halves the Anchor's pulse damage — holy abilities hit it for 2.5× normal.")
-		s.append("Keep your party 3+ tiles from the Anchor when it drops below 50% HP — the Phase 2 pulse is double-width.")
+		s.append("Luminarch's Covenant boon halves the Anchor's pulse damage  holy abilities hit it for 2.5 normal.")
+		s.append("Keep your party 3+ tiles from the Anchor when it drops below 50% HP  the Phase 2 pulse is double-width.")
 		if not "luminarch_light" in boon_ids:
-			s.append("A Luminary job on Mira gives access to Consecrate (holy, 3-tile range) — ideal for hitting the Anchor safely.")
+			s.append("A Luminary job on Mira gives access to Consecrate (holy, 3-tile range)  ideal for hitting the Anchor safely.")
 	elif was_elite:
 		if elite_tier == "champion":
-			s.append("Champions have 2+ prefixes. Void Sight boon reveals affixes before the battle — no surprises.")
+			s.append("Champions have 2+ prefixes. Void Sight boon reveals affixes before the battle  no surprises.")
 		s.append("Champion's Grit boon turns elite kills into heals: each elite killed restores 30 HP to the attacker.")
 		var curse_ids: Array[String] = []
 		if gs and gs.active_run:
@@ -257,22 +285,22 @@ func _get_suggestions(death: Dictionary, gs: Node) -> Array[String]:
 		if "null_resonance" in curse_ids:
 			s.append("The Null Resonance curse gave every enemy an extra affix - that's what made this elite hit harder.")
 	elif killer_type == "void_cultist":
-		s.append("Void Cultists drain Ether fast. Kill them first — their magic output drops to zero at 0 Ether.")
+		s.append("Void Cultists drain Ether fast. Kill them first  their magic output drops to zero at 0 Ether.")
 	elif killer_type == "storm_imp":
-		s.append("Storm Imps have 0 thunder resistance (immune). Hit them with fire or blizzard — 1.5× and 1.75× affinity.")
+		s.append("Storm Imps have 0 thunder resistance (immune). Hit them with fire or blizzard  1.5 and 1.75 affinity.")
 	elif killer_type == "fen_wraith":
-		s.append("Fen Wraiths take 1.75× holy damage. Mira's holy abilities are the fastest way through them.")
+		s.append("Fen Wraiths take 1.75 holy damage. Mira's holy abilities are the fastest way through them.")
 
 	if had_curses >= 2 and s.size() < 2:
 		s.append("Two active curses reshape the run significantly. Void Hunger + Tide's Price together require very high healing output.")
 
 	if not "swift_recovery" in boon_ids and not was_anchor:
-		s.append("Swift Recovery boon restores 25% HP between floors — often the difference on Floors 7-9.")
+		s.append("Swift Recovery boon restores 25% HP between floors  often the difference on Floors 7-9.")
 
 	return s.slice(0, 3)   # Max 3 suggestions
 
 
-# ── Widget helpers ────────────────────────────────────────────────────────────
+#  Widget helpers
 
 func _lbl(parent: Control, text: String, font_size: int, color: Color) -> Label:
 	var l := Label.new(); l.text = text

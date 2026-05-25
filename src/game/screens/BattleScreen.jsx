@@ -79,6 +79,7 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
   const [forecast,     setForecast]     = useState(null)
   const [lastReaction, setLastReaction] = useState(null)
   const [battleSpeed,  setBattleSpeed]  = useState(1)
+  const [autoBattle,   setAutoBattle]   = useState(false)
   const [battleLog,    setBattleLog]    = useState([`${activeMission.name} — battle started.`])
   // JP tracking: { characterId: totalJp }
   const [battleJp,    setBattleJp]    = useState({})
@@ -172,6 +173,15 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
     if(activeUnit.team==='player'){setSelectedUnitId(activeUnit.id);setPhase(PHASE.PLAYER_TURN);addLog(`${activeUnit.name}'s turn.`)}
     else setPhase(PHASE.ENEMY_TURN)
   },[phase,addLog,activeMission])
+
+  // AUTO BATTLE - automatically skip player turns
+  useEffect(()=>{
+    if(!autoBattle||phase!==PHASE.PLAYER_TURN||!activeUnitId)return
+    const t=setTimeout(()=>{
+      hRef.current.handleWait()
+    },delay(300))
+    return()=>clearTimeout(t)
+  },[autoBattle,phase,activeUnitId,battleSpeed,delay])
 
   // ENEMY TURN
   useEffect(()=>{
@@ -395,6 +405,9 @@ export default function BattleScreen({ gameState, setGameState, activeMission, d
           <span style={s.speedLabel}>Speed</span>
           {SPEED_OPTIONS.map(opt=><button key={opt.value} style={{...s.speedBtn,...(battleSpeed===opt.value?s.speedActive:{})}} onClick={()=>setBattleSpeed(opt.value)}>{opt.label}</button>)}
         </div>
+        <button style={{...s.speedBtn,...(autoBattle?s.autoBattleActive:{})}} onClick={()=>setAutoBattle(!autoBattle)}>
+          {autoBattle ? '⚔ Auto ON' : '⚔ Auto OFF'}
+        </button>
         <div style={s.btnRow}>
           <button onClick={()=>gameState.activeRun?onDefeat?.():setScreen('worldMap')}>Retreat</button>
           {phase===PHASE.DEFEAT&&<button onClick={()=>onDefeat?.()} style={s.defeatBtn}>Return to Hub</button>}
@@ -471,6 +484,7 @@ const s={
   speedLabel:{fontSize:11,color:'rgba(247,240,223,.5)',marginRight:4},
   speedBtn:{padding:'5px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,.18)',background:'rgba(255,255,255,.07)',color:'#f7f0df',fontWeight:700,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
   speedActive:{background:'rgba(201,167,86,.28)',borderColor:'rgba(201,167,86,.7)',color:'#ffd86b'},
+  autoBattleActive:{background:'rgba(248,113,113,.3)',borderColor:'rgba(248,113,113,.7)',color:'#fca5a5'},
   victoryBtn:{background:'linear-gradient(135deg,#22c55e,#16a34a)',border:'none',color:'white',fontWeight:900,padding:'10px 18px',borderRadius:999,cursor:'pointer'},
   defeatBtn:{background:'linear-gradient(135deg,#ef4444,#991b1b)',border:'none',color:'white',fontWeight:900,padding:'10px 18px',borderRadius:999,cursor:'pointer'},
   confirmBanner:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,padding:'10px 16px',marginBottom:14,borderRadius:14,background:'rgba(134,239,172,.1)',border:'1px solid rgba(134,239,172,.35)',flexWrap:'wrap'},

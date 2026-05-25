@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://baa2xep0n83lf"
-path="res://.godot/imported/lightning-impact-vfx-sheet.png-779591c03f0e6be55f352bc9b8d15feb.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/vfx/lightning-impact-vfx-sheet.png"
-dest_files=["res://.godot/imported/lightning-impact-vfx-sheet.png-779591c03f0e6be55f352bc9b8d15feb.ctex"]
 
 [params]
 

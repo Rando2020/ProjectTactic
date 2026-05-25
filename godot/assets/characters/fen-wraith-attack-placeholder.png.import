@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://pbusrnvv0o08"
-path="res://.godot/imported/fen-wraith-attack-placeholder.png-b2d0f43406ec99fa5f5f26ddc44b3ea2.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/characters/fen-wraith-attack-placeholder.png"
-dest_files=["res://.godot/imported/fen-wraith-attack-placeholder.png-b2d0f43406ec99fa5f5f26ddc44b3ea2.ctex"]
 
 [params]
 

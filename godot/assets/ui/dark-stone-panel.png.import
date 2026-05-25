@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://m3jsbb2rdgmy"
-path="res://.godot/imported/dark-stone-panel.png-9932284586e544c15a3713e2cc8d9853.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/dark-stone-panel.png"
-dest_files=["res://.godot/imported/dark-stone-panel.png-9932284586e544c15a3713e2cc8d9853.ctex"]
 
 [params]
 

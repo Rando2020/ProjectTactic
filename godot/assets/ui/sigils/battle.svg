@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Battle sigil</title>
+  <defs>
+    <radialGradient id="field" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </radialGradient>
+  </defs>
+  
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#3d3530" stroke-width="2"></circle>
+  
+  <circle cx="32" cy="32" r="27.5" fill="url(#field)"></circle>
+  
+  <circle cx="32" cy="32" r="25" fill="none" stroke="#3d3530" stroke-width="0.6" opacity="0.5"></circle>
+  
+  <g color="#8a7e6a" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none">
+    <line x1="22" y1="22" x2="42" y2="42"></line>
+    <line x1="42" y1="22" x2="22" y2="42"></line>
+    <line x1="20" y1="20" x2="24" y2="24" stroke-width="3"></line>
+    <line x1="40" y1="24" x2="44" y2="20" stroke-width="3"></line>
+  </g>
+</svg>

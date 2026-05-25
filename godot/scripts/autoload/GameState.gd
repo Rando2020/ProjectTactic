@@ -1,19 +1,19 @@
 extends Node
 # ============================================================
 #  THE APPOINTED: AS ABOVE
-#  GameState.gd — Main narrative state management
+#  GameState.gd  Main narrative state management
 # ============================================================
-#
+
 #  This replaces the React "reducer" pattern with Godot signals.
 #  All game state lives here. Other scripts connect to signals
 #  to react to state changes.
-#
+
 #  TO SET UP:
-#  Project → Project Settings → Autoload
+#  Project  Project Settings  Autoload
 #  Add: res://scripts/autoload/GameState.gd as "GameState"
 # ============================================================
 
-# ── Signals ──────────────────────────────────────────────────
+#  Signals
 # UI connects to these to update when state changes
 
 signal revelation_tier_changed(new_tier: int)
@@ -26,7 +26,7 @@ signal hub_character_met(hub_char_id: String)
 signal run_started(run_number: int)
 signal run_ended(run_number: int)
 
-# ── State Variables ──────────────────────────────────────────
+#  State Variables
 
 # Meta
 var game_title: String = "The Appointed: As Above"
@@ -61,7 +61,27 @@ var narrative_flags: Dictionary = {}
 # Run history
 var run_history: Array = []
 
-# ── Initialization ───────────────────────────────────────────
+#  Roguelike Run State
+
+# Active run for roguelike progression
+var active_run: RunState = null
+
+# Battle results and rewards
+var pending_rewards: Dictionary = {}           # Rewards from current battle
+var pending_loot: Array = []                   # Items from current battle
+var run_inventory: Array = []                  # All items collected this run
+var run_floor_reached: int = 0                 # Highest floor reached this run
+var last_run_death: Dictionary = {}            # Death context for ResultsScreen
+var selected_map_index: int = 0                # For debug/editor map selection
+var pending_boon_offers: Array = []            # Boon choices for next screen
+var unit_registry: Dictionary = {}             # Persistent unit state across battles (uid -> {base_hp, current_hp, status, etc.})
+
+# Run statistics
+var run_jp_earned: int = 0                     # Total JP earned this run
+var runs_completed: int = 0                    # Total successful runs
+var best_floor_reached: int = 0                # Highest floor ever reached
+
+#  Initialization
 
 func _ready():
 	_initialize_state()
@@ -165,7 +185,7 @@ func _init_narrative_flags():
 		narrative_flags[char_id + "_crack_event_complete"] = false
 	# More flags added as needed during gameplay
 
-# ── Run Lifecycle ────────────────────────────────────────────
+#  Run Lifecycle
 
 func begin_run():
 	current_run += 1
@@ -181,7 +201,23 @@ func end_run(summary: Dictionary):
 	})
 	run_ended.emit(current_run)
 
-# ── Revelation ───────────────────────────────────────────────
+
+#  Roguelike Battle Flow
+
+func apply_victory(map_id: String, rewards: Dictionary, player_unit_ids: Array[String]) -> void:
+	"""Called when a battle ends in victory. Updates pending rewards for UI."""
+	pending_rewards = rewards.duplicate()
+	pending_loot.clear()
+	last_run_death.clear()
+
+
+func apply_defeat(death_info: Dictionary) -> void:
+	"""Called when a battle ends in defeat. Stores death context."""
+	last_run_death = death_info.duplicate()
+	pending_rewards.clear()
+	pending_loot.clear()
+
+#  Revelation
 
 func gain_revelation(points: int, source: String = ""):
 	revelation_points += points
@@ -190,7 +226,7 @@ func gain_revelation(points: int, source: String = ""):
 		revelation_tier = new_tier
 		revelation_tier_changed.emit(revelation_tier)
 
-# ── Clarity ──────────────────────────────────────────────────
+#  Clarity
 
 func gain_clarity(amount: int, reason: String = ""):
 	clarity = clampi(clarity + amount, GameConfig.CLARITY.MIN, GameConfig.CLARITY.MAX)
@@ -200,20 +236,20 @@ func lose_clarity(amount: int, reason: String = ""):
 	clarity = clampi(clarity - amount, GameConfig.CLARITY.MIN, GameConfig.CLARITY.MAX)
 	clarity_changed.emit(clarity)
 
-# ── Character Arcs ───────────────────────────────────────────
+#  Character Arcs
 
 func trigger_crack_event(char_id: String):
 	if not characters.has(char_id):
 		return
-	
+
 	var char = characters[char_id]
 	char.crack_event_triggered = true
 	char.costume_integrity = max(0, char.costume_integrity + GameConfig.COSTUME_INTEGRITY.CRACK_EVENT)
-	
+
 	gain_clarity(GameConfig.CLARITY.CRACK_EVENT_TRIGGERED)
 	gain_revelation(30, "crack_event_" + char_id)
 	narrative_flags[char_id + "_crack_event_complete"] = true
-	
+
 	character_crack_event.emit(char_id)
 
 func lower_costume(char_id: String, amount: int):
@@ -246,7 +282,7 @@ func reach_resolution(char_id: String):
 	characters[char_id].resolution_reached = true
 	gain_revelation(100, "resolution_" + char_id)
 
-# ── Relationships ────────────────────────────────────────────
+#  Relationships
 
 func get_relationship_key(char_a: String, char_b: String) -> String:
 	var pair = [char_a, char_b]
@@ -268,7 +304,7 @@ func add_shared_moment(char_a: String, char_b: String, moment_id: String):
 	if moment_id not in relationships[key].moments_shared:
 		relationships[key].moments_shared.append(moment_id)
 
-# ── Hub Characters ───────────────────────────────────────────
+#  Hub Characters
 
 func meet_hub_character(hub_char_id: String):
 	if not hub_characters.has(hub_char_id):
@@ -284,7 +320,7 @@ func hub_conversation(hub_char_id: String):
 		return
 	hub_characters[hub_char_id].conversations += 1
 	gain_clarity(GameConfig.CLARITY.HUB_RELATIONSHIP_MOMENT)
-	
+
 	# Auto-advance dialogue tier
 	var convos = hub_characters[hub_char_id].conversations
 	var current_tier = hub_characters[hub_char_id].dialogue_tier
@@ -306,7 +342,7 @@ func archivist_learns_truth():
 	gain_revelation(40, "archivist_truth")
 	narrative_flags.archivist_tier4_conversation = true
 
-# ── Souls ────────────────────────────────────────────────────
+#  Souls
 
 func meet_soul(soul_id: String):
 	if not soul_encounters.has(soul_id):
@@ -333,7 +369,7 @@ func soul_departs(soul_id: String):
 	gain_revelation(40, "soul_depart_" + soul_id)
 	narrative_flags[soul_id + "_departed"] = true
 
-# ── Bosses ───────────────────────────────────────────────────
+#  Bosses
 
 func boss_fight_complete(boss_id: String, killed_by_char_id: String):
 	if not boss_encounters.has(boss_id):
@@ -368,7 +404,7 @@ func mirror_appeared(target_char_id: String):
 		mirror.characters_targeted.append(target_char_id)
 	mirror.last_target = target_char_id
 
-# ── Narrative Flags ──────────────────────────────────────────
+#  Narrative Flags
 
 func set_flag(flag_name: String, value: bool = true):
 	narrative_flags[flag_name] = value
@@ -376,7 +412,7 @@ func set_flag(flag_name: String, value: bool = true):
 func get_flag(flag_name: String) -> bool:
 	return narrative_flags.get(flag_name, false)
 
-# ── Getters ──────────────────────────────────────────────────
+#  Getters
 
 func get_character(char_id: String) -> Dictionary:
 	return characters.get(char_id, {})

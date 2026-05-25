@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dr6ayvnwfghg"
-path="res://.godot/imported/damage-number-floats.png-6d0abafd67eb752db30e45b43737c59f.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/vfx/damage-number-floats.png"
-dest_files=["res://.godot/imported/damage-number-floats.png-6d0abafd67eb752db30e45b43737c59f.ctex"]
 
 [params]
 

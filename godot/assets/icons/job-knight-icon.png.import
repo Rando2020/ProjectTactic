@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxu08erw7yvym"
-path="res://.godot/imported/job-knight-icon.png-78eb3364ade8acb9027884ac1e327892.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/icons/job-knight-icon.png"
-dest_files=["res://.godot/imported/job-knight-icon.png-78eb3364ade8acb9027884ac1e327892.ctex"]
 
 [params]
 

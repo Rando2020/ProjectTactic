@@ -1,4 +1,4 @@
-## ElementalSystem.gd — Reactions + chain electrify + burning spread.
+## ElementalSystem.gd  Reactions + chain electrify + burning spread.
 class_name ElementalSystem
 extends Node
 
@@ -58,7 +58,7 @@ func apply_element(tile_pos: Vector2i, element: String, units_on_tile: Array) ->
 
 		surface_states[tile_pos] = new_state
 
-		# Handle chain electrify — spreads to all connected wet/electrified tiles
+		# Handle chain electrify  spreads to all connected wet/electrified tiles
 		if reaction_id == "electrify_chain":
 			var chain_positions := _find_chain_tiles(tile_pos)
 			for pos in chain_positions:

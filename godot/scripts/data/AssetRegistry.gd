@@ -2,7 +2,7 @@ class_name AssetRegistry
 extends RefCounted
 
 # Central Godot asset registry for ProjectTactic.
-#
+
 # This file maps stable gameplay IDs to planned asset paths. The paths are
 # allowed to point to placeholder files that will be generated later. Keeping
 # these IDs stable lets battle, UI, hub, run-node, and map systems integrate art
@@ -271,6 +271,16 @@ const UI := {
 		"temper": "res://assets/generated/ui/temper-bar-frame.png",
 		"ether": "res://assets/generated/ui/ether-bar-frame.png",
 	},
+	# Bell icons  use in audio settings panel (mute/unmute toggle)
+	"icons": {
+		"bell":      "res://assets/ui/icons/bell.svg",
+		"bell_mute": "res://assets/ui/icons/bell_mute.svg",
+	},
+	# Parchment  use as background/corner for dialogue boxes and narrative interludes
+	"parchment": {
+		"bg":     "res://assets/ui/parchment/parchment_bg.png",
+		"corner": "res://assets/ui/parchment/parchment_corner.svg",
+	},
 }
 
 const CURRENCIES := {
@@ -347,6 +357,33 @@ const GUARDIANS := {
 	"void": "res://assets/generated/icons/guardian-void-sigil.png",
 }
 
+# Job class insignias  full-detail SVG badges for job tree, character sheet,
+# and any screen that needs the heraldic class mark rather than a small icon.
+# Mapping aligns with job IDs used elsewhere; monk/soldier/templar/vagrant are
+# additional classes available for future expansion.
+const INSIGNIAS := {
+	"archer":  "res://assets/ui/insignias/archer.svg",
+	"cleric":  "res://assets/ui/insignias/cleric.svg",
+	"knight":  "res://assets/ui/insignias/knight.svg",
+	"mage":    "res://assets/ui/insignias/mage.svg",
+	"monk":    "res://assets/ui/insignias/monk.svg",
+	"soldier": "res://assets/ui/insignias/soldier.svg",
+	"templar": "res://assets/ui/insignias/templar.svg",
+	"vagrant": "res://assets/ui/insignias/vagrant.svg",
+}
+
+# Run-node sigils  SVG source art for map node icons.
+# These parallel RUN_NODES (which point to generated PNGs); use SIGILS
+# when you need vector quality (large display, tooltips, loading screens).
+const SIGILS := {
+	"battle":   "res://assets/ui/sigils/battle.svg",
+	"boon":     "res://assets/ui/sigils/boon.svg",
+	"boss":     "res://assets/ui/sigils/boss.svg",
+	"elite":    "res://assets/ui/sigils/elite.svg",
+	"mystery":  "res://assets/ui/sigils/mystery.svg",
+	"wanderer": "res://assets/ui/sigils/wanderer.svg",
+}
+
 static func get_tile(tile_id: String) -> Dictionary:
 	return TILES.get(tile_id, {})
 
@@ -382,3 +419,15 @@ static func get_affix_icon(affix_id: String) -> String:
 
 static func get_guardian_icon(guardian_id: String) -> String:
 	return GUARDIANS.get(guardian_id.replace("-", "_"), "")
+
+static func get_insignia(job_id: String) -> String:
+	return INSIGNIAS.get(job_id.replace("-", "_"), "")
+
+static func get_sigil(node_type: String) -> String:
+	return SIGILS.get(node_type.replace("-", "_"), "")
+
+static func get_ui_icon(icon_id: String) -> String:
+	return UI.get("icons", {}).get(icon_id, "")
+
+static func get_parchment(part: String) -> String:
+	return UI.get("parchment", {}).get(part, "")

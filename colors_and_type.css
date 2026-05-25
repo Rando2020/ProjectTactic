@@ -1,0 +1,322 @@
+/* =================================================================
+   THE APPOINTED: AS ABOVE
+   colors_and_type.css — Foundation tokens
+   -----------------------------------------------------------------
+   Stone and iron. No rounded corners on structural elements.
+   Cinzel for headers. Crimson Text for body. Sin colors per
+   character. The whole palette shifts subtly upward in temperature
+   as the player advances through revelation tiers.
+   ================================================================= */
+
+/* ---- Webfonts ------------------------------------------------
+   Display + Header: Trajan Pro (local — uploaded by brand).
+   Body + UI: Crimson Text + Cormorant Garamond (Google Fonts —
+   no proprietary equivalents uploaded yet; see fonts/README.md). */
+
+@font-face {
+  font-family: 'Trajan Pro';
+  font-style: normal;
+  font-weight: 400 900;     /* single regular face; clamp range so heavier weights don't fall back */
+  font-display: swap;
+  src: url('fonts/TrajanPro-Regular.ttf') format('truetype');
+}
+
+/* Cinzel stays in the chain as a lowercase-capable Roman fallback —
+   Trajan Pro has no lowercase glyphs, and we don't want the browser
+   to fall all the way through to Georgia when a designer types a
+   sentence-cased display string in flight. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital,wght@0,400;1,400&family=IM+Fell+DW+Pica+SC&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  /* === COLOR — Hub (warm decay, holy ruin) ====================== */
+  --hub-bg:        #08090d;   /* the void the Antechamber floats in */
+  --hub-bg-warm:   #0a0806;   /* one shade warmer for tier 1-2 fills */
+  --hub-stone:     #3d3530;
+  --hub-stone-2:   #2a2520;
+  --hub-warm:      #c8a96e;   /* candlelight, brass, old leather */
+  --hub-light:     #f0e8d0;   /* aged parchment */
+  --hub-shadow:    #1a1410;
+
+  /* === COLOR — Mountain (cold, ascending) ======================= */
+  --mountain-bg:   #070a0f;
+  --mountain-stone:#1a2230;
+  --mountain-mist: #8fa3b8;
+  --mountain-ice:  #c8dde8;
+
+  /* === COLOR — Sacred / sin-forward signals ===================== */
+  --sacred-gold:   #d4af37;   /* sacred / revelation moments only */
+  --sacred-glow:   #ffd86b;   /* divine highlight (use sparingly) */
+  --crimson:       #9b2335;   /* danger, sin-forward moments */
+  --crimson-deep:  #5c1620;
+  --bone:          #e8d8c8;
+  --ash:           #5a544f;
+
+  /* === COLOR — The Seven (one sin color each) =================== */
+  --pride-gold:       #d4af37;  /* Aeryn / Luciel — Pride */
+  --envy-verdigris:   #4a8c6f;  /* Cael / Zaqiel  — Envy */
+  --wrath-crimson:    #9b2335;  /* Brennan / Camael — Wrath */
+  --sloth-dusk:       #6b5b8a;  /* Solan / Raziel — Sloth */
+  --greed-amber:      #b8860b;  /* Mira / Sachiel — Greed */
+  --gluttony-ash:     #8a9a8a;  /* Tobias / Muriel — Gluttony */
+  --lust-ivory:       #e8d8c8;  /* Seren / Anael — Lust */
+
+  /* === COLOR — Revelation Tier ramps ============================ */
+  /* Each tier shifts the UI's accent color a shade further up.
+     Tier 1 = tactical / distant. Tier 5 = transcendent / near-white. */
+  --tier-1: #4a6fa5;   /* cold blue — The War */
+  --tier-2: #7a5c8a;   /* violet — The Cracks */
+  --tier-3: #8a3a3a;   /* deep red — The Fallen */
+  --tier-4: #c8a040;   /* gold — The Pattern */
+  --tier-5: #e8e0d0;   /* near-white — The Ascent */
+
+  /* === FOREGROUND / NEUTRAL scale =============================== */
+  --fg-1:   #f0e8d0;   /* primary text — aged parchment */
+  --fg-2:   #c8b89a;   /* secondary text */
+  --fg-3:   #8a7e6a;   /* tertiary / labels */
+  --fg-4:   #5a5247;   /* hint / disabled */
+  --fg-mute:rgba(240, 232, 208, 0.55);
+  --line:   rgba(200, 169, 110, 0.18);  /* hairline brass */
+  --line-2: rgba(240, 232, 208, 0.08);  /* subtle stone */
+  --line-hot:rgba(212, 175, 55, 0.55);  /* sacred highlight border */
+
+  /* === SURFACES ================================================= */
+  --surface-0: #08090d;            /* the void */
+  --surface-1: #11100c;            /* slab */
+  --surface-2: #1a1610;            /* raised slab */
+  --surface-3: #25201a;            /* iron plate */
+  --surface-glass: rgba(8, 9, 13, 0.78);
+  --surface-warm:  rgba(40, 28, 16, 0.85);
+
+  /* === PARCHMENT — counterpoint surface ==========================
+     Used for narrative interludes only: chapter cards between runs,
+     codex manuscript pages, soul-encounter cards, sacred-tier dialogue
+     unfurls. Never used for combat or menu chrome. */
+  --parchment:        #ede0c2;   /* aged cream — the page */
+  --parchment-light:  #f5ecd2;   /* highlight, edge */
+  --parchment-shadow: #d4c298;   /* stained / fold shadow */
+  --parchment-burn:   #b8a06a;   /* singed corners, inkbleed pools */
+  --ink:              #2a1d10;   /* primary ink — almost black brown */
+  --ink-faded:        #5c4530;   /* secondary ink — older marks */
+  --ink-rubric:       #8c1f1f;   /* red rubric — illuminated capitals, sacred marks */
+  --brass-deep:       #6a4a1a;   /* corner ornaments, frame */
+  --brass:            #8c6f2a;
+
+  /* === STATUS / Combat semantics ================================
+     Stained-glass pigment over candlelight — pushed to read clearly
+     on a #08090d ground at small sizes. Saturated but not LED-bright. */
+  --hp:        #4cd166;   /* vital flesh — illuminated emerald */
+  --tmp:       #f08020;   /* temper / physical armor — molten copper */
+  --eth:       #a585ff;   /* ether / magical armor — stained-glass violet */
+  --hit:       #f5c542;   /* hit — vibrant gold */
+  --crit:      #ffe680;   /* crit glow — bright halo */
+  --heal:      #62e576;   /* healing flash — saturated leaf */
+  --miss:      #5a544f;
+  --status-buff:   #efc46b;   /* buff banner — warm brass */
+  --status-debuff: #e0304a;   /* debuff banner — stained-glass blood */
+
+  /* === SPACING (4-pt grid, with iron-clad density) ============== */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 24px;  --space-6: 32px;
+  --space-7: 48px;  --space-8: 64px;  --space-9: 96px;
+
+  /* === BORDERS / corners (stone & iron — sharp) ================= */
+  --radius-0: 0;     /* default — structural elements */
+  --radius-1: 1px;   /* hairline correction */
+  --radius-2: 2px;   /* chips, tiny pills only */
+  --border-thin:   1px solid var(--line);
+  --border-iron:   1px solid #2a2520;
+  --border-sacred: 1px solid var(--line-hot);
+  --border-double: 3px double var(--hub-warm);   /* sacred frame */
+
+  /* === SHADOWS (interior depth, not material drop) ============== */
+  --inset-deep:    inset 0 0 0 1px rgba(0,0,0,0.6),
+                   inset 0 1px 0 rgba(240,232,208,0.04);
+  --shadow-iron:   0 0 0 1px #1a1410, 0 2px 0 #000;
+  --shadow-recess: inset 0 2px 8px rgba(0,0,0,0.6);
+  --glow-sacred:   0 0 24px rgba(255, 216, 107, 0.35),
+                   0 0 2px rgba(212, 175, 55, 0.8);
+  --glow-crimson:  0 0 20px rgba(155, 35, 53, 0.35);
+  --glow-violet:   0 0 22px rgba(107, 91, 138, 0.32);
+
+  /* === TYPOGRAPHY families ======================================
+     Trajan Pro is a Roman-capitals face (no lowercase). It carries
+     all display + header roles — both are already UPPERCASE in this
+     system, so the mapping is exact. Fallbacks remain in place for
+     environments that can't load the .ttf. */
+  --font-display: 'Trajan Pro', 'Cinzel Decorative', 'Cinzel', serif;
+  --font-header:  'Trajan Pro', 'Cinzel', serif;
+  /* Body: IM Fell English — a digitisation of a 17th‑century English
+     punch-cut face by Igino Marini. Ink-bled, slightly irregular,
+     letterpress feel; reads like an old spellbook (FFT job-card vibe).
+     Crimson Text + Garamond stay as silent fallbacks. */
+  --font-body:    'IM Fell English', 'Crimson Text', 'EB Garamond', Georgia, serif;
+  --font-ui:      'IM Fell DW Pica SC', 'Cormorant Garamond', 'Crimson Text', Georgia, serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* === TYPOGRAPHY scale ========================================= */
+  --type-display:  clamp(48px, 6.4vw, 88px) / 1.02 var(--font-display);
+  --type-h1:       clamp(34px, 3.6vw, 52px) / 1.1  var(--font-header);
+  --type-h2:       clamp(24px, 2.4vw, 34px) / 1.18 var(--font-header);
+  --type-h3:       20px / 1.2  var(--font-header);
+  --type-h4:       16px / 1.25 var(--font-header);
+  --type-eyebrow:  11px / 1.2  var(--font-header);   /* uppercase, tracked */
+  --type-body:     17px / 1.55 var(--font-body);
+  --type-body-sm:  14px / 1.5  var(--font-body);
+  --type-ui:       13px / 1.35 var(--font-ui);
+  --type-label:    11px / 1.2  var(--font-ui);
+  --type-numeric:  14px / 1 var(--font-mono);
+
+  /* === MOTION (slow, candlelit) ================================= */
+  --ease-stone:   cubic-bezier(.4, .0, .2, 1);
+  --ease-breath:  cubic-bezier(.65, 0, .35, 1);
+  --dur-quick:   140ms;
+  --dur-default: 240ms;
+  --dur-slow:    560ms;     /* sacred transitions / tier shifts */
+  --dur-glacial: 1400ms;    /* tier 4-5 only */
+}
+
+/* =================================================================
+   BASE — applied wherever this file is imported
+   ================================================================= */
+
+html, body {
+  background: var(--surface-0);
+  color: var(--fg-1);
+  font: var(--type-body);
+  font-feature-settings: "liga", "dlig", "onum";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* === Semantic element styles ===================================== */
+h1, .h1 { font: var(--type-h1);
+          letter-spacing: 0.04em; text-transform: uppercase;
+          color: var(--fg-1); margin: 0; }
+h2, .h2 { font: var(--type-h2);
+          letter-spacing: 0.06em; text-transform: uppercase;
+          color: var(--fg-1); margin: 0; }
+h3, .h3 { font: var(--type-h3);
+          letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--fg-1); margin: 0; }
+h4, .h4 { font: var(--type-h4);
+          letter-spacing: 0.1em;  text-transform: uppercase;
+          color: var(--fg-2); margin: 0; }
+.display { font: var(--type-display);
+           letter-spacing: 0.02em; color: var(--fg-1); margin: 0;
+           text-transform: uppercase; /* Trajan Pro is caps-only — keep display surfaces in its glyph set */ }
+.eyebrow { font: var(--type-eyebrow);
+           letter-spacing: 0.32em; text-transform: uppercase;
+           color: var(--sacred-gold); margin: 0; }
+.eyebrow.ash { color: var(--fg-3); }
+.eyebrow.crimson { color: var(--crimson); }
+
+p, .p   { font: var(--type-body); color: var(--fg-1); margin: 0; }
+.copy   { font: var(--type-body); color: var(--fg-2);
+          max-width: 64ch; line-height: 1.6; }
+.copy.muted { color: var(--fg-3); }
+.label  { font: var(--type-label);
+          letter-spacing: 0.18em; text-transform: uppercase;
+          color: var(--fg-3); }
+.numeric { font: var(--type-numeric); font-variant-numeric: tabular-nums lining-nums; }
+code, .mono { font: var(--type-numeric); color: var(--fg-2); }
+
+/* === Sacred typography moments =================================== */
+/* For revelation lines, true names, scripture echoes. */
+.sacred {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sacred-gold);
+  text-shadow: 0 0 18px rgba(255, 216, 107, 0.45);
+}
+.scripture {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--fg-2);
+  line-height: 1.7;
+  border-left: 1px solid var(--line-hot);
+  padding-left: var(--space-4);
+}
+.true-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--sacred-glow);
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+}
+
+/* =================================================================
+   PARCHMENT — counterpoint surface for narrative interludes.
+   Use it for chapter cards, soul-encounter cards, codex manuscript
+   pages, and sacred-tier dialogue unfurls. Never for menus, combat
+   chrome, or persistent UI.
+
+   Apply as a class on a positioned ancestor. Brass corner ornaments
+   are CSS pseudo-elements — no SVG required. Layer .parchment-ink
+   on text inside to flip foreground colors to sepia automatically.
+   ================================================================= */
+
+.parchment {
+  position: relative;
+  background:
+    /* darkened singed corners */
+    radial-gradient(ellipse 60% 60% at 0% 0%,   rgba(106, 74, 26, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 100% 0%, rgba(106, 74, 26, 0.16), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 0% 100%, rgba(106, 74, 26, 0.18), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(106, 74, 26, 0.20), transparent 60%),
+    /* age stains */
+    radial-gradient(ellipse 30% 22% at 22% 38%, rgba(184, 160, 106, 0.18), transparent 70%),
+    radial-gradient(ellipse 18% 14% at 78% 64%, rgba(184, 160, 106, 0.14), transparent 70%),
+    /* fibre grain */
+    repeating-linear-gradient( 4deg,
+      rgba(106, 74, 26, 0.025) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(94deg,
+      rgba(106, 74, 26, 0.022) 0 1px, transparent 1px 5px),
+    /* base paper */
+    linear-gradient(165deg, var(--parchment-light), var(--parchment) 35%, var(--parchment-shadow) 100%);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(106, 74, 26, 0.18),
+    inset 0 0 30px rgba(106, 74, 26, 0.15),
+    0 14px 50px rgba(0, 0, 0, 0.55);
+}
+
+.parchment::before,
+.parchment::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  pointer-events: none;
+  /* brass corner ornament — two L-shaped rules in deep brass */
+  border-color: var(--brass-deep);
+  border-style: solid;
+}
+.parchment::before {
+  top: 10px; left: 10px;
+  border-width: 1px 0 0 1px;
+  box-shadow: 4px 4px 0 -3px var(--brass-deep);
+}
+.parchment::after {
+  bottom: 10px; right: 10px;
+  border-width: 0 1px 1px 0;
+  box-shadow: -4px -4px 0 -3px var(--brass-deep);
+}
+
+.parchment .ink     { color: var(--ink); }
+.parchment .ink-faded { color: var(--ink-faded); }
+.parchment .rubric  { color: var(--ink-rubric); font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.16em; }
+.parchment .brass   { color: var(--brass-deep); }
+.parchment hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brass-deep) 25%, var(--brass-deep) 75%, transparent);
+  opacity: 0.55;
+  margin: var(--space-4) 0;
+}
+
+/* === Selection ================================================== */
+::selection { background: rgba(212, 175, 55, 0.35); color: var(--fg-1); }

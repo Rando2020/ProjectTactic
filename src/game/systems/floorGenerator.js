@@ -1,5 +1,6 @@
 import { BOONS, BOON_RARITIES } from '../data/boons.js'
 import { WANDERERS, getWanderersForFloor } from '../data/wanderers.js'
+import { MYSTERY_EVENT_TYPES, getMysteryEvent } from '../data/mysteryEvents.js'
 
 const FLOOR_MAPS = {
   1: ['ashvale_road_01'],
@@ -46,6 +47,12 @@ function generateBattle(floorNum, rng, isElite=false, isBoss=false, preferredMap
   return { type:isBoss?'boss':isElite?'elite_battle':'battle', mapId:pickRng(pool,rng), eliteRateBonus:isElite?0.5:isBoss?1.0:0, completed:false }
 }
 
+function generateMysteryEvent(floorNum, totalFloors, rng) {
+  const event = getMysteryEvent(floorNum, rng, totalFloors)
+  if (!event) return { type:'event', eventType:'standard' }
+  return { type:'mystery', eventId:event.id, eventName:event.name, completed:false }
+}
+
 export function generateRun(seed, floors=10, stage={}) {
   const rng  = seededRng(seed)
   const plan = []
@@ -64,7 +71,12 @@ export function generateRun(seed, floors=10, stage={}) {
       nodes.push(generateBoonPick(rng,f))
     } else {
       nodes.push(generateBattle(f,rng,false,false,preferredMapId))
-      nodes.push(generateWandererEvent(rng,f))  // wanderer on deeper floors
+      // Mix of wanderer and mystery events on deeper floors
+      if (rng() < 0.5) {
+        nodes.push(generateWandererEvent(rng,f))
+      } else {
+        nodes.push(generateMysteryEvent(f,floors,rng))
+      }
       nodes.push(generateBattle(f,rng,true,false,preferredMapId))
       nodes.push(generateBoonPick(rng,f))
     }

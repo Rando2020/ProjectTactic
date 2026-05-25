@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxshqa1ws0vvp"
-path="res://.godot/imported/tile-ability-diamond.png-75bd3cfed0d4baa91308a74229e539c6.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/tile-ability-diamond.png"
-dest_files=["res://.godot/imported/tile-ability-diamond.png-75bd3cfed0d4baa91308a74229e539c6.ctex"]
 
 [params]
 

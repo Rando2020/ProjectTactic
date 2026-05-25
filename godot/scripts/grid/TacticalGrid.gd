@@ -53,6 +53,8 @@ var selected_tile: Vector2i = Vector2i(-1, -1)
 var target_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_tile: Vector2i = Vector2i(-1, -1)
 var active_unit_team: String = ""
+var _highlight_animation_time: float = 0.0
+var _show_grid_overlay: bool = true
 
 @onready var highlight_layer: Node2D = $HighlightLayer
 @onready var unit_layer: Node2D = $UnitLayer
@@ -63,6 +65,17 @@ func _ready() -> void:
 	if map_data:
 		_build_tiles()
 		_draw_base_tiles()
+
+
+func _process(delta: float) -> void:
+	# Update animation for pulsing highlights
+	_highlight_animation_time = fmod(_highlight_animation_time + delta, TAU)
+	# Only refresh if we have active highlights to animate
+	var has_animated_highlights: bool = move_tiles.size() > 0 or attack_tiles.size() > 0 \
+		or ability_tiles.size() > 0 or aoe_preview_tiles.size() > 0 \
+		or _is_valid_pos(active_unit_tile) or _is_valid_pos(target_tile)
+	if has_animated_highlights:
+		_refresh_highlights()
 
 
 func initialize_from_map(p_map_data: MapData) -> void:
@@ -130,6 +143,8 @@ func _draw_base_tiles() -> void:
 			lbl.z_index = _depth_for(pos) + 4
 			add_child(lbl)
 	_draw_props()
+	if _show_grid_overlay:
+		_draw_grid_overlay()
 
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
@@ -391,6 +406,26 @@ func _draw_props() -> void:
 		add_child(sprite)
 
 
+func _draw_grid_overlay() -> void:
+	if not map_data:
+		return
+
+	# Draw subtle diamond grid lines for each tile
+	for pos: Vector2i in tiles.keys():
+		var world := _grid_to_local(pos)
+		var depth := _depth_for(pos)
+
+		# Create a Line2D that traces the diamond outline of the tile
+		var grid_line := Line2D.new()
+		var poly := _diamond_polygon(1.0)
+		grid_line.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
+		grid_line.width = 1.0
+		grid_line.default_color = Color(0.7, 0.7, 0.7, 0.15)
+		grid_line.position = world
+		grid_line.z_index = depth - 1  # Behind tile but above terrain
+		add_child(grid_line)
+
+
 func _terrain_color(terrain: String, height: int) -> Color:
 	var base: Color
 	match terrain:
@@ -489,31 +524,52 @@ func _refresh_highlights() -> void:
 	for child in highlight_layer.get_children():
 		child.queue_free()
 	for pos in move_tiles:
-		_add_highlight(pos, Color(0.0, 0.85, 1.0, 0.48), 0.90)
+		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true)
 	for i in path_preview_tiles.size():
 		var pos: Vector2i = path_preview_tiles[i]
-		var alpha: float = 0.38 + min(float(i) * 0.035, 0.26)
-		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.62)
+		var alpha: float = 0.48 + min(float(i) * 0.035, 0.32)
+		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.65)
 		_add_path_step_badge(pos, i + 1)
 	for pos in attack_tiles:
-		_add_highlight(pos, Color(1.0, 0.35, 0.0, 0.50), 0.90)
+		_add_highlight(pos, Color(1.0, 0.40, 0.0, 0.65), 0.92, true)
 	for pos in ability_tiles:
-		_add_highlight(pos, Color(0.65, 0.18, 1.0, 0.48), 0.90)
-	# AoE burst preview — hot red, drawn over ability range tiles
+		_add_highlight(pos, Color(0.75, 0.25, 1.0, 0.62), 0.92, true)
+	# AoE burst preview  hot red, drawn over ability range tiles
 	for pos in aoe_preview_tiles:
-		_add_highlight(pos, Color(1.0, 0.18, 0.08, 0.70), 0.98)
+		_add_highlight(pos, Color(1.0, 0.22, 0.1, 0.80), 1.0, true)
+	# Show AoE tile count if preview is active
+	if not aoe_preview_tiles.is_empty():
+		_add_aoe_tile_count_badge(aoe_preview_tiles)
 	if _is_valid_pos(active_unit_tile):
-		var active_color := Color(0.25, 0.72, 1.0, 0.58) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, 0.58)
-		_add_highlight(active_unit_tile, active_color, 1.04)
+		var active_pulse: float = 0.72 + 0.22 * (sin(_highlight_animation_time * 1.4) * 0.5 + 0.5)
+		var active_color: Color = Color(0.25, 0.72, 1.0, active_pulse) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, active_pulse)
+		_add_highlight(active_unit_tile, active_color, 1.06, true)
+		# Add outer glow ring for active unit
+		var glow_ring := Line2D.new()
+		var poly := _diamond_polygon(1.16)
+		glow_ring.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
+		glow_ring.width = 2.5
+		glow_ring.default_color = Color(active_color.r, active_color.g, active_color.b, 0.8)
+		glow_ring.position = _grid_to_local(active_unit_tile)
+		glow_ring.z_index = _depth_for(active_unit_tile) + 51
+		highlight_layer.add_child(glow_ring)
+		_add_tile_badge(active_unit_tile, "ACTIVE", active_color)
 	if _is_valid_pos(selected_tile):
 		_add_selected_tile_guidance()
 	if _is_valid_pos(target_tile):
 		_add_target_lock(target_tile)
 
 
-func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86) -> void:
+func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86, animate: bool = false) -> void:
+	# Calculate animated alpha if this highlight should pulse
+	var final_color := color
+	if animate:
+		# Pulsing effect: varies from 60% to 100% opacity
+		var pulse_alpha := 0.6 + 0.4 * (sin(_highlight_animation_time) * 0.5 + 0.5)
+		final_color = Color(color.r, color.g, color.b, color.a * pulse_alpha)
+
 	var diamond := Polygon2D.new()
-	diamond.color = color
+	diamond.color = final_color
 	diamond.polygon = _diamond_polygon(highlight_scale)
 	diamond.position = _grid_to_local(pos)
 	diamond.z_index = _depth_for(pos) + 50
@@ -523,7 +579,8 @@ func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86) 
 	var poly := _diamond_polygon(highlight_scale)
 	rim.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
 	rim.width = 2.0
-	rim.default_color = Color(color.r, color.g, color.b, min(color.a + 0.28, 1.0))
+	var rim_color := Color(final_color.r, final_color.g, final_color.b, min(final_color.a + 0.28, 1.0))
+	rim.default_color = rim_color
 	rim.position = _grid_to_local(pos)
 	rim.z_index = _depth_for(pos) + 51
 	highlight_layer.add_child(rim)
@@ -531,34 +588,60 @@ func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86) 
 
 func _add_selected_tile_guidance() -> void:
 	var label := ""
-	var color := Color(1.0, 0.95, 0.0, 0.66)
+	var color := Color(1.0, 0.95, 0.0, 0.80)
 	if selected_tile in move_tiles:
 		label = "GO"
-		color = Color(0.1, 1.0, 1.0, 0.82)
+		color = Color(0.1, 1.0, 1.0, 0.90)
 	elif selected_tile in attack_tiles:
 		label = "HIT"
-		color = Color(1.0, 0.28, 0.04, 0.82)
+		color = Color(1.0, 0.28, 0.04, 0.90)
 	elif selected_tile in ability_tiles:
 		label = "CAST"
-		color = Color(0.75, 0.30, 1.0, 0.82)
-	_add_highlight(selected_tile, color, 1.08)
+		color = Color(0.75, 0.30, 1.0, 0.90)
+	# Larger scale and stronger highlight for selected tile
+	_add_highlight(selected_tile, color, 1.14)
 	if label != "":
 		_add_tile_badge(selected_tile, label, color)
+	# Add pulsing effect by drawing an outer ring
+	var outer_ring := Line2D.new()
+	var poly := _diamond_polygon(1.22)
+	outer_ring.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
+	outer_ring.width = 3.0
+	outer_ring.default_color = Color(color.r, color.g, color.b, 0.6)
+	outer_ring.position = _grid_to_local(selected_tile)
+	outer_ring.z_index = _depth_for(selected_tile) + 52
+	highlight_layer.add_child(outer_ring)
 
 
 func _add_target_lock(pos: Vector2i) -> void:
-	var color := Color(1.0, 0.88, 0.18, 0.86)
-	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.28), 1.18)
+	var color := Color(1.0, 0.88, 0.18, 0.90)
+	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.35), 1.20)
+
+	# Arrow shadow for depth
+	var arrow_shadow := Polygon2D.new()
+	arrow_shadow.polygon = PackedVector2Array([
+		Vector2(0.0, 0.0),
+		Vector2(-10.0, -18.0),
+		Vector2(-4.0, -18.0),
+		Vector2(-4.0, -31.0),
+		Vector2(4.0, -31.0),
+		Vector2(4.0, -18.0),
+		Vector2(10.0, -18.0),
+	])
+	arrow_shadow.position = _grid_to_local(pos) + Vector2(1.0, -tile_size.y * 0.32)
+	arrow_shadow.color = Color(0.0, 0.0, 0.0, 0.5)
+	arrow_shadow.z_index = _depth_for(pos) + 69
+	highlight_layer.add_child(arrow_shadow)
 
 	var arrow := Polygon2D.new()
 	arrow.polygon = PackedVector2Array([
 		Vector2(0.0, 0.0),
-		Vector2(-9.0, -16.0),
-		Vector2(-3.0, -16.0),
-		Vector2(-3.0, -28.0),
-		Vector2(3.0, -28.0),
-		Vector2(3.0, -16.0),
-		Vector2(9.0, -16.0),
+		Vector2(-10.0, -18.0),
+		Vector2(-4.0, -18.0),
+		Vector2(-4.0, -31.0),
+		Vector2(4.0, -31.0),
+		Vector2(4.0, -18.0),
+		Vector2(10.0, -18.0),
 	])
 	arrow.position = _grid_to_local(pos) + Vector2(0.0, -tile_size.y * 0.34)
 	arrow.color = color
@@ -568,18 +651,69 @@ func _add_target_lock(pos: Vector2i) -> void:
 	_add_tile_badge(pos, "TARGET", color)
 
 
+func _add_aoe_tile_count_badge(positions: Array[Vector2i]) -> void:
+	if positions.is_empty():
+		return
+
+	# Find the center of the AoE for badge placement
+	var center_x := 0
+	var center_y := 0
+	for pos: Vector2i in positions:
+		center_x += pos.x
+		center_y += pos.y
+	center_x /= positions.size()
+	center_y /= positions.size()
+	var center_pos := Vector2i(center_x, center_y)
+
+	# Create AoE info badge showing tile count
+	var badge_text := "AoE: %d" % positions.size()
+	var world_pos := _grid_to_local(center_pos)
+
+	# Background panel
+	var bg_panel := ColorRect.new()
+	bg_panel.size = Vector2(72.0, 26.0)
+	bg_panel.position = world_pos + Vector2(-36.0, 24.0)
+	bg_panel.color = Color(1.0, 0.22, 0.1, 0.70)  # Hot red, semi-transparent
+	bg_panel.z_index = _depth_for(center_pos) + 59
+	highlight_layer.add_child(bg_panel)
+
+	# Text label
+	var badge := Label.new()
+	badge.text = badge_text
+	badge.add_theme_font_size_override("font_size", 13)
+	badge.add_theme_color_override("font_color", Color.WHITE)
+	badge.add_theme_color_override("font_outline_color", Color(1.0, 0.1, 0.0))
+	badge.add_theme_constant_override("outline_size", 5)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.size = Vector2(72.0, 26.0)
+	badge.position = world_pos + Vector2(-36.0, 24.0)
+	badge.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	badge.z_index = _depth_for(center_pos) + 61
+	highlight_layer.add_child(badge)
+
+
 func _add_tile_badge(pos: Vector2i, text: String, color: Color) -> void:
+	# Background panel for better readability
+	var bg_panel := ColorRect.new()
+	bg_panel.size = Vector2(66.0, 26.0)
+	bg_panel.position = _grid_to_local(pos) + Vector2(-33.0, -16.0)
+	bg_panel.color = Color(color.r * 0.3, color.g * 0.3, color.b * 0.3, 0.75)
+	bg_panel.z_index = _depth_for(pos) + 59
+	highlight_layer.add_child(bg_panel)
+
 	var badge := Label.new()
 	badge.text = text
-	badge.add_theme_font_size_override("font_size", 11)
+	badge.add_theme_font_size_override("font_size", 13)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	badge.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
-	badge.add_theme_constant_override("outline_size", 4)
+	badge.add_theme_color_override("font_outline_color", Color(color.r * 0.8, color.g * 0.8, color.b * 0.8))
+	badge.add_theme_constant_override("outline_size", 5)
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	badge.size = Vector2(58.0, 18.0)
-	badge.position = _grid_to_local(pos) + Vector2(-29.0, -12.0)
-	badge.modulate = Color(1.0, 1.0, 1.0, min(color.a + 0.18, 1.0))
-	badge.z_index = _depth_for(pos) + 60
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.size = Vector2(66.0, 26.0)
+	badge.position = _grid_to_local(pos) + Vector2(-33.0, -16.0)
+	badge.modulate = Color(1.0, 1.0, 1.0, min(color.a + 0.20, 1.0))
+	badge.z_index = _depth_for(pos) + 61
 	highlight_layer.add_child(badge)
 
 

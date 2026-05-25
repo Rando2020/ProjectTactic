@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcmtidmle0ssp"
-path="res://.godot/imported/hp-bar-frame.png-ba9f97cd0a298c1524dd345131c906e5.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://assets/ui/hp-bar-frame.png"
-dest_files=["res://.godot/imported/hp-bar-frame.png-ba9f97cd0a298c1524dd345131c906e5.ctex"]
 
 [params]
 

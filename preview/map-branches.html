@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Appointed: As Above — Run Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── Design tokens ─────────────────────────────────────── */
+    :root {
+      --bg:          #08090d;
+      --surface:     #11100c;
+      --text:        #f0e8d0;
+      --text-dim:    #5a5247;
+      --gold:        #d4af37;
+
+      --battle:   #4a86c8;
+      --elite:    #c87828;
+      --boon:     #d4af37;
+      --mystery:  #8a6fc8;
+      --wanderer: #4ac87a;
+      --boss:     #c83030;
+
+      --col-w:   90px;
+      --card-w:  82px;
+      --card-h:  96px;
+      --gap:     8px;
+    }
+
+    /* ─── Page shell ─────────────────────────────────────────── */
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IM Fell English', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      overflow-x: hidden;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────── */
+    .hud-header {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      border-bottom: 1px solid #1e1c17;
+      padding: 14px 28px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-transform: uppercase;
+    }
+    .hud-header .title-block {
+      font-size: 13px;
+      color: var(--gold);
+      letter-spacing: 0.25em;
+    }
+    .hud-header .stats {
+      display: flex;
+      gap: 32px;
+    }
+    .hud-header .stat span {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ─── Boon bar ───────────────────────────────────────────── */
+    .boon-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 28px;
+      border-bottom: 1px solid #1a1915;
+      background: #0c0b09;
+    }
+    .boon-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+    .boon-pill {
+      font-family: 'IM Fell English', serif;
+      font-size: 11px;
+      color: var(--gold);
+      background: #17150d;
+      border: 1px solid #3a3010;
+      padding: 3px 10px 3px 8px;
+      letter-spacing: 0.04em;
+    }
+    .boon-pill .boon-icon { margin-right: 4px; opacity: 0.8; }
+
+    /* ─── Map scroll container ───────────────────────────────── */
+    .map-scroll-outer {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 32px 28px 40px;
+      scrollbar-width: thin;
+      scrollbar-color: #2a2820 var(--bg);
+    }
+    .map-scroll-outer::-webkit-scrollbar { height: 6px; }
+    .map-scroll-outer::-webkit-scrollbar-track { background: var(--bg); }
+    .map-scroll-outer::-webkit-scrollbar-thumb { background: #2a2820; }
+
+    .map-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: max-content;
+      position: relative;
+    }
+
+    /* ─── Floor column ───────────────────────────────────────── */
+    .floor-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: var(--col-w);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .floor-label {
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      letter-spacing: 0.16em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .floor-label.current {
+      color: var(--gold);
+      font-size: 9px;
+    }
+
+    .floor-cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      align-items: center;
+    }
+
+    /* ─── Branch card ────────────────────────────────────────── */
+    .card {
+      width: var(--card-w);
+      height: var(--card-h);
+      background: var(--surface);
+      border: 1px solid;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: default;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+
+    /* left accent bar */
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+    }
+
+    .card-icon {
+      font-size: 20px;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .card-type {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+      position: relative;
+      z-index: 1;
+    }
+    .card-hint {
+      font-family: 'IM Fell English', serif;
+      font-size: 8px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 0 8px;
+      line-height: 1.3;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── State: current ── */
+    .card.state-current {
+      cursor: pointer;
+    }
+    .card.state-current:hover {
+      z-index: 10;
+    }
+
+    /* ── State: completed (chosen) ── */
+    .card.state-done {
+      border-color: #2a4a2a !important;
+      opacity: 0.72;
+    }
+    .card.state-done .card-icon,
+    .card.state-done .card-type { color: #3a6a3a; }
+    .card.state-done::after {
+      content: '✓';
+      position: absolute;
+      top: 4px; right: 6px;
+      font-size: 12px;
+      color: #4a9a4a;
+      font-family: sans-serif;
+      z-index: 2;
+    }
+    .card.state-done::before { background: #2a5a2a; }
+
+    /* ── State: skipped (X'd out) ── */
+    .card.state-skip {
+      opacity: 0.3;
+      border-color: #222 !important;
+    }
+    .card.state-skip::before { background: #333; }
+    .card.state-skip .cross-overlay {
+      display: block;
+    }
+
+    .cross-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .cross-overlay::before,
+    .cross-overlay::after {
+      content: '';
+      position: absolute;
+      background: #444;
+      top: 50%; left: 50%;
+      width: 80%; height: 1px;
+      transform-origin: center;
+    }
+    .cross-overlay::before { transform: translate(-50%, -50%) rotate(38deg); }
+    .cross-overlay::after  { transform: translate(-50%, -50%) rotate(-38deg); }
+
+    /* ── State: future ── */
+    .card.state-future {
+      opacity: 0.38;
+    }
+
+    /* ── State: far-future (5-9) ── */
+    .card.state-far {
+      opacity: 0.18;
+    }
+
+    /* ─── Connector SVG wrapper ──────────────────────────────── */
+    .connector-wrap {
+      position: relative;
+      width: 36px;
+      flex-shrink: 0;
+      /* height is set inline per connector */
+    }
+    .connector-wrap svg {
+      position: absolute;
+      top: 0; left: 0;
+      overflow: visible;
+    }
+
+    /* ─── "Choose your path" badge ───────────────────────────── */
+    .choose-badge {
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.9;
+      margin-bottom: 6px;
+      text-align: center;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .choose-badge::before {
+      content: '— ';
+      opacity: 0.5;
+    }
+    .choose-badge::after {
+      content: ' —';
+      opacity: 0.5;
+    }
+
+    /* ─── Progress spine ─────────────────────────────────────── */
+    .progress-spine {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-top: 20px;
+      padding: 0 28px;
+    }
+    .spine-node {
+      width: 8px; height: 8px;
+      border: 1px solid var(--text-dim);
+      background: var(--bg);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .spine-node.done  { background: var(--gold); border-color: var(--gold); }
+    .spine-node.cur   { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 6px var(--gold); }
+    .spine-line {
+      height: 1px;
+      flex: 1;
+      background: var(--text-dim);
+      opacity: 0.25;
+    }
+    .spine-line.done  { background: var(--gold); opacity: 0.5; }
+
+    /* ─── Footer flavor ──────────────────────────────────────── */
+    .map-footer {
+      border-top: 1px solid #1a1915;
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-footer-text {
+      font-family: 'IM Fell English', serif;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-dim);
+      opacity: 0.7;
+    }
+    .map-footer-keys {
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      opacity: 0.5;
+      text-transform: uppercase;
+    }
+
+    /* ─── Hover glow for current cards ──────────────────────── */
+    .card.state-current:hover {
+      box-shadow: 0 0 12px -2px var(--accent), 0 0 2px var(--accent);
+    }
+    .card.state-current {
+      box-shadow: 0 0 8px -4px var(--accent);
+    }
+
+    /* ─── Subtle scanline texture ────────────────────────────── */
+    body::after {
+      content: '';
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0,0,0,0.06) 3px,
+        rgba(0,0,0,0.06) 4px
+      );
+      z-index: 9999;
+    }
+
+    /* ─── Vignette ───────────────────────────────────────────── */
+    .vignette {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+      z-index: 9998;
+    }
+  </style>
+</head>
+<body>
+<div class="vignette"></div>
+
+<!-- ═══════════════════ HUD HEADER ═══════════════════ -->
+<header class="hud-header">
+  <div class="title-block">The Appointed: As Above</div>
+  <div class="stats">
+    <div class="stat">Floor <span>3 / 10</span></div>
+    <div class="stat">Gold <span>340g</span></div>
+    <div class="stat">Elites <span>1</span></div>
+    <div class="stat">Boons <span>2</span></div>
+  </div>
+</header>
+
+<!-- ═══════════════════ BOON BAR ══════════════════════ -->
+<div class="boon-bar">
+  <span class="boon-label">Active Boons</span>
+  <div class="boon-pill"><span class="boon-icon">✦</span>Iron Temper</div>
+  <div class="boon-pill"><span class="boon-icon">🔥</span>Ignareth's Warmth</div>
+</div>
+
+<!-- ═══════════════════ MAP ════════════════════════════ -->
+<div class="map-scroll-outer">
+  <div class="map-track" id="mapTrack"></div>
+</div>
+
+<!-- ═══════════════════ SPINE PROGRESS ════════════════ -->
+<div class="progress-spine" id="progressSpine"></div>
+
+<!-- ═══════════════════ FOOTER ════════════════════════ -->
+<footer class="map-footer">
+  <span class="map-footer-text">The road does not forgive hesitation.</span>
+  <span class="map-footer-keys">[Click a node to advance] &nbsp;·&nbsp; [Esc] Abandon Run</span>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════
+   DATA — floor definitions
+   ══════════════════════════════════════════════ */
+const NODE = {
+  battle:   { color: '#4a86c8', label: 'Battle',    icon: '⚔',  hint: 'Standard encounter' },
+  elite:    { color: '#c87828', label: 'Elite',     icon: '☠',  hint: 'High risk, better loot' },
+  boon_pick:{ color: '#d4af37', label: 'Boon',      icon: '✦',  hint: 'Choose a Guardian boon' },
+  mystery:  { color: '#8a6fc8', label: '?',         icon: '?',  hint: 'Unknown event' },
+  wanderer: { color: '#4ac87a', label: 'Wanderer',  icon: '◈',  hint: 'Story encounter' },
+  boss:     { color: '#c83030', label: 'BOSS',      icon: '⬡',  hint: 'Final confrontation' },
+};
+
+// Each floor: { nodes: [{type, state}], label? }
+// states: 'done' | 'skip' | 'current' | 'future' | 'far' | 'boss'
+const FLOORS = [
+  // Floor 1 — completed, single branch
+  {
+    num: 1,
+    nodes: [
+      { type: 'battle', state: 'done' },
+    ]
+  },
+  // Floor 2 — completed, chose battle, skipped wanderer
+  {
+    num: 2,
+    nodes: [
+      { type: 'battle',   state: 'done' },
+      { type: 'wanderer', state: 'skip' },
+    ]
+  },
+  // Floor 3 — CURRENT, 3 branches
+  {
+    num: 3,
+    current: true,
+    nodes: [
+      { type: 'battle',    state: 'current' },
+      { type: 'boon_pick', state: 'current' },
+      { type: 'mystery',   state: 'current' },
+    ]
+  },
+  // Floor 4 — future, 2 branches
+  {
+    num: 4,
+    nodes: [
+      { type: 'elite',   state: 'future' },
+      { type: 'mystery', state: 'future' },
+    ]
+  },
+  // Floors 5-9 — far future
+  { num: 5,  nodes: [{ type: 'battle',   state: 'far' }, { type: 'wanderer', state: 'far' }] },
+  { num: 6,  nodes: [{ type: 'elite',    state: 'far' }, { type: 'boon_pick',state: 'far' }] },
+  { num: 7,  nodes: [{ type: 'mystery',  state: 'far' }, { type: 'battle',   state: 'far' }, { type: 'wanderer', state: 'far' }] },
+  { num: 8,  nodes: [{ type: 'elite',    state: 'far' }, { type: 'boon_pick',state: 'far' }] },
+  { num: 9,  nodes: [{ type: 'battle',   state: 'far' }, { type: 'mystery',  state: 'far' }] },
+  // Floor 10 — boss
+  { num: 10, nodes: [{ type: 'boss', state: 'current', isBoss: true }] },
+];
+
+/* ══════════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════════ */
+const CARD_H   = 96;
+const CARD_GAP = 8;
+
+function colHeight(nodeCount) {
+  return nodeCount * CARD_H + (nodeCount - 1) * CARD_GAP;
+}
+
+function cardTopOffsets(nodeCount) {
+  const offsets = [];
+  for (let i = 0; i < nodeCount; i++) {
+    offsets.push(i * (CARD_H + CARD_GAP));
+  }
+  return offsets;
+}
+
+function colMidY(nodeCount, labelH) {
+  return labelH + colHeight(nodeCount) / 2;
+}
+
+function buildCard(node) {
+  const def   = NODE[node.type];
+  const card  = document.createElement('div');
+  card.className = `card state-${node.state}`;
+  card.style.setProperty('--accent', def.color);
+
+  // border color
+  const alpha = (node.state === 'future' || node.state === 'far') ? '80' : 'ff';
+  if (node.state === 'done') {
+    card.style.borderColor = '#2a4a2a';
+  } else if (node.state === 'skip') {
+    card.style.borderColor = '#222';
+  } else {
+    card.style.borderColor = def.color + (node.state === 'future' ? '66' : '');
+  }
+
+  // icon
+  const icon = document.createElement('div');
+  icon.className = 'card-icon';
+  icon.textContent = def.icon;
+  if (node.state === 'done')  icon.style.color = '#3a6a3a';
+  else if (node.state !== 'skip') icon.style.color = def.color;
+
+  // label
+  const lbl = document.createElement('div');
+  lbl.className = 'card-type';
+  lbl.textContent = def.label;
+  if (node.state === 'current' || node.isBoss) {
+    lbl.style.color = def.color;
+  } else if (node.state === 'done') {
+    lbl.style.color = '#3a6a3a';
+  }
+
+  // hint
+  const hint = document.createElement('div');
+  hint.className = 'card-hint';
+  hint.textContent = def.hint;
+
+  // cross overlay
+  const cross = document.createElement('div');
+  cross.className = 'cross-overlay';
+
+  card.appendChild(icon);
+  card.appendChild(lbl);
+  card.appendChild(hint);
+  card.appendChild(cross);
+
+  return card;
+}
+
+function buildFloorCol(floor) {
+  const col  = document.createElement('div');
+  col.className = 'floor-col';
+
+  // choose badge above current floor
+  if (floor.current) {
+    const badge = document.createElement('div');
+    badge.className = 'choose-badge';
+    badge.textContent = 'Choose your path';
+    col.appendChild(badge);
+  } else {
+    // spacer to align non-current floors
+    const spacer = document.createElement('div');
+    spacer.style.height = '22px';
+    col.appendChild(spacer);
+  }
+
+  // floor number label
+  const lbl = document.createElement('div');
+  lbl.className = floor.current ? 'floor-label current' : 'floor-label';
+  lbl.textContent = `Floor ${floor.num}`;
+  col.appendChild(lbl);
+
+  // cards
+  const cards = document.createElement('div');
+  cards.className = 'floor-cards';
+  floor.nodes.forEach(n => cards.appendChild(buildCard(n)));
+  col.appendChild(cards);
+
+  return col;
+}
+
+/* ── SVG connector between two floors ── */
+function buildConnector(fromFloor, toFloor) {
+  const wrap = document.createElement('div');
+  wrap.className = 'connector-wrap';
+
+  const fromCount = fromFloor.nodes.length;
+  const toCount   = toFloor.nodes.length;
+
+  // total height needed: max of both sides + some breathing room
+  const topPad = 22 + 14; // badge area + label
+  const fromH  = colHeight(fromCount);
+  const toH    = colHeight(toCount);
+  const totalH = topPad + Math.max(fromH, toH) + 20;
+
+  wrap.style.height = totalH + 'px';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width',  '36');
+  svg.setAttribute('height', totalH);
+  svg.setAttribute('viewBox', `0 0 36 ${totalH}`);
+
+  // vertical midpoints of cards relative to top of column
+  // (skip badge area + label offset)
+  const baseOffset = topPad;
+
+  const fromOffsets = cardTopOffsets(fromCount).map(o => baseOffset + o + CARD_H / 2);
+  const toOffsets   = cardTopOffsets(toCount  ).map(o => baseOffset + o + CARD_H / 2);
+
+  // determine which source points are "active" (done or current, not skipped)
+  const activeSources = fromFloor.nodes
+    .map((n, i) => ({ n, i }))
+    .filter(({ n }) => n.state === 'done' || n.state === 'current');
+
+  // fallback: if all are skipped somehow, draw all
+  const sources = activeSources.length > 0 ? activeSources.map(a => a.i) : fromFloor.nodes.map((_, i) => i);
+
+  // If only one source (done), draw from that single card to all targets
+  // If current (multiple sources), fan out from all current cards
+  const colorDim   = '#2a2820';
+  const colorMid   = '#3a3630';
+  const colorGold  = 'rgba(212,175,55,0.35)';
+
+  // determine line style per connection
+  function lineColor(fromNode, toNode) {
+    if (fromNode.state === 'done' && (toNode.state === 'future' || toNode.state === 'far' || toNode.state === 'current')) return colorMid;
+    if (fromNode.state === 'current') return colorGold;
+    if (fromNode.state === 'skip') return colorDim;
+    return colorDim;
+  }
+
+  // For each source, draw curves to all destinations
+  sources.forEach(si => {
+    const fromNode = fromFloor.nodes[si];
+    const fy = fromOffsets[si];
+
+    toOffsets.forEach((ty, ti) => {
+      const toNode = toFloor.nodes[ti];
+      // skipped destinations still get a faint line
+      const col   = (fromNode.state === 'skip' || toNode.state === 'skip') ? colorDim : lineColor(fromNode, toNode);
+      const dash  = (fromNode.state === 'skip' || toNode.state === 'skip') ? '3,4' : '';
+      const width = fromNode.state === 'current' ? '1' : '1';
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      // cubic bezier: exit right from x=0, enter left at x=36
+      const mx = 18;
+      path.setAttribute('d', `M0,${fy} C${mx},${fy} ${mx},${ty} 36,${ty}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', col);
+      path.setAttribute('stroke-width', width);
+      if (dash) path.setAttribute('stroke-dasharray', dash);
+      svg.appendChild(path);
+    });
+  });
+
+  wrap.appendChild(svg);
+  return wrap;
+}
+
+/* ── Build spine ── */
+function buildSpine() {
+  const spine = document.getElementById('progressSpine');
+  FLOORS.forEach((floor, idx) => {
+    const node = document.createElement('div');
+    node.className = 'spine-node';
+    if (floor.num < 3)       node.classList.add('done');
+    else if (floor.num === 3) node.classList.add('cur');
+
+    spine.appendChild(node);
+
+    if (idx < FLOORS.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'spine-line';
+      if (floor.num < 3) line.classList.add('done');
+      spine.appendChild(line);
+    }
+  });
+}
+
+/* ── Assemble map ── */
+function buildMap() {
+  const track = document.getElementById('mapTrack');
+
+  FLOORS.forEach((floor, idx) => {
+    const col = buildFloorCol(floor);
+    track.appendChild(col);
+
+    if (idx < FLOORS.length - 1) {
+      const conn = buildConnector(floor, FLOORS[idx + 1]);
+      track.appendChild(conn);
+    }
+  });
+}
+
+buildMap();
+buildSpine();
+
+/* ── Scroll to current floor on load ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const outer = document.querySelector('.map-scroll-outer');
+  if (outer) {
+    // floor 3 is at roughly index 2, each floor+connector = ~126px
+    outer.scrollLeft = 2 * (90 + 36) - 20;
+  }
+});
+</script>
+</body>
+</html>

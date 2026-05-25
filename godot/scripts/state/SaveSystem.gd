@@ -1,4 +1,4 @@
-## SaveSystem.gd — Autoload. 3 save slots, schema v2, run state included.
+## SaveSystem.gd  Autoload. 3 save slots, schema v2, run state included.
 extends Node
 
 const SCHEMA := 2

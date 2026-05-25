@@ -3,6 +3,26 @@ import { buildGrid, getUnitAt } from '../systems/grid.js'
 import { TERRAIN_OVERLAY_COLORS } from '../systems/elementalSystem.js'
 import { FACING_LABELS, getRelativeFacing } from '../systems/damageFormula.js'
 
+// Job color system: maps job IDs to thematic colors and silhouette icons
+const JOB_COLORS = {
+  // Tank/Defender jobs
+  warder: { bg: '#dc2626', border: '#991b1b', text: '#fecaca', icon: '⚔️' },
+  null_breaker: { bg: '#b91c1c', border: '#7f1d1d', text: '#fecaca', icon: '🗡️' },
+  // Healer jobs
+  luminary: { bg: '#059669', border: '#065f46', text: '#d1fae5', icon: '✨' },
+  seraph: { bg: '#0891b2', border: '#164e63', text: '#cffafe', icon: '☆' },
+  // Caster jobs
+  arcanist: { bg: '#7c3aed', border: '#4c1d95', text: '#e9d5ff', icon: '⚡' },
+  etherweaver: { bg: '#6366f1', border: '#312e81', text: '#e0e7ff', icon: '◆' },
+  // Summoner/Guardian jobs
+  resonant: { bg: '#d97706', border: '#92400e', text: '#fef3c7', icon: '◎' },
+  primal_binder: { bg: '#ca8a04', border: '#713f12', text: '#fef08a', icon: '⊕' },
+  // Jump attacker
+  skywarden: { bg: '#0ea5e9', border: '#0c4a6e', text: '#cffafe', icon: '△' }
+}
+
+const getJobColor = (jobId) => JOB_COLORS[jobId] || { bg: '#4b5563', border: '#1e293b', text: '#cbd5e1', icon: '◇' }
+
 const TC = { grass: '#244733', road: '#6b5131', stone: '#4b5563', shrine: '#68512a', shallow_water: '#155e75', deep_water: '#0f2942', ice: '#2a6a8a', burning: '#7f1d1d', electrified_water: '#1a3a1a', wall: '#111827', high_ground: '#374151', void_anchor: '#2d1a4f' }
 const TI = { ice: 'ICE', burning: 'FIRE', electrified_water: 'ELEC', void_anchor: 'VOID', shrine: '*', shallow_water: '~', deep_water: '~~' }
 const PC = { damage: '#f8f5ff', crit: '#fde047', heal: '#4ade80', temper: '#f97316', ether: '#a78bfa' }
@@ -11,6 +31,25 @@ const ANGLE_STYLE = {
   front: { border: '#86efac', background: 'rgba(134,239,172,.12)', text: '#bbf7d0' },
   side: { border: '#fbbf24', background: 'rgba(251,191,36,.16)', text: '#fde68a' },
   back: { border: '#f87171', background: 'rgba(248,113,113,.2)', text: '#fecaca' }
+}
+
+function UnitPortrait({ unit, isSelected }) {
+  const jobColor = getJobColor(unit.baseJobId || unit.currentJobId)
+  const initials = unit.name.split(' ').map(n => n[0]).join('')
+
+  return (
+    <div style={{
+      ...s.unitPortrait,
+      background: jobColor.bg,
+      borderColor: jobColor.border,
+      filter: isSelected ? `drop-shadow(0 0 6px ${jobColor.border})` : 'none',
+      animation: 'unitBob 2.2s ease-in-out infinite'
+    }}>
+      <div style={s.portraitIcon}>{jobColor.icon}</div>
+      <div style={{ ...s.portraitInitials, color: jobColor.text }}>{initials}</div>
+      {unit.team === 'enemy' && <div style={s.enemyBadge}>E</div>}
+    </div>
+  )
 }
 
 function HpBars({ unit }) {
@@ -129,12 +168,10 @@ export default function TacticalGrid({
                     </span>
                   )}
                   <div style={s.unitBody}>
-                    <div style={{ ...s.unitGem, filter: isSelected ? 'drop-shadow(0 0 5px #facc15)' : 'none' }}>
-                      {unit.team === 'player' ? 'P' : 'E'}
-                    </div>
+                    <UnitPortrait unit={unit} isSelected={isSelected} />
                     <div style={s.unitName}>{unit.name.split(' ')[0]}</div>
                     {unit.statuses?.length > 0 && <div style={s.statuses}>{unit.statuses.map((status) => status.id[0].toUpperCase()).join('')}</div>}
-                    {unit.hp <= 0 && <div style={s.defeated}>X</div>}
+                    {unit.hp <= 0 && <div style={s.defeated}>✕</div>}
                   </div>
                   <HpBars unit={unit} />
                 </div>
@@ -148,7 +185,17 @@ export default function TacticalGrid({
           )
         })}
       </div>
-      <style>{'@keyframes floatUp{0%{opacity:1;transform:translateX(-50%) translateY(0)}70%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-28px)}}'}</style>
+      <style>{`
+        @keyframes floatUp {
+          0% { opacity: 1; transform: translateX(-50%) translateY(0) }
+          70% { opacity: 1 }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-28px) }
+        }
+        @keyframes unitBob {
+          0%, 100% { transform: translateY(0px) }
+          50% { transform: translateY(-2px) }
+        }
+      `}</style>
       <div style={s.legend}>
         <span>P Player</span><span>E Enemy</span>
         <span style={{ color: '#67e8f9' }}>Move</span><span style={{ color: '#f97316' }}>Attack</span>
@@ -172,10 +219,57 @@ const s = {
   facing: { position: 'absolute', top: 3, right: 5, width: 16, height: 16, borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 900, background: 'rgba(0,0,0,.52)', border: '1px solid rgba(255,255,255,.22)', color: '#f8f5ff', zIndex: 5 },
   angleBadge: { position: 'absolute', left: 4, bottom: 13, padding: '1px 5px', borderRadius: 6, fontSize: 8, fontWeight: 900, letterSpacing: '.04em', textTransform: 'uppercase', border: '1px solid', zIndex: 5 },
   unitBody: { textAlign: 'center' },
-  unitGem: { fontSize: 15, fontWeight: 900 },
+  unitPortrait: {
+    width: 24,
+    height: 24,
+    borderRadius: '50%',
+    border: '2px solid',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    fontSize: 12,
+    fontWeight: 900,
+    color: '#fff',
+    marginBottom: 2,
+    transition: 'all .2s ease'
+  },
+  portraitIcon: {
+    position: 'absolute',
+    fontSize: 10,
+    top: 1,
+    right: 1,
+    opacity: 0.9,
+    lineHeight: 1
+  },
+  portraitInitials: {
+    fontSize: 8,
+    fontWeight: 900,
+    letterSpacing: '.02em',
+    textShadow: '0 1px 2px rgba(0,0,0,.5)',
+    position: 'relative',
+    zIndex: 2
+  },
+  enemyBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    width: 12,
+    height: 12,
+    background: '#dc2626',
+    border: '1px solid #991b1b',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 7,
+    fontWeight: 900,
+    color: '#fff',
+    zIndex: 3
+  },
   unitName: { fontSize: 9, lineHeight: 1.2, fontWeight: 800 },
   statuses: { fontSize: 8, color: '#fbbf24', lineHeight: 1 },
-  defeated: { fontSize: 9, color: '#f87171' },
+  defeated: { fontSize: 11, color: '#f87171', fontWeight: 900 },
   bars: { position: 'absolute', bottom: 0, left: 2, right: 2, display: 'grid', gap: 1, padding: '0 1px 2px', zIndex: 3 },
   barTrack: { height: 3, borderRadius: 2, background: 'rgba(0,0,0,.5)', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 2, transition: 'width .2s' },
