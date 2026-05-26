@@ -1096,6 +1096,9 @@ func _format_enemy_intent_details(intent: Dictionary, details: Dictionary) -> St
 	var affinity := str(details.get("affinity_label", ""))
 	if not affinity.is_empty():
 		parts.append(affinity)
+	var breakdown: Array = details.get("modifier_breakdown", []) as Array
+	if not breakdown.is_empty():
+		parts.append(_compact_forecast_breakdown(breakdown, 7))
 	var danger := str(intent.get("danger", ""))
 	if danger == "lethal":
 		parts.append("Priority: lethal")
@@ -1209,18 +1212,20 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 		critical_notes.append("Counter possible")
 
 	# Tactical advantages second (flank, height, facing)
+	var has_breakdown: bool = preview.has("modifier_breakdown") and not (preview.get("modifier_breakdown", []) as Array).is_empty()
 	var flank_l: String = str(preview.get("flank_label", ""))
-	if not flank_l.is_empty():
+	if not flank_l.is_empty() and not has_breakdown:
 		tactical_notes.append("Facing: " + flank_l)
 	var height_rule: String = str(preview.get("height_rule_label", ""))
-	if not height_rule.is_empty():
+	if not height_rule.is_empty() and not has_breakdown:
 		tactical_notes.append(height_rule)
 	var facing_rule: String = str(preview.get("facing_rule_label", ""))
-	if not facing_rule.is_empty():
+	if not facing_rule.is_empty() and not has_breakdown:
 		tactical_notes.append(facing_rule)
 	var run_bonus_notes: Array = preview.get("run_bonus_notes", []) as Array
-	for bonus_note_variant in run_bonus_notes:
-		tactical_notes.append(str(bonus_note_variant))
+	if not has_breakdown:
+		for bonus_note_variant in run_bonus_notes:
+			tactical_notes.append(str(bonus_note_variant))
 
 	# Details last (range, formula explanations)
 	var range_l: String = str(preview.get("range_label", ""))
@@ -1232,9 +1237,9 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	var aoe_n: String = str(preview.get("aoe_note", ""))
 	if not aoe_n.is_empty():
 		detail_notes.append(aoe_n)
-	var formula_explain: Array = preview.get("formula_explain", [])
-	if not formula_explain.is_empty():
-		detail_notes.append("Formula: " + " / ".join(formula_explain))
+	var modifier_breakdown: Array = preview.get("modifier_breakdown", preview.get("formula_explain", [])) as Array
+	if not modifier_breakdown.is_empty():
+		detail_notes.append(_compact_forecast_breakdown(modifier_breakdown, 9))
 	var note: String = str(preview.get("note", ""))
 	if not note.is_empty():
 		detail_notes.append(note)
@@ -1245,6 +1250,18 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 
 	_set_preview_portrait(_preview_actor_portrait, str(preview.get("actor_portrait", "")))
 	_set_preview_portrait(_preview_target_portrait, str(preview.get("target_portrait", "")))
+
+
+func _compact_forecast_breakdown(items: Array, max_items: int = 9) -> String:
+	var parts: Array[String] = []
+	for item in items:
+		var text: String = str(item)
+		if text.is_empty() or text in parts:
+			continue
+		parts.append(text)
+		if parts.size() >= max_items:
+			break
+	return " | ".join(parts)
 
 func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
 	_can_move_now = can_move

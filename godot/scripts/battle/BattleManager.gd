@@ -408,6 +408,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		details["target_hp_after"] = max(target.hp - int(details["damage"]), 0)
 		details["can_ko"] = int(details["damage"]) >= target.hp
 		details["affinity_label"] = str(formula.get("facing_label", "front")).capitalize()
+		details["modifier_breakdown"] = _intent_formula_breakdown(formula, "physical")
 	elif kind == "spell" and not ability.is_empty():
 		var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 		var formula := {}
@@ -427,6 +428,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		details["target_hp_after"] = max(target.hp - int(details["damage"]), 0)
 		details["can_ko"] = int(details["damage"]) >= target.hp
 		details["affinity_label"] = str(formula.get("affinity_label", ""))
+		details["modifier_breakdown"] = _intent_formula_breakdown(formula, spell_type)
 	elif kind == "heal":
 		var heal_formula := CombatFormula.calculate_heal(unit, int(ability.get("base_power", 100)), 0)
 		details["damage"] = -int(heal_formula.get("heal", 0))
@@ -451,7 +453,7 @@ func _ability_has_area_effect(ability: Dictionary) -> bool:
 
 
 func _ability_area_label(ability: Dictionary) -> String:
-	var aoe_type := str(ability.get("aoe_type", ""))
+	var aoe_type: String = str(ability.get("aoe_type", ""))
 	if aoe_type == "chain":
 		return "Chain"
 	if not aoe_type.is_empty():
@@ -468,6 +470,22 @@ func _ability_target_in_range(unit: Unit, target: Unit, ability: Dictionary) -> 
 	var max_range := int(ability.get("range", ability.get("attack_range_max", 1)))
 	var min_range := int(ability.get("min_range", ability.get("attack_range_min", 0)))
 	return distance >= min_range and distance <= max_range
+
+
+func _intent_formula_breakdown(formula: Dictionary, element: String) -> Array[String]:
+	var parts: Array[String] = []
+	for item in formula.get("explain", []):
+		var text: String = str(item)
+		if not text.is_empty() and text not in parts:
+			parts.append(text)
+	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
+	if element != "physical" and bonuses.has("elemental_mult") and bonuses["elemental_mult"] is Dictionary:
+		var element_mult: float = float(bonuses["elemental_mult"].get(element, 1.0))
+		if element_mult != 1.0:
+			var boon_label := "Boon %s %+d%%" % [element.capitalize(), int(round((element_mult - 1.0) * 100.0))]
+			if boon_label not in parts:
+				parts.append(boon_label)
+	return parts
 
 
 func _emit_enemy_intent_board() -> void:
@@ -1804,7 +1822,7 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 	var target_type: String = ability.get("target_type", "enemy")
 	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
 	if not valid: return {}
-	var spell_fc := ForecastCalculator.spell(caster, target, ability)
+	var spell_fc := ForecastCalculator.spell(caster, target, ability, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
 	spell_fc["actor_portrait"] = _portrait_path(caster)
 	spell_fc["target_portrait"] = _portrait_path(target)
 	return _with_run_bonus_context(_with_position_context(spell_fc, caster, target), caster, target)
@@ -1866,6 +1884,12 @@ func _with_run_bonus_context(preview: Dictionary, actor: Unit, target: Unit) -> 
 	if float(bonuses.get("jp_multiplier", 1.0)) != 1.0:
 		notes.append("Boon: JP x%.1f" % float(bonuses["jp_multiplier"]))
 	preview["run_bonus_notes"] = notes
+	var breakdown: Array = preview.get("modifier_breakdown", preview.get("formula_explain", [])) as Array
+	for note in notes:
+		var compact_note: String = str(note).replace("Boon: ", "Boon ")
+		if compact_note not in breakdown:
+			breakdown.append(compact_note)
+	preview["modifier_breakdown"] = breakdown
 	return preview
 
 

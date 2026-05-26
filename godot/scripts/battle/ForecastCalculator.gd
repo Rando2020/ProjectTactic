@@ -58,6 +58,7 @@ static func attack(attacker: Unit, target: Unit,
 		"temper_damage": int(formula.get("temper_damage", 0)),
 		"physical_resistance": int(formula.get("physical_resistance", 0)),
 		"formula_explain": formula.get("explain", []),
+		"modifier_breakdown": _compact_breakdown(formula),
 		"hp_before":     target.hp,
 		"hp_after":      max(target.hp - dmg, 0),
 		"max_hp":        _max_hp(target),
@@ -79,7 +80,8 @@ static func attack(attacker: Unit, target: Unit,
 	}
 
 
-static func spell(caster: Unit, target: Unit, ability: Dictionary) -> Dictionary:
+static func spell(caster: Unit, target: Unit, ability: Dictionary,
+		tile_caster: Dictionary = {}, tile_target: Dictionary = {}) -> Dictionary:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	var base_power: int = int(ability.get("base_power", 50))
 	var mp_cost: int = int(ability.get("mp_cost", 0))
@@ -97,6 +99,9 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary) -> Dictionary
 		heal = int(formula.get("heal", 0))
 	elif is_buff:
 		dmg = 0
+	elif spell_type == "physical":
+		formula = CombatFormula.calculate_physical_attack(caster, target, tile_caster, tile_target)
+		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 	else:
 		formula = CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
 		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
@@ -135,6 +140,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary) -> Dictionary
 		"hit_pct":        int(formula.get("hit_pct", 100)),
 		"crit_pct":       int(formula.get("crit_pct", 0)),
 		"formula_explain": formula.get("explain", []),
+		"modifier_breakdown": _compact_breakdown(formula, _run_damage_notes(spell_type, bonuses)),
 		"status_preview": status_text,
 		"aoe_note":       ("%d-tile radius" % aoe_r) if aoe_r > 0 else "",
 		"jp_gain":        jp,
@@ -163,6 +169,33 @@ static func quick_spell(caster: Unit, ability: Dictionary) -> Dictionary:
 		"mp_cost": ability.get("mp_cost", 0),
 		"range": ability.get("range", 0),
 	}
+
+
+static func _compact_breakdown(formula: Dictionary, extra_notes: Array[String] = []) -> Array[String]:
+	var parts: Array[String] = []
+	for item in formula.get("explain", []):
+		var text: String = str(item)
+		if not text.is_empty() and text not in parts:
+			parts.append(text)
+	for note in extra_notes:
+		if not note.is_empty() and note not in parts:
+			parts.append(note)
+	return parts
+
+
+static func _run_damage_notes(element: String, bonuses: Dictionary) -> Array[String]:
+	var notes: Array[String] = []
+	if bonuses.has("elemental_mult") and bonuses["elemental_mult"] is Dictionary:
+		var element_mult: float = float(bonuses["elemental_mult"].get(element, 1.0))
+		if element != "physical" and element_mult != 1.0:
+			notes.append("Boon %s %s" % [element.capitalize(), _signed_percent(element_mult - 1.0)])
+	if int(bonuses.get("heal_bonus", 0)) != 0 and element == "heal":
+		notes.append("Boon Heal %+d" % int(bonuses.get("heal_bonus", 0)))
+	return notes
+
+
+static func _signed_percent(delta: float) -> String:
+	return "%+d%%" % int(round(delta * 100.0))
 
 
 static func _status_preview(ability: Dictionary) -> String:

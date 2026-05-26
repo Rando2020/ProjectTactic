@@ -321,28 +321,36 @@ static func _stat_value(unit: Unit, stat_name: String, fallback: int) -> int:
 
 static func _damage_explain(label: String, raw: float, attack_mult: float, resistance: float,
 		context: Dictionary, affinity: float, armor: Dictionary, accuracy: Dictionary, crit: Dictionary) -> Array[String]:
-	var rows: Array[String] = ["%s raw %d" % [label, int(round(raw))]]
+	var rows: Array[String] = ["%s %d" % [label, int(round(raw))]]
 	if attack_mult != 1.0:
-		rows.append("Power x%.2f" % attack_mult)
+		rows.append("Power %s" % _signed_percent(attack_mult - 1.0))
 	if resistance > 0.0:
 		rows.append("Resist -%d" % int(round(resistance)))
 	var height_delta := int(context.get("height_delta", 0))
 	var height_mult := float(context.get("height_mult", 1.0))
 	if height_delta != 0 or height_mult != 1.0:
-		rows.append("Height %+d x%.2f" % [height_delta, height_mult])
+		var height_name := "High Ground" if height_delta > 0 else "Low Ground"
+		rows.append("%s %s" % [height_name, _signed_percent(height_mult - 1.0)])
 	var facing_mult := float(context.get("facing_mult", 1.0))
 	if facing_mult != 1.0:
-		rows.append("%s x%.2f" % [str(context.get("facing_label", "front")).capitalize(), facing_mult])
+		rows.append("%s %s" % [str(context.get("facing_label", "front")).capitalize(), _signed_percent(facing_mult - 1.0)])
 	if affinity != 1.0:
-		rows.append("Affinity x%.2f" % affinity)
+		rows.append("%s %s" % [affinity_label(affinity), _signed_percent(affinity - 1.0)])
 	var temper_damage := int(armor.get("temper_damage", 0))
 	var ether_damage := int(armor.get("ether_damage", 0))
 	if temper_damage > 0:
 		rows.append("Temper -%d" % temper_damage)
 	if ether_damage > 0:
 		rows.append("Ether -%d" % ether_damage)
+	var hp_damage := int(armor.get("hp_damage", 0))
+	if hp_damage > 0:
+		rows.append("HP %d" % hp_damage)
 	rows.append("Hit %d%%" % int(accuracy.get("hit_pct", 100)))
 	var crit_pct := int(crit.get("crit_pct", 0))
 	if crit_pct > 0:
 		rows.append("Crit %d%%" % crit_pct)
 	return rows
+
+
+static func _signed_percent(delta: float) -> String:
+	return "%+d%%" % int(round(delta * 100.0))
