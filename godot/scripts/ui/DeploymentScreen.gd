@@ -43,6 +43,65 @@ const _TERRAIN := {
 }
 const _TILE_PX := 56
 
+## Canonical player roster — must stay in sync with BattleScene._spawn_player_units().
+const PLAYER_ROSTER: Array = ["zane", "mira", "kael", "lyra"]
+
+## Validate a deployment formation against a MapData without instantiating a screen.
+## Returns an empty Array if valid, or a list of human-readable error strings.
+static func validate_formation(formation: Array, map: MapData) -> Array:
+	if formation.is_empty():
+		return ["No saved formation."]
+
+	# Build the zone set the same way _zones() does at runtime
+	var zone_set: Dictionary = {}
+	var zones: Array = []
+	if map and map.deployment_zones.size() > 0:
+		zones = map.deployment_zones
+	else:
+		var w: int = map.map_width  if map else 10
+		var h: int = map.map_height if map else 8
+		for row in range(h - 2, h):
+			for col in range(0, mini(4, w)):
+				zones.append({"x": col, "y": row})
+	for z in zones:
+		zone_set[Vector2i(int(z.get("x", 0)), int(z.get("y", 0)))] = true
+
+	var errs: Array = []
+	var used_tiles: Dictionary = {}
+	var used_units: Dictionary = {}
+	var party_cap: int = map.max_party_size if map else 4
+
+	for slot: Dictionary in formation:
+		var uid := str(slot.get("unit_id", ""))
+		var pos := Vector2i(int(slot.get("x", 0)), int(slot.get("y", 0)))
+		if uid.is_empty() or not (uid in PLAYER_ROSTER):
+			errs.append("Unknown unit in formation: %s" % uid)
+			continue
+		if used_units.has(uid):
+			errs.append("Duplicate unit in formation: %s" % uid)
+			continue
+		if not zone_set.has(pos):
+			errs.append("%s placed outside deployment zone (%d,%d)." % [uid, pos.x, pos.y])
+			continue
+		if used_tiles.has(pos):
+			errs.append("Two units share the same tile (%d,%d)." % [pos.x, pos.y])
+			continue
+		used_tiles[pos] = true
+		used_units[uid] = true
+
+	if used_units.is_empty():
+		errs.append("Formation contains no valid units.")
+
+	if used_units.size() > party_cap:
+		errs.append("Formation exceeds the map's party limit of %d." % party_cap)
+
+	if map:
+		for uid: String in map.required_unit_ids:
+			if not used_units.has(uid):
+				errs.append("Required unit '%s' is missing from the formation." % uid)
+
+	return errs
+
 const _UNITS := {
 	"zane":    {"name":"Zane",    "job":"Knight"},
 	"mira":    {"name":"Mira",    "job":"Mage"},
@@ -417,13 +476,13 @@ func _build_grid_panel(parent: HBoxContainer) -> void:
 	_iron_panel_style(pc)
 	parent.add_child(pc)
 
-	var wrap := VBoxContainer.new()
-	wrap.add_theme_constant_override("separation", 10)
-	wrap.add_theme_constant_override("margin_left", 16)
-	wrap.add_theme_constant_override("margin_right", 16)
-	wrap.add_theme_constant_override("margin_top", 16)
-	wrap.add_theme_constant_override("margin_bottom", 16)
-	pc.add_child(wrap)
+	var grid_wrap := VBoxContainer.new()
+	grid_wrap.add_theme_constant_override("separation", 10)
+	grid_wrap.add_theme_constant_override("margin_left", 16)
+	grid_wrap.add_theme_constant_override("margin_right", 16)
+	grid_wrap.add_theme_constant_override("margin_top", 16)
+	grid_wrap.add_theme_constant_override("margin_bottom", 16)
+	pc.add_child(grid_wrap)
 
 	var map_meta := Label.new()
 	map_meta.add_theme_font_override("font", _FONT_BODY)
@@ -434,13 +493,13 @@ func _build_grid_panel(parent: HBoxContainer) -> void:
 		map_data.map_height if map_data else 8,
 		_zones().size(),
 	]
-	wrap.add_child(map_meta)
+	grid_wrap.add_child(map_meta)
 
 	var inner_scroll := ScrollContainer.new()
 	inner_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inner_scroll.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	inner_scroll.custom_minimum_size    = Vector2(0, 520)
-	wrap.add_child(inner_scroll)
+	grid_wrap.add_child(inner_scroll)
 
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL

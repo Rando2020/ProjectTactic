@@ -141,6 +141,14 @@ func _build_run_screen(run: RunState) -> void:
 	_lbl(hh, "  Elites: %d" % run.elite_kills, 12, DIM)
 	_lbl(hh, "  Boons: %d" % run.active_boons.size(), 12, DIM)
 	_gap(hh, 12)
+	# "Edit Formation" shortcut — always accessible so player isn't forced
+	# to enter a battle node just to adjust positions.
+	var formation_btn := _btn("⚔ Formation", Color(0.48, 0.72, 1.0))
+	formation_btn.custom_minimum_size.x = 120
+	formation_btn.pressed.connect(_on_edit_formation_from_run.bind(run))
+	hh.add_child(formation_btn)
+	_gap(hh, 8)
+
 	var ab_btn := _btn("Abandon", Color(0.93,0.27,0.27))
 	ab_btn.custom_minimum_size.x = 90
 	ab_btn.pressed.connect(_on_abandon)
@@ -149,25 +157,52 @@ func _build_run_screen(run: RunState) -> void:
 
 	# Active boons row
 	if run.active_boons.size() > 0:
-		var bar := _panel(root, Color(0.06,0.07,0.10), Vector2(0, 44))
+		var bar := _panel(root, Color(0.05, 0.06, 0.09), Vector2(0, 50))
 		var br  := _hbox(bar)
 		br.add_theme_constant_override("margin_left", 24)
+		br.add_theme_constant_override("margin_right", 16)
 		br.set_anchors_and_offsets_preset(Control.PRESET_VCENTER_WIDE)
-		_lbl(br, "Boons:", 10, DIM)
-		_gap(br, 6)
+		br.add_theme_constant_override("separation", 6)
+		var boons_title := Label.new()
+		boons_title.text = "BLESSINGS"
+		boons_title.add_theme_font_override("font", _FONT_HEADER)
+		boons_title.add_theme_font_size_override("font_size", 9)
+		boons_title.add_theme_color_override("font_color", GOLD.darkened(0.25))
+		br.add_child(boons_title)
+		_gap(br, 8)
 		for boon in run.active_boons:
-			_pill(br, boon.get("icon","+") + " " + boon.get("name","?"), GOLD)
-			_gap(br, 4)
+			var rd: Dictionary = BoonSystem.RARITIES.get(boon.get("rarity","common"), {})
+			var bc: Color = rd.get("color", GOLD)
+			_pill(br, "%s %s" % [str(boon.get("icon","+")), str(boon.get("name","?"))], bc)
+		_stretch(br)
+		var count_lbl := Label.new()
+		count_lbl.text = "%d / ?" % run.active_boons.size()
+		count_lbl.add_theme_font_size_override("font_size", 10)
+		count_lbl.add_theme_color_override("font_color", DIM)
+		br.add_child(count_lbl)
 
 	_build_run_build_panel(root, run)
 	_space(root, 18)
 
 	# Group floor_plan by floor number, then render one column per floor.
 	# Each column shows 1-3 branch cards stacked vertically.
+	var map_wrapper := PanelContainer.new()
+	map_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var map_bg_st := StyleBoxFlat.new()
+	map_bg_st.bg_color = Color(0.03, 0.035, 0.055, 0.85)
+	map_bg_st.border_color = Color(1.0, 1.0, 1.0, 0.05)
+	map_bg_st.set_border_width_all(1)
+	map_bg_st.content_margin_left = 0
+	map_bg_st.content_margin_right = 0
+	map_bg_st.content_margin_top = 8
+	map_bg_st.content_margin_bottom = 8
+	map_wrapper.add_theme_stylebox_override("panel", map_bg_st)
+	root.add_child(map_wrapper)
+
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size.y = 320
-	root.add_child(scroll)
+	map_wrapper.add_child(scroll)
 
 	var hmap := HBoxContainer.new()
 	hmap.add_theme_constant_override("margin_left",  20)
@@ -209,13 +244,25 @@ func _build_run_screen(run: RunState) -> void:
 
 		# "CHOOSE" badge above current floor
 		if is_current and branches.size() > 1:
+			var choose_pc := PanelContainer.new()
+			var choose_st := StyleBoxFlat.new()
+			choose_st.bg_color = GOLD.darkened(0.7)
+			choose_st.border_color = GOLD
+			choose_st.set_border_width_all(1)
+			choose_st.set_corner_radius_all(4)
+			choose_st.content_margin_left = 6
+			choose_st.content_margin_right = 6
+			choose_st.content_margin_top = 2
+			choose_st.content_margin_bottom = 2
+			choose_pc.add_theme_stylebox_override("panel", choose_st)
 			var choose_lbl := Label.new()
 			choose_lbl.text = "CHOOSE"
 			choose_lbl.add_theme_font_override("font", _FONT_HEADER)
 			choose_lbl.add_theme_font_size_override("font_size", 8)
 			choose_lbl.add_theme_color_override("font_color", GOLD)
 			choose_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			col.add_child(choose_lbl)
+			choose_pc.add_child(choose_lbl)
+			col.add_child(choose_pc)
 
 		# Branch cards
 		for node in branches:
@@ -239,33 +286,38 @@ func _build_run_screen(run: RunState) -> void:
 			col.add_child(card)
 
 		if f < RunState.TOTAL_FLOORS:
-			var arrow := Label.new()
-			arrow.text = ">"
-			arrow.add_theme_font_size_override("font_size", 16)
-			arrow.add_theme_color_override("font_color",
-				GOLD.lerp(Color.TRANSPARENT, 0.4) if is_current else
-				Color(0.3, 0.55, 0.3, 0.7) if is_past else
-				Color(0.25, 0.25, 0.3, 0.5))
-			arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			arrow.custom_minimum_size = Vector2(24, 96)
-			hmap.add_child(arrow)
+			var connector := _build_floor_connector(is_current, is_past)
+			hmap.add_child(connector)
 
 	_space(root, 12)
 
 	# Route hint when a choice is available
+	_space(root, 6)
 	if available_nodes.size() > 1:
+		var hint_pc := PanelContainer.new()
+		hint_pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var hint_bg := StyleBoxFlat.new()
+		hint_bg.bg_color = GOLD.darkened(0.82)
+		hint_bg.border_color = GOLD.darkened(0.4)
+		hint_bg.set_border_width_all(1)
+		hint_bg.set_corner_radius_all(4)
+		hint_bg.content_margin_top = 6
+		hint_bg.content_margin_bottom = 6
+		hint_pc.add_theme_stylebox_override("panel", hint_bg)
+		root.add_child(hint_pc)
 		var hint_lbl := Label.new()
-		hint_lbl.text = "Select a node above to enter it - the other paths will close."
+		hint_lbl.text = "▲  Select your path — unchosen routes will close forever."
 		hint_lbl.add_theme_font_override("font", _FONT_UI)
-		hint_lbl.add_theme_font_size_override("font_size", 11)
-		hint_lbl.add_theme_color_override("font_color", DIM)
+		hint_lbl.add_theme_font_size_override("font_size", 12)
+		hint_lbl.add_theme_color_override("font_color", GOLD.lightened(0.1))
 		hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		root.add_child(hint_lbl)
+		hint_pc.add_child(hint_lbl)
 	elif available_nodes.size() == 1:
 		var single := available_nodes[0]
 		var nm: Dictionary = NODE_META.get(single.get("type","battle"), NODE_META["battle"])
+		var reward_text := _clean_ui_text(single.get("reward_hint", ""), "")
 		var hint_lbl := Label.new()
-		hint_lbl.text = "%s - %s" % [nm["label"], _clean_ui_text(single.get("reward_hint", ""), "")]
+		hint_lbl.text = "▶  %s%s" % [nm["label"], ("  —  " + reward_text if not reward_text.is_empty() else "")]
 		hint_lbl.add_theme_font_override("font", _FONT_UI)
 		hint_lbl.add_theme_font_size_override("font_size", 12)
 		hint_lbl.add_theme_color_override("font_color", nm["color"])
@@ -274,7 +326,13 @@ func _build_run_screen(run: RunState) -> void:
 
 
 func _build_run_build_panel(parent: Control, run: RunState) -> void:
-	var panel := _panel(parent, Color(0.055, 0.062, 0.085), Vector2(0, 74))
+	var panel := _panel(parent, Color(0.050, 0.058, 0.082), Vector2(0, 74))
+	# Thin gold top border on panel
+	var panel_border := ColorRect.new()
+	panel_border.color = GOLD.darkened(0.55)
+	panel_border.custom_minimum_size = Vector2(0, 1)
+	panel_border.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	panel.add_child(panel_border)
 	var row := _hbox(panel)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	row.add_theme_constant_override("margin_left", 24)
@@ -290,13 +348,13 @@ func _build_run_build_panel(parent: Control, run: RunState) -> void:
 	_stretch(row)
 	_build_lane_status(row, run)
 
-func _build_loadout_status(parent: Control, label: String, name: String, level: int, xp: int, color: Color) -> void:
+func _build_loadout_status(parent: Control, label: String, loadout_name: String, level: int, xp: int, color: Color) -> void:
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(210, 0)
 	box.add_theme_constant_override("separation", 2)
 	parent.add_child(box)
 	_lbl(box, label, 9, DIM)
-	_lbl(box, "%s  Lv.%d" % [name, level], 15, color)
+	_lbl(box, "%s  Lv.%d" % [loadout_name, level], 15, color)
 	_lbl(box, VowSigilSystem.xp_progress_text(xp), 10, DIM)
 	_lbl(box, VowSigilSystem.level_bonus_text(level, label == "VOW"), 10, color)
 
@@ -425,25 +483,45 @@ func _on_enter_node(node: Dictionary) -> void:
 			_show_wanderer_encounter(_gs.active_run)
 
 
+## Resolve MapData for a run node — same logic used by both _open_deployment
+## and the "Edit Formation" shortcut.
+func _resolve_map_data(node: Dictionary) -> MapData:
+	var map_id: String = str(node.get("map_id", ""))
+	if not map_id.is_empty():
+		var path := "res://data/maps/%s.tres" % map_id
+		if ResourceLoader.exists(path):
+			return load(path)
+	var mg := MapGenerator.new()
+	return mg.generate_floor(
+		_gs.active_run.current_floor,
+		_gs.active_run.seed,
+		_gs.active_run.heat_level,
+	)
+
+
 func _open_deployment(node: Dictionary) -> void:
 	if not _gs or not _gs.active_run:
 		return
 	_gs.active_run.set_meta("pending_node", node)
 	var saved_deployment: Array = _gs.active_run.run_deployment.duplicate(true)
+	var map_data: MapData = _resolve_map_data(node)
 
+	# Skip deployment screen when the saved formation is still valid for this map.
+	if not saved_deployment.is_empty():
+		var errs := DeploymentScreen.validate_formation(saved_deployment, map_data)
+		if errs.is_empty():
+			_on_deployment_confirmed(saved_deployment)
+			return
+
+	_show_deployment_screen(saved_deployment, map_data)
+
+
+func _show_deployment_screen(saved_deployment: Array, map_data: MapData) -> void:
 	var ds := preload("res://scripts/ui/DeploymentScreen.gd").new()
 	ds.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ds.saved_formation = saved_deployment
 	ds.saved_formation_loaded = not saved_deployment.is_empty()
-	# Use the same generated floor shape the battle scene will use, so deployment has real zones.
-	var map_id: String = str(node.get("map_id", ""))
-	if not map_id.is_empty():
-		var path := "res://data/maps/%s.tres" % map_id
-		if ResourceLoader.exists(path):
-			ds.map_data = load(path)
-	if ds.map_data == null and _gs and _gs.active_run:
-		var mg := MapGenerator.new()
-		ds.map_data = mg.generate_floor(_gs.active_run.current_floor, _gs.active_run.seed, _gs.active_run.heat_level)
+	ds.map_data = map_data
 	ds.battle_started.connect(_on_deployment_confirmed)
 	ds.cancelled.connect(func() -> void: ds.queue_free(); _build_ui())
 	get_tree().current_scene.add_child(ds)
@@ -553,6 +631,37 @@ func _grant_party_jp(amount: int) -> void:
 		var reg: Dictionary = _gs.unit_registry[uid]
 		reg["jp"] = int(reg.get("jp", 0)) + amount
 	_gs.run_jp_earned += amount
+
+func _on_edit_formation_from_run(run: RunState) -> void:
+	"""Open the deployment editor without committing to a battle node."""
+	if not _gs or not run:
+		return
+	# Use the next available node's map data if possible, otherwise a generic floor.
+	var available := run.get_available_nodes()
+	var map_data: MapData
+	if available.size() > 0:
+		map_data = _resolve_map_data(available[0])
+	else:
+		var mg := MapGenerator.new()
+		map_data = mg.generate_floor(run.current_floor, run.seed, run.heat_level)
+
+	var saved: Array = run.run_deployment.duplicate(true)
+	var ds := preload("res://scripts/ui/DeploymentScreen.gd").new()
+	ds.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ds.saved_formation = saved
+	ds.saved_formation_loaded = not saved.is_empty()
+	ds.map_data = map_data
+	# On confirm: save formation to run but do NOT start battle yet.
+	ds.battle_started.connect(func(deployment: Array) -> void:
+		run.run_deployment = deployment.duplicate(true)
+		if _gs:
+			_gs.save()
+		ds.queue_free()
+		_build_ui()
+	)
+	ds.cancelled.connect(func() -> void: ds.queue_free(); _build_ui())
+	get_tree().current_scene.add_child(ds)
+
 
 func _on_abandon() -> void:
 	var rm: Node = get_node_or_null("/root/RunManager")
@@ -1001,7 +1110,7 @@ func _show_wanderer_encounter(run: RunState) -> void:
 	_lbl(vbox, "Orren will remember which help you accepted.", 11, DIM, true)
 
 
-func _apply_wanderer_choice(choice_id: String, run: RunState) -> void:
+func _apply_wanderer_choice(choice_id: String, _run: RunState) -> void:
 	if not _gs:
 		return
 	if not _gs.story_flags.has("met_orren"):
@@ -1183,76 +1292,149 @@ func _pill(parent: Control, text: String, color: Color) -> void:
 
 func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool, is_skipped: bool, node: Dictionary) -> Button:
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(82, 100)
+	btn.custom_minimum_size = Vector2(90, 116)
+	var accent := meta["color"] as Color
+
 	var st := StyleBoxFlat.new()
+	var hover_st := StyleBoxFlat.new()
 	if is_cur:
-		st.bg_color = meta["color"].darkened(0.55)
-		st.border_color = meta["color"]
+		st.bg_color = accent.darkened(0.62)
+		st.border_color = accent
 		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 2)
+		hover_st.bg_color = accent.darkened(0.45)
+		hover_st.border_color = accent.lightened(0.2)
+		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: hover_st.set_border_width(side, 2)
 	elif is_done:
-		st.bg_color = Color(0.12, 0.16, 0.12, 0.7)
-		st.border_color = Color(0.3, 0.65, 0.3, 0.5)
+		st.bg_color = Color(0.09, 0.14, 0.09, 0.80)
+		st.border_color = Color(0.28, 0.60, 0.28, 0.55)
 		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
+		hover_st = st.duplicate()
 	elif is_skipped:
-		st.bg_color = Color(0.045, 0.045, 0.055, 0.45)
+		st.bg_color = Color(0.04, 0.04, 0.06, 0.40)
 		st.border_color = Color(1, 1, 1, 0.04)
 		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
+		hover_st = st.duplicate()
 	else:
-		st.bg_color = Color(0.08, 0.09, 0.12, 0.5)
-		st.border_color = Color(1, 1, 1, 0.08)
+		st.bg_color = Color(0.07, 0.08, 0.11, 0.55)
+		st.border_color = Color(1, 1, 1, 0.07)
 		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
-	for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]:
-		st.set_corner_radius(c, 10)
-	btn.add_theme_stylebox_override("normal", st); btn.add_theme_stylebox_override("hover", st)
+		hover_st = st.duplicate()
+	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(c, 8)
+		hover_st.set_corner_radius(c, 8)
+	btn.add_theme_stylebox_override("normal", st)
+	btn.add_theme_stylebox_override("hover", hover_st)
+	btn.add_theme_stylebox_override("pressed", st)
+	btn.add_theme_stylebox_override("focus", st)
 	btn.disabled = not is_cur
 
+	# Colored top accent strip
+	var top_bar := ColorRect.new()
+	top_bar.color = accent if is_cur else (Color(0.28, 0.60, 0.28, 0.4) if is_done else Color(1,1,1,0.04))
+	top_bar.custom_minimum_size = Vector2(0, 3)
+	top_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	btn.add_child(top_bar)
+
+	# Node type label (top center, small caps)
+	var type_lbl := Label.new()
+	type_lbl.text = meta["label"].to_upper() if not is_done and not is_skipped else ("DONE" if is_done else "SKIPPED")
+	type_lbl.add_theme_font_override("font", _FONT_HEADER)
+	type_lbl.add_theme_font_size_override("font_size", 8)
+	type_lbl.add_theme_color_override("font_color", accent if is_cur else (Color(0.35, 0.70, 0.35) if is_done else DIM.darkened(0.3)))
+	type_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	type_lbl.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	type_lbl.offset_top = 7
+	type_lbl.offset_bottom = 22
+	btn.add_child(type_lbl)
+
+	# Center icon
 	var ic: Control
 	if is_done:
 		var done_lbl := Label.new()
-		done_lbl.text = "OK"
-		done_lbl.add_theme_font_size_override("font_size", 22)
-		done_lbl.add_theme_color_override("font_color", Color(0.4, 0.75, 0.4))
+		done_lbl.text = "✓"
+		done_lbl.add_theme_font_size_override("font_size", 26)
+		done_lbl.add_theme_color_override("font_color", Color(0.35, 0.75, 0.35, 0.9))
 		done_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		ic = done_lbl
 	elif is_skipped:
 		var skip_lbl := Label.new()
-		skip_lbl.text = "-"
-		skip_lbl.add_theme_font_size_override("font_size", 22)
-		skip_lbl.add_theme_color_override("font_color", DIM.darkened(0.35))
+		skip_lbl.text = "✗"
+		skip_lbl.add_theme_font_size_override("font_size", 20)
+		skip_lbl.add_theme_color_override("font_color", DIM.darkened(0.4))
 		skip_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		ic = skip_lbl
 	else:
-		# Try to load a registered run-node PNG icon
-		var ntype: String = str(node.get("type","battle"))
+		var ntype: String = str(node.get("type", "battle"))
 		ic = _node_icon_widget(ntype, str(meta["icon"]),
-			meta["color"] if is_cur else DIM.darkened(0.2), Vector2(36, 36))
+			accent if is_cur else DIM.darkened(0.15), Vector2(38, 38))
 	ic.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	ic.offset_top = 2
 	btn.add_child(ic)
 
-	var hint := Label.new()
+	# Reward hint at bottom
 	var reward_hint := _clean_ui_text(node.get("reward_hint", ""), "")
-	if reward_hint.length() > 18:
-		reward_hint = reward_hint.substr(0, 18)
-	hint.text = reward_hint
-	hint.add_theme_font_size_override("font_size", 8)
-	hint.add_theme_color_override("font_color", meta["color"] if is_cur else DIM.darkened(0.1))
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	hint.offset_top = -34
-	btn.add_child(hint)
+	if reward_hint.length() > 14:
+		reward_hint = reward_hint.substr(0, 14)
+	if not reward_hint.is_empty():
+		var hint := Label.new()
+		hint.text = reward_hint
+		hint.add_theme_font_size_override("font_size", 8)
+		hint.add_theme_color_override("font_color", accent.lerp(Color.WHITE, 0.2) if is_cur else DIM.darkened(0.15))
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		hint.offset_top = -26
+		hint.offset_bottom = -8
+		btn.add_child(hint)
 
-	# Floor number badge at bottom
-	if meta["label"] in ["Battle","Elite","Boss"]:
-		var fl := Label.new()
-		fl.text = "F%d" % int(node.get("floor", 1))
-		fl.add_theme_font_size_override("font_size", 9)
-		fl.add_theme_color_override("font_color", meta["color"] if is_cur else DIM)
-		fl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		fl.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-		fl.offset_top = -18
-		btn.add_child(fl)
+	# Animated glow ring for current node
+	if is_cur:
+		var glow := ColorRect.new()
+		glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		glow.color = Color(accent.r, accent.g, accent.b, 0.0)
+		glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(glow)
+		var tween := btn.create_tween()
+		tween.set_loops()
+		tween.tween_property(glow, "color:a", 0.12, 0.9).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(glow, "color:a", 0.0, 0.9).set_trans(Tween.TRANS_SINE)
 
 	return btn
+
+
+func _build_floor_connector(is_current: bool, is_past: bool) -> Control:
+	"""Visual connector between floor columns with line + arrowhead."""
+	var container := Control.new()
+	container.custom_minimum_size = Vector2(28, 96)
+
+	# Horizontal line
+	var line := ColorRect.new()
+	line.custom_minimum_size = Vector2(18, 2)
+	var line_color: Color
+	if is_current:
+		line_color = GOLD.lerp(Color.TRANSPARENT, 0.35)
+	elif is_past:
+		line_color = Color(0.3, 0.58, 0.3, 0.55)
+	else:
+		line_color = Color(0.22, 0.22, 0.28, 0.35)
+	line.color = line_color
+	line.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	line.offset_left = -9
+	line.offset_right = 9
+	line.offset_top = -1
+	line.offset_bottom = 1
+	container.add_child(line)
+
+	# Arrowhead label
+	var arrow := Label.new()
+	arrow.text = "›"
+	arrow.add_theme_font_size_override("font_size", 18)
+	arrow.add_theme_color_override("font_color", line_color.lightened(0.15))
+	arrow.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	arrow.offset_left = 2
+	arrow.offset_top = -11
+	container.add_child(arrow)
+
+	return container
 
 
 func _node_hint(ntype: String) -> String:
@@ -1282,13 +1464,13 @@ func _available_route_hint(nodes: Array[Dictionary]) -> String:
 func _boon_icon_widget(boon_id: String, emoji: String, accent: Color) -> Control:
 	var icon_path: String = AssetRegistry.get_boon_icon(boon_id)
 	if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
-		var tr := TextureRect.new()
-		tr.texture = load(icon_path)
-		tr.custom_minimum_size = Vector2(64, 64)
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		return tr
+		var icon_rect := TextureRect.new()
+		icon_rect.texture = load(icon_path)
+		icon_rect.custom_minimum_size = Vector2(64, 64)
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		return icon_rect
 	var lbl := Label.new()
 	lbl.text = emoji
 	lbl.add_theme_font_size_override("font_size", 36)
@@ -1297,15 +1479,15 @@ func _boon_icon_widget(boon_id: String, emoji: String, accent: Color) -> Control
 	return lbl
 
 ## Returns a TextureRect for a run-node type, or null if no PNG registered.
-func _node_icon_widget(ntype: String, fallback_text: String, color: Color, size: Vector2) -> Control:
+func _node_icon_widget(ntype: String, fallback_text: String, color: Color, icon_size: Vector2) -> Control:
 	var icon_path: String = AssetRegistry.get_run_node_icon(ntype)
 	if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
-		var tr := TextureRect.new()
-		tr.texture = load(icon_path)
-		tr.custom_minimum_size = size
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		return tr
+		var icon_rect := TextureRect.new()
+		icon_rect.texture = load(icon_path)
+		icon_rect.custom_minimum_size = icon_size
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		return icon_rect
 	var lbl := Label.new()
 	lbl.text = fallback_text
 	lbl.add_theme_font_size_override("font_size", 22)
