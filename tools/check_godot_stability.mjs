@@ -17,20 +17,39 @@ const GODOT_ROOT = path.join(REPO_ROOT, "godot");
 const DEFAULT_GODOT_EXE =
   "C:\\Users\\jojo3\\Downloads\\Godot_v4.6.2-stable_win64\\Godot_v4.6.2-stable_win64_console.exe";
 
-const MOJIBAKE_RE = /[ÂÃâ�]/;
-const FUNC_RE = /^\s*func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
+const MOJIBAKE_RE = /[\u00C2\u00C3\u00E2\uFFFD]/u;
+const FUNC_RE = /^\s*(static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)/;
+const CLASS_NAME_RE = /^\s*class_name\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 const RESOURCE_RE = /\b(preload|load)\(\s*['"]res:\/\/([^'"]+)['"]\s*\)/g;
 const UNSUPPORTED_GODOT_CLI_FLAGS = ["--" + "check-only"];
 const COLOR_FADED_RE = /\.faded\s*\(/;
 const VARIANT_INFERENCE_RE =
   /^\s*var\s+([A-Za-z_][A-Za-z0-9_]*)\s*:=\s*[A-Za-z_][A-Za-z0-9_.]*\.get\(/;
+const CONST_PRELOAD_RE =
+  /^\s*const\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::=\s*|=\s*)preload\(\s*['"]res:\/\/([^'"]+)['"]\s*\)/;
+const LOCAL_VAR_RE = /^\s*(?:var|const)\s+([A-Za-z_][A-Za-z0-9_]*)\b/;
 const BLOCK_RE = /^(\s*)(?:if|elif|else|for|while|match)\b.*:\s*(?:#.*)?$/;
-const FUNC_BLOCK_RE = /^(\s*)func\b.*:\s*(?:#.*)?$/;
+const FUNC_BLOCK_RE = /^(\s*)(?:static\s+)?func\b.*:\s*(?:#.*)?$/;
+const COMMON_SHADOWED_NAMES = new Set(["name", "size", "tr", "visible", "wrap"]);
+const BUILTIN_SINGLETON_NAMES = new Set([
+  "AudioServer",
+  "DisplayServer",
+  "Engine",
+  "Input",
+  "OS",
+  "Performance",
+  "ProjectSettings",
+  "RenderingServer",
+  "ResourceLoader",
+  "Time",
+  "TranslationServer",
+]);
 
 function parseArgs(argv) {
   const args = {
     skipGodot: false,
     strictGodot: false,
+    warningsAsErrors: false,
     godotExe: DEFAULT_GODOT_EXE,
   };
 
@@ -38,6 +57,7 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (arg === "--skip-godot") args.skipGodot = true;
     else if (arg === "--strict-godot") args.strictGodot = true;
+    else if (arg === "--warnings-as-errors") args.warningsAsErrors = true;
     else if (arg === "--godot-exe") {
       i += 1;
       args.godotExe = argv[i] ?? args.godotExe;
@@ -98,6 +118,10 @@ function rel(filePath) {
   return path.relative(REPO_ROOT, filePath).replaceAll(path.sep, "/");
 }
 
+function gdResourceToPath(resourcePath) {
+  return path.join(GODOT_ROOT, resourcePath.replaceAll("\\", "/"));
+}
+
 function finding(severity, filePath, line, message) {
   return { severity, filePath, line, message };
 }
@@ -109,7 +133,115 @@ function renderFinding(item) {
 function resourceExists(resourcePath) {
   const normalized = resourcePath.replaceAll("\\", "/");
   if (normalized.includes("%") || normalized.includes("{")) return true;
-  return existsSync(path.join(GODOT_ROOT, normalized));
+  return existsSync(gdResourceToPath(normalized));
+}
+
+function lineIndent(line) {
+  return (line.match(/^\s*/) ?? [""])[0].replaceAll("\t", "    ").length;
+}
+
+function parseParamNames(paramSource) {
+  if (!paramSource.trim()) return [];
+  return paramSource
+    .split(",")
+    .map((param) => param.trim().replace(/^@?[A-Za-z_][A-Za-z0-9_]*\s+/, ""))
+    .map((param) => param.split("=")[0].trim())
+    .map((param) => param.split(":")[0].trim())
+    .filter((param) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(param));
+}
+
+function stripStringsAndComments(source) {
+  return source
+    .replace(/"([^"\\]|\\.)*"/g, '""')
+    .replace(/'([^'\\]|\\.)*'/g, "''")
+    .replace(/#.*$/gm, "");
+}
+
+function functionBlocks(filePath, lines) {
+  const blocks = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const match = lines[i].match(FUNC_RE);
+    if (!match) continue;
+
+    const indent = lineIndent(lines[i]);
+    let end = lines.length - 1;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      if (lines[j].trim() === "" || lines[j].trim().startsWith("#")) continue;
+      if (lineIndent(lines[j]) <= indent) {
+        end = j - 1;
+        break;
+      }
+    }
+
+    blocks.push({
+      filePath,
+      line: i + 1,
+      name: match[2],
+      isStatic: Boolean(match[1]),
+      params: parseParamNames(match[3] ?? ""),
+      bodyLines: lines.slice(i + 1, end + 1),
+    });
+  }
+  return blocks;
+}
+
+function parseGodotProjectAutoloads() {
+  const autoloads = new Map();
+  const projectPath = path.join(GODOT_ROOT, "project.godot");
+  if (!existsSync(projectPath)) return autoloads;
+
+  const lines = readLines(projectPath);
+  let inAutoload = false;
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (line === "[autoload]") {
+      inAutoload = true;
+      continue;
+    }
+    if (inAutoload && line.startsWith("[") && line.endsWith("]")) break;
+    if (!inAutoload || line === "" || line.startsWith(";")) continue;
+
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)="?\*?res:\/\/([^"]+)"?/);
+    if (!match) continue;
+    autoloads.set(match[1], {
+      name: match[1],
+      filePath: gdResourceToPath(match[2]),
+      line: i + 1,
+      resourcePath: `res://${match[2]}`,
+    });
+  }
+  return autoloads;
+}
+
+function collectGodotSymbols(files) {
+  const classNames = new Set(BUILTIN_SINGLETON_NAMES);
+  const scriptClassByPath = new Map();
+  const methodsByClass = new Map();
+  const functionBlocksByPath = new Map();
+
+  for (const filePath of files) {
+    const lines = readLines(filePath);
+    const classMatch = lines.map((line) => line.match(CLASS_NAME_RE)).find(Boolean);
+    const blocks = functionBlocks(filePath, lines);
+    functionBlocksByPath.set(filePath, blocks);
+
+    if (!classMatch) continue;
+    const className = classMatch[1];
+    classNames.add(className);
+    scriptClassByPath.set(path.normalize(filePath), className);
+    methodsByClass.set(
+      className,
+      new Map(blocks.map((block) => [block.name, { isStatic: block.isStatic, line: block.line, filePath }])),
+    );
+  }
+
+  return {
+    autoloads: parseGodotProjectAutoloads(),
+    classNames,
+    functionBlocksByPath,
+    methodsByClass,
+    scriptClassByPath,
+  };
 }
 
 function checkObviousEmptyBlocks(filePath, lines) {
@@ -135,14 +267,96 @@ function checkObviousEmptyBlocks(filePath, lines) {
   return findings;
 }
 
-function checkGdFile(filePath) {
+function checkAutoloadClassCollisions(symbols) {
+  const findings = [];
+  for (const autoload of symbols.autoloads.values()) {
+    const className = symbols.scriptClassByPath.get(path.normalize(autoload.filePath));
+    if (className === autoload.name) {
+      findings.push(
+        finding(
+          "FAIL",
+          autoload.filePath,
+          1,
+          `class_name '${className}' hides autoload singleton '${autoload.name}'; remove class_name or rename one side`,
+        ),
+      );
+    }
+  }
+  return findings;
+}
+
+function checkFunctionBlockHygiene(block) {
+  const findings = [];
+  const body = stripStringsAndComments(block.bodyLines.join("\n"));
+  const bodyWithNestedFunctionCallsRemoved = body.replace(/\bfunc\s+[A-Za-z_][A-Za-z0-9_]*\s*\([^)]*\)/g, "");
+
+  for (const param of block.params) {
+    if (param.startsWith("_")) continue;
+
+    const usage = new RegExp(`\\b${param}\\b`);
+    if (!usage.test(bodyWithNestedFunctionCallsRemoved)) {
+      findings.push(
+        finding(
+          "WARN",
+          block.filePath,
+          block.line,
+          `parameter '${param}' appears unused; prefix it with '_' if intentional`,
+        ),
+      );
+    }
+
+    if (COMMON_SHADOWED_NAMES.has(param)) {
+      findings.push(
+        finding("WARN", block.filePath, block.line, `parameter '${param}' shadows a common Godot/built-in name`),
+      );
+    }
+  }
+
+  return findings;
+}
+
+function checkAwaitOnLocalNonCoroutine(filePath, blocks) {
+  const findings = [];
+  const localFunctions = new Map(blocks.map((block) => [block.name, block]));
+  const coroutineFunctions = new Set(
+    blocks
+      .filter((block) => stripStringsAndComments(block.bodyLines.join("\n")).includes("await "))
+      .map((block) => block.name),
+  );
+
+  for (const block of blocks) {
+    for (let i = 0; i < block.bodyLines.length; i += 1) {
+      const line = stripStringsAndComments(block.bodyLines[i]);
+      for (const awaitMatch of line.matchAll(/\bawait\s+([A-Za-z_][A-Za-z0-9_]*)\s*\([^)]*\)(\.[A-Za-z_][A-Za-z0-9_]*)?/g)) {
+        const awaitedName = awaitMatch[1];
+        if (awaitMatch[2]) continue;
+        if (localFunctions.has(awaitedName) && !coroutineFunctions.has(awaitedName)) {
+          findings.push(
+            finding(
+              "WARN",
+              filePath,
+              block.line + i + 1,
+              `await on local function '${awaitedName}()' that does not appear to yield or await`,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  return findings;
+}
+
+function checkGdFile(filePath, symbols) {
   const findings = [];
   const lines = readLines(filePath);
   const funcs = new Map();
+  const blocks = symbols.functionBlocksByPath.get(filePath) ?? functionBlocks(filePath, lines);
 
   for (let i = 0; i < lines.length; i += 1) {
     const lineNo = i + 1;
     const line = lines[i];
+    const codeLine = stripStringsAndComments(line);
 
     if (MOJIBAKE_RE.test(line)) {
       findings.push(finding("FAIL", filePath, lineNo, "suspicious mojibake/corrupt text"));
@@ -154,7 +368,7 @@ function checkGdFile(filePath) {
 
     const funcMatch = line.match(FUNC_RE);
     if (funcMatch) {
-      const name = funcMatch[1];
+      const name = funcMatch[2];
       if (funcs.has(name)) {
         findings.push(
           finding("FAIL", filePath, lineNo, `duplicate function '${name}' also declared on line ${funcs.get(name)}`),
@@ -162,6 +376,37 @@ function checkGdFile(filePath) {
       } else {
         funcs.set(name, lineNo);
       }
+    }
+
+    const classMatch = line.match(CLASS_NAME_RE);
+    if (classMatch && symbols.autoloads.has(classMatch[1])) {
+      findings.push(
+        finding(
+          "FAIL",
+          filePath,
+          lineNo,
+          `class_name '${classMatch[1]}' collides with an autoload singleton of the same name`,
+        ),
+      );
+    }
+
+    const constPreloadMatch = line.match(CONST_PRELOAD_RE);
+    if (constPreloadMatch && symbols.classNames.has(constPreloadMatch[1])) {
+      findings.push(
+        finding(
+          "WARN",
+          filePath,
+          lineNo,
+          `constant '${constPreloadMatch[1]}' shadows a global class; use the class_name directly or rename the constant`,
+        ),
+      );
+    }
+
+    const localVarMatch = line.match(LOCAL_VAR_RE);
+    if (localVarMatch && COMMON_SHADOWED_NAMES.has(localVarMatch[1])) {
+      findings.push(
+        finding("WARN", filePath, lineNo, `local '${localVarMatch[1]}' shadows a common Godot/built-in name`),
+      );
     }
 
     const variantMatch = line.match(VARIANT_INFERENCE_RE);
@@ -190,14 +435,39 @@ function checkGdFile(filePath) {
         );
       }
     }
+
+    for (const [className, methods] of symbols.methodsByClass.entries()) {
+      for (const [methodName, method] of methods.entries()) {
+        if (method.isStatic) continue;
+        if (!new RegExp(`\\b${className}\\.${methodName}\\s*\\(`).test(codeLine)) continue;
+        findings.push(
+          finding(
+            "FAIL",
+            filePath,
+            lineNo,
+            `non-static method '${methodName}()' is called on class '${className}' directly; use an instance or autoload`,
+          ),
+        );
+      }
+    }
   }
 
-  return [...findings, ...checkObviousEmptyBlocks(filePath, lines)];
+  for (const block of blocks) findings.push(...checkFunctionBlockHygiene(block));
+
+  return [
+    ...findings,
+    ...checkAwaitOnLocalNonCoroutine(filePath, blocks),
+    ...checkObviousEmptyBlocks(filePath, lines),
+  ];
 }
 
 function runStaticChecks() {
   const findings = [];
-  for (const filePath of gdFiles()) findings.push(...checkGdFile(filePath));
+  const files = gdFiles();
+  const symbols = collectGodotSymbols(files);
+
+  findings.push(...checkAutoloadClassCollisions(symbols));
+  for (const filePath of files) findings.push(...checkGdFile(filePath, symbols));
   for (const filePath of cliScanFiles()) {
     const lines = readLines(filePath);
     for (let i = 0; i < lines.length; i += 1) {
@@ -218,6 +488,36 @@ function lastRelevantLines(output, limit = 24) {
     .filter(Boolean)
     .slice(-limit)
     .join("\n");
+}
+
+function describeGodotFailure(output, result) {
+  const lower = output.toLowerCase();
+  const notes = [];
+
+  if (
+    lower.includes("could not create editor data directory") ||
+    lower.includes("could not create editor cache directory") ||
+    lower.includes("check user write permissions") ||
+    lower.includes("could not create directory") ||
+    lower.includes("cannot create file")
+  ) {
+    notes.push("permission/cache setup issue");
+  }
+
+  if (output.includes("CrashHandlerException") || lower.includes("signal 11") || result.signal) {
+    notes.push("Godot/headless engine crash");
+  }
+
+  if (
+    lower.includes("parse error") ||
+    lower.includes("failed to load script") ||
+    lower.includes("failed to compile") ||
+    lower.includes("compile error")
+  ) {
+    notes.push("project parse/compile issue");
+  }
+
+  return notes.length > 0 ? notes.join(" + ") : "unclassified Godot CLI failure";
 }
 
 function runGodotSmoke(godotExe, strictGodot) {
@@ -246,13 +546,15 @@ function runGodotSmoke(godotExe, strictGodot) {
     console.log("[PASS] Godot smoke check exited cleanly");
     return 0;
   }
-  if (output.includes("CrashHandlerException") || output.toLowerCase().includes("signal 11") || result.signal) {
-    console.log("[WARN] Godot headless smoke crashed on this machine; use editor reload as final validator");
+  const failureSummary = describeGodotFailure(output, result);
+  if (failureSummary.includes("Godot/headless engine crash")) {
+    console.log(`[WARN] Godot smoke check did not complete: ${failureSummary}`);
+    console.log("[WARN] Use editor reload as final validator until the headless crash is resolved");
     if (output) console.log(lastRelevantLines(output));
     return strictGodot ? 1 : 0;
   }
 
-  console.log("[FAIL] Godot smoke check reported errors");
+  console.log(`[FAIL] Godot smoke check reported errors: ${failureSummary}`);
   if (output) console.log(lastRelevantLines(output));
   return 1;
 }
@@ -267,6 +569,10 @@ function main() {
 
   if (failures.length > 0) {
     console.log(`[SUMMARY] Static checks failed: ${failures.length} failure(s), ${warnings.length} warning(s)`);
+    return 1;
+  }
+  if (args.warningsAsErrors && warnings.length > 0) {
+    console.log(`[SUMMARY] Static checks failed because --warnings-as-errors found ${warnings.length} warning(s)`);
     return 1;
   }
 
