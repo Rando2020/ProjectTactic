@@ -1048,12 +1048,15 @@ func _format_enemy_intent_board(rows_variant: Variant) -> String:
 		var dmg := int(details.get("damage", 0))
 		var hp_after := int(details.get("target_hp_after", -1))
 		var suffix := ""
+		var area_label := str(details.get("area_label", ""))
+		if not area_label.is_empty():
+			suffix += "  " + area_label
 		if dmg > 0:
-			suffix = "  %d dmg" % dmg
+			suffix += "  %d dmg" % dmg
 			if hp_after >= 0:
 				suffix += ", leaves %d HP" % hp_after
 		elif dmg < 0:
-			suffix = "  heals %d" % abs(dmg)
+			suffix += "  heals %d" % abs(dmg)
 		var move_label := str(details.get("move_label", ""))
 		if not move_label.is_empty():
 			suffix += "  " + move_label
@@ -1076,6 +1079,9 @@ func _format_enemy_intent_details(intent: Dictionary, details: Dictionary) -> St
 		parts.append(line)
 	elif dmg < 0:
 		parts.append("Heals %d HP" % abs(dmg))
+	var area_label := str(details.get("area_label", ""))
+	if not area_label.is_empty():
+		parts.append(area_label)
 	if dmg > 0:
 		parts.append("Hit %d%%" % int(details.get("hit_pct", 100)))
 		var crit := int(details.get("crit_pct", 0))

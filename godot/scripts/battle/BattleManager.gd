@@ -315,7 +315,7 @@ func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
 	if hp_ratio <= 0.28:
 		var retreat_tile := _best_retreat_tile(unit, nearest)
 		if retreat_tile != unit.grid_pos:
-			return _enemy_intent(unit, "retreat", nearest, "Retreat", "Low HP - falling back.", {}, retreat_tile)
+			return _enemy_intent(unit, "retreat", null, "Retreat", "Low HP - falling back from %s." % nearest.display_name, {}, retreat_tile)
 	var kill_spell := _find_kill_spell(unit)
 	if not kill_spell.is_empty():
 		return kill_spell
@@ -329,7 +329,10 @@ func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
 		return _enemy_intent(unit, "attack", nearest, "Attack", "Basic attack on %s." % nearest.display_name)
 	var advance_tile := _best_advance_tile(unit, nearest)
 	if advance_tile != unit.grid_pos:
-		return _enemy_intent(unit, "advance", nearest, "Advance", "Moving toward %s." % nearest.display_name, {}, advance_tile)
+		var can_attack_after_advance := GridSystem.manhattan(advance_tile, nearest.grid_pos) <= unit.unit_data.base_stats.attack_range_max
+		var advance_action := "Advance + Attack" if can_attack_after_advance else "Advance"
+		var advance_note := "Will move then attack %s." % nearest.display_name if can_attack_after_advance else "Moving toward %s." % nearest.display_name
+		return _enemy_intent(unit, "advance", nearest, advance_action, advance_note, {}, advance_tile)
 	return _enemy_intent(unit, "hold", nearest, "Hold", "No useful action.")
 
 
@@ -407,11 +410,17 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		details["affinity_label"] = str(formula.get("facing_label", "front")).capitalize()
 	elif kind == "spell" and not ability.is_empty():
 		var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
-		var base_power: int = int(ability.get("base_power", 100))
-		var bonuses: Dictionary = RunBonusesUtil.for_current_run()
-		var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
-		var formula := CombatFormula.calculate_magical_attack(unit, target, spell_type, base_power, {"power_mult": el_mult})
+		var formula := {}
+		if spell_type == "physical":
+			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+		else:
+			var base_power: int = int(ability.get("base_power", 100))
+			var bonuses: Dictionary = RunBonusesUtil.for_current_run()
+			var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+			formula = CombatFormula.calculate_magical_attack(unit, target, spell_type, base_power, {"power_mult": el_mult})
 		details["element"] = spell_type
+		if _ability_has_area_effect(ability):
+			details["area_label"] = _ability_area_label(ability)
 		details["damage"] = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 		details["hit_pct"] = int(formula.get("hit_pct", 100))
 		details["crit_pct"] = int(formula.get("crit_pct", 0))
@@ -435,6 +444,30 @@ func _enemy_intent_danger(kind: String, target: Unit, details: Dictionary) -> St
 	if kind == "advance":
 		return "medium"
 	return "normal"
+
+
+func _ability_has_area_effect(ability: Dictionary) -> bool:
+	return not str(ability.get("aoe_type", "")).is_empty() or int(ability.get("aoe_radius", 0)) > 0
+
+
+func _ability_area_label(ability: Dictionary) -> String:
+	var aoe_type := str(ability.get("aoe_type", ""))
+	if aoe_type == "chain":
+		return "Chain"
+	if not aoe_type.is_empty():
+		return aoe_type.capitalize()
+	if int(ability.get("aoe_radius", 0)) > 0:
+		return "Area"
+	return ""
+
+
+func _ability_target_in_range(unit: Unit, target: Unit, ability: Dictionary) -> bool:
+	if not unit or not target:
+		return false
+	var distance := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
+	var max_range := int(ability.get("range", ability.get("attack_range_max", 1)))
+	var min_range := int(ability.get("min_range", ability.get("attack_range_min", 0)))
+	return distance >= min_range and distance <= max_range
 
 
 func _emit_enemy_intent_board() -> void:
@@ -488,7 +521,10 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 			var ability: Dictionary = intent.get("ability", {})
 			if target and target.hp > 0 and not ability.is_empty():
 				last_ability_used = ability.get("display_name", "an ability")
-				_execute_ability(unit, target, ability)
+				if _ability_has_area_effect(ability):
+					_execute_aoe_ability(unit, target.grid_pos, ability)
+				else:
+					_execute_ability(unit, target, ability)
 				active_unit_has_acted = true
 		"attack":
 			var attack_target: Unit = units.get(str(intent.get("target_id", "")))
@@ -541,6 +577,10 @@ func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
 		"advance":
 			var chase_target: Unit = units.get(str(intent.get("target_id", "")))
 			var advance_pos: Vector2i = _intent_move_to(intent, unit.grid_pos)
+			var details: Dictionary = intent.get("details", {})
+			if chase_target and int(details.get("damage", 0)) > 0 \
+					and GridSystem.manhattan(advance_pos, chase_target.grid_pos) > unit.unit_data.base_stats.attack_range_max:
+				return false
 			return chase_target != null and chase_target.hp > 0 and chase_target.team == "player" \
 				and _enemy_move_tile_is_valid(unit, advance_pos)
 		"spell":
@@ -548,9 +588,11 @@ func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
 			var ability: Dictionary = intent.get("ability", {})
 			if not spell_target or spell_target.hp <= 0 or spell_target.team != "player" or ability.is_empty():
 				return false
+			if str(ability.get("target_type", "enemy")) != "enemy":
+				return false
 			if unit.mp < int(ability.get("mp_cost", 0)):
 				return false
-			return GridSystem.manhattan(unit.grid_pos, spell_target.grid_pos) <= int(ability.get("range", 1))
+			return _ability_target_in_range(unit, spell_target, ability)
 	return false
 
 
@@ -661,7 +703,7 @@ func _find_kill_spell(unit: Unit) -> Dictionary:
 				continue
 			if unit.mp < int(ability.get("mp_cost", 0)):
 				continue
-			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > int(ability.get("range", 1)):
+			if not _ability_target_in_range(unit, target, ability):
 				continue
 			var amount := _predict_spell_damage(unit, target, ability)
 			if amount >= target.hp:
@@ -685,7 +727,7 @@ func _find_best_spell_intent(unit: Unit) -> Dictionary:
 				continue
 			if unit.mp < int(ability.get("mp_cost", 0)):
 				continue
-			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > int(ability.get("range", 1)):
+			if not _ability_target_in_range(unit, target, ability):
 				continue
 			var score := _predict_spell_damage(unit, target, ability) + (target.unit_data.base_stats.hp - target.hp)
 			if score > best_score:
@@ -1863,6 +1905,8 @@ func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Diction
 
 func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> int:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
+	if spell_type == "physical":
+		return _predict_attack_damage(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
 	var base_power: int = int(ability.get("base_power", 100))
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
