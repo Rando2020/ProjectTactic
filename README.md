@@ -1,5 +1,13 @@
 # The Appointed · Design System
 
+## Godot-First Implementation Rule
+
+The playable game is now implemented in `godot/`.
+
+The React/JavaScript code under `src/`, `archive_react/`, and `VaeltharChronicles.jsx` is reference material only unless the user explicitly asks for React work. New gameplay, UI screens, run systems, combat systems, and content integration should be built in Godot/GDScript.
+
+Agents should read `CLAUDE.md`, `ARCHITECTURE.md`, `AI_TASK_PACKETS.md`, and `docs/systems/js-to-godot-migration-backlog.md` before starting implementation work.
+
 > *Seven angels, assigned to embody the seven deadly sins,
 > administer the trials of Purgatory — while being refined by those same trials.
 > They don't know what they are yet.*

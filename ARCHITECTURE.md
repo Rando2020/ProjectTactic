@@ -4,6 +4,8 @@ ProjectTactic is now a **Godot-first tactical RPG / roguelite prototype**.
 
 The former React/Vite implementation remains in `src/` only as a read-only design reference. Do not add new runtime gameplay to React. The production game should live under `godot/`.
 
+For Claude Code and other agents, read `CLAUDE.md` first. For concrete porting tasks, use `AI_TASK_PACKETS.md` and `docs/systems/js-to-godot-migration-backlog.md`.
+
 ## Core rule for Codex and future agents
 
 Build scenes as thin presentation/orchestration layers. Put reusable gameplay rules in GDScript simulation services.
