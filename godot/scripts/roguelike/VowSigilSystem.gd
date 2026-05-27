@@ -97,7 +97,7 @@ static func level_bonus_text(level: int, is_vow: bool) -> String:
 		3: return "+rare/legendary offer bias"
 		_: return "Max attunement"
 
-static func next_unlock_text(level: int, is_vow: bool) -> String:
+static func next_unlock_text(level: int, _is_vow: bool) -> String:
 	match clampi(level, 1, MAX_LEVEL):
 		1: return "Next: stronger weighting"
 		2: return "Next: rare/legendary bias"

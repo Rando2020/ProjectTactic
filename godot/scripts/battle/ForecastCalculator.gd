@@ -4,8 +4,6 @@
 class_name ForecastCalculator
 extends RefCounted
 
-const CombatFormula := preload("res://scripts/battle/CombatFormula.gd")
-
 const ELEMENT_COLORS: Dictionary = {
 	"fire":      Color(1.00, 0.42, 0.10),
 	"blizzard":  Color(0.42, 0.82, 1.00),

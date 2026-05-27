@@ -186,10 +186,10 @@ func _build_filter_bar(root: VBoxContainer) -> void:
 
 
 func _build_grid(root: VBoxContainer) -> void:
-	var wrap := HBoxContainer.new()
-	wrap.add_theme_constant_override("margin_left", 40)
-	wrap.add_theme_constant_override("margin_right", 40)
-	root.add_child(wrap)
+	var grid_wrap := HBoxContainer.new()
+	grid_wrap.add_theme_constant_override("margin_left", 40)
+	grid_wrap.add_theme_constant_override("margin_right", 40)
+	root.add_child(grid_wrap)
 
 	var items_filtered := _items.filter(func(item: Dictionary) -> bool:
 		return _filter == "all" or item.get("slot", "") == _filter)
@@ -203,7 +203,7 @@ func _build_grid(root: VBoxContainer) -> void:
 	_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_grid.add_theme_constant_override("h_separation", 16)
 	_grid.add_theme_constant_override("v_separation", 16)
-	wrap.add_child(_grid)
+	grid_wrap.add_child(_grid)
 
 	for item in items_filtered:
 		_grid.add_child(_item_card(item))
@@ -222,11 +222,11 @@ func _build_empty_state(root: VBoxContainer) -> void:
 	st.content_margin_left = 40; st.content_margin_right = 40
 	pc.add_theme_stylebox_override("panel", st)
 
-	var wrap2 := HBoxContainer.new()
-	wrap2.add_theme_constant_override("margin_left", 40)
-	wrap2.add_theme_constant_override("margin_right", 40)
-	root.add_child(wrap2)
-	wrap2.add_child(pc)
+	var empty_wrap := HBoxContainer.new()
+	empty_wrap.add_theme_constant_override("margin_left", 40)
+	empty_wrap.add_theme_constant_override("margin_right", 40)
+	root.add_child(empty_wrap)
+	empty_wrap.add_child(pc)
 
 	var inner := VBoxContainer.new()
 	inner.add_theme_constant_override("separation", 12)

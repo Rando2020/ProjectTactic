@@ -7,9 +7,6 @@ extends Node
 signal combat_resolved(result: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
-const CombatFormula := preload("res://scripts/battle/CombatFormula.gd")
-
-
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
 		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
@@ -58,6 +55,18 @@ func resolve_attack(attacker: Unit, target: Unit,
 	_play_sfx("attack_impact", -3.0)
 	var dmg_result := target.receive_damage(incoming_damage, "physical")
 	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
+
+	# Trigger hit effects based on damage intensity
+	var hit_intensity := "normal"
+	if actual_hp_damage > 150:
+		hit_intensity = "critical"
+	elif actual_hp_damage > 100:
+		hit_intensity = "heavy"
+	elif actual_hp_damage > 50:
+		hit_intensity = "normal"
+	else:
+		hit_intensity = "light"
+	BattleJuiceEffects.trigger_hit([target.unit_id], hit_intensity, 80, 300, 150)
 
 	if target.hp <= 0:
 		if vfx_n:
@@ -127,6 +136,19 @@ func resolve_spell(caster: Unit, target: Unit,
 
 	var dmg_result := target.receive_damage(final_damage, "magical")
 	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
+
+	# Trigger hit effects for spell damage
+	var spell_intensity := "normal"
+	if actual_hp_damage > 150:
+		spell_intensity = "critical"
+	elif actual_hp_damage > 100:
+		spell_intensity = "heavy"
+	elif actual_hp_damage > 50:
+		spell_intensity = "normal"
+	else:
+		spell_intensity = "light"
+	BattleJuiceEffects.trigger_hit([target.unit_id], spell_intensity, 60, 250, 120)
+
 	if target.hp <= 0 and vfx_n:
 		get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(target.grid_pos))
 		get_tree().create_timer(0.42).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(target.grid_pos))

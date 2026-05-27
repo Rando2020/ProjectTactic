@@ -205,7 +205,6 @@ var _active_category: String = "All"
 var _gs: Node
 
 #  UI refs
-var _entry_grid: VBoxContainer
 var _cat_bar: HBoxContainer
 
 
@@ -310,23 +309,23 @@ func _build_category_bar(root: VBoxContainer) -> void:
 
 
 func _build_entries(root: VBoxContainer) -> void:
-	var wrap := HBoxContainer.new()
-	wrap.add_theme_constant_override("margin_left",  40)
-	wrap.add_theme_constant_override("margin_right", 40)
-	root.add_child(wrap)
+	var entry_wrap := HBoxContainer.new()
+	entry_wrap.add_theme_constant_override("margin_left",  40)
+	entry_wrap.add_theme_constant_override("margin_right", 40)
+	root.add_child(entry_wrap)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 12)
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrap.add_child(vbox)
+	entry_wrap.add_child(vbox)
 
-	var visible := _filtered_entries()
+	var visible_entries := _filtered_entries()
 
-	if visible.is_empty():
+	if visible_entries.is_empty():
 		_build_empty(vbox)
 		return
 
-	for entry in visible:
+	for entry in visible_entries:
 		vbox.add_child(_entry_card(entry))
 
 

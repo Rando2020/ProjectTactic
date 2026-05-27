@@ -42,6 +42,15 @@ var _selection_ring: Line2D
 var _selection_glow: Polygon2D
 var _status_icons_container: Node2D
 
+## Returns the main visual element for effects (sprite if available, else body_rect)
+var visual: Node:
+	get:
+		if _sprite and is_instance_valid(_sprite):
+			return _sprite
+		if _body_rect and is_instance_valid(_body_rect):
+			return _body_rect
+		return self
+
 
 func _ready() -> void:
 	if unit_data and unit_id.is_empty():

@@ -20,8 +20,6 @@ signal action_state_changed(can_move: bool, can_act: bool, has_pending: bool)
 signal enemy_intent_changed(intent: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
-const CombatFormula := preload("res://scripts/battle/CombatFormula.gd")
-const ForecastCalculator := preload("res://scripts/battle/ForecastCalculator.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
 const DEMO_PACE := 0.45
 const MIN_WAIT := 0.03
@@ -829,7 +827,7 @@ func _auto_try_attack(unit: Unit) -> bool:
 		return false
 	action_preview_changed.emit(_attack_preview_for_tile(target.grid_pos))
 	await _timer(0.10).timeout
-	await _on_unit_clicked(target.unit_id)
+	_on_unit_clicked(target.unit_id)
 	return true
 
 
@@ -868,7 +866,7 @@ func _nearest_enemy(unit: Unit) -> Unit:
 	return best
 
 
-func _best_auto_move_tile(unit: Unit, target: Unit) -> Vector2i:
+func _best_auto_move_tile(unit: Unit, _target: Unit) -> Vector2i:
 	var occupied: Array = []
 	for uid: String in units.keys():
 		var other := _living_unit(uid)
@@ -1182,14 +1180,14 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 
 	#  Chain: ordered hops with damage falloff
 	if aoe_type == "chain":
-		var targets := _chain_targets(center, ability, caster)
-		if targets.is_empty():
+		var chain_targets := _chain_targets(center, ability, caster)
+		if chain_targets.is_empty():
 			log_message.emit("(no target to chain from)")
 			return
 		var falloff: float = ability.get("chain_falloff", 0.40)
 		var power_mult     := 1.0
-		for i: int in range(targets.size()):
-			var tgt: Unit = targets[i]
+		for i: int in range(chain_targets.size()):
+			var tgt: Unit = chain_targets[i]
 			var chain_ab  := ability.duplicate()
 			chain_ab["base_power"] = int(float(ability.get("base_power", 100)) * power_mult)
 			_execute_ability(caster, tgt, chain_ab, i > 0)  # skip_setup on hops
@@ -1201,11 +1199,11 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 		return
 
 	#  All other shapes
-	var targets := _get_aoe_targets(center, ability, caster)
-	if targets.is_empty():
+	var aoe_targets := _get_aoe_targets(center, ability, caster)
+	if aoe_targets.is_empty():
 		log_message.emit("(no targets in burst)")
 		return
-	for tgt: Unit in targets:
+	for tgt: Unit in aoe_targets:
 		_execute_ability(caster, tgt, ability, true)
 
 
