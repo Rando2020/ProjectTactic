@@ -11,6 +11,14 @@ extends Resource
 @export var portrait: Texture2D
 @export var sprite_sheet: Texture2D
 
+# Directional sprites for isometric view.
+# S direction = front-left, E = front-right, W = back-left, N = back-right.
+# When set, Unit will swap textures automatically as facing changes.
+@export var sprite_front_left: Texture2D   # used when facing S
+@export var sprite_front_right: Texture2D  # used when facing E
+@export var sprite_back_left: Texture2D    # used when facing W
+@export var sprite_back_right: Texture2D   # used when facing N
+
 ## Elemental affinity multipliers applied to incoming spell damage.
 ## Keys: "fire" "blizzard" "thunder" "wind" "holy" "dark"
 ## Values: 2.0=very weak  1.5=weak  1.0=neutral  0.5=resist  0.0=immune

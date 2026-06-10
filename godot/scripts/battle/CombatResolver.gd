@@ -16,6 +16,10 @@ func resolve_attack(attacker: Unit, target: Unit,
 		var miss_result := {
 			"damage": 0, "hp_damage": 0, "temper_damage": 0, "ether_damage": 0,
 			"missed": true, "hit_pct": hit_pct, "formula_explain": formula.get("explain", []),
+			"actor_id": attacker.unit_id if attacker else "",
+			"actor_team": attacker.team if attacker else "",
+			"target_id": target.unit_id if target else "",
+			"target_team": target.team if target else "",
 		}
 		_show_miss(target)
 		combat_resolved.emit(miss_result)
@@ -96,6 +100,10 @@ func resolve_attack(attacker: Unit, target: Unit,
 		"crit_pct": crit_pct,
 		"critical": did_crit,
 		"counter": should_counter,
+		"actor_id": attacker.unit_id if attacker else "",
+		"actor_team": attacker.team if attacker else "",
+		"target_id": target.unit_id if target else "",
+		"target_team": target.team if target else "",
 	}
 	combat_resolved.emit(result)
 	return result
@@ -107,10 +115,15 @@ func resolve_spell(caster: Unit, target: Unit,
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var element := CombatFormula.normalize_element(spell_type)
 	var el_mult: float = float(bonuses["elemental_mult"].get(element, 1.0))
+	el_mult *= CombatFormula.item_elemental_multiplier(caster, element)
 	var formula := CombatFormula.calculate_magical_attack(caster, target, element, base_power, {"power_mult": el_mult})
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {"damage":0, "hp_damage":0, "missed":true, "spell_type":element, "hit_pct":hit_pct}
+		miss_result["actor_id"] = caster.unit_id if caster else ""
+		miss_result["actor_team"] = caster.team if caster else ""
+		miss_result["target_id"] = target.unit_id if target else ""
+		miss_result["target_team"] = target.team if target else ""
 		_show_miss(target)
 		combat_resolved.emit(miss_result)
 		return miss_result
@@ -169,12 +182,16 @@ func resolve_spell(caster: Unit, target: Unit,
 		"el_boon_mult": el_mult,
 		"hit_pct": hit_pct,
 		"is_weakness": affinity > 1.0,
+		"actor_id": caster.unit_id if caster else "",
+		"actor_team": caster.team if caster else "",
+		"target_id": target.unit_id if target else "",
+		"target_team": target.team if target else "",
 	}
 	combat_resolved.emit(result)
 	return result
 
 
-func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
+func resolve_heal(caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	heal_amount += int(bonuses.get("heal_bonus", 0))
 	target.heal(heal_amount)
@@ -184,7 +201,13 @@ func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 		var vfx := vfx_n as VFXManager
 		vfx.play_cure(target.grid_pos)
 		vfx.play_heal_number(target.grid_pos, heal_amount)
-	var result := {"healed": heal_amount}
+	var result := {
+		"healed": heal_amount,
+		"actor_id": caster.unit_id if caster else "",
+		"actor_team": caster.team if caster else "",
+		"target_id": target.unit_id if target else "",
+		"target_team": target.team if target else "",
+	}
 	combat_resolved.emit(result)
 	return result
 

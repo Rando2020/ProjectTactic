@@ -36,7 +36,13 @@ func get_summary(slot: int = 1) -> Dictionary:
 	var data: Variant = JSON.parse_string(file.get_as_text())
 	file.close()
 	if not data is Dictionary: return {"exists":false}
-	return {"exists":true,"gold":data.get("gold",0),"floor":data.get("floor",1),"saved_at":data.get("saved_at","")}
+	return {
+		"exists":    true,
+		"gold":      data.get("gold",    0),
+		"floor":     data.get("floor",   0),
+		"boons":     data.get("boons",   0),
+		"saved_at":  data.get("saved_at",""),
+	}
 
 func _serialize(gs: Node) -> Dictionary:
 	var units: Dictionary = {}
@@ -55,6 +61,9 @@ func _serialize(gs: Node) -> Dictionary:
 		"gold":gs.gold, "completed_stages":gs.completed_stages,
 		"story_flags":gs.get("story_flags") or [],
 		"unit_registry":units, "active_run":run_dict,
+		# Top-level summary fields read by get_summary() without parsing nested run.
+		"floor": gs.active_run.current_floor if gs.active_run else 0,
+		"boons": gs.active_run.active_boons.size() if gs.active_run else 0,
 	}
 
 func _deserialize(data: Dictionary) -> void:
@@ -63,7 +72,7 @@ func _deserialize(data: Dictionary) -> void:
 	gs.completed_stages = data.get("completed_stages", [])
 	if gs.get("story_flags") != null: gs.story_flags = data.get("story_flags", [])
 	var rd: Dictionary = data.get("active_run", {})
-	if not rd.is_empty() and gs.get("active_run") != null:
+	if not rd.is_empty():
 		gs.active_run = RunState.from_dict(rd)
 	for uid in data.get("unit_registry", {}):
 		if not gs.unit_registry.has(uid): continue

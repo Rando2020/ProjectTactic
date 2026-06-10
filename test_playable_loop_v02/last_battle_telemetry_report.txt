@@ -1,0 +1,17 @@
+The Appointed Playable Loop v0.2 Battle Telemetry
+Outcome: victory
+Map: Ashvale Road (ashvale_road_01)
+Driver: auto playtest 8.00x
+
+Turns: 18 total, 15 player, 3 enemy
+Damage: 312 dealt, 87 taken, 50 boon, 13 terrain
+Recovery: 0 healing used, 0 allies downed, 1 close calls
+Triggers: 2 boons, 1 terrain hazards
+Progress: +150g, +40 party JP, +30 job JP, 1 job level-ups
+Vitals: Aeryn 349/460 HP, Cael 0/340 HP, Brennan 47/450 HP, Solan 255/345 HP, Mira 0/385 HP, Tobias 310/400 HP, Seren 236/360 HP
+Healing Sources: none recorded
+
+Tuning Notes:
+- Healthy test: telemetry stayed within the v0.2 target range.
+
+v0.2 Targets: <=22 turns ideal, <=16 player turns, <55% damage pressure, 1+ boon triggers after 12 player turns or 250 damage, 20+ terrain damage matters.

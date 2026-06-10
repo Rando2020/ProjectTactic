@@ -4,9 +4,8 @@ extends Node
 #  GameState.gd  Main narrative state management
 # ============================================================
 
-#  This replaces the React "reducer" pattern with Godot signals.
-#  All game state lives here. Other scripts connect to signals
-#  to react to state changes.
+#  Game state lives here. Other scripts connect to Godot signals
+#  to respond to state changes.
 
 #  TO SET UP:
 #  Project  Project Settings  Autoload

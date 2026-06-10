@@ -71,36 +71,77 @@ var unit_registry: Dictionary = {}
 func _ready() -> void:
 	if not load_save():
 		_init_defaults()
+	elif _save_has_old_party():
+		# Character roster changed — rebuild unit registry while keeping all other save data.
+		unit_registry.clear()
+		_init_defaults()
+		save()
+
+
+func _save_has_old_party() -> bool:
+	## Returns true when the loaded save still contains any pre-Appointed character IDs.
+	var old_ids := ["zane", "kael", "lyra", "mira_vey"]
+	for id in old_ids:
+		if unit_registry.has(id):
+			return true
+	# Also catches the case where none of the new characters are present yet.
+	var new_ids := ["aeryn", "cael", "brennan", "solan", "tobias", "seren"]
+	for id in new_ids:
+		if unit_registry.has(id):
+			return false
+	return true  # new characters missing — force rebuild
 
 
 func _init_defaults() -> void:
-	# Zane  Arcanist path  Resonant
-	_reg("zane", "Zane",
-		["fireball", "thunderstrike", "void_pulse"],
-		["blizzard", "dark_breath", "elemental_convergence"])
-	unit_registry["zane"]["current_job_id"] = "arcanist"
-	unit_registry["zane"]["job_jp"]         = { "arcanist": 0 }
+	# Aeryn  Knight  Pride -> Dignity  Squire path
+	_reg("aeryn", "Aeryn",
+		["mighty_strike", "defend"],
+		["cover_ally", "iron_wall", "retribution", "rally"])
+	unit_registry["aeryn"]["current_job_id"] = "squire"
+	unit_registry["aeryn"]["job_jp"]         = { "squire": 0 }
 
-	# Mira  Arcanist  Luminary path
-	_reg("mira", "Mira Vey",
-		["fireball", "cure", "holy_strike"],
-		["blizzard", "luminous_barrier", "mass_cure"])
-	unit_registry["mira"]["current_job_id"] = "arcanist"
-	unit_registry["mira"]["job_jp"]         = { "arcanist": 0 }
+	# Cael  Archer  Envy -> Justice  Scout path
+	_reg("cael", "Cael",
+		["pin_shot", "long_shot"],
+		["aimed_shot", "eagle_eye", "scatter_shot", "smoke_screen"])
+	unit_registry["cael"]["current_job_id"] = "scout"
+	unit_registry["cael"]["job_jp"]         = { "scout": 0 }
 
-	# Kael  Squire  Warder  Void Knight path
-	_reg("kael", "Kael",
-		["slash", "mighty_strike", "defend"],
-		["cover_ally", "iron_wall", "retribution"])
-	unit_registry["kael"]["current_job_id"] = "squire"
-	unit_registry["kael"]["job_jp"]         = { "squire": 0 }
+	# Brennan  Soldier  Wrath -> Righteous Anger  Squire path
+	_reg("brennan", "Brennan",
+		["mighty_strike", "wind_slash"],
+		["retribution", "tremor", "aero", "sunder_armor"])
+	unit_registry["brennan"]["current_job_id"] = "squire"
+	unit_registry["brennan"]["job_jp"]         = { "squire": 0 }
 
-	# Lyra  Scout  Shadow path
-	_reg("lyra", "Lyra",
-		["long_shot", "quickstep"],
-		["rain_of_arrows", "smoke_screen", "shadow_step"])
-	unit_registry["lyra"]["current_job_id"] = "scout"
-	unit_registry["lyra"]["job_jp"]         = { "scout": 0 }
+	# Solan  Mage  Sloth -> Sacred Rest  Arcanist path
+	_reg("solan", "Solan",
+		["fire", "blizzard", "thunder"],
+		["fira", "blizzara", "cure", "firaga", "elemental_convergence"])
+	unit_registry["solan"]["current_job_id"] = "arcanist"
+	unit_registry["solan"]["job_jp"]         = { "arcanist": 0 }
+
+	# Mira  Vagrant  Greed -> Provision  Scout path
+	_reg("mira", "Mira",
+		["mighty_strike", "cure"],
+		["wind_slash", "quickstep", "shadow_step", "vanish", "expose_weakness"])
+	unit_registry["mira"]["current_job_id"] = "scout"
+	unit_registry["mira"]["job_jp"]         = { "scout": 0 }
+
+	# Tobias  Cleric  Gluttony -> Joy  Arcanist -> Luminary path
+	_reg("tobias", "Tobias",
+		["cure", "holy", "protect"],
+		["cura", "haste", "luminous_barrier", "mass_cure", "consecrate"])
+	unit_registry["tobias"]["current_job_id"] = "arcanist"
+	unit_registry["tobias"]["job_jp"]         = { "arcanist": 0 }
+
+	# Seren  Duelist  Lust -> Sacred Love  Squire -> Shadow path
+	_reg("seren", "Seren",
+		["mighty_strike", "wind_slash"],
+		["dark_blade", "expose_weakness", "shadow_step", "vanish", "arc_counter"])
+	unit_registry["seren"]["current_job_id"] = "squire"
+	unit_registry["seren"]["job_jp"]         = { "squire": 0 }
+
 	_init_loadout_progress_defaults()
 
 
@@ -272,6 +313,10 @@ func apply_victory(map_id: String, rewards: Dictionary,
 		player_unit_ids: Array[String]) -> void:
 	var gld: int = rewards.get("gold", 0)
 	var jp_gain: int = rewards.get("jp", 0)
+	var item_jp_pct := _run_item_affix_total("jp")
+	if item_jp_pct > 0:
+		jp_gain = int(round(float(jp_gain) * (1.0 + float(item_jp_pct) / 100.0)))
+		rewards["jp"] = jp_gain
 	gold += gld
 	run_jp_earned += jp_gain
 	for uid in player_unit_ids:
@@ -279,13 +324,38 @@ func apply_victory(map_id: String, rewards: Dictionary,
 			unit_registry[uid]["jp"] = unit_registry[uid].get("jp", 0) + jp_gain
 	if map_id not in completed_stages:
 		completed_stages.append(map_id)
+	var vitals: Dictionary = {}
+	for uid in player_unit_ids:
+		if not unit_registry.has(uid):
+			continue
+		var reg: Dictionary = unit_registry[uid]
+		vitals[uid] = {
+			"hp": int(reg.get("current_hp", reg.get("base_hp", 0))),
+			"max_hp": int(reg.get("base_hp", reg.get("max_hp", 0))),
+			"mp": int(reg.get("current_mp", 0)),
+			"temper": int(reg.get("current_temper", 0)),
+			"ether": int(reg.get("current_ether", 0)),
+		}
 	pending_rewards = {
 		"gold":    gld,
 		"jp":      jp_gain,
 		"map_id":  map_id,
 		"units":   player_unit_ids.duplicate(),
+		"telemetry": rewards.get("telemetry", {}),
+		"vitals": vitals,
 	}
 	save()   # auto-save on every victory
+
+
+func _run_item_affix_total(affix_id: String) -> int:
+	var total := 0
+	for item in run_inventory:
+		if not (item is Dictionary):
+			continue
+		for affix in item.get("affixes", []):
+			if affix is Dictionary and str(affix.get("id", "")) == affix_id:
+				total += int(affix.get("value", 0))
+	return total
 
 
 #  Persistence
@@ -302,6 +372,11 @@ func save() -> void:
 	var unit_job_jp:    Dictionary = {}
 	var unit_equipped:  Dictionary = {}
 	var unit_equipment: Dictionary = {}
+	var unit_base_hp:   Dictionary = {}
+	var unit_current_hp: Dictionary = {}
+	var unit_current_mp: Dictionary = {}
+	var unit_current_temper: Dictionary = {}
+	var unit_current_ether: Dictionary = {}
 	for uid in unit_registry:
 		var reg: Dictionary = unit_registry[uid]
 		unit_jp[uid]        = reg.get("jp", 0)
@@ -310,6 +385,11 @@ func save() -> void:
 		unit_job_jp[uid]    = reg.get("job_jp", {}).duplicate()
 		unit_equipped[uid]  = reg.get("equipped_abilities", []).duplicate()
 		unit_equipment[uid] = reg.get("equipment", {}).duplicate()
+		unit_base_hp[uid] = int(reg.get("base_hp", 0))
+		unit_current_hp[uid] = int(reg.get("current_hp", reg.get("base_hp", 0)))
+		unit_current_mp[uid] = int(reg.get("current_mp", 0))
+		unit_current_temper[uid] = int(reg.get("current_temper", 0))
+		unit_current_ether[uid] = int(reg.get("current_ether", 0))
 
 	var data: Dictionary = {
 		"version":          SAVE_VERSION,
@@ -322,8 +402,14 @@ func save() -> void:
 		"unit_job_jp":      unit_job_jp,
 		"unit_equipped":    unit_equipped,
 		"unit_equipment":   unit_equipment,
+		"unit_base_hp":     unit_base_hp,
+		"unit_current_hp":  unit_current_hp,
+		"unit_current_mp":  unit_current_mp,
+		"unit_current_temper": unit_current_temper,
+		"unit_current_ether": unit_current_ether,
 		"vow_progress":     vow_progress.duplicate(),
 		"sigil_progress":   sigil_progress.duplicate(),
+		"active_run":        active_run.to_dict() if active_run else {},
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -332,6 +418,10 @@ func save() -> void:
 		return
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
+	# Keep SaveSystem slot 1 in sync so SaveSlotScreen can display run metadata.
+	var save_sys: Node = get_node_or_null("/root/SaveSystem")
+	if save_sys:
+		save_sys.save(1)
 
 
 ## Loads save file.  Returns false if no file or format mismatch.
@@ -374,6 +464,11 @@ func load_save() -> bool:
 	var saved_job_jp:    Dictionary = data.get("unit_job_jp", {})
 	var saved_equipped:  Dictionary = data.get("unit_equipped", {})
 	var saved_equipment: Dictionary = data.get("unit_equipment", {})
+	var saved_base_hp: Dictionary = data.get("unit_base_hp", {})
+	var saved_current_hp: Dictionary = data.get("unit_current_hp", {})
+	var saved_current_mp: Dictionary = data.get("unit_current_mp", {})
+	var saved_current_temper: Dictionary = data.get("unit_current_temper", {})
+	var saved_current_ether: Dictionary = data.get("unit_current_ether", {})
 	var saved_vow_progress: Variant = data.get("vow_progress", {})
 	var saved_sigil_progress: Variant = data.get("sigil_progress", {})
 	vow_progress = {}
@@ -404,6 +499,21 @@ func load_save() -> bool:
 			unit_registry[uid]["equipped_abilities"] = eq
 		if saved_equipment.has(uid) and saved_equipment[uid] is Dictionary:
 			unit_registry[uid]["equipment"] = (saved_equipment[uid] as Dictionary).duplicate()
+		if saved_base_hp.has(uid):
+			unit_registry[uid]["base_hp"] = int(saved_base_hp[uid])
+		if saved_current_hp.has(uid):
+			unit_registry[uid]["current_hp"] = int(saved_current_hp[uid])
+		if saved_current_mp.has(uid):
+			unit_registry[uid]["current_mp"] = int(saved_current_mp[uid])
+		if saved_current_temper.has(uid):
+			unit_registry[uid]["current_temper"] = int(saved_current_temper[uid])
+		if saved_current_ether.has(uid):
+			unit_registry[uid]["current_ether"] = int(saved_current_ether[uid])
+
+	# Restore the active run so Continue can resume without needing a new start.
+	var run_dict: Dictionary = data.get("active_run", {})
+	if not run_dict.is_empty():
+		active_run = RunState.from_dict(run_dict)
 
 	return true
 

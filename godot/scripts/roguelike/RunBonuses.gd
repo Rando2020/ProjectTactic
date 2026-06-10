@@ -159,5 +159,23 @@ static func for_current_run() -> Dictionary:
 	elif Engine.get_main_loop():
 		gs = Engine.get_main_loop().root.get_node_or_null("/root/GameState")
 	if not gs or not gs.get("active_run") or not gs.active_run:
-		return compute([])
-	return compute(gs.active_run.active_boons)
+		return compute(_v02_playtest_starter_boons())
+	var active_boons: Array = gs.active_run.active_boons.duplicate(true)
+	if active_boons.is_empty():
+		active_boons.append_array(_v02_playtest_starter_boons())
+	return compute(active_boons)
+
+
+static func _v02_playtest_starter_boons() -> Array[Dictionary]:
+	if not ProjectSettings.get_setting("project_tactic/playtest/auto_battle", false):
+		return []
+	return [{
+		"id": "battle_fury",
+		"name": "Battle Fury",
+		"rarity": "rare",
+		"icon": "*",
+		"category": "tactical",
+		"desc": "Moving before attacking this turn adds 30% bonus damage to that strike.",
+		"effect": {"type": "tactical", "id": "battle_fury", "bonus": 0.30},
+		"lane": "movement",
+	}]

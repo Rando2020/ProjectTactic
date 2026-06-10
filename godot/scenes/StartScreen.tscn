@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://dxi7edx4bh0an"]
 
-[ext_resource type="Script" path="res://scripts/ui/StartScreen.gd" id="1_start"]
-[ext_resource type="AudioStream" path="res://assets/music/gold-severance.wav" id="2_music"]
+[ext_resource type="Script" uid="uid://b733ndjug0fxa" path="res://scripts/ui/StartScreen.gd" id="1_start"]
+[ext_resource type="AudioStream" path="res://assets/music/gold-severance.ogg" id="2_music"]
 
-[node name="StartScreen" type="Control"]
+[node name="StartScreen" type="Control" unique_id=1803588947]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,7 +13,8 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_start")
 
-[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="." unique_id=1515541374]
 stream = ExtResource("2_music")
-volume_db = -4.0
-bus = &"Music"
+volume_db = -1.263
+autoplay = true
+mix_target = 1

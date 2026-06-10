@@ -90,10 +90,11 @@ func _draw_unit() -> void:
 	#  Sprite or coloured-square fallback
 	# IMPORTANT: the unit's world origin represents the character's FEET.
 	# All sprites and rects are offset upward so their bottom sits at y = 0.
-	if unit_data and unit_data.sprite_sheet:
+	var initial_tex := _get_texture_for_facing(facing)
+	if initial_tex:
 		_sprite = Sprite2D.new()
-		_sprite.texture = unit_data.sprite_sheet
-		var tex_size := unit_data.sprite_sheet.get_size()
+		_sprite.texture = initial_tex
+		var tex_size := initial_tex.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
 			var target_size: float = 80.0 if is_player else 95.0
 			var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
@@ -380,7 +381,33 @@ func set_facing(new_facing: String) -> void:
 	if new_facing not in ["N", "E", "S", "W"]:
 		return
 	facing = new_facing
+	_update_directional_sprite()
 	_update_facing_arrow()
+
+
+func _get_texture_for_facing(dir: String) -> Texture2D:
+	if not unit_data:
+		return null
+	match dir:
+		"N": return unit_data.sprite_back_right if unit_data.sprite_back_right else unit_data.sprite_sheet
+		"E": return unit_data.sprite_front_right if unit_data.sprite_front_right else unit_data.sprite_sheet
+		"W": return unit_data.sprite_back_left if unit_data.sprite_back_left else unit_data.sprite_sheet
+		_:   return unit_data.sprite_front_left if unit_data.sprite_front_left else unit_data.sprite_sheet
+
+
+func _update_directional_sprite() -> void:
+	if not _sprite or not unit_data:
+		return
+	var tex := _get_texture_for_facing(facing)
+	if not tex or tex == _sprite.texture:
+		return
+	_sprite.texture = tex
+	var tex_size := tex.get_size()
+	if tex_size.x > 0 and tex_size.y > 0:
+		var target_size: float = 80.0 if team == "player" else 95.0
+		var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
+		_sprite.scale = Vector2(sprite_scale, sprite_scale)
+		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
 
 
 func _draw_facing_arrow() -> void:

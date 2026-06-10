@@ -1,5 +1,5 @@
 ## StageSelect.gd
-## 10-floor run map. Start Run -> choose routes -> fight through procedurally generated floors.
+## 30-floor Act 1 run map. Start Run -> choose routes -> fight through procedurally generated floors.
 
 class_name StageSelect
 extends Control
@@ -8,12 +8,22 @@ const BG   := Color(0.04, 0.05, 0.08)
 const FG   := Color(0.97, 0.94, 0.87)
 const DIM  := Color(0.45, 0.42, 0.38)
 const GOLD := Color(0.79, 0.65, 0.34)
+const TEAL := Color(0.25, 0.82, 0.72)
+
+const SELL_VALUES: Dictionary = {
+	"common":   15,
+	"uncommon": 35,
+	"rare":     80,
+	"resonant": 200,
+}
 
 # Design-system fonts
 const _FONT_DISPLAY := preload("res://assets/fonts/TrajanPro-Regular.ttf")
 const _FONT_HEADER  := preload("res://assets/fonts/Cinzel-Bold.ttf")
 const _FONT_BODY    := preload("res://assets/fonts/IMFellEnglish-Regular.ttf")
 const _FONT_UI      := preload("res://assets/fonts/CormorantGaramond-Regular.ttf")
+
+const PARTY_SCENE := preload("res://scenes/PartyScreen.tscn")
 
 const NODE_META: Dictionary = {
 	"battle":      {"icon":"B", "color":Color(0.48,0.86,1.0),  "label":"Battle"},
@@ -26,10 +36,14 @@ const NODE_META: Dictionary = {
 	"boss":        {"icon":"!", "color":Color(0.93,0.27,0.27), "label":"Boss"},
 	"boon_pick":   {"icon":"+", "color":Color(0.79,0.65,0.34), "label":"Boon"},
 	"wanderer":    {"icon":"?", "color":Color(0.53,0.94,0.67), "label":"Wanderer"},
+	"town_1":      {"icon":"T1", "color":Color(0.53,0.94,0.67), "label":"Town 1"},
+	"town_2":      {"icon":"T2", "color":Color(0.96,0.78,0.28), "label":"Town 2"},
+	"town_3":      {"icon":"T3", "color":Color(0.72,0.58,1.0), "label":"Town 3"},
 }
 
 var _gs:  Node
 var _bs:  BoonSystem
+var _cs:  CurseSystem
 
 var _boon_overlay:  Control = null
 var _loot_overlay:  Control = null
@@ -40,6 +54,7 @@ var _selected_sigil_id: String = VowSigilSystem.DEFAULT_SIGIL_ID
 func _ready() -> void:
 	_gs = get_node_or_null("/root/GameState")
 	_bs = BoonSystem.new()
+	_cs = CurseSystem.new()
 
 	if _gs and _gs.pending_boon_offers.size() > 0:
 		_build_ui(); _show_boon_pick(_gs.pending_boon_offers); return
@@ -77,7 +92,7 @@ func _build_start_screen() -> void:
 	_space(vbox, 8)
 	_lbl(vbox, "The Roguelike Run", 34, FG, true)
 	_space(vbox, 6)
-	_lbl(vbox, "10 floors. Randomised maps. Five Guardians.", 14, DIM, true)
+	_lbl(vbox, "%d floors. Town checkpoints. Five Guardians." % RunState.TOTAL_FLOORS, 14, DIM, true)
 	_space(vbox, 28)
 
 	# Heat level selector
@@ -110,7 +125,7 @@ func _build_start_screen() -> void:
 
 	var btn := _btn(">  Start New Run", GOLD)
 	btn.custom_minimum_size = Vector2(300, 52)
-	btn.pressed.connect(func() -> void: _on_start_run(meta.selected_heat_level if meta else 0))
+	btn.pressed.connect(func() -> void: _show_party_select(meta.selected_heat_level if meta else 0))
 	vbox.add_child(btn)
 	_space(vbox, 12)
 
@@ -135,7 +150,7 @@ func _build_run_screen(run: RunState) -> void:
 	hh.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hh.add_theme_constant_override("margin_left", 24)
 	hh.add_theme_constant_override("margin_right", 16)
-	_lbl(hh, "Floor %d / 10" % run.current_floor, 22, FG)
+	_lbl(hh, "Floor %d / %d" % [run.current_floor, RunState.TOTAL_FLOORS], 22, FG)
 	_stretch(hh)
 	_lbl(hh, "Gold: %dg" % (_gs.gold if _gs else 0), 14, GOLD)
 	_lbl(hh, "  Elites: %d" % run.elite_kills, 12, DIM)
@@ -147,6 +162,12 @@ func _build_run_screen(run: RunState) -> void:
 	formation_btn.custom_minimum_size.x = 120
 	formation_btn.pressed.connect(_on_edit_formation_from_run.bind(run))
 	hh.add_child(formation_btn)
+	_gap(hh, 8)
+
+	var gear_btn := _btn("Gear", TEAL)
+	gear_btn.custom_minimum_size.x = 90
+	gear_btn.pressed.connect(_show_gear_panel)
+	hh.add_child(gear_btn)
 	_gap(hh, 8)
 
 	var ab_btn := _btn("Abandon", Color(0.93,0.27,0.27))
@@ -443,6 +464,46 @@ func _loadout_picker_detail(item: Dictionary, is_vow: bool) -> String:
 		VowSigilSystem.xp_progress_text(xp),
 		VowSigilSystem.next_unlock_text(level, is_vow),
 	]
+## Opens the PartyScreen overlay.  Called by "Start New Run" instead of going
+## directly to _on_start_run() so the player picks their 4-unit roster first.
+func _show_party_select(heat: int) -> void:
+	var screen := PARTY_SCENE.instantiate() as PartyScreen
+	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen.party_confirmed.connect(func(ids: Array) -> void:
+		screen.queue_free()
+		_on_start_run_with_party(heat, ids))
+	screen.cancelled.connect(screen.queue_free)
+	add_child(screen)
+
+
+## Called after the player confirms their party choice.
+## Creates the run then stamps run_deployment with the 4 selected units at
+## default deployment-zone positions so DeploymentScreen has a starting formation.
+func _on_start_run_with_party(heat: int, party_ids: Array) -> void:
+	_on_start_run(heat)        # creates active_run and rebuilds UI
+	if _gs and _gs.active_run and not party_ids.is_empty():
+		_gs.active_run.run_deployment = _party_ids_to_deployment(party_ids)
+
+
+## Converts an ordered list of unit IDs into a run_deployment Array.
+## Positions are in the default deployment zone (bottom-2 rows, cols 0-3).
+## DeploymentScreen will let the player rearrange before the first battle.
+func _party_ids_to_deployment(ids: Array) -> Array:
+	var positions: Array[Dictionary] = [
+		{"x": 0, "y": 6}, {"x": 1, "y": 6},
+		{"x": 2, "y": 6}, {"x": 3, "y": 6},
+	]
+	var result: Array = []
+	for i: int in mini(ids.size(), positions.size()):
+		result.append({
+			"unit_id": str(ids[i]),
+			"x":       int(positions[i]["x"]),
+			"y":       int(positions[i]["y"]),
+			"facing":  "N",
+		})
+	return result
+
+
 func _on_start_run(heat: int = 0) -> void:
 	if not _gs: return
 	var rm: Node = get_node_or_null("/root/RunManager")
@@ -481,6 +542,8 @@ func _on_enter_node(node: Dictionary) -> void:
 			_show_boon_pick(offers)
 		"wanderer":
 			_show_wanderer_encounter(_gs.active_run)
+		"town_1", "town_2", "town_3":
+			_show_town_node(node)
 
 
 ## Resolve MapData for a run node — same logic used by both _open_deployment
@@ -543,6 +606,16 @@ func _resolve_revealed_mystery(node: Dictionary) -> void:
 			_show_mystery_shrine(node)
 		"mystery_cache", "mystery_training":
 			_show_mystery_event(node)
+		"mystery_treasure":
+			_show_mystery_treasure(node)
+		"mystery_caravan":
+			_show_mystery_caravan(node)
+		"mystery_trap":
+			_show_mystery_trap(node)
+		"mystery_curse_site":
+			_show_mystery_curse_site(node)
+		"mystery_mimic":
+			_show_mystery_mimic(node)
 		_:
 			_build_ui()
 
@@ -588,6 +661,951 @@ func _show_mystery_event(node: Dictionary) -> void:
 	vbox.add_child(cont)
 
 
+func _show_mystery_treasure(_node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(620, 0)
+	var gold_reward: int = _mystery_treasure_reward()
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, "Ancient Vault", 30, FG, true)
+	_space(vbox, 8)
+	_lbl(vbox, "A sealed chamber, untouched since the last age. Coin and relics spill out as the lock breaks.", 13, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, "+%dg" % gold_reward, 22, GOLD, true)
+	_space(vbox, 22)
+	var cont2 := _btn("Claim the Vault", GOLD)
+	cont2.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont2.pressed.connect(func() -> void:
+		_apply_mystery_event("mystery_treasure")
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_build_ui())
+	vbox.add_child(cont2)
+
+
+func _show_mystery_caravan(_node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var gold: int = int(_gs.gold) if _gs else 0
+	var heal_amount: int = floor_num * 12 + 40
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(720, 0)
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Traveling Caravan", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "A merchant convoy halts at your approach. They trade quickly — routes don't wait.", 13, DIM, true)
+	_space(vbox, 4)
+	_lbl(vbox, "Gold: %dg" % gold, 15, GOLD, true)
+	_space(vbox, 16)
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+	var btn_ca := _town_service_card(cards_row,
+		"Healing Provisions",
+		"Restore %d HP to each party member.\nCaravan physician-grade salves." % heal_amount,
+		"60g",
+		Color(0.30, 0.86, 0.50) if gold >= 60 else DIM)
+	btn_ca.text = "Buy"
+	btn_ca.disabled = gold < 60
+	btn_ca.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 60:
+			return
+		_gs.gold -= 60
+		_apply_partial_hp_heal(heal_amount)
+		btn_ca.text = "Purchased"
+		btn_ca.disabled = true)
+	var btn_cb := _town_service_card(cards_row,
+		"Trainer's Contract",
+		"All units gain +22 JP.\nA retired soldier shares hard-won technique.",
+		"80g",
+		Color(0.96, 0.78, 0.28) if gold >= 80 else DIM)
+	btn_cb.text = "Buy"
+	btn_cb.disabled = gold < 80
+	btn_cb.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 80:
+			return
+		_gs.gold -= 80
+		_grant_party_jp(22)
+		btn_cb.text = "Contracted"
+		btn_cb.disabled = true)
+	_space(vbox, 22)
+	var depart_car := _btn("Move On  ->", GOLD)
+	depart_car.custom_minimum_size = Vector2(200, 46)
+	depart_car.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	depart_car.pressed.connect(func() -> void:
+		_complete_current_node_with_loadout_xp("mystery_caravan")
+		if _gs:
+			_gs.save()
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_build_ui())
+	vbox.add_child(depart_car)
+
+
+func _show_mystery_trap(_node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var damage: int        = floor_num * 5 + 10
+	var gold_brave: int    = floor_num * 30 + 60
+	var gold_cautious: int = floor_num * 10 + 20
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(680, 0)
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, "Pressure Plate Trap", 30, FG, true)
+	_space(vbox, 8)
+	_lbl(vbox, "The path is rigged. A cache sits just beyond the trigger — if you can reach it.", 13, DIM, true)
+	_space(vbox, 20)
+	var trap_row := _hbox(vbox)
+	trap_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	trap_row.add_theme_constant_override("separation", 16)
+	var btn_ta := _town_service_card(trap_row,
+		"Brave the Trigger",
+		"Sprint through and grab the full cache.\nAll units take -%d HP." % damage,
+		"-%d HP per unit" % damage,
+		Color(0.96, 0.40, 0.30))
+	btn_ta.text = "Push Through  (+%dg)" % gold_brave
+	btn_ta.pressed.connect(func() -> void:
+		if _gs:
+			for uid in _gs.unit_registry:
+				var reg: Dictionary = _gs.unit_registry[uid]
+				reg["current_hp"] = maxi(1, int(reg.get("current_hp", 0)) - damage)
+			_gs.gold += gold_brave
+		_complete_current_node_with_loadout_xp("mystery_trap")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	var btn_tb := _town_service_card(trap_row,
+		"Careful Retreat",
+		"Probe safely and snag what you can reach.\nNo injuries, but a smaller haul.",
+		"No risk",
+		Color(0.48, 0.86, 1.0))
+	btn_tb.text = "Back Away  (+%dg)" % gold_cautious
+	btn_tb.pressed.connect(func() -> void:
+		if _gs:
+			_gs.gold += gold_cautious
+		_complete_current_node_with_loadout_xp("mystery_trap")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+
+
+func _show_mystery_curse_site(_node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var meta: Node = get_node_or_null("/root/MetaProgression")
+	var shards: int = meta.get_currency(Currency.SOUL_SHARDS) if meta else 0
+	var jp_absorb: int = floor_num * 25 + 60
+	var jp_purge: int  = floor_num * 12 + 25
+	var owned_curse_ids: Array = []
+	if _gs and _gs.active_run:
+		owned_curse_ids = _gs.active_run.active_curses.map(
+			func(c: Dictionary) -> String: return c.get("id", ""))
+	var cs_seed: int = (_gs.active_run.seed * 61 + floor_num * 13 + _gs.active_run.current_node + 777) if _gs and _gs.active_run else 777
+	var curse_offer: Dictionary = _cs.generate_curse_offer(cs_seed, floor_num, owned_curse_ids)
+	var curse_name: String = str(curse_offer.get("name", "an unknown curse")) if not curse_offer.is_empty() else ""
+	var can_absorb := not curse_offer.is_empty()
+	var can_purge  := shards >= 30
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(780, 0)
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Blackened Altar", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "A site of old dark power. The taint is still active. What do you do with it?", 13, DIM, true)
+	_space(vbox, 18)
+	var cs_row := _hbox(vbox)
+	cs_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cs_row.add_theme_constant_override("separation", 12)
+	var absorb_body: String
+	if can_absorb:
+		absorb_body = "Accept [%s] into the run.\n+%d JP to every unit as dark power courses through." % [curse_name, jp_absorb]
+	else:
+		absorb_body = "All curses for this depth are already active."
+	var btn_cs_a := _town_service_card(cs_row,
+		"Absorb the Darkness",
+		absorb_body,
+		"1 curse added to run",
+		Color(0.72, 0.30, 0.86) if can_absorb else DIM)
+	btn_cs_a.text = "Accept"
+	btn_cs_a.disabled = not can_absorb
+	btn_cs_a.pressed.connect(func() -> void:
+		if _gs and _gs.active_run and not curse_offer.is_empty():
+			_gs.active_run.active_curses.append(curse_offer)
+			_grant_party_jp(jp_absorb)
+		_complete_current_node_with_loadout_xp("mystery_curse_site")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	var btn_cs_b := _town_service_card(cs_row,
+		"Purge the Sigil",
+		"Spend Soul Shards to cleanse the altar.\n+%d JP from residual energy. No curse." % jp_purge,
+		"30 Soul Shards",
+		Color(0.55, 0.92, 0.72) if can_purge else DIM)
+	btn_cs_b.text = "Purge"
+	btn_cs_b.disabled = not can_purge
+	btn_cs_b.pressed.connect(func() -> void:
+		if not meta or not meta.spend({Currency.SOUL_SHARDS: 30}):
+			return
+		_grant_party_jp(jp_purge)
+		_complete_current_node_with_loadout_xp("mystery_curse_site")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	_space(vbox, 22)
+	var skip_cs := _btn("Walk Past", DIM)
+	skip_cs.custom_minimum_size = Vector2(160, 40)
+	skip_cs.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	skip_cs.pressed.connect(func() -> void:
+		_complete_current_node_with_loadout_xp("mystery_curse_site")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	vbox.add_child(skip_cs)
+
+
+func _show_mystery_mimic(node: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var flee_damage: int = floor_num * 8 + 15
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(640, 0)
+	_lbl(vbox, "MYSTERY", 11, DIM, true)
+	_space(vbox, 8)
+	_lbl(vbox, "!! MIMIC !!", 32, Color(0.96, 0.30, 0.20), true)
+	_space(vbox, 8)
+	_lbl(vbox, "The chest lunges. Eyes and teeth emerge from the lock. It was never treasure at all.", 13, DIM, true)
+	_space(vbox, 20)
+	var mimic_row := _hbox(vbox)
+	mimic_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	mimic_row.add_theme_constant_override("separation", 16)
+	var fight := _btn("Fight!  ->", Color(0.96, 0.40, 0.30))
+	fight.custom_minimum_size = Vector2(200, 56)
+	fight.pressed.connect(func() -> void:
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_open_deployment(node))
+	mimic_row.add_child(fight)
+	var flee := _btn("Flee!  (-%d HP each)" % flee_damage, DIM)
+	flee.custom_minimum_size = Vector2(250, 56)
+	flee.pressed.connect(func() -> void:
+		if _gs:
+			for uid in _gs.unit_registry:
+				var reg: Dictionary = _gs.unit_registry[uid]
+				reg["current_hp"] = maxi(1, int(reg.get("current_hp", 0)) - flee_damage)
+		_complete_current_node_with_loadout_xp("mystery_mimic")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	mimic_row.add_child(flee)
+
+
+func _show_town_node(node: Dictionary) -> void:
+	_show_town_hub(str(node.get("type", "town_1")))
+
+
+func _close_town_overlay(town_type: String) -> void:
+	_complete_current_node_with_loadout_xp(town_type)
+	if _gs:
+		_gs.save()
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+		_boon_overlay = null
+	_build_ui()
+
+
+func _town_service_card(parent: Control, title: String, body: String,
+		cost: String, accent: Color) -> Button:
+	var pc := PanelContainer.new()
+	pc.custom_minimum_size = Vector2(320, 210)
+	pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pc.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	var st := StyleBoxFlat.new()
+	st.bg_color     = Color(accent.r * 0.08, accent.g * 0.08, accent.b * 0.08, 0.92)
+	st.border_color = accent.lerp(Color.TRANSPARENT, 0.35)
+	st.set_border_width_all(1)
+	st.content_margin_left = 22; st.content_margin_right  = 22
+	st.content_margin_top  = 18; st.content_margin_bottom = 18
+	pc.add_theme_stylebox_override("panel", st)
+	parent.add_child(pc)
+
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 10)
+	pc.add_child(inner)
+
+	var title_lbl := Label.new()
+	title_lbl.text = title
+	title_lbl.add_theme_font_size_override("font_size", 18)
+	title_lbl.add_theme_color_override("font_color", accent)
+	inner.add_child(title_lbl)
+
+	var body_lbl := Label.new()
+	body_lbl.text = body
+	body_lbl.add_theme_font_size_override("font_size", 13)
+	body_lbl.add_theme_color_override("font_color", Color(0.78, 0.75, 0.70))
+	body_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_child(body_lbl)
+
+	inner.add_child(HSeparator.new())
+
+	var cost_lbl := Label.new()
+	cost_lbl.text = "Cost: %s" % cost
+	cost_lbl.add_theme_font_size_override("font_size", 13)
+	cost_lbl.add_theme_color_override("font_color", accent)
+	inner.add_child(cost_lbl)
+
+	var btn := _btn("Use", accent)
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_child(btn)
+	return btn
+
+
+func _apply_partial_hp_heal(amount: int) -> void:
+	if not _gs:
+		return
+	var total_healed := 0
+	for uid in _gs.unit_registry:
+		var reg: Dictionary = _gs.unit_registry[uid]
+		var current: int = int(reg.get("current_hp", reg.get("base_hp", reg.get("max_hp", 200))))
+		var max_hp: int  = int(reg.get("base_hp", reg.get("max_hp", 200)))
+		var next_hp: int = mini(max_hp, current + amount)
+		total_healed += maxi(0, next_hp - current)
+		reg["current_hp"] = next_hp
+	_record_healing_applied("partial_hp", total_healed)
+
+
+func _show_sanctum(town_type: String) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var partial_hp: int = floor_num * 15 + 30
+	var meta: Node = get_node_or_null("/root/MetaProgression")
+	var shards: int = meta.get_currency(Currency.SOUL_SHARDS) if meta else 0
+	var jp_bonus: int = 6 + floor_num * 2
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(720, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Sanctum of the Last Hearth", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Holy ground. Choose your services before continuing.", 13, DIM, true)
+	_space(vbox, 18)
+
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+
+	var btn_a := _town_service_card(cards_row,
+		"Tend the Wounded",
+		"Restore %d HP to each party member.\nWill not exceed max HP." % partial_hp,
+		"Free", Color(0.30, 0.86, 0.50))
+	btn_a.pressed.connect(func() -> void:
+		_apply_partial_hp_heal(partial_hp)
+		btn_a.text = "Mended"
+		btn_a.disabled = true)
+
+	var can_rite := shards >= 50
+	var btn_b := _town_service_card(cards_row,
+		"Full Consecration",
+		"Restore ALL HP to full.\n+%d JP to every unit." % jp_bonus,
+		"50 Soul Shards",
+		GOLD if can_rite else DIM)
+	btn_b.disabled = not can_rite
+	btn_b.pressed.connect(func() -> void:
+		if not meta or not meta.spend({Currency.SOUL_SHARDS: 50}):
+			return
+		_restore_party_hp()
+		_grant_party_jp(jp_bonus)
+		btn_b.text = "Consecrated"
+		btn_b.disabled = true)
+
+	_space(vbox, 22)
+	var back_sanc := _btn("← Town Square", DIM)
+	back_sanc.custom_minimum_size = Vector2(200, 46)
+	back_sanc.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back_sanc.pressed.connect(func() -> void: _show_town_hub(town_type))
+	vbox.add_child(back_sanc)
+
+
+func _show_armory(town_type: String) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var gold: int = int(_gs.gold) if _gs else 0
+	var heal_b: int = floor_num * 10 + 25
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(720, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Field Armory", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Spend gold to strengthen the party. Services can be used once each.", 13, DIM, true)
+	_space(vbox, 4)
+	_lbl(vbox, "Gold: %dg" % gold, 15, GOLD, true)
+	_space(vbox, 16)
+
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+
+	var btn_a := _town_service_card(cards_row,
+		"Basic Resupply",
+		"All units gain +15 JP.\nSharpen skills for the fights ahead.",
+		"50g",
+		Color(0.96, 0.78, 0.28) if gold >= 50 else DIM)
+	btn_a.disabled = gold < 50
+	btn_a.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 50:
+			return
+		_gs.gold -= 50
+		_grant_party_jp(15)
+		btn_a.text = "Supplied"
+		btn_a.disabled = true)
+
+	var btn_b := _town_service_card(cards_row,
+		"Full War Drill",
+		"All units gain +30 JP.\nRestore %d HP to each unit." % heal_b,
+		"100g",
+		Color(1.0, 0.55, 0.20) if gold >= 100 else DIM)
+	btn_b.disabled = gold < 100
+	btn_b.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 100:
+			return
+		_gs.gold -= 100
+		_grant_party_jp(30)
+		_apply_partial_hp_heal(heal_b)
+		btn_b.text = "Drilled"
+		btn_b.disabled = true)
+
+	_space(vbox, 22)
+	var back_arm := _btn("← Town Square", DIM)
+	back_arm.custom_minimum_size = Vector2(200, 46)
+	back_arm.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back_arm.pressed.connect(func() -> void: _show_town_hub(town_type))
+	vbox.add_child(back_arm)
+
+
+func _show_oracle(town_type: String) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var floor_num: int = int(_gs.active_run.current_floor) if _gs and _gs.active_run else 1
+	var meta: Node = get_node_or_null("/root/MetaProgression")
+	var shards: int = meta.get_currency(Currency.SOUL_SHARDS) if meta else 0
+	var can_boon := shards >= 40 and _gs != null and _gs.active_run != null
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(760, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "The Oracle's Post", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "A seer reads the paths ahead. Knowledge and power, for a price.", 13, DIM, true)
+	_space(vbox, 18)
+
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+
+	var btn_a := _town_service_card(cards_row,
+		"Scout Ahead",
+		"Reveal mystery nodes on the next 2 floors.\nFree intelligence on what lies ahead.",
+		"Free", Color(0.72, 0.58, 1.0))
+	btn_a.pressed.connect(func() -> void:
+		var revealed: int = _reveal_upcoming_mysteries(2)
+		btn_a.text = "%d Node%s Revealed" % [revealed, "s" if revealed != 1 else ""]
+		btn_a.disabled = true)
+
+	var btn_b := _town_service_card(cards_row,
+		"Commune with the Weave",
+		"Draw 3 Guardian boons. Choose one to add to your run.\nLane limits apply.",
+		"40 Soul Shards",
+		Color(0.55, 0.92, 0.72) if can_boon else DIM)
+	btn_b.disabled = not can_boon
+	btn_b.pressed.connect(func() -> void:
+		if not meta or not meta.spend({Currency.SOUL_SHARDS: 40}):
+			return
+		btn_b.text = "Communing..."
+		btn_b.disabled = true
+		_show_oracle_boon_pick(vbox, floor_num))
+
+	_space(vbox, 22)
+	var back_orc := _btn("← Town Square", DIM)
+	back_orc.custom_minimum_size = Vector2(200, 46)
+	back_orc.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back_orc.pressed.connect(func() -> void: _show_town_hub(town_type))
+	vbox.add_child(back_orc)
+
+
+func _show_oracle_boon_pick(parent: Control, floor_num: int) -> void:
+	if not _gs or not _gs.active_run:
+		return
+	var owned: Array = _gs.active_run.active_boons.map(
+		func(b: Dictionary) -> String: return b.get("id", ""))
+	var offers := _bs.generate_offers(
+		_gs.active_run.seed * 37 + floor_num * 7 + _gs.active_run.current_node + 999,
+		floor_num, owned, _gs.active_run.get_loadout_bonus())
+
+	_space(parent, 14)
+	_lbl(parent, "CHOOSE A VISION", 11, Color(0.55, 0.92, 0.72), true)
+	_space(parent, 8)
+
+	var row := _hbox(parent)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+
+	var offer_btns: Array[Button] = []
+	for boon: Dictionary in offers:
+		var rd: Dictionary = BoonSystem.RARITIES.get(boon.get("rarity", "common"), {})
+		var bc: Color = rd.get("color", GOLD)
+		var boon_copy := boon
+		var offer_btn := Button.new()
+		offer_btn.custom_minimum_size = Vector2(220, 80)
+		offer_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var st := StyleBoxFlat.new()
+		st.bg_color     = Color(bc.r * 0.10, bc.g * 0.10, bc.b * 0.10, 0.92)
+		st.border_color = bc.lerp(Color.TRANSPARENT, 0.30)
+		st.set_border_width_all(1)
+		st.content_margin_left = 14; st.content_margin_right  = 14
+		st.content_margin_top  = 10; st.content_margin_bottom = 10
+		offer_btn.add_theme_stylebox_override("normal", st)
+		offer_btn.add_theme_stylebox_override("hover",  st)
+		offer_btn.add_theme_color_override("font_color", bc)
+		offer_btn.add_theme_font_size_override("font_size", 13)
+		offer_btn.text = "%s %s  [%s]" % [
+			str(boon_copy.get("icon", "+")),
+			str(boon_copy.get("name", "?")),
+			str(boon_copy.get("rarity", "common")).capitalize()
+		]
+		offer_btn.pressed.connect(func() -> void:
+			_oracle_accept_boon(boon_copy)
+			for b: Button in offer_btns:
+				b.disabled = true)
+		offer_btns.append(offer_btn)
+		row.add_child(offer_btn)
+
+
+func _oracle_accept_boon(boon: Dictionary) -> void:
+	if not _gs or not _gs.active_run:
+		return
+	if BoonSystem.needs_lane_replacement(_gs.active_run.active_boons, boon):
+		var lane: String = BoonSystem.boon_lane(boon)
+		var in_lane: Array = BoonSystem.boons_in_lane(_gs.active_run.active_boons, lane)
+		if not in_lane.is_empty():
+			var lane_id: String = str(in_lane[0].get("id", ""))
+			for i: int in range(_gs.active_run.active_boons.size() - 1, -1, -1):
+				if str(_gs.active_run.active_boons[i].get("id", "")) == lane_id:
+					_gs.active_run.active_boons.remove_at(i)
+					break
+	_gs.active_run.active_boons.append(boon)
+
+
+#  Town hub — 5-district entry screen  ——————————————————————————————————————
+
+## Hub shown for all town node types.  Lets the player visit each district
+## freely before the single "Depart" button completes the node.
+func _show_town_hub(town_type: String) -> void:
+	if _boon_overlay: _boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(920, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Town Square", 30, FG, true)
+	_space(vbox, 8)
+	_lbl(vbox, "Choose a district.  You may visit each one before departing.", 13, DIM, true)
+	_space(vbox, 22)
+
+	# District definitions — Callable stored as Variant in an untyped Array.
+	var districts: Array = [
+		{
+			"title": "Sanctum",  "icon": "+",
+			"desc":  "Rest the wounded.\nBlessings for the worthy.",
+			"accent": Color(0.30, 0.86, 0.50),
+			"fn": func() -> void: _show_sanctum(town_type),
+		},
+		{
+			"title": "Armory",   "icon": "@",
+			"desc":  "Spend gold on training\nand war supplies.",
+			"accent": Color(0.96, 0.78, 0.28),
+			"fn": func() -> void: _show_armory(town_type),
+		},
+		{
+			"title": "Tavern",   "icon": "T",
+			"desc":  "Reassign your deployed\nparty roster.",
+			"accent": Color(0.48, 0.78, 1.00),
+			"fn": func() -> void: _show_tavern(town_type),
+		},
+		{
+			"title": "Vault",    "icon": "$",
+			"desc":  "Convert gold into\nmeta-currencies.",
+			"accent": Color(0.72, 0.58, 1.00),
+			"fn": func() -> void: _show_vault(town_type),
+		},
+		{
+			"title": "Oracle",   "icon": "?",
+			"desc":  "Scout ahead and\ncommunne with the Weave.",
+			"accent": Color(0.55, 0.92, 0.72),
+			"fn": func() -> void: _show_oracle(town_type),
+		},
+	]
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 12)
+	vbox.add_child(row)
+
+	for d: Dictionary in districts:
+		var acc: Color = d["accent"]
+
+		var pc := PanelContainer.new()
+		pc.custom_minimum_size = Vector2(162, 220)
+		pc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var card_st := StyleBoxFlat.new()
+		card_st.bg_color     = Color(acc.r * 0.08, acc.g * 0.08, acc.b * 0.08, 0.92)
+		card_st.border_color = acc.lerp(Color.TRANSPARENT, 0.40)
+		card_st.set_border_width_all(1)
+		card_st.set_corner_radius_all(8)
+		card_st.content_margin_left = 14; card_st.content_margin_right  = 14
+		card_st.content_margin_top  = 14; card_st.content_margin_bottom = 14
+		pc.add_theme_stylebox_override("panel", card_st)
+		row.add_child(pc)
+
+		var inner := VBoxContainer.new()
+		inner.add_theme_constant_override("separation", 8)
+		pc.add_child(inner)
+
+		_lbl(inner, str(d["icon"]), 26, acc, true)
+		var title_lbl := Label.new()
+		title_lbl.text = str(d["title"])
+		title_lbl.add_theme_font_size_override("font_size", 16)
+		title_lbl.add_theme_color_override("font_color", acc)
+		title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		inner.add_child(title_lbl)
+
+		var desc_lbl := Label.new()
+		desc_lbl.text = str(d["desc"])
+		desc_lbl.add_theme_font_size_override("font_size", 12)
+		desc_lbl.add_theme_color_override("font_color", Color(0.72, 0.70, 0.65))
+		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inner.add_child(desc_lbl)
+
+		var fill := Control.new()
+		fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		inner.add_child(fill)
+
+		var enter_btn := _btn("Enter", acc)
+		enter_btn.custom_minimum_size = Vector2(0, 36)
+		enter_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var fn: Callable = d["fn"]
+		enter_btn.pressed.connect(fn)
+		inner.add_child(enter_btn)
+
+	_space(vbox, 26)
+	var depart_hub := _btn("Depart from Town  ->", GOLD)
+	depart_hub.custom_minimum_size = Vector2(240, 48)
+	depart_hub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	depart_hub.pressed.connect(func() -> void: _close_town_overlay(town_type))
+	vbox.add_child(depart_hub)
+
+
+#  Tavern — roster management  ——————————————————————————————————————————————
+
+## Lets the player bench deployed units and call up reserve units.
+## Changes write directly to run_deployment; max 4 deployed, min 1.
+func _show_tavern(town_type: String) -> void:
+	if _boon_overlay: _boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	if not _gs or not _gs.active_run:
+		_show_town_hub(town_type)
+		return
+
+	var run: RunState = _gs.active_run
+	var chars_node := get_node_or_null("/root/Characters")
+
+	# Deployed: units present in run_deployment (preserving order).
+	var deployed_ids: Array[String] = []
+	for slot: Dictionary in run.run_deployment:
+		var uid: String = str(slot.get("unit_id", ""))
+		if uid != "" and uid not in deployed_ids:
+			deployed_ids.append(uid)
+
+	# Reserve: all unit_registry keys not currently deployed.
+	var reserve_ids: Array[String] = []
+	for uid: String in _gs.unit_registry.keys():
+		if uid not in deployed_ids:
+			reserve_ids.append(uid)
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(780, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Tavern — Roster", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Reassign your party before the next battle.  Changes take effect immediately.", 13, DIM, true)
+	_space(vbox, 18)
+
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 20)
+	vbox.add_child(cols)
+
+	# Left column: deployed.
+	var dep_col := VBoxContainer.new()
+	dep_col.add_theme_constant_override("separation", 8)
+	dep_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cols.add_child(dep_col)
+	_lbl(dep_col, "DEPLOYED  (%d / 4)" % deployed_ids.size(), 11, TEAL)
+	_space(dep_col, 4)
+	for uid: String in deployed_ids:
+		dep_col.add_child(_tavern_unit_row(uid, true, town_type, deployed_ids, chars_node))
+
+	# Right column: reserve.
+	var res_col := VBoxContainer.new()
+	res_col.add_theme_constant_override("separation", 8)
+	res_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cols.add_child(res_col)
+	_lbl(res_col, "RESERVE  (%d)" % reserve_ids.size(), 11, DIM)
+	_space(res_col, 4)
+	if reserve_ids.is_empty():
+		_lbl(res_col, "All units are deployed.", 13, DIM)
+	else:
+		for uid: String in reserve_ids:
+			res_col.add_child(_tavern_unit_row(uid, false, town_type, deployed_ids, chars_node))
+
+	_space(vbox, 22)
+	var back_tav := _btn("← Town Square", DIM)
+	back_tav.custom_minimum_size = Vector2(200, 46)
+	back_tav.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back_tav.pressed.connect(func() -> void: _show_town_hub(town_type))
+	vbox.add_child(back_tav)
+
+
+## Builds one unit row for the Tavern — name/stats + Bench or Deploy button.
+func _tavern_unit_row(uid: String, is_deployed: bool, town_type: String,
+		deployed_ids: Array[String], chars_node: Node) -> PanelContainer:
+	var reg: Dictionary = _gs.unit_registry.get(uid, {}) if _gs else {}
+	var hp_cur: int = int(reg.get("current_hp", reg.get("base_hp", 200)))
+	var hp_max: int = int(reg.get("base_hp",    reg.get("max_hp",  200)))
+	var jp_val: int = int(reg.get("jp", 0))
+
+	var display_name: String = uid
+	if chars_node and chars_node.CHARACTERS.has(uid):
+		display_name = str(chars_node.CHARACTERS[uid].get("human_name", uid))
+
+	var pc := PanelContainer.new()
+	pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var card_st := StyleBoxFlat.new()
+	card_st.bg_color     = Color(0.07, 0.08, 0.11) if is_deployed else Color(0.05, 0.055, 0.075)
+	card_st.border_color = TEAL.lerp(Color.TRANSPARENT, 0.50) if is_deployed else Color(1.0, 1.0, 1.0, 0.07)
+	card_st.set_border_width_all(1)
+	card_st.set_corner_radius_all(6)
+	card_st.content_margin_left = 14; card_st.content_margin_right  = 14
+	card_st.content_margin_top  = 10; card_st.content_margin_bottom = 10
+	pc.add_theme_stylebox_override("panel", card_st)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	pc.add_child(row)
+
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_theme_constant_override("separation", 2)
+	row.add_child(info)
+	_lbl(info, display_name, 14, FG if is_deployed else DIM)
+	_lbl(info, "HP %d/%d  ·  %d JP" % [hp_cur, hp_max, jp_val], 11, DIM)
+
+	var cap_uid := uid
+	if is_deployed:
+		var bench_btn := _btn("Bench", DIM)
+		bench_btn.custom_minimum_size = Vector2(72, 28)
+		bench_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		# Prevent benching the last deployed unit.
+		bench_btn.disabled = deployed_ids.size() <= 1
+		bench_btn.pressed.connect(func() -> void:
+			if not _gs or not _gs.active_run: return
+			for i: int in range(_gs.active_run.run_deployment.size() - 1, -1, -1):
+				if str(_gs.active_run.run_deployment[i].get("unit_id", "")) == cap_uid:
+					_gs.active_run.run_deployment.remove_at(i)
+					break
+			_show_tavern(town_type))
+		row.add_child(bench_btn)
+	else:
+		var deploy_btn := _btn("Deploy", TEAL)
+		deploy_btn.custom_minimum_size = Vector2(72, 28)
+		deploy_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		# Prevent deploying a fifth unit.
+		deploy_btn.disabled = deployed_ids.size() >= 4
+		deploy_btn.pressed.connect(func() -> void:
+			if not _gs or not _gs.active_run: return
+			var pos: int = _gs.active_run.run_deployment.size()
+			_gs.active_run.run_deployment.append({
+				"unit_id": cap_uid,
+				"x":       mini(pos, 3),
+				"y":       6,
+				"facing":  "N",
+			})
+			_show_tavern(town_type))
+		row.add_child(deploy_btn)
+
+	return pc
+
+
+#  Vault — gold banking  ————————————————————————————————————————————————————
+
+## Converts run gold into persistent meta-currencies (Soul Shards and Obsidian).
+func _show_vault(town_type: String) -> void:
+	if _boon_overlay: _boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var meta: Node    = get_node_or_null("/root/MetaProgression")
+	var gold: int     = int(_gs.gold) if _gs else 0
+	var shards: int   = meta.get_currency(Currency.SOUL_SHARDS) if meta else 0
+	var obsidian: int = meta.get_currency(Currency.OBSIDIAN)     if meta else 0
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(720, 0)
+
+	_lbl(vbox, "TOWN NODE", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "The Vault", 28, FG, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Convert run gold into persistent currencies that carry over between runs.", 13, DIM, true)
+	_space(vbox, 12)
+
+	# Current holdings summary.
+	var res_row := HBoxContainer.new()
+	res_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	res_row.add_theme_constant_override("separation", 28)
+	vbox.add_child(res_row)
+	_lbl(res_row, "Gold:  %dg" % gold, 16, GOLD)
+	_lbl(res_row, "Soul Shards:  %d" % shards, 15, Color(0.55, 0.92, 0.72))
+	_lbl(res_row, "Obsidian:  %d" % obsidian, 15, Color(0.72, 0.58, 1.00))
+	_space(vbox, 18)
+
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+
+	# Conversion A: 50g → 10 Soul Shards.
+	var btn_v1 := _town_service_card(cards_row,
+		"Tithe to the Shards",
+		"Convert 50g into 10 Soul Shards.\nShards fund Sanctum rites and Oracle visions.",
+		"50g",
+		Color(0.55, 0.92, 0.72) if gold >= 50 else DIM)
+	btn_v1.disabled = gold < 50 or not meta
+	btn_v1.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 50 or not meta: return
+		_gs.gold -= 50
+		meta.add_currency(Currency.SOUL_SHARDS, 10)
+		btn_v1.text    = "+10 Shards"
+		btn_v1.disabled = true)
+
+	# Conversion B: 100g → 5 Obsidian.
+	var btn_v2 := _town_service_card(cards_row,
+		"Temper the Obsidian",
+		"Convert 100g into 5 Obsidian.\nObsidian fuels permanent upgrades between runs.",
+		"100g",
+		Color(0.72, 0.58, 1.00) if gold >= 100 else DIM)
+	btn_v2.disabled = gold < 100 or not meta
+	btn_v2.pressed.connect(func() -> void:
+		if not _gs or int(_gs.gold) < 100 or not meta: return
+		_gs.gold -= 100
+		meta.add_currency(Currency.OBSIDIAN, 5)
+		btn_v2.text    = "+5 Obsidian"
+		btn_v2.disabled = true)
+
+	_space(vbox, 22)
+	var back_vlt := _btn("← Town Square", DIM)
+	back_vlt.custom_minimum_size = Vector2(200, 46)
+	back_vlt.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back_vlt.pressed.connect(func() -> void: _show_town_hub(town_type))
+	vbox.add_child(back_vlt)
+
+
+func _restore_party_hp() -> void:
+	if not _gs:
+		return
+	var total_healed := 0
+	for uid in _gs.unit_registry:
+		var reg: Dictionary = _gs.unit_registry[uid]
+		var max_hp: int = int(reg.get("base_hp", reg.get("max_hp", 200)))
+		var current: int = int(reg.get("current_hp", max_hp))
+		total_healed += maxi(0, max_hp - current)
+		reg["current_hp"] = max_hp
+	_record_healing_applied("full_restore", total_healed)
+
+
+func _reveal_upcoming_mysteries(floors_ahead: int) -> int:
+	if not _gs or not _gs.active_run:
+		return 0
+	var run: RunState = _gs.active_run
+	var revealed := 0
+	var start_floor: int = int(run.current_floor)
+	for i in range(run.floor_plan.size()):
+		var route_node: Dictionary = run.floor_plan[i]
+		var node_floor: int = int(route_node.get("floor", 0))
+		if node_floor <= start_floor or node_floor > start_floor + floors_ahead:
+			continue
+		if route_node.get("type", "") == "mystery":
+			run.reveal_mystery_node_at_index(i)
+			revealed += 1
+	return revealed
+
+
 func _apply_mystery_event(event_type: String) -> void:
 	if not _gs or not _gs.active_run:
 		return
@@ -596,8 +1614,14 @@ func _apply_mystery_event(event_type: String) -> void:
 			_gs.gold += _mystery_gold_reward()
 		"mystery_training":
 			_grant_party_jp(_mystery_jp_reward())
+		"mystery_treasure":
+			_gs.gold += _mystery_treasure_reward()
 	_complete_current_node_with_loadout_xp(event_type)
 	_gs.save()
+
+
+func _mystery_treasure_reward() -> int:
+	return 120 + int(_gs.active_run.current_floor) * 40 if _gs and _gs.active_run else 120
 
 
 func _complete_current_node_with_loadout_xp(node_type_override: String = "") -> Dictionary:
@@ -747,17 +1771,209 @@ func _apply_between_battle_heal() -> void:
 	if pct <= 0.0: return
 	var gs: Node = get_node_or_null("/root/GameState")
 	if not gs: return
+	var total_healed := 0
 	for uid in gs.unit_registry:
 		var reg: Dictionary = gs.unit_registry[uid]
 		var max_hp: int = reg.get("base_hp", 200)
 		var heal: int   = int(float(max_hp) * pct)
 		if heal > 0:
-			reg["current_hp"] = min(max_hp, reg.get("current_hp", max_hp) + heal)
+			var current: int = int(reg.get("current_hp", max_hp))
+			var next_hp: int = min(max_hp, current + heal)
+			total_healed += maxi(0, next_hp - current)
+			reg["current_hp"] = next_hp
+	_record_healing_applied("between_battle_boon", total_healed)
+
+
+func _record_healing_applied(source: String, amount: int) -> void:
+	if not _gs or amount <= 0:
+		return
+	var healing: Array = _gs.pending_rewards.get("healing_applied", [])
+	healing.append({"source": source, "amount": amount})
+	_gs.pending_rewards["healing_applied"] = healing
 
 func _on_loot_continue() -> void:
 	if _gs: _gs.pending_loot.clear()
 	if _loot_overlay: _loot_overlay.queue_free(); _loot_overlay = null
 	_build_ui()
+
+
+#  Gear management overlay
+
+## Opens the Party Gear overlay showing each deployed unit's equipped items.
+## Reuses _loot_overlay so Gear and Loot panels are mutually exclusive.
+func _show_gear_panel() -> void:
+	if not _gs or not _gs.active_run: return
+	if _loot_overlay: _loot_overlay.queue_free()
+	_loot_overlay = _overlay()
+	add_child(_loot_overlay)
+
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_loot_overlay.add_child(scroll)
+
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.custom_minimum_size = Vector2(820, 0)
+	vbox.add_theme_constant_override("separation", 0)
+	center.add_child(vbox)
+
+	_space(vbox, 28)
+	_lbl(vbox, "PARTY GEAR", 11, DIM, true)
+	_space(vbox, 6)
+	_lbl(vbox, "Equipment", 30, FG, true)
+	_space(vbox, 18)
+
+	# Gather deployed unit ids from run_deployment
+	var party_ids: Array[String] = []
+	for slot: Dictionary in _gs.active_run.run_deployment:
+		var uid: String = str(slot.get("unit_id", ""))
+		if uid != "" and uid not in party_ids:
+			party_ids.append(uid)
+
+	var chars_node := get_node_or_null("/root/Characters")
+
+	if party_ids.is_empty():
+		_lbl(vbox, "No party deployed. Start a battle to assign a formation.", 14, DIM, true)
+	else:
+		for uid: String in party_ids:
+			vbox.add_child(_unit_gear_card(uid, chars_node))
+			_space(vbox, 10)
+
+	# — Stash footer ——————————————————————————————
+	_space(vbox, 8)
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color(1.0, 1.0, 1.0, 0.08))
+	vbox.add_child(sep)
+	_space(vbox, 12)
+
+	var stash_count: int = _gs.pending_loot.size()
+	var stash_row := HBoxContainer.new()
+	stash_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	stash_row.add_theme_constant_override("separation", 16)
+	vbox.add_child(stash_row)
+
+	_lbl(stash_row, "%d item%s in stash" % [stash_count, "s" if stash_count != 1 else ""], 14, DIM)
+	if stash_count > 0:
+		var stash_btn := _btn("View Stash  →", GOLD)
+		stash_btn.custom_minimum_size = Vector2(160, 36)
+		stash_btn.pressed.connect(func() -> void: _show_loot(_gs.pending_loot))
+		stash_row.add_child(stash_btn)
+
+	_space(vbox, 16)
+	var close_btn := _btn("Close", DIM)
+	close_btn.custom_minimum_size = Vector2(160, 44)
+	close_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_btn.pressed.connect(func() -> void:
+		if _loot_overlay: _loot_overlay.queue_free(); _loot_overlay = null)
+	vbox.add_child(close_btn)
+	_space(vbox, 28)
+
+
+## Builds one unit's gear card — name header + one row per slot.
+func _unit_gear_card(uid: String, chars_node: Node) -> PanelContainer:
+	var reg: Dictionary       = _gs.unit_registry.get(uid, {}) if _gs else {}
+	var equipment: Dictionary = reg.get("equipment", {})
+
+	var display_name: String = uid
+	if chars_node and chars_node.CHARACTERS.has(uid):
+		display_name = str(chars_node.CHARACTERS[uid].get("human_name", uid))
+
+	var pc := PanelContainer.new()
+	pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var card_st := StyleBoxFlat.new()
+	card_st.bg_color = Color(0.06, 0.07, 0.10)
+	card_st.border_color = Color(1.0, 1.0, 1.0, 0.08)
+	card_st.set_border_width_all(1)
+	card_st.set_corner_radius_all(8)
+	card_st.content_margin_left   = 20
+	card_st.content_margin_right  = 20
+	card_st.content_margin_top    = 14
+	card_st.content_margin_bottom = 14
+	pc.add_theme_stylebox_override("panel", card_st)
+
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 8)
+	pc.add_child(inner)
+
+	_lbl(inner, display_name.to_upper(), 14, FG)
+
+	for slot_id: String in ["weapon", "accessory", "charm"]:
+		inner.add_child(_slot_row(uid, slot_id, equipment.get(slot_id, {})))
+
+	return pc
+
+
+## One slot row: SLOT | item name + affixes | [Unequip] button.
+func _slot_row(uid: String, slot_id: String, item: Dictionary) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+
+	# Slot label — fixed 88 px so all slots align across units.
+	var slot_lbl := Label.new()
+	slot_lbl.text = slot_id.to_upper()
+	slot_lbl.custom_minimum_size = Vector2(88, 0)
+	slot_lbl.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	slot_lbl.add_theme_font_size_override("font_size", 10)
+	slot_lbl.add_theme_color_override("font_color", DIM)
+	row.add_child(slot_lbl)
+
+	# Item info — expands to fill remaining width.
+	var info := VBoxContainer.new()
+	info.add_theme_constant_override("separation", 2)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+
+	if item.is_empty():
+		var empty_lbl := Label.new()
+		empty_lbl.text = "— Empty —"
+		empty_lbl.add_theme_font_size_override("font_size", 13)
+		empty_lbl.add_theme_color_override("font_color", Color(DIM.r, DIM.g, DIM.b, 0.50))
+		info.add_child(empty_lbl)
+	else:
+		var accent: Color = item.get("color", FG)
+		var name_lbl := Label.new()
+		name_lbl.text = "%s  [%s]" % [item.get("name", "?"), item.get("label", "")]
+		name_lbl.add_theme_font_size_override("font_size", 14)
+		name_lbl.add_theme_color_override("font_color", accent)
+		info.add_child(name_lbl)
+		for affix: Dictionary in item.get("affixes", []):
+			var al := Label.new()
+			al.text = "· %s" % affix.get("label", "")
+			al.add_theme_font_size_override("font_size", 11)
+			al.add_theme_color_override("font_color", Color(0.75, 0.72, 0.68))
+			info.add_child(al)
+
+		# Unequip button — right-aligned, vertically centred.
+		var unequip_btn := _btn("Unequip", DIM)
+		unequip_btn.custom_minimum_size = Vector2(90, 30)
+		unequip_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		# Capture loop values for the closure.
+		var cap_uid  := uid
+		var cap_slot := slot_id
+		var cap_item := item
+		unequip_btn.pressed.connect(func() -> void:
+			_on_unequip_item(cap_uid, cap_slot, cap_item))
+		row.add_child(unequip_btn)
+
+	return row
+
+
+## Remove an item from a unit's equipment slot and return it to the stash,
+## then rebuild the gear panel so the change is immediately visible.
+func _on_unequip_item(uid: String, slot_id: String, item: Dictionary) -> void:
+	if not _gs: return
+	if _gs.unit_registry.has(uid):
+		var eq: Dictionary = _gs.unit_registry[uid].get("equipment", {})
+		eq.erase(slot_id)
+		_gs.unit_registry[uid]["equipment"] = eq
+	_gs.pending_loot.append(item)
+	_show_gear_panel()
 
 
 #  Boon pick overlay
@@ -1067,72 +2283,229 @@ func _on_curse_picked(curse: Dictionary) -> void:
 
 
 func _show_wanderer_encounter(run: RunState) -> void:
+	if not run:
+		return
+	var floor_num: int = int(run.current_floor)
+
+	# Pick a wanderer for this floor, excluding those already met this run.
+	var met_ids: Array = []
+	if _gs:
+		for flag: String in _gs.story_flags:
+			if flag.begins_with("met_wanderer_"):
+				met_ids.append(flag.substr("met_wanderer_".length()))
+	var rng_val: float = fmod(float(run.seed * 13 + floor_num * 7 + run.current_node), 1000.0) / 1000.0
+	var wanderer: Dictionary = WandererData.get_for_floor(floor_num, rng_val, met_ids)
+	if wanderer.is_empty():
+		wanderer = WandererData.WANDERERS[0]
+
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 	_boon_overlay = _overlay()
 	add_child(_boon_overlay)
 
-	var met_before: bool = _gs != null and _gs.story_flags.has("met_orren")
-	var title := "Orren of the Lower Stair" if not met_before else "Orren's Second Mark"
-	var body := "A lantern flickers beside a broken stair. Orren, a vault-runner with a silver map case, raises one hand before your party reaches for steel."
-	if met_before:
-		body = "Orren finds you again between two impossible doors. His map has changed since the last floor, and one route now burns gold-bright."
-
+	var accent: Color = _wanderer_element_color(str(wanderer.get("element", "")))
 	var vbox := _vbox(_boon_overlay, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	vbox.custom_minimum_size = Vector2(760, 0)
-	_lbl(vbox, "STORY ENCOUNTER", 11, Color(0.53,0.94,0.67), true)
-	_space(vbox, 8)
-	_lbl(vbox, title, 30, FG, true)
-	_space(vbox, 8)
+	vbox.custom_minimum_size = Vector2(800, 0)
+
+	_lbl(vbox, "STORY ENCOUNTER", 11, accent, true)
+	_space(vbox, 6)
+	_lbl(vbox, str(wanderer.get("name", "Wanderer")), 30, FG, true)
+	_lbl(vbox, str(wanderer.get("title", "")), 13, DIM, true)
+	_space(vbox, 12)
+
 	var story := RichTextLabel.new()
 	story.bbcode_enabled = false
-	story.text = body + "\n\n\"The Anchor rearranges the floors when it feels watched,\" he says. \"Let me mark one truth before it lies again.\""
+	story.text = str(wanderer.get("greeting", "..."))
 	story.add_theme_font_size_override("normal_font_size", 13)
-	story.add_theme_color_override("default_color", Color(0.82,0.80,0.76))
-	story.custom_minimum_size = Vector2(700, 112)
+	story.add_theme_color_override("default_color", Color(0.82, 0.80, 0.76))
+	story.custom_minimum_size = Vector2(760, 80)
 	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(story)
 	_space(vbox, 16)
 
-	var choices := _hbox(vbox)
-	choices.add_theme_constant_override("separation", 14)
-	var map_btn := _btn("Trust His Map  +%dg" % _wanderer_gold_reward(), GOLD)
-	map_btn.custom_minimum_size = Vector2(260, 54)
-	map_btn.pressed.connect(_apply_wanderer_choice.bind("map", run))
-	choices.add_child(map_btn)
-	var train_btn := _btn("Train At The Stair  +%d JP" % _wanderer_jp_reward(), Color(0.48,0.86,1.0))
-	train_btn.custom_minimum_size = Vector2(260, 54)
-	train_btn.pressed.connect(_apply_wanderer_choice.bind("training", run))
-	choices.add_child(train_btn)
+	# --- Determine payment branch ---
+	var cond: Dictionary = wanderer.get("condition", {})
+	var cond_type: String = str(cond.get("type", "pay"))
+	var gold_cost: int = int(cond.get("cost", 80))
+	var current_gold: int = int(_gs.gold) if _gs else 0
+	var pay_ok: bool = cond_type == "free" or current_gold >= gold_cost
+	var pay_cost_str: String = "Free" if cond_type == "free" else "%dg" % gold_cost
+	var pay_card_title: String = str(cond.get("label", "Pay %s" % pay_cost_str))
+	var pay_body: String = str(wanderer.get("accept_msg", "The wanderer shares what they know."))
+	if cond_type not in ["pay", "free"]:
+		gold_cost = 80
+		pay_cost_str = "80g"
+		pay_card_title = "Offer Payment (80g)"
+		pay_ok = current_gold >= 80
+		pay_body = "Offer gold as a show of good faith."
 
-	_space(vbox, 12)
-	_lbl(vbox, "Orren will remember which help you accepted.", 11, DIM, true)
+	# --- Determine challenge branch ---
+	var alt_cond: Dictionary = wanderer.get("alt_condition", {})
+	var alt_type: String = str(alt_cond.get("type", "")) if not alt_cond.is_empty() else ""
+	var challenge_damage: int = floor_num * 15 + 20
+	var chal_ok := true
+	var chal_card_title: String
+	var chal_cost_str: String
+	var chal_body: String
+	if alt_type in ["challenge", "duel"]:
+		chal_card_title = str(alt_cond.get("label", "Accept the duel"))
+		chal_cost_str   = "-%d HP per unit" % challenge_damage
+		chal_body       = "Face the wanderer directly. No gold changes hands — only blood."
+	elif alt_type == "answer":
+		chal_card_title = str(alt_cond.get("label", "Answer correctly"))
+		chal_cost_str   = "Free"
+		chal_body       = str(alt_cond.get("question", "Answer their question to receive the reward."))
+		challenge_damage = 0
+	elif alt_type == "party_full_hp":
+		chal_card_title = str(alt_cond.get("label", "Arrive at full HP"))
+		chal_cost_str   = "Party must be at full HP"
+		chal_body       = "The wanderer teaches only those who arrive unblemished."
+		challenge_damage = 0
+		if _gs:
+			for uid in _gs.unit_registry:
+				var reg: Dictionary = _gs.unit_registry[uid]
+				if int(reg.get("current_hp", 0)) < int(reg.get("base_hp", reg.get("max_hp", 200))):
+					chal_ok = false
+					break
+	else:
+		chal_card_title = "Prove Yourself"
+		chal_cost_str   = "-%d HP per unit" % challenge_damage
+		chal_body       = "Endure a trial by hardship. The wanderer respects those who survive."
+
+	# --- Build service cards ---
+	var cards_row := _hbox(vbox)
+	cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	cards_row.add_theme_constant_override("separation", 16)
+
+	var btn_pay := _town_service_card(cards_row,
+		pay_card_title, pay_body, pay_cost_str,
+		accent if pay_ok else DIM)
+	btn_pay.text = "Accept"
+	btn_pay.disabled = not pay_ok
+
+	var btn_chal := _town_service_card(cards_row,
+		chal_card_title, chal_body, chal_cost_str,
+		Color(0.96, 0.78, 0.28) if chal_ok else DIM)
+	btn_chal.text = "Challenge"
+	btn_chal.disabled = not chal_ok
+
+	# Connect after both are declared so each lambda can reference the other.
+	btn_pay.pressed.connect(func() -> void:
+		btn_pay.disabled = true
+		btn_chal.disabled = true
+		if cond_type == "pay" and _gs:
+			_gs.gold -= gold_cost
+		_wanderer_mark_met(wanderer)
+		_wanderer_show_gift(vbox, wanderer, floor_num))
+
+	btn_chal.pressed.connect(func() -> void:
+		btn_pay.disabled = true
+		btn_chal.disabled = true
+		if challenge_damage > 0 and _gs:
+			for uid in _gs.unit_registry:
+				var reg: Dictionary = _gs.unit_registry[uid]
+				reg["current_hp"] = maxi(1, int(reg.get("current_hp", 0)) - challenge_damage)
+		_wanderer_mark_met(wanderer)
+		_wanderer_show_gift(vbox, wanderer, floor_num))
+
+	_space(vbox, 18)
+	var decline := _btn("Decline", DIM)
+	decline.custom_minimum_size = Vector2(160, 40)
+	decline.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	decline.pressed.connect(func() -> void:
+		_wanderer_mark_met(wanderer)
+		_complete_current_node_with_loadout_xp("wanderer")
+		if _gs: _gs.save()
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	vbox.add_child(decline)
 
 
-func _apply_wanderer_choice(choice_id: String, _run: RunState) -> void:
+func _wanderer_mark_met(wanderer: Dictionary) -> void:
 	if not _gs:
 		return
-	if not _gs.story_flags.has("met_orren"):
-		_gs.story_flags.append("met_orren")
-	var choice_flag := "orrens_%s" % choice_id
-	if not _gs.story_flags.has(choice_flag):
-		_gs.story_flags.append(choice_flag)
-	match choice_id:
-		"map":
-			_gs.gold += _wanderer_gold_reward()
-		"training":
-			_grant_party_jp(_wanderer_jp_reward())
-	_complete_current_node_with_loadout_xp("wanderer")
-	_gs.save()
-	if _boon_overlay:
-		_boon_overlay.queue_free()
-		_boon_overlay = null
-	_build_ui()
+	var flag := "met_wanderer_%s" % str(wanderer.get("id", "unknown"))
+	if not _gs.story_flags.has(flag):
+		_gs.story_flags.append(flag)
 
 
-func _wanderer_gold_reward() -> int:
-	return 70 + int(_gs.active_run.current_floor) * 30 if _gs and _gs.active_run else 100
+func _wanderer_element_color(element: String) -> Color:
+	match element:
+		"fire":      return Color(0.96, 0.45, 0.20)
+		"holy":      return Color(0.97, 0.93, 0.68)
+		"dark":      return Color(0.72, 0.30, 0.86)
+		"thunder":   return Color(0.94, 0.90, 0.20)
+		"water":     return Color(0.28, 0.74, 0.96)
+		"resonance": return Color(0.55, 0.92, 0.72)
+		_:           return GOLD
+
+
+func _wanderer_show_gift(parent: Control, wanderer: Dictionary, floor_num: int) -> void:
+	if not _gs or not _gs.active_run:
+		return
+	var owned: Array = _gs.active_run.active_boons.map(
+		func(b: Dictionary) -> String: return b.get("id", ""))
+	var offers := _bs.generate_offers(
+		_gs.active_run.seed * 43 + floor_num * 11 + _gs.active_run.current_node + 5555,
+		floor_num, owned, _gs.active_run.get_loadout_bonus())
+
+	_space(parent, 18)
+	var reward_msg: String = str(wanderer.get("reward_msg", '"A reward for your efforts." [Grants a Guardian boon]'))
+	_lbl(parent, reward_msg, 13, Color(0.82, 0.80, 0.76), true)
+	_space(parent, 12)
+	_lbl(parent, "CHOOSE YOUR REWARD", 11, GOLD, true)
+	_space(parent, 8)
+
+	var row := _hbox(parent)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+
+	var gift_btns: Array[Button] = []
+	for boon: Dictionary in offers:
+		var rd: Dictionary = BoonSystem.RARITIES.get(boon.get("rarity", "common"), {})
+		var bc: Color = rd.get("color", GOLD)
+		var boon_copy := boon
+		var offer_btn := Button.new()
+		offer_btn.custom_minimum_size = Vector2(220, 80)
+		offer_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var st := StyleBoxFlat.new()
+		st.bg_color     = Color(bc.r * 0.10, bc.g * 0.10, bc.b * 0.10, 0.92)
+		st.border_color = bc.lerp(Color.TRANSPARENT, 0.30)
+		st.set_border_width_all(1)
+		st.content_margin_left = 14; st.content_margin_right  = 14
+		st.content_margin_top  = 10; st.content_margin_bottom = 10
+		offer_btn.add_theme_stylebox_override("normal", st)
+		offer_btn.add_theme_stylebox_override("hover",  st)
+		offer_btn.add_theme_color_override("font_color", bc)
+		offer_btn.add_theme_font_size_override("font_size", 13)
+		offer_btn.text = "%s %s  [%s]" % [
+			str(boon_copy.get("icon", "+")),
+			str(boon_copy.get("name", "?")),
+			str(boon_copy.get("rarity", "common")).capitalize()
+		]
+		offer_btn.pressed.connect(func() -> void:
+			_oracle_accept_boon(boon_copy)
+			_complete_current_node_with_loadout_xp("wanderer")
+			if _gs: _gs.save()
+			for b: Button in gift_btns: b.disabled = true
+			if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+			_build_ui())
+		gift_btns.append(offer_btn)
+		row.add_child(offer_btn)
+
+	_space(parent, 12)
+	var jp_alt := _btn("Take JP Instead  (+%d JP)" % _wanderer_jp_reward(), DIM)
+	jp_alt.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	jp_alt.pressed.connect(func() -> void:
+		_grant_party_jp(_wanderer_jp_reward())
+		_complete_current_node_with_loadout_xp("wanderer")
+		if _gs: _gs.save()
+		for b: Button in gift_btns: b.disabled = true
+		jp_alt.disabled = true
+		if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
+		_build_ui())
+	parent.add_child(jp_alt)
 
 
 func _wanderer_jp_reward() -> int:
@@ -1143,51 +2516,230 @@ func _show_loot(items: Array) -> void:
 	_loot_overlay = _overlay()
 	add_child(_loot_overlay)
 
-	var vbox := _vbox(_loot_overlay, true)
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	vbox.custom_minimum_size = Vector2(800, 0)
+	# Scrollable centre column — wider to fit item cards + buttons.
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_loot_overlay.add_child(scroll)
 
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.custom_minimum_size = Vector2(960, 0)
+	vbox.add_theme_constant_override("separation", 0)
+	center.add_child(vbox)
+
+	# — Header ——————————————————————————————————
+	_space(vbox, 28)
 	_lbl(vbox, "BATTLE COMPLETE", 11, DIM, true)
 	_space(vbox, 6)
-	_lbl(vbox, "%d item%s found." % [items.size(), "s" if items.size() != 1 else ""], 24, FG, true)
-	_space(vbox, 20)
+	_lbl(vbox, "Loot Claim", 30, FG, true)
+	_space(vbox, 14)
 
+	# — Rewards summary ——————————————————————————
+	if _gs and not _gs.pending_rewards.is_empty():
+		var pr: Dictionary = _gs.pending_rewards
+		var gold_n: int = pr.get("gold", 0)
+		var jp_n:   int = pr.get("jp",   0)
+		if gold_n > 0 or jp_n > 0:
+			var reward_row := HBoxContainer.new()
+			reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
+			reward_row.add_theme_constant_override("separation", 24)
+			vbox.add_child(reward_row)
+			if gold_n > 0:
+				_lbl(reward_row, "+%dg Gold" % gold_n, 17, GOLD)
+			if jp_n > 0:
+				_lbl(reward_row, "+%d JP" % jp_n, 17, TEAL)
+			_space(vbox, 10)
+
+	# — Item count ————————————————————————————————
+	_lbl(vbox, "%d item%s found." % [items.size(), "s" if items.size() != 1 else ""], 15, DIM, true)
+	_space(vbox, 18)
+
+	# — Item cards ————————————————————————————————
 	if items.size() > 0:
-		var hbox := _hbox(vbox)
-		hbox.add_theme_constant_override("separation", 14)
-		for item in items:
-			hbox.add_child(_item_card(item))
+		var cards_row := HBoxContainer.new()
+		cards_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		cards_row.add_theme_constant_override("separation", 14)
+		vbox.add_child(cards_row)
+		for item: Dictionary in items:
+			cards_row.add_child(_item_card(item))
 	else:
 		_lbl(vbox, "The enemies carried nothing of value.", 14, DIM, true)
 
-	_space(vbox, 20)
-	var cont := _btn("Continue  ->", GOLD)
-	cont.custom_minimum_size = Vector2(200, 44)
+	# — Done button ———————————————————————————————
+	_space(vbox, 24)
+	var cont := _btn("Done  →", GOLD)
+	cont.custom_minimum_size = Vector2(200, 48)
 	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	cont.pressed.connect(_on_loot_continue)
 	vbox.add_child(cont)
+	_space(vbox, 24)
 
 
+## Builds one item card.  When pending_loot contains the item, Equip and Sell
+## buttons are shown.  If the item was already sold/equipped it is greyed out.
 func _item_card(item: Dictionary) -> PanelContainer:
-	var pc  := PanelContainer.new()
-	pc.custom_minimum_size = Vector2(200, 240)
-	_style_panel(pc, item.get("color", Color.WHITE))
+	var is_pending: bool = _gs != null and _gs.pending_loot.has(item)
+	var accent: Color = item.get("color", Color.WHITE)
 
-	var inner := _vbox(pc, false)
-	inner.add_theme_constant_override("margin_left", 14)
+	var pc := PanelContainer.new()
+	pc.custom_minimum_size = Vector2(200, 0)
+	_style_panel(pc, accent if is_pending else DIM)
+
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("margin_left",  14)
 	inner.add_theme_constant_override("margin_right", 14)
-	inner.add_theme_constant_override("margin_top",  14)
+	inner.add_theme_constant_override("margin_top",   14)
 	inner.add_theme_constant_override("margin_bottom",14)
-	inner.add_theme_constant_override("separation", 5)
+	inner.add_theme_constant_override("separation",    5)
+	pc.add_child(inner)
 
-	_lbl(inner, item.get("label","").to_upper(), 9, item.get("color", Color.WHITE), false)
-	_lbl(inner, item.get("icon",""), 28, Color.WHITE, true)
-	_lbl(inner, item.get("name","?"), 13, FG, true)
+	var label_col: Color = accent if is_pending else DIM
+	_lbl(inner, item.get("label","").to_upper(), 9, label_col, false)
+	_lbl(inner, item.get("icon",""), 28, FG if is_pending else DIM, true)
+	_lbl(inner, item.get("name","?"), 13, FG if is_pending else DIM, true)
 	_lbl(inner, item.get("slot","").to_upper(), 9, DIM, true)
 	_space(inner, 4)
-	for affix in item.get("affixes", []):
-		_lbl(inner, "- " + affix.get("label",""), 11, Color(0.85,0.82,0.77), false)
+	for affix: Dictionary in item.get("affixes", []):
+		_lbl(inner, "- " + affix.get("label",""), 11,
+			Color(0.85, 0.82, 0.77) if is_pending else DIM, false)
+
+	_space(inner, 8)
+
+	if is_pending:
+		# Sell value hint
+		var rarity: String = item.get("rarity", "common")
+		var sell_price: int = SELL_VALUES.get(rarity, 10)
+		_lbl(inner, "Sell: %dg" % sell_price, 10, DIM, true)
+		_space(inner, 4)
+
+		# Action buttons
+		var btn_row := HBoxContainer.new()
+		btn_row.add_theme_constant_override("separation", 6)
+		btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		inner.add_child(btn_row)
+
+		var equip_btn := _btn("Equip", TEAL)
+		equip_btn.custom_minimum_size = Vector2(80, 30)
+		equip_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		equip_btn.pressed.connect(func() -> void: _on_equip_item(item))
+		btn_row.add_child(equip_btn)
+
+		var sell_btn := _btn("Sell", GOLD)
+		sell_btn.custom_minimum_size = Vector2(64, 30)
+		sell_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sell_btn.pressed.connect(func() -> void: _on_sell_item(item))
+		btn_row.add_child(sell_btn)
+	else:
+		_lbl(inner, "EQUIPPED", 10, TEAL, true)
+
 	return pc
+
+
+## Sell: award gold, remove from pending_loot, rebuild the overlay.
+func _on_sell_item(item: Dictionary) -> void:
+	if not _gs: return
+	var rarity: String = item.get("rarity", "common")
+	_gs.gold += SELL_VALUES.get(rarity, 10)
+	_gs.pending_loot.erase(item)
+	_show_loot(_gs.pending_loot)
+
+
+## Equip: open the unit-picker popup so the player chooses who wears the item.
+func _on_equip_item(item: Dictionary) -> void:
+	_show_unit_picker(item)
+
+
+## Unit picker — a small modal listing deployed party members.
+## Clicking a unit assigns item → unit_registry[uid]["equipment"][slot] and
+## removes the item from pending_loot, then rebuilds the loot overlay.
+func _show_unit_picker(item: Dictionary) -> void:
+	# Gather deployed unit ids from run_deployment; fall back to PARTY_ORDER.
+	var party_ids: Array[String] = []
+	if _gs and _gs.active_run:
+		for slot: Dictionary in _gs.active_run.run_deployment:
+			var uid: String = str(slot.get("unit_id",""))
+			if uid != "" and uid not in party_ids:
+				party_ids.append(uid)
+	if party_ids.is_empty() and _gs:
+		for uid: String in _gs.unit_registry.keys():
+			if uid not in party_ids:
+				party_ids.append(uid)
+			if party_ids.size() >= 4:
+				break
+
+	if party_ids.is_empty():
+		# No party data — equip without unit binding.
+		_gs.pending_loot.erase(item)
+		_show_loot(_gs.pending_loot)
+		return
+
+	# Build picker overlay.
+	var picker := PanelContainer.new()
+	picker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim_st := StyleBoxFlat.new(); dim_st.bg_color = Color(0.0, 0.0, 0.0, 0.72)
+	picker.add_theme_stylebox_override("panel", dim_st)
+	add_child(picker)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	picker.add_child(center)
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(380, 0)
+	_style_panel(card, item.get("color", TEAL))
+	center.add_child(card)
+
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("margin_left",  24)
+	inner.add_theme_constant_override("margin_right", 24)
+	inner.add_theme_constant_override("margin_top",   22)
+	inner.add_theme_constant_override("margin_bottom",22)
+	inner.add_theme_constant_override("separation",   10)
+	card.add_child(inner)
+
+	_lbl(inner, "EQUIP TO UNIT", 10, DIM, true)
+	_space(inner, 2)
+	_lbl(inner, item.get("name", "?"), 16, FG, true)
+	_lbl(inner, item.get("slot","").to_upper(), 10, item.get("color", TEAL), true)
+	_space(inner, 8)
+
+	var chars_node := get_node_or_null("/root/Characters")
+
+	for uid: String in party_ids:
+		var reg: Dictionary = _gs.unit_registry.get(uid, {}) if _gs else {}
+		var display_name: String = uid
+		if chars_node and chars_node.CHARACTERS.has(uid):
+			display_name = str(chars_node.CHARACTERS[uid].get("human_name", uid))
+		var current_item: Dictionary = reg.get("equipment", {}).get(item.get("slot",""), {})
+		var btn_label: String = display_name
+		if not current_item.is_empty():
+			btn_label += "  (replaces %s)" % current_item.get("name","?")
+		var uid_btn := _btn(btn_label, FG)
+		uid_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		uid_btn.custom_minimum_size = Vector2(0, 38)
+		var captured_uid := uid
+		uid_btn.pressed.connect(func() -> void:
+			if _gs and _gs.unit_registry.has(captured_uid):
+				if not _gs.unit_registry[captured_uid].has("equipment"):
+					_gs.unit_registry[captured_uid]["equipment"] = {}
+				_gs.unit_registry[captured_uid]["equipment"][item.get("slot","")] = item
+			if _gs: _gs.pending_loot.erase(item)
+			picker.queue_free()
+			_show_loot(_gs.pending_loot if _gs else []))
+		inner.add_child(uid_btn)
+
+	_space(inner, 4)
+	var cancel_btn := _btn("Cancel", DIM)
+	cancel_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cancel_btn.custom_minimum_size = Vector2(120, 36)
+	cancel_btn.pressed.connect(func() -> void: picker.queue_free())
+	inner.add_child(cancel_btn)
 
 
 #  Widget helpers
@@ -1448,6 +3000,9 @@ func _node_hint(ntype: String) -> String:
 		"mystery_ambush": return "Ambush battle with better spoils."
 		"boon_pick": return "Choose one Guardian boon."
 		"wanderer":  return "A named character waits here."
+		"town_1":    return "Rest, restore HP, and gain a little JP."
+		"town_2":    return "Spend gold on party training and supplies."
+		"town_3":    return "Reveal hidden route nodes ahead."
 		_:           return "Procedurally generated battle."
 
 

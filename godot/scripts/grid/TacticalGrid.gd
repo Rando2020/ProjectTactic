@@ -29,6 +29,9 @@ const TERRAIN_TEXTURE_PATHS := {
 	"ice": "res://assets/ui/tiles/ice.png",
 	"frozen_water": "res://assets/ui/tiles/ice.png",
 	"burning": "res://assets/ui/tiles/burning.png",
+	"electrified": "res://assets/ui/tiles/electrified_overlay.png",
+	"electrified_water": "res://assets/ui/tiles/electrified_water.png",
+	"void_corruption": "res://assets/ui/tiles/void_overlay.png",
 	"scorched": "res://assets/ui/tiles/dirt.png",
 	"shrine": "res://assets/ui/tiles/shrine.png",
 	"wall": "res://assets/ui/tiles/wall.png",
@@ -111,6 +114,7 @@ func _build_tiles() -> void:
 			var height: int = data.get("height", 0)
 			tiles[pos] = {
 				"terrain": terrain,
+				"art": str(data.get("art", "")),
 				"height": height,
 				"move_cost": _move_cost_for(terrain),
 				"blocks_movement": terrain in ["wall", "deep_water"],
@@ -122,6 +126,8 @@ func _draw_base_tiles() -> void:
 	for child in get_children():
 		if child != highlight_layer and child != unit_layer:
 			child.queue_free()
+
+	_draw_battlefield_shadow()
 
 	var draw_positions: Array = tiles.keys()
 	draw_positions.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
@@ -149,8 +155,9 @@ func _draw_base_tiles() -> void:
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
 	var terrain: String = tiles[pos].get("terrain", "")
-	if _uses_art_tile(terrain):
-		var texture := _texture_for_terrain(terrain)
+	var art_id: String = str(tiles[pos].get("art", ""))
+	if _uses_art_tile(terrain, art_id):
+		var texture := _texture_for_tile(terrain, art_id)
 		if texture:
 			_add_exposed_faces(pos, world, base_color)
 			_add_art_tile_top(pos, world, texture)
@@ -216,21 +223,42 @@ func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> voi
 	top.texture = texture
 	top.centered = true
 	top.position = world
+	if texture.get_width() > 0:
+		var art_scale := float(tile_size.x) / float(texture.get_width())
+		top.scale = Vector2(art_scale, art_scale)
 	top.z_index = depth + 2
 	add_child(top)
 	_tile_top_polys[pos] = top
 
 
-func _uses_art_tile(terrain: String) -> bool:
-	return TERRAIN_TEXTURE_PATHS.has(terrain)
+func _uses_art_tile(terrain: String, art_id: String = "") -> bool:
+	return not art_id.is_empty() or TERRAIN_TEXTURE_PATHS.has(terrain)
 
 
-func _texture_for_terrain(terrain: String) -> Texture2D:
+func _texture_for_tile(terrain: String, art_id: String = "") -> Texture2D:
+	if not art_id.is_empty():
+		var art_path := _act1_tile_path(art_id)
+		var texture := _texture_from_path(art_path, _terrain_texture_cache)
+		if texture:
+			return texture
+		texture = _texture_from_path(_act1_prop_path(art_id), _terrain_texture_cache)
+		if texture:
+			return texture
 	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
 
 
 func _texture_for_prop(prop_name: String) -> Texture2D:
+	if prop_name.begins_with("act1_"):
+		return _texture_from_path(_act1_prop_path(prop_name), _prop_texture_cache)
 	return _texture_from_path(PROP_TEXTURE_PATHS.get(prop_name, ""), _prop_texture_cache)
+
+
+func _act1_tile_path(art_id: String) -> String:
+	return "res://assets/tiles/act1/%s.png" % art_id
+
+
+func _act1_prop_path(prop_id: String) -> String:
+	return "res://assets/props/act1/%s.png" % prop_id
 
 
 func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
@@ -387,7 +415,7 @@ func _draw_props() -> void:
 		return
 	for prop_data: Dictionary in map_data.prop_overrides:
 		var prop_name: String = prop_data.get("prop", "")
-		if not PROP_TEXTURE_PATHS.has(prop_name):
+		if prop_name.is_empty():
 			continue
 		var texture := _texture_for_prop(prop_name)
 		if not texture:
@@ -420,10 +448,26 @@ func _draw_grid_overlay() -> void:
 		var poly := _diamond_polygon(1.0)
 		grid_line.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
 		grid_line.width = 1.0
-		grid_line.default_color = Color(0.7, 0.7, 0.7, 0.15)
+		grid_line.default_color = Color(0.62, 0.48, 0.78, 0.18)
 		grid_line.position = world
 		grid_line.z_index = depth - 1  # Behind tile but above terrain
 		add_child(grid_line)
+
+
+func _draw_battlefield_shadow() -> void:
+	if not map_data:
+		return
+	var bounds := get_board_bounds().grow(84.0)
+	var shadow := Polygon2D.new()
+	shadow.polygon = PackedVector2Array([
+		Vector2(bounds.position.x, bounds.position.y + bounds.size.y * 0.52),
+		Vector2(bounds.position.x + bounds.size.x * 0.50, bounds.position.y),
+		Vector2(bounds.position.x + bounds.size.x, bounds.position.y + bounds.size.y * 0.52),
+		Vector2(bounds.position.x + bounds.size.x * 0.50, bounds.position.y + bounds.size.y),
+	])
+	shadow.color = Color(0.0, 0.0, 0.0, 0.34)
+	shadow.z_index = -200
+	add_child(shadow)
 
 
 func _terrain_color(terrain: String, height: int) -> Color:
@@ -437,6 +481,9 @@ func _terrain_color(terrain: String, height: int) -> Color:
 		"deep_water":    base = Color(0.07, 0.20, 0.42)
 		"ice":           base = Color(0.65, 0.84, 0.92)
 		"burning":       base = Color(0.70, 0.16, 0.07)
+		"electrified":   base = Color(0.16, 0.58, 0.95)
+		"electrified_water": base = Color(0.20, 0.78, 0.95)
+		"void_corruption": base = Color(0.36, 0.12, 0.56)
 		"scorched":      base = Color(0.14, 0.11, 0.09)
 		"cracked_stone": base = Color(0.28, 0.30, 0.32)
 		"wall":          base = Color(0.09, 0.11, 0.14)
@@ -447,7 +494,7 @@ func _terrain_color(terrain: String, height: int) -> Color:
 
 func _move_cost_for(terrain: String) -> int:
 	match terrain:
-		"shallow_water", "high_ground": return 2
+		"shallow_water", "high_ground", "electrified_water": return 2
 		"deep_water", "wall": return 99
 		_: return 1
 
@@ -524,7 +571,8 @@ func _refresh_highlights() -> void:
 	for child in highlight_layer.get_children():
 		child.queue_free()
 	for pos in move_tiles:
-		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true)
+		_add_highlight(pos, Color(0.06, 0.28, 0.88, 0.55), 0.94, true)
+		_add_highlight(pos, Color(0.35, 0.70, 1.00, 0.18), 0.50, false)
 	for i in path_preview_tiles.size():
 		var pos: Vector2i = path_preview_tiles[i]
 		var alpha: float = 0.48 + min(float(i) * 0.035, 0.32)

@@ -23,6 +23,8 @@ const CAMERA_ZOOM_STEP := 0.08
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
 @export var map_index: int = 0
+@export var auto_playtest_battle: bool = false
+@export_range(0.25, 8.0, 0.25) var auto_playtest_speed: float = 3.0
 
 var _map_data: MapData
 var _defeated_enemies: Array[Dictionary] = []
@@ -31,29 +33,50 @@ var _enemy_instance_seq: int = 0
 var _last_death_info:  Dictionary = {}
 
 const SPRITE_PATHS := {
-	"zane":         "res://assets/sprites/units/zane.png",
-	"mira":         "res://assets/sprites/units/mira.png",
-	"kael":         "res://assets/sprites/units/kael.png",
-	"lyra":         "res://assets/sprites/units/lyra.png",
-	"null_drake":   "res://assets/sprites/units/null_drake.png",
-	"storm_imp":    "res://assets/sprites/units/storm_imp.png",
-	"void_cultist": "res://assets/sprites/units/void_cultist.png",
+	"zane":             "res://assets/sprites/units/zane.png",
+	"mira":             "res://assets/sprites/units/mira.png",
+	"kael":             "res://assets/sprites/units/kael.png",
+	"lyra":             "res://assets/sprites/units/lyra.png",
+	"aeryn":            "res://assets/sprites/units/aeryn.png",
+	"cael":             "res://assets/sprites/units/cael.png",
+	"brennan":          "res://assets/sprites/units/brennan.png",
+	"solan":            "res://assets/sprites/units/solan.png",
+	"tobias":           "res://assets/sprites/units/tobias.png",
+	"seren":            "res://assets/sprites/units/seren.png",
+	"null_drake":       "res://assets/sprites/units/null_drake.png",
+	"storm_imp":        "res://assets/sprites/units/storm_imp.png",
+	"void_cultist":     "res://assets/sprites/units/void_cultist.png",
+	"fen_wraith":       "res://assets/sprites/units/fen_wraith.png",
+	"ashen_knight":     "res://assets/sprites/units/ashen_soldier.png",
+	"void_golem":       "res://assets/sprites/units/null_drake.png",
+	"rift_shade":       "res://assets/sprites/units/void_cultist.png",
+	"ashen_soldier":    "res://assets/sprites/units/ashen_soldier.png",
+	"bone_archer":      "res://assets/sprites/units/bone_archer.png",
+	"cult_mage":        "res://assets/sprites/units/cult_mage.png",
+	"boss_null_knight": "res://assets/sprites/units/boss_null_knight.png",
 }
 
 const DEFAULT_BATTLE_MUSIC_PATH := "res://assets/music/steel-march-echo-battle.wav"
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+const PLAYTEST_PROBE_REPORT := "C:/Users/jojo3/Coding/ProjectTactic/test_playable_loop_v02/battle_scene_probe_report.txt"
+const AUTO_PLAYTEST_SETTING := "project_tactic/playtest/auto_battle"
+const AUTO_PLAYTEST_SPEED_SETTING := "project_tactic/playtest/auto_battle_speed"
+const AUTO_PLAYTEST_FLAGS := ["--auto-battle-playtest", "--auto-playtest-battle"]
+const STANDALONE_PLAYTEST_FLAGS := ["--standalone-battle-playtest", "--debug-battle-playtest"]
 
 var _battle_music_player: AudioStreamPlayer
 
 
 func _ready() -> void:
+	_write_playtest_probe("BattleScene loaded.")
+	RenderingServer.set_default_clear_color(Color(0.025, 0.027, 0.033))
 	_setup_camera()
 	_start_battle_music()
 
 	var gs: Node = get_node_or_null("/root/GameState")
 
 	# Use procedurally generated map when inside a roguelike run
-	if gs and gs.active_run and not gs.active_run.completed:
+	if gs and gs.active_run and not gs.active_run.completed and not _standalone_playtest_requested():
 		var mg := MapGenerator.new()
 		var run: RunState = gs.active_run
 		var current_node: Dictionary = run.get_current_node()
@@ -96,7 +119,9 @@ func _ready() -> void:
 	if gs and gs.active_run:
 		_apply_boon_battle_start_effects(gs, all_units)
 		gs.run_floor_reached = max(gs.run_floor_reached, gs.active_run.current_floor)
+	_apply_auto_playtest_config()
 	battle_manager.start_battle(_map_data, all_units)
+	_write_playtest_probe("Battle started: %s" % _map_data.display_name)
 
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
@@ -104,6 +129,50 @@ func _ready() -> void:
 	battle_manager.unit_defeated.connect(_on_unit_defeated)
 	battle_manager.unit_moved.connect(_on_unit_moved)
 	battle_manager.combat_resolver.combat_resolved.connect(_on_combat_resolved)
+
+
+func _write_playtest_probe(message: String) -> void:
+	var dir_path := PLAYTEST_PROBE_REPORT.get_base_dir()
+	if not DirAccess.dir_exists_absolute(dir_path):
+		DirAccess.make_dir_recursive_absolute(dir_path)
+	var file := FileAccess.open(PLAYTEST_PROBE_REPORT, FileAccess.WRITE)
+	if file:
+		file.store_string("%s\n%s" % [message, Time.get_datetime_string_from_system()])
+		file.close()
+
+
+func _apply_auto_playtest_config() -> void:
+	var enabled := auto_playtest_battle
+	var speed := auto_playtest_speed
+	if ProjectSettings.has_setting(AUTO_PLAYTEST_SETTING):
+		enabled = enabled or bool(ProjectSettings.get_setting(AUTO_PLAYTEST_SETTING, false))
+	if ProjectSettings.has_setting(AUTO_PLAYTEST_SPEED_SETTING):
+		speed = float(ProjectSettings.get_setting(AUTO_PLAYTEST_SPEED_SETTING, speed))
+	for arg: String in _playtest_args():
+		if arg in AUTO_PLAYTEST_FLAGS:
+			enabled = true
+		elif arg.begins_with("--auto-battle-speed="):
+			speed = float(arg.get_slice("=", 1))
+	if battle_manager:
+		battle_manager.configure_auto_playtest(enabled, speed)
+		if enabled:
+			_write_playtest_probe("Auto playtest enabled at %.2fx." % speed)
+
+
+func _playtest_args() -> Array[String]:
+	var args: Array[String] = []
+	for arg: String in OS.get_cmdline_args():
+		args.append(arg)
+	for arg: String in OS.get_cmdline_user_args():
+		args.append(arg)
+	return args
+
+
+func _standalone_playtest_requested() -> bool:
+	for arg: String in _playtest_args():
+		if arg in STANDALONE_PLAYTEST_FLAGS:
+			return true
+	return false
 
 
 func _start_battle_music() -> void:
@@ -153,12 +222,13 @@ func _frame_battlefield_camera() -> void:
 		return
 	var bounds := tactical_grid.get_board_bounds().grow(48.0)
 	_camera_bounds = bounds.grow(260.0)
-	var play_area := Vector2(1020.0, 590.0)
+	var play_area := Vector2(1260.0, 700.0)
 	var zoom_x: float = play_area.x / max(bounds.size.x, 1.0)
 	var zoom_y: float = play_area.y / max(bounds.size.y, 1.0)
 	_camera_zoom_value = clamp(min(zoom_x, zoom_y), 1.02, 1.60)
 	_camera_base_position = bounds.get_center()
-	_camera_base_position.y -= 12.0
+	_camera_base_position.y -= 22.0
+	_camera_base_position.x -= 44.0
 	_battle_camera.position = _camera_base_position
 	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
 	_clamp_camera_to_board()
@@ -298,6 +368,14 @@ func _on_unit_defeated(unit_id: String) -> void:
 			"jp_mult":    float(u.get_meta("jp_mult", 1.0)) if u.has_meta("jp_mult") else 1.0,
 		})
 	elif u and u.team == "player":
+		var gs: Node = get_node_or_null("/root/GameState")
+		if gs and gs.unit_registry and gs.unit_registry.has(unit_id):
+			var reg: Dictionary = gs.unit_registry.get(unit_id, {})
+			reg["current_hp"] = 0
+			reg["current_mp"] = u.mp
+			reg["current_temper"] = u.temper
+			reg["current_ether"] = u.ether
+			gs.unit_registry[unit_id] = reg
 		# Record who killed this player unit for the death screen.
 		var killer_unit: Unit = null
 		if battle_manager.active_unit_id != "":
@@ -313,7 +391,6 @@ func _on_unit_defeated(unit_id: String) -> void:
 			was_elite   = killer_unit.has_meta("elite_tier") and killer_unit.get_meta("elite_tier","") != ""
 			elite_tier  = killer_unit.get_meta("elite_tier","") if killer_unit.has_meta("elite_tier") else ""
 			was_anchor  = killer_unit.unit_id.begins_with("anchor")
-		var gs: Node = get_node_or_null("/root/GameState")
 		var curse_count: int = 0
 		if gs and gs.active_run:
 			curse_count = gs.active_run.active_curses.size()
@@ -340,34 +417,37 @@ func _on_battle_won(rewards: Dictionary) -> void:
 				player_ids.append(str(uid))
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs:
-		# Save surviving player units' state for next battle
+		# Save player vitals for the next battle without wiping jobs, JP, or equipment.
 		if gs.unit_registry and battle_manager and is_instance_valid(battle_manager):
 			for uid in player_ids:
 				var unit_ref = battle_manager.units.get(uid)
 				if unit_ref is Unit:
-					gs.unit_registry[uid] = {
-						"base_hp": unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0,
-						"current_hp": unit_ref.hp,
-						"current_mp": unit_ref.mp,
-						"current_temper": unit_ref.temper,
-						"current_ether": unit_ref.ether,
-					}
-		# Track JP earned this run
-		gs.run_jp_earned += rewards.get("jp", 0)
+					var reg: Dictionary = gs.unit_registry.get(uid, {})
+					reg["base_hp"] = unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0
+					reg["current_hp"] = unit_ref.hp
+					reg["current_mp"] = unit_ref.mp
+					reg["current_temper"] = unit_ref.temper
+					reg["current_ether"] = unit_ref.ether
+					gs.unit_registry[uid] = reg
 		gs.apply_victory(_map_data.id, rewards, player_ids)
+		if battle_manager and battle_manager.has_method("set_post_battle_state"):
+			battle_manager.set_post_battle_state(gs.pending_rewards.get("vitals", {}), gs.pending_rewards.get("healing_applied", []))
 
 		if gs.active_run:
 			# Generate loot, show spoils, then route to the next run node.
 			var ls    := LootSystem.new()
 			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
 			gs.pending_loot.clear()
-			for item in loot: gs.run_inventory.append(item)
+			for item in loot:
+				gs.run_inventory.append(item)
+				gs.active_run.inventory.append(item)
+				gs.pending_loot.append(item)   # StageSelect reads this for equip/sell UI
 			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
 			gs.active_run.elite_kills += elite_n
 
 			var rm: Node = get_node_or_null("/root/RunManager")
 			var floor_num: int = int(gs.active_run.current_floor)
-			var is_boss: bool = floor_num >= 10
+			var is_boss: bool = floor_num >= RunState.TOTAL_FLOORS
 			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
 			if rm and rm.is_run_active:
 				rm.award_stage_reward(floor_num, has_elite, is_boss)
@@ -386,7 +466,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			if is_boss:
 				if rm and rm.is_run_active:
 					rm.end_run(true)
-				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+				_change_scene_safely("res://scenes/ResultsScreen.tscn")
 				return
 
 			gs.active_run.complete_current_node()
@@ -395,11 +475,21 @@ func _on_battle_won(rewards: Dictionary) -> void:
 				var bs := BoonSystem.new()
 				var owned: Array = gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
 				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned, gs.active_run.get_loadout_bonus())
-			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
+			_change_scene_safely("res://scenes/StageSelect.tscn")
 			return
 	battle_ui.show_spoils(rewards, [])
 	await battle_ui.spoils_continue_requested
-	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+	_change_scene_safely("res://scenes/ResultsScreen.tscn")
+
+
+func _change_scene_safely(scene_path: String) -> void:
+	var tree := get_tree()
+	if not tree:
+		push_warning("Scene change skipped because BattleScene is no longer in the tree: %s" % scene_path)
+		return
+	tree.call_deferred("change_scene_to_file", scene_path)
+
+
 func _on_battle_lost() -> void:
 	_fade_battle_music()
 	await get_tree().create_timer(0.85).timeout
@@ -407,14 +497,20 @@ func _on_battle_lost() -> void:
 	if gs and gs.active_run:
 		# Populate death context so ResultsScreen can show what killed you.
 		gs.last_run_death = _last_death_info.duplicate()
+		gs.pending_rewards = {
+			"gold": 0,
+			"jp": 0,
+			"map_id": _map_data.id if _map_data else "",
+			"telemetry": battle_manager.get_battle_telemetry() if battle_manager else {},
+		}
 		# End the run via RunManager if available.
 		var rm: Node = get_node_or_null("/root/RunManager")
 		if rm and rm.is_run_active:
 			rm.end_run(false)
-		get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+		_change_scene_safely("res://scenes/ResultsScreen.tscn")
 	else:
 		# Outside a run (standalone battle test)  just go back to stage select.
-		get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
+		_change_scene_safely("res://scenes/StageSelect.tscn")
 
 
 #  Map data
@@ -444,6 +540,11 @@ func _create_ashvale_map() -> MapData:
 		{"x": 2, "y": 1, "terrain": "brush", "height": 0},
 		{"x": 6, "y": 5, "terrain": "grass_flowers", "height": 0},
 		{"x": 8, "y": 4, "terrain": "brush", "height": 0},
+		{"x": 4, "y": 5, "terrain": "burning", "height": 0},
+		{"x": 5, "y": 5, "terrain": "road", "height": 0},
+		{"x": 6, "y": 4, "terrain": "electrified_water", "height": 0},
+		{"x": 3, "y": 5, "terrain": "high_ground", "height": 1},
+		{"x": 7, "y": 4, "terrain": "high_ground", "height": 1},
 		{"x": 7, "y": 0, "terrain": "stone", "height": 2},
 		{"x": 8, "y": 0, "terrain": "stone", "height": 2},
 		{"x": 7, "y": 1, "terrain": "high_ground", "height": 1},
@@ -589,19 +690,36 @@ func _make_status(status_id: String, display_name: String, turns: int, magnitude
 func _spawn_player_units() -> Array[Unit]:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
-	result.append(_make_unit("zane", "Zane", "player", Vector2i(1, 6),
-		320, 90,  4, 2, 8, 42, 48, 80,  110,
-		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
-	result.append(_make_unit("mira", "Mira Vey", "player", Vector2i(2, 6),
-		280, 120, 4, 2, 7, 28, 54, 65,  130,
-		gs.get_all_abilities("mira") if gs else ["fire", "thunder", "blizzard", "cure", "holy"]))
-	result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
-		380, 55,  4, 2, 6, 55, 32, 110, 70,
-		gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
-	result.append(_make_unit("lyra", "Lyra", "player", Vector2i(0, 7),
-		240, 70, 4, 2, 9, 52, 18, 55, 65,
-		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
+	#  The Appointed  stats balanced against a baseline of 50 HP = 1.0x visual scale
+	#  Aeryn  Knight  Pride -> Dignity  hp spd def str fth
+	result.append(_make_unit("aeryn", "Aeryn", "player", Vector2i(1, 6),
+		370, 65, 3, 2, 7, 52, 22, 108, 68,
+		gs.get_all_abilities("aeryn") if gs else ["mighty_strike", "defend"]))
+	#  Cael  Archer  Envy -> Justice
+	result.append(_make_unit("cael", "Cael", "player", Vector2i(3, 6),
+		250, 75, 4, 2, 10, 46, 25, 60, 72,
+		gs.get_all_abilities("cael") if gs else ["pin_shot", "long_shot"],
 		{}, 2, 4))
+	#  Brennan  Soldier  Wrath -> Righteous Anger
+	result.append(_make_unit("brennan", "Brennan", "player", Vector2i(2, 6),
+		360, 55, 4, 2, 8, 60, 14, 105, 58,
+		gs.get_all_abilities("brennan") if gs else ["mighty_strike", "wind_slash"]))
+	#  Solan  Mage  Sloth -> Sacred Rest
+	result.append(_make_unit("solan", "Solan", "player", Vector2i(0, 6),
+		255, 140, 3, 2, 6, 16, 62, 48, 148,
+		gs.get_all_abilities("solan") if gs else ["fire", "blizzard", "thunder"]))
+	#  Mira  Vagrant  Greed -> Provision
+	result.append(_make_unit("mira", "Mira", "player", Vector2i(2, 7),
+		295, 95, 5, 3, 10, 38, 36, 75, 90,
+		gs.get_all_abilities("mira") if gs else ["mighty_strike", "cure"]))
+	#  Tobias  Cleric  Gluttony -> Joy
+	result.append(_make_unit("tobias", "Tobias", "player", Vector2i(0, 7),
+		310, 130, 3, 2, 6, 24, 56, 65, 138,
+		gs.get_all_abilities("tobias") if gs else ["cure", "holy", "protect"]))
+	#  Seren  Duelist  Lust -> Sacred Love
+	result.append(_make_unit("seren", "Seren", "player", Vector2i(1, 7),
+		270, 85, 4, 3, 11, 44, 32, 65, 88,
+		gs.get_all_abilities("seren") if gs else ["mighty_strike", "wind_slash"]))
 	_apply_pending_deployment(result, gs)
 	# Apply curse move penalty
 	var bonuses := RunBonuses.for_current_run()
@@ -619,10 +737,13 @@ func _spawn_player_units() -> Array[Unit]:
 				unit.unit_data.base_stats.physical += phys_bonus
 				unit.unit_data.base_stats.magic    += mag_bonus
 			if move_pen != 0:
-				unit.unit_data.base_stats.movement = max(1, unit.unit_data.base_stats.movement + move_pen)
+				unit.unit_data.base_stats.move = max(1, unit.unit_data.base_stats.move + move_pen)
 
-	# Restore HP from previous battles in this run
-	if gs and gs.unit_registry:
+	_apply_run_item_bonuses(result, gs)
+
+	# Restore HP from previous battles in real runs. Standalone playtests start fresh
+	# so balance samples do not inherit old test wounds.
+	if gs and gs.unit_registry and not _standalone_playtest_requested():
 		for unit in result:
 			var reg: Dictionary = gs.unit_registry.get(unit.unit_id, {})
 			if not reg.is_empty():
@@ -630,8 +751,85 @@ func _spawn_player_units() -> Array[Unit]:
 				unit.mp = reg.get("current_mp", unit.mp)
 				unit.temper = reg.get("current_temper", unit.temper)
 				unit.ether = reg.get("current_ether", unit.ether)
+				unit.hp = mini(unit.hp, unit.unit_data.base_stats.hp)
+				unit.mp = mini(unit.mp, unit.unit_data.base_stats.mp)
+				unit.temper = mini(unit.temper, unit.unit_data.base_stats.max_temper)
+				unit.ether = mini(unit.ether, unit.unit_data.base_stats.max_ether)
 
 	return result
+
+
+func _apply_run_item_bonuses(units: Array[Unit], gs: Node) -> void:
+	if not gs:
+		return
+	var inventory: Array = gs.run_inventory if gs.get("run_inventory") != null else []
+	if inventory.is_empty():
+		return
+
+	var flat: Dictionary = {
+		"hp": 0,
+		"physical": 0,
+		"magic": 0,
+		"max_temper": 0,
+		"speed": 0,
+		"jp_pct": 0,
+		"kill_hp": 0,
+	}
+	var elemental: Dictionary = {"fire": 1.0, "thunder": 1.0, "holy": 1.0, "dark": 1.0}
+	for item in inventory:
+		if not (item is Dictionary):
+			continue
+		for affix in item.get("affixes", []):
+			if not (affix is Dictionary):
+				continue
+			var affix_id: String = str(affix.get("id", ""))
+			var value: int = int(affix.get("value", 0))
+			match affix_id:
+				"phys":
+					flat["physical"] += value
+				"mag":
+					flat["magic"] += value
+				"hp":
+					flat["hp"] += value
+				"tmpr":
+					flat["max_temper"] += value
+				"spd":
+					flat["speed"] += value
+				"jp":
+					flat["jp_pct"] += value
+				"kill_hp":
+					flat["kill_hp"] += value
+				"fire", "holy", "dark":
+					elemental[affix_id] = float(elemental.get(affix_id, 1.0)) + (float(value) / 100.0)
+				"thun":
+					elemental["thunder"] = float(elemental.get("thunder", 1.0)) + (float(value) / 100.0)
+
+	for unit in units:
+		if not unit.unit_data or not unit.unit_data.base_stats:
+			continue
+		var stats: UnitStats = unit.unit_data.base_stats
+		stats.hp += int(flat["hp"])
+		stats.physical += int(flat["physical"])
+		stats.magic += int(flat["magic"])
+		stats.max_temper += int(flat["max_temper"])
+		stats.speed += int(flat["speed"])
+		unit.hp = mini(unit.hp + int(flat["hp"]), stats.hp)
+		unit.temper = mini(unit.temper + int(flat["max_temper"]), stats.max_temper)
+		unit.set_meta("item_elemental_mult", elemental.duplicate(true))
+		unit.set_meta("item_jp_pct", int(flat["jp_pct"]))
+		unit.set_meta("item_kill_hp", int(flat["kill_hp"]))
+
+	if battle_manager and is_instance_valid(battle_manager):
+		var stat_parts: Array[String] = []
+		for label in ["hp", "physical", "magic", "max_temper", "speed", "jp_pct", "kill_hp"]:
+			if int(flat[label]) != 0:
+				stat_parts.append("%s %+d" % [label, int(flat[label])])
+		for element in elemental.keys():
+			var pct: int = int(round((float(elemental[element]) - 1.0) * 100.0))
+			if pct != 0:
+				stat_parts.append("%s %+d%%" % [str(element), pct])
+		if not stat_parts.is_empty():
+			battle_manager.log_message.emit("Run items active: %s" % ", ".join(stat_parts))
 
 
 func _apply_pending_deployment(units: Array[Unit], gs: Node) -> void:
@@ -684,14 +882,12 @@ func _spawn_enemy_units() -> Array[Unit]:
 	else:
 		#  Hardcoded fallback for editor / debug
 		result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
-			120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
+			120, 35, 3, 1, 6, 36, 28, 80, 60, ["dark_breath"],
 			{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
 		result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
-			90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
+			88,  50, 4, 2, 8, 23, 37, 50, 90, ["thunderstrike", "void_pulse"],
 			{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
-		result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
-			80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath", "shadow_mend"],
-			{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
+		# v0.2 early pacing: save the healer/caster trio for later Ashvale variants.
 
 	# Apply elite rolls when in a roguelike run
 	var gs2: Node = get_node_or_null("/root/GameState")
@@ -748,10 +944,12 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	data.abilities = _to_string_array(abilities)
 	data.elemental_affinities = affinities
 
-	if SPRITE_PATHS.has(id):
-		var tex := _texture_from_source(SPRITE_PATHS[id])
-		if tex:
-			data.sprite_sheet = tex
+	# Try explicit path map first, then auto-discover res://assets/sprites/units/{id}.png
+	var sprite_path: String = SPRITE_PATHS.get(id, "res://assets/sprites/units/%s.png" % id)
+	var tex := _texture_from_source(sprite_path)
+	if tex:
+		data.sprite_sheet = tex
+	_load_directional_sprites(id, data)
 
 	var unit: Unit = unit_scene.instantiate()
 	unit.unit_data = data
@@ -770,16 +968,32 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 
 func _texture_from_source(path: String) -> Texture2D:
 	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
-		return null
-	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
-	if err != OK:
-		return null
-	return ImageTexture.create_from_image(image)
+	if file:
+		var bytes := file.get_buffer(file.get_length())
+		var image := Image.new()
+		if image.load_png_from_buffer(bytes) == OK:
+			return ImageTexture.create_from_image(image)
+	if ResourceLoader.exists(path):
+		var tex := ResourceLoader.load(path, "Texture2D")
+		if tex is Texture2D:
+			return tex
+	return null
+
+# Loads directional sprites by convention: res://assets/sprites/units/{id}-{view}.png
+# Views: front-left (S), front-right (E), back-left (W), back-right (N)
+func _load_directional_sprites(id: String, data: UnitData) -> void:
+	var base := "res://assets/sprites/units/%s" % id
+	var views := {
+		"sprite_front_left":  base + "-front-left.png",
+		"sprite_front_right": base + "-front-right.png",
+		"sprite_back_left":   base + "-back-left.png",
+		"sprite_back_right":  base + "-back-right.png",
+	}
+	for prop: String in views:
+		var tex := _texture_from_source(views[prop])
+		if tex:
+			data.set(prop, tex)
+
 
 func _to_string_array(values: Array) -> Array[String]:
 	var result: Array[String] = []

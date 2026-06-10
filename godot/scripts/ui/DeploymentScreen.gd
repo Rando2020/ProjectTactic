@@ -43,12 +43,10 @@ const _TERRAIN := {
 }
 const _TILE_PX := 56
 
-## Canonical player roster — must stay in sync with BattleScene._spawn_player_units().
-const PLAYER_ROSTER: Array = ["zane", "mira", "kael", "lyra"]
-
 ## Validate a deployment formation against a MapData without instantiating a screen.
 ## Returns an empty Array if valid, or a list of human-readable error strings.
-static func validate_formation(formation: Array, map: MapData) -> Array:
+## Pass known_roster to enforce that only those unit IDs are valid.
+static func validate_formation(formation: Array, map: MapData, known_roster: Array = []) -> Array:
 	if formation.is_empty():
 		return ["No saved formation."]
 
@@ -74,7 +72,7 @@ static func validate_formation(formation: Array, map: MapData) -> Array:
 	for slot: Dictionary in formation:
 		var uid := str(slot.get("unit_id", ""))
 		var pos := Vector2i(int(slot.get("x", 0)), int(slot.get("y", 0)))
-		if uid.is_empty() or not (uid in PLAYER_ROSTER):
+		if uid.is_empty() or (not known_roster.is_empty() and not (uid in known_roster)):
 			errs.append("Unknown unit in formation: %s" % uid)
 			continue
 		if used_units.has(uid):
@@ -102,23 +100,22 @@ static func validate_formation(formation: Array, map: MapData) -> Array:
 
 	return errs
 
-const _UNITS := {
-	"zane":    {"name":"Zane",    "job":"Knight"},
-	"mira":    {"name":"Mira",    "job":"Mage"},
-	"kael":    {"name":"Kael",    "job":"Guardian"},
-	"lyra":    {"name":"Lyra",    "job":"Archer"},
-	"aeryn":   {"name":"Aeryn",   "job":"Soldier"},
-	"cael":    {"name":"Cael",    "job":"Mage"},
-	"brennan": {"name":"Brennan", "job":"Fighter"},
-	"solan":   {"name":"Solan",   "job":"Scholar"},
-	"tobias":  {"name":"Tobias",  "job":"Cleric"},
-	"seren":   {"name":"Seren",   "job":"Dancer"},
-}
+## Returns {"name": ..., "job": ...} pulled live from the Characters autoload.
+## Falls back gracefully if the autoload doesn't know the id.
+func _unit_def(uid: String) -> Dictionary:
+	var char_data: Dictionary = Characters.get_character(uid)
+	if char_data.is_empty():
+		return {"name": uid.capitalize(), "job": ""}
+	var job_raw: String = char_data.get("starting_job", "")
+	return {
+		"name": char_data.get("human_name", uid.capitalize()),
+		"job":  job_raw.capitalize(),
+	}
 
 var map_data: MapData = null
 var saved_formation: Array = []
 var saved_formation_loaded: bool = false
-var _roster: Array        = ["zane", "mira", "kael", "lyra"]
+var _roster: Array        = []
 var _deployment: Array    = []   # [{unit_id, x, y, facing}]
 var _selected_id: String  = ""
 var _editing_saved_formation: bool = false
@@ -130,6 +127,8 @@ var _status_lbl:  Label
 
 
 func _ready() -> void:
+	# Populate roster from the Characters autoload — single source of truth.
+	_roster = Characters.PARTY_ORDER.duplicate()
 	_setup_deployment()
 	_editing_saved_formation = not saved_formation_loaded
 	_build_ui()
@@ -432,7 +431,7 @@ func _refresh_roster() -> void:
 	var required: Array = map_data.required_unit_ids if map_data else []
 
 	for uid in _roster:
-		var udef: Dictionary = _UNITS.get(uid, {"name": uid.capitalize(), "job": ""})
+		var udef: Dictionary = _unit_def(uid)
 		var is_sel: bool = _selected_id == uid
 		var is_placed: bool = placed.has(uid)
 		var is_req: bool = uid in required
@@ -573,7 +572,7 @@ func _refresh_grid() -> void:
 			# If a unit is placed here
 			if slot != null:
 				var uid: String    = str(slot["unit_id"])
-				var udef: Dictionary = _UNITS.get(uid, {"name": uid.capitalize()})
+				var udef: Dictionary = _unit_def(uid)
 				var is_sel         := _selected_id == uid
 				var tok_lbl        := Label.new()
 				tok_lbl.text       = "%s\n%s" % [udef["name"].left(3).to_upper(), _arrow(str(slot["facing"]))]
@@ -710,7 +709,7 @@ func _validate() -> Array:
 			if slot["unit_id"] == uid:
 				found = true; break
 		if not found:
-			errs.append("%s is required and has not been placed." % _UNITS.get(uid, {"name": uid}).get("name", uid))
+			errs.append("%s is required and has not been placed." % _unit_def(uid).get("name", uid))
 	return errs
 
 
@@ -721,7 +720,7 @@ func _refresh_start_btn() -> void:
 #  WIDGET HELPERS
 
 func _unit_name(uid: String) -> String:
-	return str(_UNITS.get(uid, {"name": uid.capitalize()}).get("name", uid.capitalize()))
+	return _unit_def(uid).get("name", uid.capitalize())
 
 
 func _formation_summary() -> String:

@@ -19,6 +19,8 @@ var _mp_label: Label
 var _temper_label: Label
 var _ether_label: Label
 var _hp_bar: ProgressBar
+var _temper_bar: ProgressBar
+var _ether_bar: ProgressBar
 var _log_labels: Array[Label] = []
 var _timeline_labels: Array[Label] = []
 var _side_timeline_labels: Array[Label] = []
@@ -34,6 +36,8 @@ var _result_label: Label
 var _status_label: Label
 var _action_state_label: Label
 var _tile_info_label: Label
+var _telemetry_panel: PanelContainer
+var _telemetry_label: Label
 var _command_hint_label: Label
 var _preview_panel: PanelContainer
 var _preview_mode_label: Label
@@ -64,8 +68,20 @@ var _can_move_now: bool = false
 var _can_act_now: bool = false
 var _has_pending_action: bool = false
 
+# Party sidebar
+var _party_vbox: VBoxContainer
+var _active_unit_id: String = ""
+# Sin/virtue subtitle in active-unit panel
+var _unit_sin_label: Label
+
 const LOG_SIZE := 5
 const TIMELINE_SLOTS := 5
+const C_PANEL := Color(0.018, 0.020, 0.028, 0.88)
+const C_PANEL_DEEP := Color(0.006, 0.008, 0.014, 0.93)
+const C_GOLD := Color(0.78, 0.58, 0.30, 0.86)
+const C_GOLD_BRIGHT := Color(1.0, 0.86, 0.48, 0.96)
+const C_TEXT := Color(0.90, 0.82, 0.68, 1.0)
+const C_MUTED := Color(0.58, 0.53, 0.47, 1.0)
 
 
 func setup(manager: BattleManager) -> void:
@@ -93,52 +109,48 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Dark background panel on right half
-	var bg := ColorRect.new()
-	bg.color = Color(0.035, 0.045, 0.065, 0.82)
-	bg.position = Vector2(908, 8)
-	bg.size = Vector2(360, 704)
-	add_child(bg)
+	# Dark background panel on right side — covers main panel + loadout strip below it
+	var viewport_size := get_viewport().get_visible_rect().size
+	var right_w := 344.0
+	var right_x: float = max(930.0, viewport_size.x - right_w - 22.0)
+	var right_panel := _framed_panel(C_PANEL, C_GOLD, 2, 6)
+	right_panel.position = Vector2(right_x - 10.0, 8.0)
+	right_panel.size = Vector2(right_w + 20.0, viewport_size.y - 148.0)
+	add_child(right_panel)
 
 	var root := VBoxContainer.new()
-	root.position = Vector2(916, 14)
-	root.size = Vector2(344, 690)
-	root.add_theme_constant_override("separation", 6)
+	root.position = Vector2(right_x, 18.0)
+	root.size = Vector2(right_w, viewport_size.y - 168.0)
+	root.add_theme_constant_override("separation", 8)
 	add_child(root)
 
 	# Mission header
 	_mission_label = Label.new()
 	_mission_label.text = "ASHVALE ROAD"
-	_mission_label.add_theme_font_size_override("font_size", 15)
-	_mission_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
+	_mission_label.add_theme_font_override("font", DISPLAY_FONT)
+	_mission_label.add_theme_font_size_override("font_size", 21)
+	_mission_label.add_theme_color_override("font_color", C_GOLD_BRIGHT)
 	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_mission_label)
 
 	_phase_label = Label.new()
 	_phase_label.text = "Initializing"
+	_phase_label.add_theme_font_override("font", DISPLAY_FONT)
 	_phase_label.add_theme_font_size_override("font_size", 13)
-	_phase_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
+	_phase_label.add_theme_color_override("font_color", C_TEXT)
 	_phase_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_phase_label)
 
 	_objective_label = Label.new()
 	_objective_label.text = "Objective pending"
 	_objective_label.add_theme_font_size_override("font_size", 12)
-	_objective_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.48))
+	_objective_label.add_theme_color_override("font_color", C_GOLD_BRIGHT)
 	_objective_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(_objective_label)
 
-	_enemy_intent_panel = PanelContainer.new()
+	_enemy_intent_panel = _registry_panel("enemy_intent", Color(0.05, 0.06, 0.085, 0.92), Color(1.0, 0.45, 0.22, 0.72), 1, 6)
 	_enemy_intent_panel.visible = false
-	var intent_style := StyleBoxFlat.new()
-	intent_style.bg_color = Color(0.05, 0.06, 0.085, 0.92)
-	intent_style.border_color = Color(1.0, 0.45, 0.22, 0.72)
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		intent_style.set_border_width(side, 1)
-	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
-		intent_style.set_corner_radius(corner, 6)
-	_enemy_intent_panel.add_theme_stylebox_override("panel", intent_style)
 	root.add_child(_enemy_intent_panel)
 
 	var intent_box := VBoxContainer.new()
@@ -156,12 +168,34 @@ func _build_ui() -> void:
 	_enemy_intent_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intent_box.add_child(_enemy_intent_body)
 
+	var tile_info_panel := _registry_panel("tile_info", Color(0.025, 0.030, 0.042, 0.76), Color(0.36, 0.50, 0.62, 0.55), 1, 5)
+	root.add_child(tile_info_panel)
 	_tile_info_label = Label.new()
 	_tile_info_label.text = "Hover a tile"
 	_tile_info_label.add_theme_font_size_override("font_size", 11)
 	_tile_info_label.add_theme_color_override("font_color", Color(0.62, 0.72, 0.80))
 	_tile_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(_tile_info_label)
+	tile_info_panel.add_child(_tile_info_label)
+
+	_telemetry_panel = _registry_panel("battle_telemetry", Color(0.028, 0.030, 0.040, 0.82), Color(0.62, 0.70, 0.80, 0.50), 1, 5)
+	_telemetry_panel.custom_minimum_size.y = 112.0
+	root.add_child(_telemetry_panel)
+	var telemetry_box := VBoxContainer.new()
+	telemetry_box.add_theme_constant_override("separation", 2)
+	_telemetry_panel.add_child(telemetry_box)
+	var telemetry_title := Label.new()
+	telemetry_title.text = "BATTLE READOUT"
+	telemetry_title.add_theme_font_size_override("font_size", 10)
+	telemetry_title.add_theme_color_override("font_color", Color(0.74, 0.84, 0.92))
+	telemetry_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	telemetry_box.add_child(telemetry_title)
+	_telemetry_label = Label.new()
+	_telemetry_label.text = "Turns 0 | Dealt 0 | Taken 0"
+	_telemetry_label.add_theme_font_size_override("font_size", 9)
+	_telemetry_label.add_theme_color_override("font_color", Color(0.80, 0.86, 0.90))
+	_telemetry_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_telemetry_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	telemetry_box.add_child(_telemetry_label)
 
 	_command_hint_label = Label.new()
 	_command_hint_label.text = "Choose a command"
@@ -178,40 +212,56 @@ func _build_ui() -> void:
 
 	_unit_name = Label.new()
 	_unit_name.text = ""
-	_unit_name.add_theme_font_size_override("font_size", 18)
-	_unit_name.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	_unit_name.add_theme_font_override("font", DISPLAY_FONT)
+	_unit_name.add_theme_font_size_override("font_size", 22)
+	_unit_name.add_theme_color_override("font_color", C_TEXT)
 	root.add_child(_unit_name)
 
+	# Sin / virtue subtitle — filled in _on_turn_started via _unit_sin_label
+	_unit_sin_label = Label.new()
+	_unit_sin_label.text = ""
+	_unit_sin_label.add_theme_font_size_override("font_size", 11)
+	_unit_sin_label.add_theme_color_override("font_color", C_MUTED)
+	root.add_child(_unit_sin_label)
+
 	_hp_bar = ProgressBar.new()
-	_hp_bar.custom_minimum_size.y = 14
+	_hp_bar.custom_minimum_size.y = 18
 	_hp_bar.value = 100
+	_hp_bar.show_percentage = false
+	_hp_bar.add_theme_stylebox_override("fill", _bar_fill_style(Color(0.88, 0.24, 0.32)))
+	_hp_bar.add_theme_stylebox_override("background", _bar_bg_style())
 	root.add_child(_hp_bar)
 
-	var stats_row := HBoxContainer.new()
-	stats_row.add_theme_constant_override("separation", 16)
-	root.add_child(stats_row)
-	_hp_label     = _stat_label(stats_row, "HP")
-	_mp_label     = _stat_label(stats_row, "MP")
-	_temper_label = _stat_label(stats_row, "TMP")
-	_ether_label  = _stat_label(stats_row, "ETH")
+	_hp_label = _stat_label(root, "❤  HP")
+	_hp_label.add_theme_color_override("font_color", Color(1.0, 0.52, 0.60))
+
+	_temper_bar = ProgressBar.new()
+	_temper_bar.custom_minimum_size.y = 14
+	_temper_bar.value = 100
+	_temper_bar.show_percentage = false
+	_temper_bar.add_theme_stylebox_override("fill", _bar_fill_style(Color(0.95, 0.58, 0.14)))
+	_temper_bar.add_theme_stylebox_override("background", _bar_bg_style())
+	root.add_child(_temper_bar)
+	_temper_label = _stat_label(root, "🔥  Temper")
+	_temper_label.add_theme_color_override("font_color", Color(0.95, 0.70, 0.30))
+
+	_ether_bar = ProgressBar.new()
+	_ether_bar.custom_minimum_size.y = 14
+	_ether_bar.value = 100
+	_ether_bar.show_percentage = false
+	_ether_bar.add_theme_stylebox_override("fill", _bar_fill_style(Color(0.50, 0.35, 0.95)))
+	_ether_bar.add_theme_stylebox_override("background", _bar_bg_style())
+	root.add_child(_ether_bar)
+	_ether_label = _stat_label(root, "✦  Ether")
+	_ether_label.add_theme_color_override("font_color", Color(0.68, 0.52, 1.0))
+
+	_mp_label = _stat_label(root, "MP")
+	_mp_label.add_theme_font_size_override("font_size", 11)
+	_mp_label.add_theme_color_override("font_color", Color(0.56, 0.72, 0.92))
 
 	root.add_child(_separator())
 
-	# Command buttons
-	root.add_child(_section_label("COMMANDS"))
-	var btn_row := HBoxContainer.new()
-	btn_row.add_theme_constant_override("separation", 6)
-	root.add_child(btn_row)
-	_move_btn   = _cmd_btn(btn_row, "Move",   _on_move)
-	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
-	_wait_btn   = _cmd_btn(btn_row, "Wait",   _on_wait)
-	_ability_btn = _cmd_btn(btn_row, "Ability", _on_ability)
-
-	var confirm_row := HBoxContainer.new()
-	confirm_row.add_theme_constant_override("separation", 6)
-	root.add_child(confirm_row)
-	_confirm_btn = _cmd_btn(confirm_row, "Confirm", _on_confirm)
-	_cancel_btn = _cmd_btn(confirm_row, "Cancel", _on_cancel)
+	_build_bottom_command_bar(viewport_size)
 
 	_action_state_label = Label.new()
 	_action_state_label.text = "Move: ready    Action: ready"
@@ -274,7 +324,7 @@ func _build_ui() -> void:
 		_log_labels.append(lbl)
 
 	_build_intro_banner()
-	_build_side_timeline()
+	_build_party_panel()
 	_build_loadout_strip()
 	_build_action_preview_panel()
 	_build_settings_overlay()
@@ -307,6 +357,28 @@ func _press_if_ready(button: Button, callback: Callable) -> void:
 	if button and not button.disabled and button.visible:
 		callback.call()
 		get_viewport().set_input_as_handled()
+
+
+func _build_bottom_command_bar(viewport_size: Vector2) -> void:
+	var panel := _framed_panel(C_PANEL_DEEP, C_GOLD, 2, 5)
+	var right_x: float = max(930.0, viewport_size.x - 366.0)
+	var command_w: float = min(780.0, max(600.0, right_x - 190.0))
+	panel.custom_minimum_size = Vector2(command_w, 86.0)
+	panel.position = Vector2(max(158.0, right_x * 0.5 - command_w * 0.5), viewport_size.y - 104.0)
+	add_child(panel)
+
+	var box := HBoxContainer.new()
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+
+	_move_btn    = _cmd_btn(box, "Move",    _on_move,    ">")
+	_attack_btn  = _cmd_btn(box, "Attack",  _on_attack,  "X")
+	_ability_btn = _cmd_btn(box, "Skill",   _on_ability, "*")
+	_wait_btn    = _cmd_btn(box, "Wait",    _on_wait,    "~")
+	_confirm_btn = _cmd_btn(box, "Confirm", _on_confirm, "OK")
+	_cancel_btn  = _cmd_btn(box, "Cancel",  _on_cancel,  "<")
+
 
 func _build_intro_banner() -> void:
 	_intro_banner = PanelContainer.new()
@@ -344,55 +416,159 @@ func _build_intro_banner() -> void:
 
 #  Builder helpers
 
-func _build_side_timeline() -> void:
-	var panel := PanelContainer.new()
-	panel.position = Vector2(12.0, 84.0)
-	panel.custom_minimum_size = Vector2(120.0, 300.0)
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.03, 0.04, 0.06, 0.82)
-	st.border_color = Color(0.25, 0.45, 0.65, 0.65)
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		st.set_border_width(side, 1)
-	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
-		st.set_corner_radius(c, 6)
-	panel.add_theme_stylebox_override("panel", st)
+func _build_party_panel() -> void:
+	var panel := _framed_panel(C_PANEL, C_GOLD, 2, 4)
+	panel.position = Vector2(8.0, 170.0)
+	panel.custom_minimum_size = Vector2(148.0, 50.0)
 	add_child(panel)
 
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	panel.add_child(box)
+	_party_vbox = VBoxContainer.new()
+	_party_vbox.add_theme_constant_override("separation", 4)
+	panel.add_child(_party_vbox)
 
 	var title := Label.new()
-	title.text = "NEXT"
+	title.text = "PARTY"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", DISPLAY_FONT)
 	title.add_theme_font_size_override("font_size", 11)
-	title.add_theme_color_override("font_color", Color(0.75, 0.86, 1.0))
-	box.add_child(title)
+	title.add_theme_color_override("font_color", C_GOLD_BRIGHT)
+	_party_vbox.add_child(title)
 
-	for i in range(TIMELINE_SLOTS):
-		var lbl := Label.new()
-		lbl.text = "%d  -" % (i + 1)
-		lbl.add_theme_font_size_override("font_size", 9)
-		lbl.add_theme_color_override("font_color", Color(0.86, 0.88, 0.9))
-		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lbl.custom_minimum_size = Vector2(104.0, 28.0)
-		box.add_child(lbl)
-		_side_timeline_labels.append(lbl)
+
+func _refresh_party_panel() -> void:
+	if not _party_vbox or not battle_manager:
+		return
+	# Safe removal: pull from index 1 each time so we never hold stale refs
+	while _party_vbox.get_child_count() > 1:
+		var child := _party_vbox.get_child(1)
+		_party_vbox.remove_child(child)
+		child.free()
+
+	# Collect living player units in PARTY_ORDER if Characters autoload is available
+	var chars: Node = get_node_or_null("/root/Characters")
+	var order: Array = []
+	if chars and chars.get("PARTY_ORDER") != null:
+		order = chars.PARTY_ORDER
+	var units_map: Dictionary = {}
+	for uid: String in battle_manager.units:
+		var u: Unit = battle_manager.units[uid]
+		if u.team == "player":
+			units_map[u.unit_id] = u
+
+	var slot := 1
+	if order.is_empty():
+		# Fallback: use whatever order the dict gives us
+		for uid in units_map:
+			_add_party_card(units_map[uid], slot)
+			slot += 1
+	else:
+		for char_id in order:
+			if units_map.has(char_id):
+				_add_party_card(units_map[char_id], slot)
+				slot += 1
+
+
+func _add_party_card(unit: Unit, slot_num: int) -> void:
+	var is_active := unit.unit_id == _active_unit_id
+	var chars: Node = get_node_or_null("/root/Characters")
+	var sin_color := C_GOLD
+	if chars and chars.has_method("get_sin_color"):
+		sin_color = chars.get_sin_color(unit.unit_id)
+
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(130.0, 50.0)
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.06, 0.065, 0.085, 0.96) if is_active else Color(0.022, 0.025, 0.035, 0.90)
+	st.border_color = C_GOLD_BRIGHT if is_active else Color(sin_color.r, sin_color.g, sin_color.b, 0.55)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, 2 if is_active else 1)
+	st.set_corner_radius_all(4)
+	# Emphasise the left edge with the sin colour
+	st.set_border_width(SIDE_LEFT, 3)
+	if not is_active:
+		st.border_color = Color(sin_color.r, sin_color.g, sin_color.b, 0.70)
+	st.content_margin_left = 8.0
+	st.content_margin_right = 8.0
+	st.content_margin_top = 5.0
+	st.content_margin_bottom = 5.0
+	card.add_theme_stylebox_override("panel", st)
+	_party_vbox.add_child(card)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	card.add_child(col)
+
+	# Name row (slot number + name)
+	var name_row := HBoxContainer.new()
+	name_row.add_theme_constant_override("separation", 4)
+	col.add_child(name_row)
+
+	var num_lbl := Label.new()
+	num_lbl.text = str(slot_num)
+	num_lbl.custom_minimum_size = Vector2(12.0, 0.0)
+	num_lbl.add_theme_font_size_override("font_size", 9)
+	num_lbl.add_theme_color_override("font_color", Color(sin_color.r, sin_color.g, sin_color.b, 0.85))
+	name_row.add_child(num_lbl)
+
+	var name_lbl := Label.new()
+	name_lbl.text = unit.display_name.left(10)
+	name_lbl.add_theme_font_override("font", DISPLAY_FONT)
+	name_lbl.add_theme_font_size_override("font_size", 12)
+	name_lbl.add_theme_color_override("font_color", C_GOLD_BRIGHT if is_active else C_TEXT)
+	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_row.add_child(name_lbl)
+
+	# HP bar
+	if unit.unit_data and unit.unit_data.base_stats:
+		var max_hp := maxi(1, unit.unit_data.base_stats.hp)
+		var ratio := float(unit.hp) / float(max_hp)
+		var hp_color := Color(0.22, 0.85, 0.32)
+		if ratio < 0.3:
+			hp_color = Color(0.88, 0.22, 0.22)
+		elif ratio < 0.6:
+			hp_color = Color(0.92, 0.72, 0.12)
+
+		var pb := ProgressBar.new()
+		pb.custom_minimum_size = Vector2(0, 7)
+		pb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pb.min_value = 0
+		pb.max_value = max_hp
+		pb.value = unit.hp
+		pb.show_percentage = false
+		pb.add_theme_stylebox_override("fill", _bar_fill_style(hp_color))
+		pb.add_theme_stylebox_override("background", _bar_bg_style())
+		col.add_child(pb)
+
+		var hp_row := HBoxContainer.new()
+		col.add_child(hp_row)
+		var hp_txt := Label.new()
+		hp_txt.text = "%d / %d" % [unit.hp, max_hp]
+		hp_txt.add_theme_font_size_override("font_size", 9)
+		hp_txt.add_theme_color_override("font_color", hp_color.lightened(0.15))
+		hp_txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hp_row.add_child(hp_txt)
+
+
+func _bar_fill_style(color: Color) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = color
+	st.set_corner_radius_all(2)
+	return st
+
+
+func _bar_bg_style() -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.05, 0.055, 0.075, 0.90)
+	st.set_corner_radius_all(2)
+	return st
 
 
 func _build_loadout_strip() -> void:
-	_loadout_panel = PanelContainer.new()
-	_loadout_panel.position = Vector2(12.0, 396.0)
-	_loadout_panel.custom_minimum_size = Vector2(330.0, 112.0)
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.03, 0.04, 0.06, 0.86)
-	st.border_color = Color(0.78, 0.66, 0.34, 0.58)
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		st.set_border_width(side, 1)
-	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
-		st.set_corner_radius(c, 6)
-	_loadout_panel.add_theme_stylebox_override("panel", st)
+	var viewport_size := get_viewport().get_visible_rect().size
+	var right_x: float = max(930.0, viewport_size.x - 366.0)
+	_loadout_panel = _framed_panel(C_PANEL_DEEP, C_GOLD, 1, 5)
+	_loadout_panel.position = Vector2(right_x, viewport_size.y - 124.0)
+	_loadout_panel.custom_minimum_size = Vector2(344.0, 104.0)
 	add_child(_loadout_panel)
 
 	var box := VBoxContainer.new()
@@ -415,7 +591,7 @@ func _build_loadout_strip() -> void:
 	_loadout_detail_label.add_theme_font_size_override("font_size", 10)
 	_loadout_detail_label.add_theme_color_override("font_color", Color(0.78, 0.82, 0.86))
 	_loadout_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_loadout_detail_label.custom_minimum_size = Vector2(312.0, 42.0)
+	_loadout_detail_label.custom_minimum_size = Vector2(344.0, 42.0)
 	box.add_child(_loadout_detail_label)
 	_refresh_loadout_strip()
 
@@ -500,19 +676,11 @@ func _boon_color(boon: Dictionary) -> Color:
 
 
 func _build_action_preview_panel() -> void:
-	_preview_panel = PanelContainer.new()
+	_preview_panel = _registry_panel("forecast", Color(0.035, 0.038, 0.052, 0.92), Color(0.78, 0.66, 0.42, 0.85), 1, 6)
 	_preview_panel.visible = false
-	_preview_panel.position = Vector2(238.0, 520.0)
-	_preview_panel.custom_minimum_size = Vector2(820.0, 168.0)
-	_preview_panel.size = Vector2(820.0, 168.0)
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.035, 0.038, 0.052, 0.92)
-	st.border_color = Color(0.78, 0.66, 0.42, 0.85)
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
-		st.set_border_width(side, 1)
-	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
-		st.set_corner_radius(c, 6)
-	_preview_panel.add_theme_stylebox_override("panel", st)
+	_preview_panel.position = Vector2(908.0, 836.0)
+	_preview_panel.custom_minimum_size = Vector2(988.0, 188.0)
+	_preview_panel.size = Vector2(988.0, 188.0)
 	add_child(_preview_panel)
 
 	var root := VBoxContainer.new()
@@ -634,6 +802,23 @@ func show_spoils(rewards: Dictionary, items: Array) -> void:
 	_reward_chip(reward_row, "Gold", "%d" % rewards.get("gold", 0), Color(1.0, 0.78, 0.28))
 	_reward_chip(reward_row, "JP", "%d" % rewards.get("jp", 0), Color(0.58, 0.84, 1.0))
 	_reward_chip(reward_row, "Items", "%d" % items.size(), Color(0.75, 0.94, 0.62))
+
+	var telemetry: Dictionary = rewards.get("telemetry", {})
+	if not telemetry.is_empty():
+		var progress_row := HBoxContainer.new()
+		progress_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		progress_row.add_theme_constant_override("separation", 12)
+		box.add_child(progress_row)
+		_reward_chip(progress_row, "Job JP", "+%d" % int(telemetry.get("job_jp_earned", 0)), Color(0.58, 0.84, 1.0))
+		_reward_chip(progress_row, "Boons", "%d / +%d" % [
+			int(telemetry.get("boon_triggers", 0)),
+			int(telemetry.get("boon_damage", 0)),
+		], Color(0.82, 0.58, 1.0))
+		_reward_chip(progress_row, "Terrain", "%d / +%d" % [
+			int(telemetry.get("terrain_hazards_triggered", 0)),
+			int(telemetry.get("terrain_damage", 0)),
+		], Color(1.0, 0.70, 0.34))
+		_reward_chip(progress_row, "Close Calls", "%d" % int(telemetry.get("close_calls", 0)), Color(1.0, 0.86, 0.28))
 
 	var item_title := "ITEMS"
 	if items.is_empty():
@@ -853,7 +1038,7 @@ func _audio_settings() -> Node:
 
 func _separator() -> HSeparator:
 	var sep := HSeparator.new()
-	sep.add_theme_color_override("color", Color(0.25, 0.28, 0.32))
+	sep.add_theme_color_override("color", Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.38))
 	return sep
 
 
@@ -862,7 +1047,7 @@ func _section_label(text: String) -> Label:
 	lbl.text = text
 	lbl.add_theme_font_override("font", DISPLAY_FONT)
 	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", Color(0.5, 0.55, 0.65))
+	lbl.add_theme_color_override("font_color", C_GOLD)
 	return lbl
 
 
@@ -870,15 +1055,24 @@ func _stat_label(parent: Control, prefix: String) -> Label:
 	var lbl := Label.new()
 	lbl.text = "%s: " % prefix
 	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.add_theme_color_override("font_color", C_TEXT)
 	parent.add_child(lbl)
 	return lbl
 
 
-func _cmd_btn(parent: Control, label: String, callback: Callable) -> Button:
+func _cmd_btn(parent: Control, label: String, callback: Callable, icon: String = "") -> Button:
 	var btn := Button.new()
-	btn.text = label
-	btn.custom_minimum_size = Vector2(96, 40)
+	btn.text = ("%s\n%s" % [icon, label.to_upper()]) if not icon.is_empty() else label.to_upper()
+	btn.custom_minimum_size = Vector2(110, 68)
 	btn.disabled = true
+	btn.add_theme_font_override("font", DISPLAY_FONT)
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_color_override("font_color", C_TEXT)
+	btn.add_theme_stylebox_override("normal",   _button_style(C_PANEL_DEEP, C_GOLD, 1))
+	btn.add_theme_stylebox_override("hover",    _button_style(Color(0.10, 0.07, 0.02, 0.97), C_GOLD_BRIGHT, 2))
+	btn.add_theme_stylebox_override("pressed",  _button_style(Color(0.14, 0.09, 0.02, 1.00), C_GOLD_BRIGHT, 2))
+	btn.add_theme_stylebox_override("disabled", _button_style(Color(0.015, 0.016, 0.020, 0.68), Color(0.22, 0.18, 0.12, 0.50), 1))
+	btn.add_theme_color_override("font_disabled_color", Color(0.32, 0.29, 0.24, 0.55))
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
 	return btn
@@ -887,6 +1081,7 @@ func _cmd_btn(parent: Control, label: String, callback: Callable) -> Button:
 func _timeline_slot(parent: Control) -> Label:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(62, 42)
+	panel.add_theme_stylebox_override("panel", _button_style(C_PANEL_DEEP, Color(C_GOLD.r, C_GOLD.g, C_GOLD.b, 0.45), 1))
 	var lbl := Label.new()
 	lbl.text = ""
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -899,18 +1094,123 @@ func _timeline_slot(parent: Control) -> Label:
 	return lbl
 
 
+func _framed_panel(bg: Color, border: Color, border_width: int = 1, radius: int = 6) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _panel_style(bg, border, border_width, radius))
+	return panel
+
+
+func _registry_panel(panel_id: String, bg: Color, border: Color, border_width: int = 1, radius: int = 6) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _registry_panel_style(panel_id, _panel_style(bg, border, border_width, radius)))
+	return panel
+
+
+func _registry_panel_style(panel_id: String, fallback: StyleBox) -> StyleBox:
+	var path := AssetRegistry.get_ui_panel(panel_id)
+	if path.is_empty() or not ResourceLoader.exists(path):
+		return fallback
+	var texture := load(path)
+	if not (texture is Texture2D):
+		return fallback
+	var st := StyleBoxTexture.new()
+	st.texture = texture as Texture2D
+	st.texture_margin_left = 12.0
+	st.texture_margin_right = 12.0
+	st.texture_margin_top = 12.0
+	st.texture_margin_bottom = 12.0
+	st.content_margin_left = 12.0
+	st.content_margin_right = 12.0
+	st.content_margin_top = 10.0
+	st.content_margin_bottom = 10.0
+	return st
+
+
+func _panel_style(bg: Color, border: Color, border_width: int = 1, radius: int = 6) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = bg
+	st.border_color = border
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		st.set_border_width(side, border_width)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		st.set_corner_radius(corner, radius)
+	st.content_margin_left = 12.0
+	st.content_margin_right = 12.0
+	st.content_margin_top = 10.0
+	st.content_margin_bottom = 10.0
+	return st
+
+
+func _button_style(bg: Color, border: Color, border_width: int = 1) -> StyleBoxFlat:
+	return _panel_style(bg, border, border_width, 3)
+
+
 #  Signal handlers
 
 func _on_log(text: String) -> void:
 	for i in range(LOG_SIZE - 1, 0, -1):
 		_log_labels[i].text = _log_labels[i - 1].text
 	_log_labels[0].text = "> " + text
+	_refresh_telemetry_panel()
+
+
+func _refresh_telemetry_panel() -> void:
+	if not _telemetry_label or not battle_manager:
+		return
+	var telemetry := battle_manager.get_battle_telemetry()
+	var turns := int(telemetry.get("turns_taken", 0))
+	var dealt := int(telemetry.get("damage_dealt", 0))
+	var taken := int(telemetry.get("damage_taken", 0))
+	var hazards := int(telemetry.get("terrain_hazards_triggered", 0))
+	var boons := int(telemetry.get("boon_triggers", 0))
+	var boon_damage := int(telemetry.get("boon_damage", 0))
+	var terrain_damage := int(telemetry.get("terrain_damage", 0))
+	var close_calls := int(telemetry.get("close_calls", 0))
+	var party_jp := int(telemetry.get("reward_jp", 0))
+	var job_jp := int(telemetry.get("job_jp_earned", 0))
+	var pressure_text := "Pressure %d" % taken
+	if close_calls > 0:
+		pressure_text = "%d close call%s" % [close_calls, "" if close_calls == 1 else "s"]
+	_telemetry_label.text = "Pace %dT / %dP | Dealt %d\nBoons %d (+%d) | Terrain %d (+%d)\n%s | JP +%d / Job +%d" % [
+		turns,
+		int(telemetry.get("player_turns", 0)),
+		dealt,
+		boons,
+		boon_damage,
+		hazards,
+		terrain_damage,
+		pressure_text,
+		party_jp,
+		job_jp,
+	]
+
+
+func _top_boon_text(telemetry: Dictionary, limit: int = 3) -> String:
+	var counts: Dictionary = telemetry.get("boon_trigger_counts", {})
+	if counts.is_empty():
+		return ""
+	var remaining := counts.duplicate()
+	var parts: Array[String] = []
+	while parts.size() < limit and not remaining.is_empty():
+		var best_id := ""
+		var best_count := -1
+		for boon_id in remaining.keys():
+			var count := int(remaining.get(boon_id, 0))
+			if count > best_count:
+				best_count = count
+				best_id = str(boon_id)
+		if best_id.is_empty():
+			break
+		parts.append("%s x%d" % [best_id.replace("_", " ").capitalize(), best_count])
+		remaining.erase(best_id)
+	return " | ".join(parts)
 
 
 func _on_phase_changed(phase: String) -> void:
 	_phase_label.text = phase.replace("_", " ")
 	_is_player_turn = phase == "PLAYER_TURN"
 	_refresh_command_buttons()
+	_refresh_telemetry_panel()
 	if _ability_panel: _ability_panel.visible = false
 
 
@@ -1028,7 +1328,7 @@ func _style_enemy_intent_panel(danger: String) -> void:
 
 		for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
 			panel_style.set_corner_radius(corner, 6)
-		_enemy_intent_panel.add_theme_stylebox_override("panel", panel_style)
+		_enemy_intent_panel.add_theme_stylebox_override("panel", _registry_panel_style("enemy_intent", panel_style))
 
 
 func _format_enemy_intent_board(rows_variant: Variant) -> String:
@@ -1272,6 +1572,7 @@ func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) 
 		var act_text := "Ready" if can_act else "Used"
 		_action_state_label.text = "Move: %s    Action: %s" % [move_text, act_text]
 	_refresh_command_buttons()
+	_refresh_telemetry_panel()
 
 
 func _refresh_command_buttons() -> void:
@@ -1338,6 +1639,8 @@ func _on_battle_started(display_name: String, objective: String) -> void:
 	if _objective_label:
 		_objective_label.text = objective
 	_show_status_banner(display_name.to_upper(), objective, Color(1.0, 0.92, 0.62))
+	_refresh_party_panel()
+	_refresh_telemetry_panel()
 
 
 func _on_turn_started(unit_id: String, _team: String) -> void:
@@ -1346,14 +1649,38 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	var unit: Unit = battle_manager.units.get(unit_id)
 	if not unit:
 		return
+	_active_unit_id = unit_id
+	_refresh_party_panel()
 	_unit_name.text = unit.display_name
-	var max_hp := unit.unit_data.base_stats.hp
+	# Sin / virtue subtitle
+	if _unit_sin_label:
+		var chars: Node = get_node_or_null("/root/Characters")
+		if chars and chars.has_method("get_character"):
+			var char_data: Dictionary = chars.get_character(unit_id)
+			var sin_label: String = str(char_data.get("sin_label", ""))
+			var virtue: String = str(char_data.get("virtue", ""))
+			if not sin_label.is_empty() and not virtue.is_empty():
+				_unit_sin_label.text = "%s  ->  %s" % [sin_label, virtue]
+				var sin_col: Color = chars.get_sin_color(unit_id)
+				_unit_sin_label.add_theme_color_override("font_color",
+					Color(sin_col.r, sin_col.g, sin_col.b, 0.80))
+			else:
+				_unit_sin_label.text = ""
+	var max_hp = maxi(1, unit.unit_data.base_stats.hp)
+	var max_temper = maxi(1, unit.unit_data.base_stats.max_temper)
+	var max_ether = maxi(1, unit.unit_data.base_stats.max_ether)
+	var max_mp = maxi(1, unit.unit_data.base_stats.mp)
 	_hp_bar.max_value = max_hp
 	_hp_bar.value = unit.hp
-	_hp_label.text    = "HP: %d/%d" % [unit.hp, max_hp]
-	_mp_label.text    = "MP: %d" % unit.mp
-	_temper_label.text = "TMP: %d" % unit.temper
-	_ether_label.text  = "ETH: %d" % unit.ether
+	_temper_bar.max_value = max_temper
+	_temper_bar.value = unit.temper
+	_ether_bar.max_value = max_ether
+	_ether_bar.value = unit.ether
+	_hp_label.text = "HP: %d/%d" % [unit.hp, max_hp]
+	_temper_label.text = "Temper: %d/%d" % [unit.temper, max_temper]
+	_ether_label.text = "Ether: %d/%d" % [unit.ether, max_ether]
+	_mp_label.text = "MP: %d/%d" % [unit.mp, max_mp]
+	_refresh_telemetry_panel()
 	# Status icons
 	if unit.statuses.is_empty():
 		_status_label.text = ""
@@ -1379,6 +1706,7 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 func _on_battle_won(rewards: Dictionary) -> void:
 	_phase_label.text = "VICTORY!"
 	_result_label.text = "+%dg  +%dJP" % [rewards.get("gold", 0), rewards.get("jp", 0)]
+	_refresh_telemetry_panel()
 	if _objective_label:
 		_objective_label.text = "Objective complete"
 	_show_status_banner(
@@ -1400,6 +1728,7 @@ func _on_battle_won(rewards: Dictionary) -> void:
 func _on_battle_lost() -> void:
 	_phase_label.text = "DEFEATED"
 	_result_label.text = "All units fallen."
+	_refresh_telemetry_panel()
 	if _objective_label:
 		_objective_label.text = "Party defeated"
 	_show_status_banner("DEFEATED", "Returning to the hub.", Color(1.0, 0.32, 0.26), 1.8)

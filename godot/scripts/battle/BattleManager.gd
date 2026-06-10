@@ -23,8 +23,9 @@ const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
 const DEMO_PACE := 0.45
 const MIN_WAIT := 0.03
-const AUTO_BATTLE_TEST_MODE := true
+const AUTO_BATTLE_TEST_MODE := false
 const AUTO_BATTLE_TEST_SPEED := 2.0
+const TELEMETRY_REPORT_EXPORT := "res://../test_playable_loop_v02/last_battle_telemetry_report.txt"
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
 
@@ -47,6 +48,7 @@ var active_unit_has_acted: bool = false
 var auto_battle_enabled: bool = AUTO_BATTLE_TEST_MODE
 var battle_speed_multiplier: float = AUTO_BATTLE_TEST_SPEED
 var _last_enemy_intents: Dictionary = {}
+var battle_telemetry: Dictionary = {}
 
 ##  Tactical boon runtime state
 var _ruinous_hit_counter:    int  = 0   ## counts hits toward Ruinous Field interval
@@ -54,6 +56,13 @@ var _wrath_crescendo_stacks: int  = 0   ## kill counter for Wrath Crescendo (res
 var _tiles_moved_this_turn:  int  = 0   ## Manhattan distance moved this player turn
 var _iron_momentum_primed:   bool = false  ## true when Iron Momentum threshold was met
 var _reaping_step_pending:   bool = false  ## true when a kill grants a free move
+
+
+func configure_auto_playtest(enabled: bool, speed: float = AUTO_BATTLE_TEST_SPEED) -> void:
+	auto_battle_enabled = enabled
+	battle_speed_multiplier = clampf(speed, 0.25, 8.0)
+	Engine.time_scale = battle_speed_multiplier if auto_battle_enabled else 1.0
+
 
 func _living_unit(uid: String) -> Unit:
 	var candidate: Variant = units.get(uid)
@@ -70,6 +79,243 @@ func _timer(seconds: float) -> SceneTreeTimer:
 	return get_tree().create_timer(maxf(seconds * DEMO_PACE, MIN_WAIT))
 
 
+func _reset_battle_telemetry() -> void:
+	battle_telemetry = {
+		"outcome": "in_progress",
+		"turns_taken": 0,
+		"player_turns": 0,
+		"enemy_turns": 0,
+		"damage_dealt": 0,
+		"damage_taken": 0,
+		"boon_damage": 0,
+		"terrain_damage": 0,
+		"healing_used": 0,
+		"allies_downed": 0,
+		"terrain_hazards_triggered": 0,
+		"boon_triggers": 0,
+		"boon_trigger_counts": {},
+		"close_calls": 0,
+		"auto_playtest": auto_battle_enabled,
+		"auto_playtest_speed": battle_speed_multiplier,
+		"reward_gold": 0,
+		"reward_jp": 0,
+		"job_jp_earned": 0,
+		"job_level_ups": 0,
+		"party_vitals": {},
+		"healing_sources": [],
+	}
+	_export_battle_telemetry_snapshot()
+
+
+func get_battle_telemetry() -> Dictionary:
+	return battle_telemetry.duplicate(true)
+
+
+func _record_boon_trigger(boon_id: String) -> void:
+	battle_telemetry["boon_triggers"] = int(battle_telemetry.get("boon_triggers", 0)) + 1
+	var counts: Dictionary = battle_telemetry.get("boon_trigger_counts", {})
+	counts[boon_id] = int(counts.get(boon_id, 0)) + 1
+	battle_telemetry["boon_trigger_counts"] = counts
+	_export_battle_telemetry_snapshot()
+
+
+func _record_close_call(unit: Unit) -> void:
+	if not unit or unit.team != "player" or unit.hp <= 0 or not unit.unit_data:
+		return
+	var max_hp: int = maxi(int(unit.unit_data.base_stats.hp), 1)
+	if float(unit.hp) / float(max_hp) <= 0.20:
+		battle_telemetry["close_calls"] = int(battle_telemetry.get("close_calls", 0)) + 1
+
+
+func _record_direct_damage(target: Unit, damage_result: Dictionary, source_team: String, source_kind: String) -> void:
+	if not target:
+		return
+	var hp_damage := int(damage_result.get("hp_damage", damage_result.get("damage", 0)))
+	if hp_damage <= 0:
+		return
+	if target.team == "player":
+		battle_telemetry["damage_taken"] = int(battle_telemetry.get("damage_taken", 0)) + hp_damage
+		_record_close_call(target)
+	elif target.team == "enemy" and source_team in ["player", "terrain"]:
+		battle_telemetry["damage_dealt"] = int(battle_telemetry.get("damage_dealt", 0)) + hp_damage
+	if source_kind == "boon":
+		battle_telemetry["boon_damage"] = int(battle_telemetry.get("boon_damage", 0)) + hp_damage
+	elif source_kind == "terrain":
+		battle_telemetry["terrain_damage"] = int(battle_telemetry.get("terrain_damage", 0)) + hp_damage
+	_export_battle_telemetry_snapshot()
+
+
+func _record_direct_healing(target: Unit, amount: int, _source_kind: String) -> void:
+	if not target or target.team != "player" or amount <= 0:
+		return
+	battle_telemetry["healing_used"] = int(battle_telemetry.get("healing_used", 0)) + amount
+	_export_battle_telemetry_snapshot()
+
+
+func _telemetry_summary_text(outcome: String) -> String:
+	return "%s telemetry: turns %d, dealt %d, taken %d, healed %d, downed %d, hazards %d, boons %d. Updated telemetry report." % [
+		outcome.capitalize(),
+		int(battle_telemetry.get("turns_taken", 0)),
+		int(battle_telemetry.get("damage_dealt", 0)),
+		int(battle_telemetry.get("damage_taken", 0)),
+		int(battle_telemetry.get("healing_used", 0)),
+		int(battle_telemetry.get("allies_downed", 0)),
+		int(battle_telemetry.get("terrain_hazards_triggered", 0)),
+		int(battle_telemetry.get("boon_triggers", 0)),
+	]
+
+
+func _finalize_battle_telemetry(outcome: String) -> Dictionary:
+	battle_telemetry["outcome"] = outcome
+	_export_battle_telemetry_snapshot()
+	log_message.emit(_telemetry_summary_text(outcome))
+	return get_battle_telemetry()
+
+
+func _export_battle_telemetry_snapshot() -> void:
+	battle_telemetry["map_id"] = map_data.id if map_data else ""
+	battle_telemetry["map_name"] = map_data.display_name if map_data else ""
+	battle_telemetry["exported_at_unix"] = int(Time.get_unix_time_from_system())
+	battle_telemetry["export_paths"] = [TELEMETRY_REPORT_EXPORT]
+	battle_telemetry["tuning_targets"] = TelemetryTuning.targets()
+	battle_telemetry["tuning_notes"] = _battle_tuning_notes()
+	battle_telemetry["export_results"] = []
+	var export_results: Array[Dictionary] = []
+	export_results.append(_write_battle_telemetry_export(TELEMETRY_REPORT_EXPORT, _battle_telemetry_report_text()))
+	battle_telemetry["export_results"] = export_results
+	if not export_results.is_empty():
+		var result: Dictionary = export_results[0]
+		var state: String = "ok" if bool(result.get("ok", false)) else "failed"
+		battle_telemetry["export_status"] = "Telemetry report %s: %s" % [state, str(result.get("path", ""))]
+
+
+func _write_battle_telemetry_export(path: String, payload: String) -> Dictionary:
+	if path.is_empty():
+		return {"path": path, "ok": false, "error": ERR_INVALID_PARAMETER}
+	var resolved_path: String = ProjectSettings.globalize_path(path) if path.begins_with("res://") else path
+	var base_dir := resolved_path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(base_dir):
+		DirAccess.make_dir_recursive_absolute(base_dir)
+	var file := FileAccess.open(resolved_path, FileAccess.WRITE)
+	if file:
+		file.store_string(payload)
+		file.close()
+		return {"path": resolved_path, "ok": true, "error": OK}
+	var err := FileAccess.get_open_error()
+	log_message.emit("Telemetry export failed: %s (error %d)" % [resolved_path, err])
+	return {"path": resolved_path, "ok": false, "error": err}
+
+
+func _telemetry_export_status_text() -> String:
+	var results: Array = battle_telemetry.get("export_results", [])
+	if results.is_empty():
+		return "Telemetry report pending: %s" % ProjectSettings.globalize_path(TELEMETRY_REPORT_EXPORT)
+	var result: Dictionary = results[0]
+	var path: String = str(result.get("path", ProjectSettings.globalize_path(TELEMETRY_REPORT_EXPORT)))
+	if bool(result.get("ok", false)):
+		return "Telemetry report: %s" % path
+	return "Telemetry report failed: %s (error %d)" % [path, int(result.get("error", -1))]
+
+
+func _battle_telemetry_report_text() -> String:
+	var lines: Array[String] = []
+	lines.append("The Appointed Playable Loop v0.2 Battle Telemetry")
+	lines.append("Outcome: %s" % str(battle_telemetry.get("outcome", "in_progress")))
+	lines.append("Map: %s (%s)" % [str(battle_telemetry.get("map_name", "")), str(battle_telemetry.get("map_id", ""))])
+	lines.append("Driver: %s" % ("auto playtest %.2fx" % float(battle_telemetry.get("auto_playtest_speed", 1.0)) if bool(battle_telemetry.get("auto_playtest", false)) else "manual"))
+	lines.append("")
+	lines.append("Turns: %d total, %d player, %d enemy" % [
+		int(battle_telemetry.get("turns_taken", 0)),
+		int(battle_telemetry.get("player_turns", 0)),
+		int(battle_telemetry.get("enemy_turns", 0)),
+	])
+	lines.append("Damage: %d dealt, %d taken, %d boon, %d terrain" % [
+		int(battle_telemetry.get("damage_dealt", 0)),
+		int(battle_telemetry.get("damage_taken", 0)),
+		int(battle_telemetry.get("boon_damage", 0)),
+		int(battle_telemetry.get("terrain_damage", 0)),
+	])
+	lines.append("Recovery: %d healing used, %d allies downed, %d close calls" % [
+		int(battle_telemetry.get("healing_used", 0)),
+		int(battle_telemetry.get("allies_downed", 0)),
+		int(battle_telemetry.get("close_calls", 0)),
+	])
+	lines.append("Triggers: %d boons, %d terrain hazards" % [
+		int(battle_telemetry.get("boon_triggers", 0)),
+		int(battle_telemetry.get("terrain_hazards_triggered", 0)),
+	])
+	lines.append("Progress: +%dg, +%d party JP, +%d job JP, %d job level-ups" % [
+		int(battle_telemetry.get("reward_gold", 0)),
+		int(battle_telemetry.get("reward_jp", 0)),
+		int(battle_telemetry.get("job_jp_earned", 0)),
+		int(battle_telemetry.get("job_level_ups", 0)),
+	])
+	lines.append("Vitals: %s" % _battle_vitals_report_text())
+	lines.append("Healing Sources: %s" % _battle_healing_sources_text())
+	lines.append("")
+	lines.append("Tuning Notes:")
+	for note: String in _battle_tuning_notes():
+		lines.append("- %s" % note)
+	lines.append("")
+	lines.append(TelemetryTuning.target_summary())
+	return "\n".join(lines)
+
+
+func _battle_tuning_notes() -> Array[String]:
+	return TelemetryTuning.notes(battle_telemetry)
+
+
+func set_post_battle_state(vitals: Dictionary, healing_sources: Array = []) -> void:
+	battle_telemetry["party_vitals"] = vitals.duplicate(true)
+	battle_telemetry["healing_sources"] = healing_sources.duplicate(true)
+	_export_battle_telemetry_snapshot()
+
+
+func _battle_vitals_report_text() -> String:
+	var vitals: Dictionary = battle_telemetry.get("party_vitals", {})
+	if vitals.is_empty():
+		return "not captured"
+	var parts: Array[String] = []
+	for uid in vitals.keys():
+		var vital: Dictionary = vitals.get(uid, {})
+		parts.append("%s %d/%d HP" % [
+			str(uid).capitalize(),
+			int(vital.get("hp", 0)),
+			int(vital.get("max_hp", 0)),
+		])
+	return ", ".join(parts)
+
+
+func _battle_healing_sources_text() -> String:
+	var healing_sources: Array = battle_telemetry.get("healing_sources", [])
+	if healing_sources.is_empty():
+		return "none recorded"
+	var parts: Array[String] = []
+	for source in healing_sources:
+		if source is Dictionary:
+			parts.append("%s +%d" % [str(source.get("source", "healing")), int(source.get("amount", 0))])
+	return ", ".join(parts)
+
+
+func _on_combat_resolved_for_telemetry(result: Dictionary) -> void:
+	if bool(result.get("missed", false)):
+		return
+	var actor_team := str(result.get("actor_team", ""))
+	var target_team := str(result.get("target_team", ""))
+	var hp_damage := int(result.get("hp_damage", result.get("damage", 0)))
+	var healed := int(result.get("healed", 0))
+	if hp_damage > 0:
+		if actor_team == "player" and target_team == "enemy":
+			battle_telemetry["damage_dealt"] = int(battle_telemetry.get("damage_dealt", 0)) + hp_damage
+		elif target_team == "player":
+			battle_telemetry["damage_taken"] = int(battle_telemetry.get("damage_taken", 0)) + hp_damage
+			var target := _living_unit(str(result.get("target_id", "")))
+			_record_close_call(target)
+	if healed > 0 and actor_team == "player":
+		battle_telemetry["healing_used"] = int(battle_telemetry.get("healing_used", 0)) + healed
+	_export_battle_telemetry_snapshot()
+
+
 func _exit_tree() -> void:
 	if auto_battle_enabled:
 		Engine.time_scale = 1.0
@@ -80,10 +326,14 @@ func _ready() -> void:
 	tactical_grid.unit_clicked.connect(_on_unit_clicked)
 	tactical_grid.tile_hovered.connect(_on_tile_hovered)
 	unit_moved.connect(_on_unit_moved_internal)
+	combat_resolver.combat_resolved.connect(_on_combat_resolved_for_telemetry)
+	if battle_telemetry.is_empty():
+		_reset_battle_telemetry()
 
 
 func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
+	_reset_battle_telemetry()
 	_ruinous_hit_counter    = 0
 	_wrath_crescendo_stacks = 0
 	_tiles_moved_this_turn  = 0
@@ -106,6 +356,9 @@ func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	battle_started.emit(map_data.display_name, map_data.objective_label)
 	log_message.emit("Battle started: %s" % map_data.display_name)
 	log_message.emit("Objective: %s" % map_data.objective_label)
+	if auto_battle_enabled:
+		log_message.emit("Auto playtest driver: enabled at %.2fx." % battle_speed_multiplier)
+	log_message.emit(_telemetry_export_status_text())
 	_set_phase(Phase.TICK)
 
 
@@ -141,6 +394,8 @@ func _begin_player_turn() -> void:
 	_iron_momentum_primed  = false
 	_reaping_step_pending  = false
 	if unit:
+		battle_telemetry["turns_taken"] = int(battle_telemetry.get("turns_taken", 0)) + 1
+		battle_telemetry["player_turns"] = int(battle_telemetry.get("player_turns", 0)) + 1
 		unit.begin_turn()
 		tactical_grid.show_active_unit(unit.grid_pos, "player")
 		#  Reset boon tracking for this turn
@@ -163,6 +418,8 @@ func _begin_enemy_turn() -> void:
 	if not unit:
 		_set_phase(Phase.RESOLVE)
 		return
+	battle_telemetry["turns_taken"] = int(battle_telemetry.get("turns_taken", 0)) + 1
+	battle_telemetry["enemy_turns"] = int(battle_telemetry.get("enemy_turns", 0)) + 1
 	unit.begin_turn()
 	active_unit_has_moved = false
 	active_unit_has_acted = false
@@ -416,6 +673,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 			var base_power: int = int(ability.get("base_power", 100))
 			var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 			var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+			el_mult *= CombatFormula.item_elemental_multiplier(unit, spell_type)
 			formula = CombatFormula.calculate_magical_attack(unit, target, spell_type, base_power, {"power_mult": el_mult})
 		details["element"] = spell_type
 		if _ability_has_area_effect(ability):
@@ -915,17 +1173,43 @@ func _resolve_turn() -> void:
 
 
 func _check_objective() -> void:
-	if objective_tracker.is_victory():
+	if _battle_victory_reached():
 		_set_phase(Phase.VICTORY)
-	elif objective_tracker.is_defeat():
+	elif _battle_defeat_reached():
 		_set_phase(Phase.DEFEAT)
 	else:
 		_set_phase(Phase.TICK)
 
 
+func _battle_victory_reached() -> bool:
+	if objective_tracker and objective_tracker.is_victory():
+		return true
+	if map_data and str(map_data.objective_type) == "defeat_all":
+		return _living_team_count("enemy") == 0
+	return false
+
+
+func _battle_defeat_reached() -> bool:
+	if objective_tracker and objective_tracker.is_defeat():
+		return true
+	return _living_team_count("player") == 0
+
+
+func _living_team_count(team: String) -> int:
+	var count := 0
+	for uid: String in units.keys():
+		var unit := _living_unit(uid)
+		if unit and unit.team == team:
+			count += 1
+	return count
+
+
 func _handle_victory() -> void:
 	var rewards := {"gold": map_data.reward_gold, "jp": map_data.reward_jp,
 					"items": map_data.reward_items, "flags": map_data.reward_flags}
+	battle_telemetry["reward_gold"] = map_data.reward_gold
+	battle_telemetry["reward_jp"] = map_data.reward_jp
+	rewards["telemetry"] = _finalize_battle_telemetry("victory")
 	_play_sfx("victory", -2.0)
 	log_message.emit("VICTORY! +%dg +%dJP" % [map_data.reward_gold, map_data.reward_jp])
 	battle_won.emit(rewards)
@@ -935,6 +1219,7 @@ func _handle_victory() -> void:
 
 func _handle_defeat() -> void:
 	_play_sfx("defeat", -2.0)
+	_finalize_battle_telemetry("defeat")
 	battle_lost.emit()
 
 
@@ -1387,7 +1672,9 @@ func _award_jp(unit: Unit, event_type: String) -> void:
 	var job_id: String = char_data.get("current_job_id", "")
 	if job_id.is_empty(): return
 	var result := js.apply_jp(char_data, job_id, total_jp)
+	battle_telemetry["job_jp_earned"] = int(battle_telemetry.get("job_jp_earned", 0)) + total_jp
 	if result["leveled_up"]:
+		battle_telemetry["job_level_ups"] = int(battle_telemetry.get("job_level_ups", 0)) + 1
 		log_message.emit("%s: %s reached %s!" % [unit.display_name, job_id.capitalize(), result["title"]])
 		var vfx_n := get_node_or_null("/root/VFX")
 		if vfx_n: (vfx_n as VFXManager).play_aura(unit.grid_pos, Color(0.9, 0.8, 0.2, 0.8))
@@ -1411,7 +1698,8 @@ func _check_volatile_explosion(dead_unit: Unit) -> void:
 				if not u:
 					continue
 				if u.grid_pos == nb and u.hp > 0 and u != dead_unit:
-					var _damage_result := u.receive_damage(dmg, "magical")
+					var damage_result := u.receive_damage(dmg, "magical")
+					_record_direct_damage(u, damage_result, dead_unit.team, "affix")
 					var vfx_n := get_node_or_null("/root/VFX")
 					if vfx_n:
 						(vfx_n as VFXManager).play_fire(nb)
@@ -1427,18 +1715,30 @@ func _check_boon_on_kill(killer: Unit, dead_unit: Unit) -> void:
 		var hp_r: int   = bonuses["on_elite_kill_hp"]
 		var tmpr_r: int = bonuses["on_elite_kill_tmpr"]
 		if hp_r > 0 or tmpr_r > 0:
-			if hp_r > 0:   killer.heal(hp_r)
+			if hp_r > 0:
+				killer.heal(hp_r)
+				_record_direct_healing(killer, hp_r, "boon")
 			if tmpr_r > 0: killer.temper = mini(killer.unit_data.base_stats.max_temper, killer.temper + tmpr_r)
+			_record_boon_trigger("champions_grit")
 			log_message.emit("Champion's Grit: +%d HP, +%d Temper!" % [hp_r, tmpr_r])
 	# Vaelthorn Unchained on-kill
 	var ve_hp:    int = bonuses["vaelthorn_kill_hp"]
 	var ve_ether: int = bonuses["vaelthorn_kill_ether"]
 	if ve_hp > 0 or ve_ether > 0:
-		if ve_hp > 0:    killer.heal(ve_hp)
+		if ve_hp > 0:
+			killer.heal(ve_hp)
+			_record_direct_healing(killer, ve_hp, "boon")
 		if ve_ether > 0: killer.ether = mini(killer.unit_data.base_stats.max_ether, killer.ether + ve_ether)
+		_record_boon_trigger("vaelthorn_kill")
+	var item_kill_hp: int = int(killer.get_meta("item_kill_hp", 0)) if killer.has_meta("item_kill_hp") else 0
+	if item_kill_hp > 0 and killer.team == "player":
+		killer.heal(item_kill_hp)
+		_record_direct_healing(killer, item_kill_hp, "item")
+		log_message.emit("Item effect: %s recovers %d HP on kill." % [killer.display_name, item_kill_hp])
 	# Reaping Step: grant free move on player kills
 	if killer.team == "player" and bonuses.get("reaping_step_range", 0) > 0:
 		_reaping_step_pending = true
+		_record_boon_trigger("reaping_step")
 
 
 func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> void:
@@ -1515,13 +1815,15 @@ func _on_tile_hovered(grid_pos: Vector2i) -> void:
 			var height_delta: int = int(tile.get("height", 0)) - int(active_tile.get("height", 0))
 			if height_delta != 0:
 				height_delta_text = "  %+dH" % height_delta
-		tile_info_changed.emit("%s  %d,%d  H:%d  Move:%d%s%s" % [
+		var hazard_text := _terrain_hazard_label(str(tile.get("terrain", "")))
+		tile_info_changed.emit("%s  %d,%d  H:%d  Move:%d%s%s%s" % [
 			str(tile.get("terrain", "unknown")).replace("_", " ").capitalize(),
 			grid_pos.x,
 			grid_pos.y,
 			int(tile.get("height", 0)),
 			int(tile.get("move_cost", 1)),
 			height_delta_text,
+			hazard_text,
 			occupant_text,
 		])
 	if active_command == "move":
@@ -1667,6 +1969,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 			_timer(0.6).timeout.connect(
 				func() -> void: _execute_counter_attack(target, attacker))
 		active_unit_has_acted = true
+		_award_jp(attacker, "action_used")
 
 		#  Tactical boon follow-ups (player attacks only)
 		var tb_bonuses := RunBonusesUtil.for_current_run()
@@ -1758,6 +2061,9 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 	var height_delta: int = int(dest_tile.get("height", 0)) - int(start_tile.get("height", 0))
 	var terrain_name := str(dest_tile.get("terrain", "unknown")).replace("_", " ").capitalize()
 	var note := "%s tile. Turn continues after moving." % terrain_name
+	var hazard_note := _path_hazard_note(unit, path)
+	if not hazard_note.is_empty():
+		note = "%s %s" % [hazard_note, note]
 	if height_delta > 0:
 		note = "Climb +%d height. %s" % [height_delta, note]
 	elif height_delta < 0:
@@ -1780,6 +2086,52 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 		"status_preview": "Move cost %d / %d" % [path_cost, unit.unit_data.base_stats.move],
 		"note": note,
 	}
+
+
+func _path_hazard_note(unit: Unit, path: Array[Vector2i]) -> String:
+	if not unit or path.size() <= 2:
+		return ""
+	var burns := 0
+	var shocks := 0
+	var voids := 0
+	var ice := 0
+	for i in range(1, path.size() - 1):
+		var tile := tactical_grid.get_tile(path[i])
+		match str(tile.get("terrain", "")):
+			"burning":
+				burns += 1
+			"electrified", "electrified_water":
+				shocks += 1
+			"void_corruption", "void_anchor":
+				voids += 1
+			"ice", "frozen_water":
+				ice += 1
+	var parts: Array[String] = []
+	if burns > 0:
+		parts.append("%d burning" % burns)
+	if shocks > 0:
+		parts.append("%d electrified" % shocks)
+	if voids > 0:
+		parts.append("%d corrupted" % voids)
+	if ice > 0:
+		parts.append("%d icy" % ice)
+	if parts.is_empty():
+		return ""
+	return "Path crosses %s hazard tile%s." % [", ".join(parts), "" if parts.size() == 1 and (burns + shocks + voids + ice) == 1 else "s"]
+
+
+func _terrain_hazard_label(terrain: String) -> String:
+	match terrain:
+		"burning":
+			return "  Hazard: burn"
+		"electrified", "electrified_water":
+			return "  Hazard: shock/Ether drain"
+		"ice", "frozen_water":
+			return "  Hazard: slippery/slow"
+		"void_corruption", "void_anchor":
+			return "  Hazard: void/Ether drain"
+		_:
+			return ""
 
 
 func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
@@ -1860,6 +2212,9 @@ func _with_run_bonus_context(preview: Dictionary, actor: Unit, target: Unit) -> 
 		element_mult = float(bonuses["elemental_mult"].get(element, 1.0))
 	if element != "physical" and element_mult != 1.0:
 		notes.append("Boon: %s %+d%% damage" % [element.capitalize(), int(round((element_mult - 1.0) * 100.0))])
+	var item_mult: float = CombatFormula.item_elemental_multiplier(actor, element)
+	if element != "physical" and item_mult != 1.0:
+		notes.append("Item: %s %+d%% damage" % [element.capitalize(), int(round((item_mult - 1.0) * 100.0))])
 	if bool(preview.get("is_heal", false)) and int(bonuses.get("heal_bonus", 0)) != 0:
 		notes.append("Boon: healing %+d" % int(bonuses.get("heal_bonus", 0)))
 	if element == "physical":
@@ -1932,6 +2287,7 @@ func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> i
 	var base_power: int = int(ability.get("base_power", 100))
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+	el_mult *= CombatFormula.item_elemental_multiplier(caster, spell_type)
 	var formula := CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
 	return int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 
@@ -1994,11 +2350,14 @@ func _on_unit_defeated(unit_id: String) -> void:
 		return
 	unit_defeated.emit(unit_id)
 	if units.has(unit_id):
+		var defeated_unit: Unit = units[unit_id]
+		if defeated_unit and defeated_unit.team == "player":
+			battle_telemetry["allies_downed"] = int(battle_telemetry.get("allies_downed", 0)) + 1
 		log_message.emit("%s was defeated!" % units[unit_id].display_name)
 	objective_tracker.on_unit_defeated(unit_id)
 	turn_order.remove_unit(unit_id)
-	# A unit dying mid-tick could end the battle  check objectives
-	if current_phase == Phase.TICK or current_phase == Phase.RESOLVE:
+	# A unit dying during any phase can end the battle.
+	if current_phase not in [Phase.VICTORY, Phase.DEFEAT, Phase.CHECK_OBJECTIVE]:
 		_set_phase(Phase.CHECK_OBJECTIVE)
 
 
@@ -2006,16 +2365,63 @@ func _process_terrain_hazards(unit: Unit) -> void:
 	if unit.hp <= 0:
 		return
 	var tile: Dictionary = tactical_grid.get_tile(unit.grid_pos)
-	match tile.get("terrain", ""):
+	_apply_terrain_hazard(unit, unit.grid_pos, str(tile.get("terrain", "")), "standing")
+
+
+func _process_terrain_path_hazards(unit: Unit, path: Array[Vector2i]) -> void:
+	if unit.hp <= 0 or path.size() <= 2:
+		return
+	for i in range(1, path.size() - 1):
+		var pos: Vector2i = path[i]
+		var tile: Dictionary = tactical_grid.get_tile(pos)
+		if tile.is_empty():
+			continue
+		_apply_terrain_hazard(unit, pos, str(tile.get("terrain", "")), "movement")
+		if unit.hp <= 0:
+			return
+
+
+func _apply_terrain_hazard(unit: Unit, pos: Vector2i, terrain: String, trigger: String) -> void:
+	match terrain:
 		"burning":
-			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.05))
-			var result := unit.receive_damage(dmg, "magical")
-			var dealt: int = result.get("hp_damage", 0)
-			log_message.emit("%s takes %d fire damage from burning ground!" % [unit.display_name, dealt])
+			battle_telemetry["terrain_hazards_triggered"] = int(battle_telemetry.get("terrain_hazards_triggered", 0)) + 1
+			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.04))
+			var burning_result := unit.receive_damage(dmg, "magical")
+			var dealt: int = burning_result.get("hp_damage", 0)
+			_record_direct_damage(unit, burning_result, "terrain", "terrain")
+			var source := "crossing burning ground" if trigger == "movement" else "burning ground"
+			log_message.emit("%s takes %d fire damage from %s!" % [unit.display_name, dealt, source])
 			var vfx_node := get_node_or_null("/root/VFX")
 			if vfx_node:
-				(vfx_node as VFXManager).play_damage_number(unit.grid_pos, dealt, Color(1.0, 0.45, 0.1))
-				(vfx_node as VFXManager).play_fire(unit.grid_pos)
+				(vfx_node as VFXManager).play_damage_number(pos, dealt, Color(1.0, 0.45, 0.1))
+				(vfx_node as VFXManager).play_fire(pos)
+		"electrified", "electrified_water":
+			battle_telemetry["terrain_hazards_triggered"] = int(battle_telemetry.get("terrain_hazards_triggered", 0)) + 1
+			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.03))
+			var shock_result := unit.receive_damage(dmg, "magical")
+			var dealt: int = shock_result.get("hp_damage", 0)
+			_record_direct_damage(unit, shock_result, "terrain", "terrain")
+			unit.ether = max(0, unit.ether - 8)
+			log_message.emit("%s takes %d lightning damage and loses 8 Ether from electrified ground!" % [unit.display_name, dealt])
+			var vfx_node := get_node_or_null("/root/VFX")
+			if vfx_node:
+				(vfx_node as VFXManager).play_damage_number(pos, dealt, Color(0.5, 0.85, 1.0))
+		"ice", "frozen_water":
+			battle_telemetry["terrain_hazards_triggered"] = int(battle_telemetry.get("terrain_hazards_triggered", 0)) + 1
+			if not unit.has_status("slow"):
+				_try_apply_status(unit, {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "ice"})
+			log_message.emit("%s loses footing on icy ground!" % unit.display_name)
+		"void_corruption", "void_anchor":
+			battle_telemetry["terrain_hazards_triggered"] = int(battle_telemetry.get("terrain_hazards_triggered", 0)) + 1
+			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.03))
+			var void_result := unit.receive_damage(dmg, "magical")
+			var dealt: int = void_result.get("hp_damage", 0)
+			_record_direct_damage(unit, void_result, "terrain", "terrain")
+			unit.ether = max(0, unit.ether - 5)
+			log_message.emit("%s takes %d void damage and loses 5 Ether from corrupted ground!" % [unit.display_name, dealt])
+			var vfx_node := get_node_or_null("/root/VFX")
+			if vfx_node:
+				(vfx_node as VFXManager).play_damage_number(pos, dealt, Color(0.72, 0.32, 1.0))
 
 
 func _try_apply_status(target: Unit, se_data: Dictionary) -> void:
@@ -2064,7 +2470,9 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 		if hp_pct <= cdg_thresh:
 			var bonus_dmg := int(round(float(damage_dealt) * cdg_bonus))
 			if bonus_dmg > 0:
-				primary_target.receive_damage(bonus_dmg, "physical")
+				var coup_result := primary_target.receive_damage(bonus_dmg, "physical")
+				_record_direct_damage(primary_target, coup_result, attacker.team, "boon")
+				_record_boon_trigger("coup_de_grace")
 				log_message.emit("Coup de Grace! +%d finishing blow!" % bonus_dmg)
 				if vfx and primary_target.hp > 0:
 					vfx.play_damage_number(primary_target.grid_pos, bonus_dmg, Color(0.95, 0.1, 0.1))
@@ -2074,7 +2482,9 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 	if fury > 0.0 and active_unit_has_moved and primary_target.hp > 0:
 		var fury_dmg := int(round(float(damage_dealt) * fury))
 		if fury_dmg > 0:
-			primary_target.receive_damage(fury_dmg, "physical")
+			var fury_result := primary_target.receive_damage(fury_dmg, "physical")
+			_record_direct_damage(primary_target, fury_result, attacker.team, "boon")
+			_record_boon_trigger("battle_fury")
 			log_message.emit("Battle Fury! +%d (moved first)!" % fury_dmg)
 			if vfx and primary_target.hp > 0:
 				vfx.play_damage_number(primary_target.grid_pos, fury_dmg, Color(1.0, 0.5, 0.1))
@@ -2084,7 +2494,9 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 			and primary_target.hp > 0:
 		var im_dmg := int(round(float(damage_dealt) * 0.30))
 		if im_dmg > 0:
-			primary_target.receive_damage(im_dmg, "physical")
+			var momentum_result := primary_target.receive_damage(im_dmg, "physical")
+			_record_direct_damage(primary_target, momentum_result, attacker.team, "boon")
+			_record_boon_trigger("iron_momentum")
 			log_message.emit("Iron Momentum! +%d bonus damage!" % im_dmg)
 			if vfx and primary_target.hp > 0:
 				vfx.play_damage_number(primary_target.grid_pos, im_dmg, Color(0.70, 0.70, 0.95))
@@ -2094,7 +2506,9 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 	if wc_pct > 0.0 and _wrath_crescendo_stacks > 0 and primary_target.hp > 0:
 		var wc_dmg := int(round(float(damage_dealt) * wc_pct * float(_wrath_crescendo_stacks)))
 		if wc_dmg > 0:
-			primary_target.receive_damage(wc_dmg, "physical")
+			var crescendo_result := primary_target.receive_damage(wc_dmg, "physical")
+			_record_direct_damage(primary_target, crescendo_result, attacker.team, "boon")
+			_record_boon_trigger("wrath_crescendo")
 			log_message.emit("Wrath Crescendo %d! +%d damage!" % [_wrath_crescendo_stacks, wc_dmg])
 			if vfx and primary_target.hp > 0:
 				vfx.play_damage_number(primary_target.grid_pos, wc_dmg, Color(0.9, 0.3, 0.9))
@@ -2105,6 +2519,8 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 		var heal_amt := int(round(float(damage_dealt) * bt))
 		if heal_amt > 0:
 			attacker.heal(heal_amt)
+			_record_direct_healing(attacker, heal_amt, "boon")
+			_record_boon_trigger("bloodthirst")
 			log_message.emit("Bloodthirst: +%d HP" % heal_amt)
 			if vfx:
 				vfx.play_aura(attacker.grid_pos, Color(0.8, 0.1, 0.1, 0.6))
@@ -2117,6 +2533,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 			maxi(0, primary_target.unit_data.base_stats.max_temper - sunder)
 		primary_target.temper = mini(
 			primary_target.temper, primary_target.unit_data.base_stats.max_temper)
+		_record_boon_trigger("sundering_blow")
 		log_message.emit("Sundering Blow! %s max Temper %d!" % [primary_target.display_name, sunder])
 
 	#  Ruinous Field
@@ -2127,6 +2544,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 			_ruinous_hit_counter = 0
 			if tactical_grid.has_method("ignite_tile"):
 				tactical_grid.ignite_tile(primary_target.grid_pos)
+			_record_boon_trigger("ruinous_field")
 			log_message.emit("Ruinous Field! Ground ignites under %s!" % primary_target.display_name)
 			if vfx:
 				vfx.play_fire(primary_target.grid_pos)
@@ -2135,6 +2553,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 	var kb: float = bonuses.get("knockback_chance", 0.0)
 	if kb > 0.0 and is_instance_valid(primary_target) and primary_target.hp > 0:
 		if randf() < kb:
+			_record_boon_trigger("knockback")
 			_apply_knockback(attacker.grid_pos, primary_target)
 
 	#  Cleave
@@ -2148,6 +2567,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 				tactical_grid.get_tile(attacker.grid_pos),
 				tactical_grid.get_tile(cpos), "slash", true)
 			if not cr.get("missed", false):
+				_record_boon_trigger("cleave")
 				log_message.emit("Cleave hits %s for %d!" % [ctgt.display_name, cr.get("hp_damage", 0)])
 				if ctgt.hp <= 0:
 					_check_volatile_explosion(ctgt)
@@ -2165,6 +2585,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 				tactical_grid.get_tile(attacker.grid_pos),
 				tactical_grid.get_tile(ppos), "slash", true)
 			if not pr.get("missed", false):
+				_record_boon_trigger("piercing_line")
 				log_message.emit("Pierce! Hits %s for %d!" % [ptgt.display_name, pr.get("hp_damage", 0)])
 				if ptgt.hp <= 0:
 					_check_volatile_explosion(ptgt)
@@ -2181,6 +2602,7 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 				tactical_grid.get_tile(attacker.grid_pos),
 				tactical_grid.get_tile(primary_target.grid_pos), "slash", true)
 			if not er.get("missed", false):
+				_record_boon_trigger("echo_strike")
 				log_message.emit("Echo Strike! Second hit: %d damage!" % er.get("hp_damage", 0))
 				if primary_target.hp <= 0:
 					_check_volatile_explosion(primary_target)
@@ -2270,7 +2692,11 @@ func _run_reaping_step_auto(unit: Unit) -> void:
 #  Boon Handler: Movement tracking
 func _on_unit_moved_internal(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	var unit := _living_unit(unit_id)
-	if not unit or unit.team != "player":
+	if not unit:
+		return
+	var path := _path_between_for_hazards(unit, from, to)
+	_process_terrain_path_hazards(unit, path)
+	if unit.hp <= 0 or unit.team != "player":
 		return
 	if unit_id != active_unit_id:
 		return  # Only track active unit
@@ -2281,6 +2707,19 @@ func _on_unit_moved_internal(unit_id: String, from: Vector2i, to: Vector2i) -> v
 	var current: int = unit.get_meta("tiles_moved_this_turn", 0) as int
 	unit.set_meta("tiles_moved_this_turn", current + distance)
 	active_unit_has_moved = true
+
+
+func _path_between_for_hazards(unit: Unit, from: Vector2i, to: Vector2i) -> Array[Vector2i]:
+	var occupied: Array = []
+	for uid in units:
+		var other: Unit = _living_unit(str(uid))
+		if not other or other.unit_id == unit.unit_id:
+			continue
+		occupied.append(other.grid_pos)
+	var path := GridSystem.find_path(from, to, tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height)
+	if path.is_empty() and from != to:
+		path = [from, to]
+	return path
 
 
 #  Boon Handler: Kill effects and survival mechanics
@@ -2309,7 +2748,8 @@ func _apply_defeat_boon_effects(unit_id: String) -> bool:
 				continue
 			var dist: int = GridSystem.manhattan(unit.grid_pos, other.grid_pos)
 			if dist <= 1 and other.hp > 0:
-				other.receive_damage(flare_dmg, "magical")
+				var flare_result := other.receive_damage(flare_dmg, "magical")
+				_record_direct_damage(other, flare_result, unit.team, "boon")
 				if vfx_n: (vfx_n as VFXManager).play_damage_number(other.grid_pos, flare_dmg, Color(0.95, 0.35, 0.15))
 
 	# Track kill for killer's boon effects

@@ -58,6 +58,7 @@ static func xp_for_floor_clear(floor_num: int, node_type: String = "battle") -> 
 		"elite": return base + 10
 		"boss": return base + 18
 		"boon_pick", "mystery_shrine": return base + 4
+		"town_1", "town_2", "town_3": return base + 2
 		_: return base
 
 static func xp_for_run_end(floor_reached: int, victory: bool, heat_level: int = 0) -> int:

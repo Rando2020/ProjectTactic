@@ -1,0 +1,58 @@
+category,priority,target_filename,target_live_path,status,notes
+battle-hud,P0,battle-command-bar-panel.png,res://assets/generated/ui/command-bar-panel.png,exists,Horizontal battle command strip.
+battle-hud,P0,battle-panel-dark-stone.png,res://assets/generated/ui/dark-stone-panel.png,exists,General battle info panel.
+battle-hud,P0,battle-turn-order-sidebar-panel.png,res://assets/generated/ui/turn-order-sidebar-panel.png,exists,Vertical turn list frame.
+battle-hud,P0,battle-hp-bar-frame.png,res://assets/generated/ui/hp-bar-frame.png,exists,HP frame.
+battle-hud,P0,battle-temper-bar-frame.png,res://assets/generated/ui/temper-bar-frame.png,exists,Physical armor frame.
+battle-hud,P0,battle-ether-bar-frame.png,res://assets/generated/ui/ether-bar-frame.png,exists,Magic armor frame.
+battle-hud,P0,command-move-icon.png,res://assets/generated/icons/command-move-icon.png,exists,Move command.
+battle-hud,P0,command-attack-icon.png,res://assets/generated/icons/command-attack-icon.png,exists,Attack command.
+battle-hud,P0,command-ability-icon.png,res://assets/generated/icons/command-ability-icon.png,exists,Ability command.
+battle-hud,P0,command-item-icon.png,res://assets/generated/icons/command-item-icon.png,exists,Item command.
+battle-hud,P0,command-wait-icon.png,res://assets/generated/icons/command-wait-icon.png,exists,Wait command.
+battle-hud,P0,tile-selected-diamond.png,res://assets/generated/ui/tile-selected-diamond.png,exists,Selected tile overlay.
+battle-hud,P0,tile-move-diamond.png,res://assets/generated/ui/tile-move-diamond.png,exists,Movement range overlay.
+battle-hud,P0,tile-attack-diamond.png,res://assets/generated/ui/tile-attack-diamond.png,exists,Attack range overlay.
+battle-hud,P0,tile-ability-diamond.png,res://assets/generated/ui/tile-ability-diamond.png,exists,Ability range overlay.
+battle-hud,P0,tile-blocked-diamond.png,res://assets/generated/ui/tile-blocked-diamond.png,exists,Blocked tile overlay.
+battle-hud,P0,forecast-panel-frame.png,res://assets/generated/ui/forecast-panel-frame.png,missing,Damage forecast container.
+battle-hud,P0,enemy-intent-panel-frame.png,res://assets/generated/ui/enemy-intent-panel-frame.png,missing,Enemy intent container.
+battle-hud,P0,tile-info-panel-frame.png,res://assets/generated/ui/tile-info-panel-frame.png,missing,Terrain tooltip container.
+battle-hud,P0,objective-marker-diamond.png,res://assets/generated/ui/objective-marker-diamond.png,missing,Objective tile marker.
+run-map,P1,run-node-battle-icon.png,res://assets/generated/icons/run-node-battle-icon.png,exists,Normal fight node.
+run-map,P1,run-node-elite-icon.png,res://assets/generated/icons/run-node-elite-icon.png,exists,Elite fight node.
+run-map,P1,run-node-boss-icon.png,res://assets/generated/icons/run-node-boss-icon.png,exists,Boss node.
+run-map,P1,run-node-boon-icon.png,res://assets/generated/icons/run-node-boon-icon.png,exists,Boon node.
+run-map,P1,run-node-wanderer-icon.png,res://assets/generated/icons/run-node-wanderer-icon.png,exists,Wanderer node.
+run-map,P1,run-node-town-sanctum-icon.png,res://assets/generated/icons/run-node-town-sanctum-icon.png,missing,Heal/revive town node.
+run-map,P1,run-node-town-armory-icon.png,res://assets/generated/icons/run-node-town-armory-icon.png,missing,Upgrade/spend gold town node.
+run-map,P1,run-node-town-oracle-icon.png,res://assets/generated/icons/run-node-town-oracle-icon.png,missing,Reveal/reroute town node.
+run-map,P1,run-node-mystery-icon.png,res://assets/generated/icons/run-node-mystery-icon.png,missing,Unknown node icon.
+run-map,P1,run-map-parchment-background.png,res://assets/generated/ui/run-map-parchment-background.png,missing,Route-map backing surface.
+run-map,P1,run-route-connector-line.png,res://assets/generated/ui/run-route-connector-line.png,missing,Connection line between floors.
+results-rewards,P0,reward-card-panel.png,res://assets/generated/ui/reward-card-panel.png,exists,Generic reward card.
+results-rewards,P0,spoils-gold-icon.png,res://assets/generated/icons/currency-glyphs-icon.png,exists,Can use current currency glyph for now.
+results-rewards,P0,spoils-jp-icon.png,res://assets/generated/icons/spoils-jp-icon.png,missing,JP reward icon.
+results-rewards,P0,battle-telemetry-panel-frame.png,res://assets/generated/ui/battle-telemetry-panel-frame.png,missing,Turns/damage/healing summary panel.
+results-rewards,P1,reward-boon-upgrade-frame.png,res://assets/generated/ui/reward-boon-upgrade-frame.png,missing,Boon upgrade choice frame.
+results-rewards,P1,reward-item-frame-common.png,res://assets/generated/ui/reward-item-frame-common.png,missing,Common item card border.
+results-rewards,P1,reward-item-frame-rare.png,res://assets/generated/ui/reward-item-frame-rare.png,missing,Rare item card border.
+status-icons,P1,status-burn-icon.png,res://assets/generated/icons/status-burn-icon.png,exists,Burn.
+status-icons,P1,status-freeze-icon.png,res://assets/generated/icons/status-freeze-icon.png,exists,Freeze.
+status-icons,P1,status-slow-icon.png,res://assets/generated/icons/status-slow-icon.png,exists,Slow.
+status-icons,P1,status-curse-icon.png,res://assets/generated/icons/status-curse-icon.png,exists,Curse.
+status-icons,P1,status-bleed-icon.png,res://assets/generated/icons/status-bleed-icon.png,exists,Bleed.
+status-icons,P1,status-shield-icon.png,res://assets/generated/icons/status-shield-icon.png,exists,Shield/protect.
+status-icons,P1,status-wounded-icon.png,res://assets/generated/icons/status-wounded-icon.png,missing,Wounded between floors.
+status-icons,P1,status-downed-icon.png,res://assets/generated/icons/status-downed-icon.png,missing,Downed/unavailable.
+town-hub,P1,hub-panel-dark-gold.png,res://assets/generated/ui/hub-panel-dark-gold.png,exists,Hub panel.
+town-hub,P1,guardian-shrine-panel.png,res://assets/generated/ui/guardian-shrine-panel.png,exists,Guardian shrine panel.
+town-hub,P1,job-reliquary-panel.png,res://assets/generated/ui/job-reliquary-panel.png,exists,Job/ability panel.
+town-hub,P1,heat-altar-panel.png,res://assets/generated/ui/heat-altar-panel.png,exists,Heat selector panel.
+town-hub,P1,hub-background-last-hearth.png,res://assets/backgrounds/hub-background-last-hearth.png,missing,Main hub background.
+town-hub,P1,antechamber-background.png,res://assets/backgrounds/antechamber-background.png,missing,Pre-run room background.
+system,P2,settings-sound-on-icon.svg,res://assets/ui/icons/bell.svg,exists,Sound on.
+system,P2,settings-sound-off-icon.svg,res://assets/ui/icons/bell_mute.svg,exists,Sound off.
+system,P2,settings-speed-icon.png,res://assets/generated/icons/settings-speed-icon.png,missing,Battle speed.
+system,P2,settings-grid-icon.png,res://assets/generated/icons/settings-grid-icon.png,missing,Grid coordinates.
+system,P2,settings-reduced-motion-icon.png,res://assets/generated/icons/settings-reduced-motion-icon.png,missing,Reduced motion.

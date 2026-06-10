@@ -140,11 +140,12 @@ const OVERLAYS := {
 }
 
 const HIGHLIGHTS := {
-	"selected": "res://assets/generated/ui/tile-selected-diamond.png",
-	"move": "res://assets/generated/ui/tile-move-diamond.png",
-	"attack": "res://assets/generated/ui/tile-attack-diamond.png",
-	"ability": "res://assets/generated/ui/tile-ability-diamond.png",
-	"blocked": "res://assets/generated/ui/tile-blocked-diamond.png",
+	"selected": "res://assets/ui/tile-selected-diamond.png",
+	"move": "res://assets/ui/tile-move-diamond.png",
+	"attack": "res://assets/ui/tile-attack-diamond.png",
+	"ability": "res://assets/ui/tile-ability-diamond.png",
+	"blocked": "res://assets/ui/tile-blocked-diamond.png",
+	"objective": "res://assets/ui/objective-marker-diamond.png",
 }
 
 const UNITS := {
@@ -182,6 +183,60 @@ const UNITS := {
 		"idle": "res://assets/sprites/units/lyra-idle-isometric.png",
 		"action": "res://assets/sprites/units/lyra-idle-isometric.png",
 		"portrait": "res://assets/sprites/units/lyra-idle-isometric.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"aeryn": {
+		"id": "aeryn",
+		"display_name": "Aeryn",
+		"role": "Soldier",
+		"idle": "res://assets/sprites/units/aeryn.png",
+		"action": "res://assets/sprites/units/aeryn.png",
+		"portrait": "res://assets/sprites/units/aeryn.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"cael": {
+		"id": "cael",
+		"display_name": "Cael",
+		"role": "Archer",
+		"idle": "res://assets/sprites/units/cael.png",
+		"action": "res://assets/sprites/units/cael.png",
+		"portrait": "res://assets/sprites/units/cael.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"brennan": {
+		"id": "brennan",
+		"display_name": "Brennan",
+		"role": "Soldier",
+		"idle": "res://assets/sprites/units/brennan.png",
+		"action": "res://assets/sprites/units/brennan.png",
+		"portrait": "res://assets/sprites/units/brennan.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"solan": {
+		"id": "solan",
+		"display_name": "Solan",
+		"role": "Mage",
+		"idle": "res://assets/sprites/units/solan.png",
+		"action": "res://assets/sprites/units/solan.png",
+		"portrait": "res://assets/sprites/units/solan.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"tobias": {
+		"id": "tobias",
+		"display_name": "Tobias",
+		"role": "Cleric",
+		"idle": "res://assets/sprites/units/tobias.png",
+		"action": "res://assets/sprites/units/tobias.png",
+		"portrait": "res://assets/sprites/units/tobias.png",
+		"prompt_source": PROMPT_SOURCE,
+	},
+	"seren": {
+		"id": "seren",
+		"display_name": "Seren",
+		"role": "Archer",
+		"idle": "res://assets/sprites/units/seren.png",
+		"action": "res://assets/sprites/units/seren.png",
+		"portrait": "res://assets/sprites/units/seren.png",
 		"prompt_source": PROMPT_SOURCE,
 	},
 }
@@ -247,34 +302,47 @@ const ENEMIES := {
 
 const UI := {
 	"panels": {
-		"dark_stone": "res://assets/generated/ui/dark-stone-panel.png",
-		"command_bar": "res://assets/generated/ui/command-bar-panel.png",
-		"turn_order_sidebar": "res://assets/generated/ui/turn-order-sidebar-panel.png",
-		"hub_dark_gold": "res://assets/generated/ui/hub-panel-dark-gold.png",
-		"guardian_shrine": "res://assets/generated/ui/guardian-shrine-panel.png",
-		"job_reliquary": "res://assets/generated/ui/job-reliquary-panel.png",
-		"heat_altar": "res://assets/generated/ui/heat-altar-panel.png",
-		"reward_card": "res://assets/generated/ui/reward-card-panel.png",
+		"dark_stone": "res://assets/ui/dark-stone-panel.png",
+		"command_bar": "res://assets/ui/command-bar-panel.png",
+		"turn_order_sidebar": "res://assets/ui/turn-order-sidebar-panel.png",
+		"forecast": "res://assets/ui/forecast-panel-frame.png",
+		"enemy_intent": "res://assets/ui/enemy-intent-panel-frame.png",
+		"tile_info": "res://assets/ui/tile-info-panel-frame.png",
+		"battle_telemetry": "res://assets/ui/battle-telemetry-panel-frame.png",
+		"hub_dark_gold": "res://assets/ui/hub-panel-dark-gold.png",
+		"guardian_shrine": "res://assets/ui/guardian-shrine-panel.png",
+		"job_reliquary": "res://assets/ui/job-reliquary-panel.png",
+		"heat_altar": "res://assets/ui/heat-altar-panel.png",
+		"reward_card": "res://assets/ui/reward-card-panel.png",
+		"reward_boon_upgrade": "res://assets/ui/reward-boon-upgrade-frame.png",
+		"reward_item_common": "res://assets/ui/reward-item-frame-common.png",
+		"reward_item_rare": "res://assets/ui/reward-item-frame-rare.png",
+		"run_route_connector": "res://assets/ui/run-route-connector-line.png",
 	},
 	"backgrounds": {
 		"hub_last_hearth": "res://assets/backgrounds/hub-background-last-hearth.png",
+		"antechamber": "res://assets/backgrounds/antechamber-background.png",
+		"run_map_parchment": "res://assets/ui/run-map-parchment-background.png",
 	},
 	"command_icons": {
-		"move": "res://assets/generated/icons/command-move-icon.png",
-		"attack": "res://assets/generated/icons/command-attack-icon.png",
-		"ability": "res://assets/generated/icons/command-ability-icon.png",
-		"item": "res://assets/generated/icons/command-item-icon.png",
-		"wait": "res://assets/generated/icons/command-wait-icon.png",
+		"move": "res://assets/icons/command-move-icon.png",
+		"attack": "res://assets/icons/command-attack-icon.png",
+		"ability": "res://assets/icons/command-ability-icon.png",
+		"item": "res://assets/icons/command-item-icon.png",
+		"wait": "res://assets/icons/command-wait-icon.png",
 	},
 	"bars": {
-		"hp": "res://assets/generated/ui/hp-bar-frame.png",
-		"temper": "res://assets/generated/ui/temper-bar-frame.png",
-		"ether": "res://assets/generated/ui/ether-bar-frame.png",
+		"hp": "res://assets/ui/hp-bar-frame.png",
+		"temper": "res://assets/ui/temper-bar-frame.png",
+		"ether": "res://assets/ui/ether-bar-frame.png",
 	},
 	# Bell icons  use in audio settings panel (mute/unmute toggle)
 	"icons": {
 		"bell":      "res://assets/ui/icons/bell.svg",
 		"bell_mute": "res://assets/ui/icons/bell_mute.svg",
+		"settings_speed": "res://assets/icons/settings-speed-icon.png",
+		"settings_grid": "res://assets/icons/settings-grid-icon.png",
+		"settings_reduced_motion": "res://assets/icons/settings-reduced-motion-icon.png",
 	},
 	# Parchment  use as background/corner for dialogue boxes and narrative interludes
 	"parchment": {
@@ -284,77 +352,90 @@ const UI := {
 }
 
 const CURRENCIES := {
-	"soul_shards": "res://assets/generated/icons/currency-soul-shards-icon.png",
-	"obsidian": "res://assets/generated/icons/currency-obsidian-icon.png",
-	"glyphs": "res://assets/generated/icons/currency-glyphs-icon.png",
-	"boss_tokens": "res://assets/generated/icons/currency-boss-tokens-icon.png",
-	"phoenix_sigils": "res://assets/generated/icons/currency-phoenix-sigils-icon.png",
-	"titan_sigils": "res://assets/generated/icons/currency-titan-sigils-icon.png",
+	"soul_shards": "res://assets/icons/currency-soul-shards-icon.png",
+	"obsidian": "res://assets/icons/currency-obsidian-icon.png",
+	"glyphs": "res://assets/icons/currency-glyphs-icon.png",
+	"jp": "res://assets/icons/spoils-jp-icon.png",
+	"gold": "res://assets/icons/currency-glyphs-icon.png",
+	"boss_tokens": "res://assets/icons/currency-boss-tokens-icon.png",
+	"phoenix_sigils": "res://assets/icons/currency-phoenix-sigils-icon.png",
+	"titan_sigils": "res://assets/icons/currency-titan-sigils-icon.png",
 }
 
 const RUN_NODES := {
-	"battle": "res://assets/generated/icons/run-node-battle-icon.png",
-	"elite": "res://assets/generated/icons/run-node-elite-icon.png",
-	"boon": "res://assets/generated/icons/run-node-boon-icon.png",
-	"wanderer": "res://assets/generated/icons/run-node-wanderer-icon.png",
-	"boss": "res://assets/generated/icons/run-node-boss-icon.png",
-	"shop": "res://assets/generated/icons/run-node-shop-icon.png",
+	"battle": "res://assets/icons/run-node-battle-icon.png",
+	"elite": "res://assets/icons/run-node-elite-icon.png",
+	"boon": "res://assets/icons/run-node-boon-icon.png",
+	"boon_pick": "res://assets/icons/run-node-boon-icon.png",
+	"wanderer": "res://assets/icons/run-node-wanderer-icon.png",
+	"boss": "res://assets/icons/run-node-boss-icon.png",
+	"shop": "res://assets/icons/run-node-shop-icon.png",
+	"mystery": "res://assets/icons/run-node-mystery-icon.png",
+	"town_1": "res://assets/icons/run-node-town-sanctum-icon.png",
+	"town_2": "res://assets/icons/run-node-town-armory-icon.png",
+	"town_3": "res://assets/icons/run-node-town-oracle-icon.png",
+	"town_sanctum": "res://assets/icons/run-node-town-sanctum-icon.png",
+	"town_armory": "res://assets/icons/run-node-town-armory-icon.png",
+	"town_oracle": "res://assets/icons/run-node-town-oracle-icon.png",
 }
 
 const BOONS := {
-	"phoenix_heart": "res://assets/generated/icons/boon-phoenix-heart-icon.png",
-	"ember_reprisal": "res://assets/generated/icons/boon-ember-reprisal-icon.png",
-	"titan_bulwark": "res://assets/generated/icons/boon-titan-bulwark-icon.png",
-	"stone_oath": "res://assets/generated/icons/boon-stone-oath-icon.png",
-	"storm_quickening": "res://assets/generated/icons/boon-storm-quickening-icon.png",
-	"void_bargain": "res://assets/generated/icons/boon-void-bargain-icon.png",
+	"phoenix_heart": "res://assets/icons/boon-phoenix-heart-icon.png",
+	"ember_reprisal": "res://assets/icons/boon-ember-reprisal-icon.png",
+	"titan_bulwark": "res://assets/icons/boon-titan-bulwark-icon.png",
+	"stone_oath": "res://assets/icons/boon-stone-oath-icon.png",
+	"storm_quickening": "res://assets/icons/boon-storm-quickening-icon.png",
+	"void_bargain": "res://assets/icons/boon-void-bargain-icon.png",
 }
 
 const STATUS_ICONS := {
-	"burn": "res://assets/generated/icons/status-burn-icon.png",
-	"freeze": "res://assets/generated/icons/status-freeze-icon.png",
-	"slow": "res://assets/generated/icons/status-slow-icon.png",
-	"curse": "res://assets/generated/icons/status-curse-icon.png",
-	"bleed": "res://assets/generated/icons/status-bleed-icon.png",
-	"shield": "res://assets/generated/icons/status-shield-icon.png",
+	"burn": "res://assets/icons/status-burn-icon.png",
+	"freeze": "res://assets/icons/status-freeze-icon.png",
+	"slow": "res://assets/icons/status-slow-icon.png",
+	"curse": "res://assets/icons/status-curse-icon.png",
+	"bleed": "res://assets/icons/status-bleed-icon.png",
+	"shield": "res://assets/icons/status-shield-icon.png",
+	"protect": "res://assets/icons/status-shield-icon.png",
+	"wounded": "res://assets/icons/status-wounded-icon.png",
+	"downed": "res://assets/icons/status-downed-icon.png",
 }
 
 const AFFIX_ICONS := {
-	"volatile": "res://assets/generated/icons/affix-volatile-icon.png",
-	"fortified": "res://assets/generated/icons/affix-fortified-icon.png",
-	"vampiric": "res://assets/generated/icons/affix-vampiric-icon.png",
-	"of_frost": "res://assets/generated/icons/affix-of-frost-icon.png",
-	"of_flames": "res://assets/generated/icons/affix-of-flames-icon.png",
-	"of_void": "res://assets/generated/icons/affix-of-void-icon.png",
+	"volatile": "res://assets/icons/affix-volatile-icon.png",
+	"fortified": "res://assets/icons/affix-fortified-icon.png",
+	"vampiric": "res://assets/icons/affix-vampiric-icon.png",
+	"of_frost": "res://assets/icons/affix-of-frost-icon.png",
+	"of_flames": "res://assets/icons/affix-of-flames-icon.png",
+	"of_void": "res://assets/icons/affix-of-void-icon.png",
 }
 
 const JOBS := {
-	"knight": "res://assets/generated/icons/job-knight-icon.png",
-	"mage": "res://assets/generated/icons/job-mage-icon.png",
-	"cleric": "res://assets/generated/icons/job-cleric-icon.png",
-	"rogue": "res://assets/generated/icons/job-rogue-icon.png",
-	"archer": "res://assets/generated/icons/job-archer-icon.png",
-	"guardian": "res://assets/generated/icons/job-guardian-icon.png",
+	"knight": "res://assets/icons/job-knight-icon.png",
+	"mage": "res://assets/icons/job-mage-icon.png",
+	"cleric": "res://assets/icons/job-cleric-icon.png",
+	"rogue": "res://assets/icons/job-rogue-icon.png",
+	"archer": "res://assets/icons/job-archer-icon.png",
+	"guardian": "res://assets/icons/job-guardian-icon.png",
 }
 
 const VFX := {
-	"fire_impact": "res://assets/generated/vfx/fire-impact-vfx-sheet.png",
-	"ice_impact": "res://assets/generated/vfx/ice-impact-vfx-sheet.png",
-	"lightning_impact": "res://assets/generated/vfx/lightning-impact-vfx-sheet.png",
-	"earth_impact": "res://assets/generated/vfx/earth-impact-vfx-sheet.png",
-	"wind_impact": "res://assets/generated/vfx/wind-impact-vfx-sheet.png",
-	"dark_impact": "res://assets/generated/vfx/dark-impact-vfx-sheet.png",
-	"holy_impact": "res://assets/generated/vfx/holy-impact-vfx-sheet.png",
-	"heal": "res://assets/generated/vfx/heal-vfx-sheet.png",
-	"buff": "res://assets/generated/vfx/buff-vfx-sheet.png",
-	"damage_numbers": "res://assets/generated/vfx/damage-number-floats.png",
+	"fire_impact": "res://assets/vfx/fire-impact-vfx-sheet.png",
+	"ice_impact": "res://assets/vfx/ice-impact-vfx-sheet.png",
+	"lightning_impact": "res://assets/vfx/lightning-impact-vfx-sheet.png",
+	"earth_impact": "res://assets/vfx/earth-impact-vfx-sheet.png",
+	"wind_impact": "res://assets/vfx/wind-impact-vfx-sheet.png",
+	"dark_impact": "res://assets/vfx/dark-impact-vfx-sheet.png",
+	"holy_impact": "res://assets/vfx/holy-impact-vfx-sheet.png",
+	"heal": "res://assets/vfx/heal-vfx-sheet.png",
+	"buff": "res://assets/vfx/buff-vfx-sheet.png",
+	"damage_numbers": "res://assets/vfx/damage-number-floats.png",
 }
 
 const GUARDIANS := {
-	"phoenix": "res://assets/generated/icons/guardian-phoenix-sigil.png",
-	"titan": "res://assets/generated/icons/guardian-titan-sigil.png",
-	"storm": "res://assets/generated/icons/guardian-storm-sigil.png",
-	"void": "res://assets/generated/icons/guardian-void-sigil.png",
+	"phoenix": "res://assets/icons/guardian-phoenix-sigil.png",
+	"titan": "res://assets/icons/guardian-titan-sigil.png",
+	"storm": "res://assets/icons/guardian-storm-sigil.png",
+	"void": "res://assets/icons/guardian-void-sigil.png",
 }
 
 # Job class insignias  full-detail SVG badges for job tree, character sheet,
@@ -428,6 +509,12 @@ static func get_sigil(node_type: String) -> String:
 
 static func get_ui_icon(icon_id: String) -> String:
 	return UI.get("icons", {}).get(icon_id, "")
+
+static func get_ui_panel(panel_id: String) -> String:
+	return UI.get("panels", {}).get(panel_id.replace("-", "_"), "")
+
+static func get_ui_background(background_id: String) -> String:
+	return UI.get("backgrounds", {}).get(background_id.replace("-", "_"), "")
 
 static func get_parchment(part: String) -> String:
 	return UI.get("parchment", {}).get(part, "")

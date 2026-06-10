@@ -1,0 +1,1335 @@
+{
+  "source": "C:\\Users\\jojo3\\Downloads\\bcc4501f-14e9-49e7-8462-69f7d7a1a9d6.png",
+  "background_rgb": [
+    21.0,
+    26.0,
+    38.0
+  ],
+  "tiles": [
+    {
+      "name": "act1_dirt_sparse_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dirt_sparse_01.png",
+      "box": [
+        3,
+        0,
+        176,
+        118
+      ],
+      "size": [
+        161,
+        95
+      ]
+    },
+    {
+      "name": "act1_dry_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dry_grass_01.png",
+      "box": [
+        182,
+        0,
+        355,
+        118
+      ],
+      "size": [
+        154,
+        97
+      ]
+    },
+    {
+      "name": "act1_dry_grass_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dry_grass_02.png",
+      "box": [
+        361,
+        0,
+        534,
+        118
+      ],
+      "size": [
+        158,
+        94
+      ]
+    },
+    {
+      "name": "act1_green_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_green_grass_01.png",
+      "box": [
+        540,
+        0,
+        714,
+        118
+      ],
+      "size": [
+        163,
+        96
+      ]
+    },
+    {
+      "name": "act1_flower_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_flower_grass_01.png",
+      "box": [
+        720,
+        0,
+        893,
+        118
+      ],
+      "size": [
+        164,
+        96
+      ]
+    },
+    {
+      "name": "act1_flower_grass_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_flower_grass_02.png",
+      "box": [
+        899,
+        0,
+        1072,
+        118
+      ],
+      "size": [
+        162,
+        95
+      ]
+    },
+    {
+      "name": "act1_purple_brush_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_purple_brush_01.png",
+      "box": [
+        1078,
+        0,
+        1251,
+        118
+      ],
+      "size": [
+        160,
+        94
+      ]
+    },
+    {
+      "name": "act1_dirt_sparse_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dirt_sparse_02.png",
+      "box": [
+        3,
+        120,
+        176,
+        230
+      ],
+      "size": [
+        157,
+        92
+      ]
+    },
+    {
+      "name": "act1_dry_brush_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dry_brush_01.png",
+      "box": [
+        182,
+        120,
+        355,
+        230
+      ],
+      "size": [
+        156,
+        110
+      ]
+    },
+    {
+      "name": "act1_grass_transition_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_grass_transition_01.png",
+      "box": [
+        361,
+        120,
+        534,
+        230
+      ],
+      "size": [
+        160,
+        110
+      ]
+    },
+    {
+      "name": "act1_moss_transition_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_moss_transition_01.png",
+      "box": [
+        540,
+        120,
+        714,
+        230
+      ],
+      "size": [
+        163,
+        97
+      ]
+    },
+    {
+      "name": "act1_flower_brush_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_flower_brush_01.png",
+      "box": [
+        720,
+        120,
+        893,
+        230
+      ],
+      "size": [
+        163,
+        98
+      ]
+    },
+    {
+      "name": "act1_flower_brush_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_flower_brush_02.png",
+      "box": [
+        899,
+        120,
+        1072,
+        230
+      ],
+      "size": [
+        161,
+        94
+      ]
+    },
+    {
+      "name": "act1_dry_brush_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_dry_brush_02.png",
+      "box": [
+        1078,
+        120,
+        1251,
+        230
+      ],
+      "size": [
+        154,
+        98
+      ]
+    },
+    {
+      "name": "act1_shallow_water_edge_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_edge_01.png",
+      "box": [
+        3,
+        236,
+        176,
+        334
+      ],
+      "size": [
+        154,
+        94
+      ]
+    },
+    {
+      "name": "act1_shallow_water_edge_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_edge_02.png",
+      "box": [
+        182,
+        236,
+        355,
+        334
+      ],
+      "size": [
+        154,
+        98
+      ]
+    },
+    {
+      "name": "act1_shallow_water_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_01.png",
+      "box": [
+        361,
+        236,
+        534,
+        334
+      ],
+      "size": [
+        157,
+        95
+      ]
+    },
+    {
+      "name": "act1_shallow_water_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_02.png",
+      "box": [
+        540,
+        236,
+        714,
+        334
+      ],
+      "size": [
+        161,
+        94
+      ]
+    },
+    {
+      "name": "act1_shallow_water_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_03.png",
+      "box": [
+        720,
+        236,
+        893,
+        334
+      ],
+      "size": [
+        164,
+        96
+      ]
+    },
+    {
+      "name": "act1_shallow_water_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_04.png",
+      "box": [
+        899,
+        236,
+        1072,
+        334
+      ],
+      "size": [
+        159,
+        94
+      ]
+    },
+    {
+      "name": "act1_shallow_water_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_shallow_water_05.png",
+      "box": [
+        1078,
+        236,
+        1251,
+        334
+      ],
+      "size": [
+        156,
+        96
+      ]
+    },
+    {
+      "name": "act1_stone_floor_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_01.png",
+      "box": [
+        3,
+        350,
+        176,
+        446
+      ],
+      "size": [
+        160,
+        90
+      ]
+    },
+    {
+      "name": "act1_stone_floor_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_02.png",
+      "box": [
+        182,
+        350,
+        355,
+        446
+      ],
+      "size": [
+        157,
+        89
+      ]
+    },
+    {
+      "name": "act1_stone_floor_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_03.png",
+      "box": [
+        361,
+        350,
+        534,
+        446
+      ],
+      "size": [
+        156,
+        90
+      ]
+    },
+    {
+      "name": "act1_stone_floor_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_04.png",
+      "box": [
+        540,
+        350,
+        714,
+        446
+      ],
+      "size": [
+        161,
+        89
+      ]
+    },
+    {
+      "name": "act1_stone_floor_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_05.png",
+      "box": [
+        720,
+        350,
+        893,
+        446
+      ],
+      "size": [
+        163,
+        84
+      ]
+    },
+    {
+      "name": "act1_stone_floor_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_floor_06.png",
+      "box": [
+        899,
+        350,
+        1072,
+        446
+      ],
+      "size": [
+        164,
+        88
+      ]
+    },
+    {
+      "name": "act1_stone_rune_circle_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_stone_rune_circle_01.png",
+      "box": [
+        1078,
+        350,
+        1251,
+        446
+      ],
+      "size": [
+        159,
+        89
+      ]
+    },
+    {
+      "name": "act1_rune_floor_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_rune_floor_01.png",
+      "box": [
+        3,
+        466,
+        176,
+        552
+      ],
+      "size": [
+        160,
+        73
+      ]
+    },
+    {
+      "name": "act1_rune_floor_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_rune_floor_02.png",
+      "box": [
+        182,
+        466,
+        355,
+        552
+      ],
+      "size": [
+        157,
+        86
+      ]
+    },
+    {
+      "name": "act1_mossy_stone_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_mossy_stone_01.png",
+      "box": [
+        361,
+        466,
+        534,
+        552
+      ],
+      "size": [
+        155,
+        86
+      ]
+    },
+    {
+      "name": "act1_broken_rune_floor_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_broken_rune_floor_01.png",
+      "box": [
+        540,
+        466,
+        714,
+        552
+      ],
+      "size": [
+        161,
+        86
+      ]
+    },
+    {
+      "name": "act1_mossy_stone_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_mossy_stone_02.png",
+      "box": [
+        720,
+        466,
+        893,
+        552
+      ],
+      "size": [
+        164,
+        86
+      ]
+    },
+    {
+      "name": "act1_magic_stone_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_magic_stone_01.png",
+      "box": [
+        899,
+        466,
+        1072,
+        552
+      ],
+      "size": [
+        162,
+        72
+      ]
+    },
+    {
+      "name": "act1_broken_stone_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_broken_stone_01.png",
+      "box": [
+        1078,
+        466,
+        1251,
+        552
+      ],
+      "size": [
+        159,
+        73
+      ]
+    },
+    {
+      "name": "act1_raised_dirt_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_dirt_01.png",
+      "box": [
+        3,
+        552,
+        176,
+        650
+      ],
+      "size": [
+        160,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_dry_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_dry_grass_01.png",
+      "box": [
+        182,
+        552,
+        355,
+        650
+      ],
+      "size": [
+        145,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_green_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_green_grass_01.png",
+      "box": [
+        361,
+        552,
+        534,
+        650
+      ],
+      "size": [
+        173,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_flower_grass_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_flower_grass_01.png",
+      "box": [
+        540,
+        552,
+        714,
+        650
+      ],
+      "size": [
+        174,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_rock_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_rock_01.png",
+      "box": [
+        720,
+        552,
+        893,
+        650
+      ],
+      "size": [
+        173,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_wall_corner_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_wall_corner_01.png",
+      "box": [
+        899,
+        552,
+        1072,
+        650
+      ],
+      "size": [
+        173,
+        98
+      ]
+    },
+    {
+      "name": "act1_raised_ruin_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\tiles\\act1\\act1_raised_ruin_01.png",
+      "box": [
+        1078,
+        552,
+        1251,
+        650
+      ],
+      "size": [
+        143,
+        98
+      ]
+    }
+  ],
+  "props": [
+    {
+      "name": "act1_ruin_wall_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_01.png",
+      "box": [
+        15,
+        645,
+        126,
+        764
+      ],
+      "size": [
+        109,
+        113
+      ],
+      "pixels": 7608
+    },
+    {
+      "name": "act1_ruin_wall_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_02.png",
+      "box": [
+        56,
+        630,
+        158,
+        661
+      ],
+      "size": [
+        105,
+        43
+      ],
+      "pixels": 1665
+    },
+    {
+      "name": "act1_ruin_wall_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_03.png",
+      "box": [
+        143,
+        660,
+        302,
+        760
+      ],
+      "size": [
+        157,
+        93
+      ],
+      "pixels": 10885
+    },
+    {
+      "name": "act1_ruin_wall_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_04.png",
+      "box": [
+        250,
+        630,
+        338,
+        660
+      ],
+      "size": [
+        86,
+        32
+      ],
+      "pixels": 1531
+    },
+    {
+      "name": "act1_ruin_wall_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_05.png",
+      "box": [
+        318,
+        655,
+        473,
+        773
+      ],
+      "size": [
+        153,
+        116
+      ],
+      "pixels": 11960
+    },
+    {
+      "name": "act1_ruin_wall_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_06.png",
+      "box": [
+        429,
+        630,
+        542,
+        665
+      ],
+      "size": [
+        108,
+        47
+      ],
+      "pixels": 2072
+    },
+    {
+      "name": "act1_ruin_wall_07",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_07.png",
+      "box": [
+        489,
+        652,
+        650,
+        774
+      ],
+      "size": [
+        159,
+        120
+      ],
+      "pixels": 12075
+    },
+    {
+      "name": "act1_ruin_wall_08",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_08.png",
+      "box": [
+        616,
+        630,
+        702,
+        662
+      ],
+      "size": [
+        85,
+        37
+      ],
+      "pixels": 1700
+    },
+    {
+      "name": "act1_ruin_wall_09",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_09.png",
+      "box": [
+        666,
+        657,
+        804,
+        768
+      ],
+      "size": [
+        136,
+        109
+      ],
+      "pixels": 8815
+    },
+    {
+      "name": "act1_ruin_wall_10",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_10.png",
+      "box": [
+        780,
+        630,
+        879,
+        660
+      ],
+      "size": [
+        94,
+        35
+      ],
+      "pixels": 1643
+    },
+    {
+      "name": "act1_ruin_wall_11",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_11.png",
+      "box": [
+        821,
+        650,
+        968,
+        770
+      ],
+      "size": [
+        152,
+        125
+      ],
+      "pixels": 10739
+    },
+    {
+      "name": "act1_ruin_wall_12",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_12.png",
+      "box": [
+        978,
+        630,
+        1070,
+        658
+      ],
+      "size": [
+        92,
+        31
+      ],
+      "pixels": 1483
+    },
+    {
+      "name": "act1_ruin_wall_13",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_13.png",
+      "box": [
+        985,
+        657,
+        1121,
+        769
+      ],
+      "size": [
+        134,
+        110
+      ],
+      "pixels": 10043
+    },
+    {
+      "name": "act1_ruin_wall_14",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_14.png",
+      "box": [
+        1111,
+        630,
+        1217,
+        664
+      ],
+      "size": [
+        100,
+        39
+      ],
+      "pixels": 2020
+    },
+    {
+      "name": "act1_ruin_wall_15",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_ruin_wall_15.png",
+      "box": [
+        1138,
+        672,
+        1235,
+        761
+      ],
+      "size": [
+        95,
+        84
+      ],
+      "pixels": 5675
+    },
+    {
+      "name": "act1_rock_prop_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_01.png",
+      "box": [
+        14,
+        787,
+        118,
+        854
+      ],
+      "size": [
+        100,
+        62
+      ],
+      "pixels": 4767
+    },
+    {
+      "name": "act1_rock_prop_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_02.png",
+      "box": [
+        137,
+        792,
+        231,
+        856
+      ],
+      "size": [
+        92,
+        60
+      ],
+      "pixels": 3769
+    },
+    {
+      "name": "act1_rock_prop_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_03.png",
+      "box": [
+        247,
+        780,
+        310,
+        853
+      ],
+      "size": [
+        61,
+        68
+      ],
+      "pixels": 3172
+    },
+    {
+      "name": "act1_rock_prop_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_04.png",
+      "box": [
+        328,
+        787,
+        408,
+        851
+      ],
+      "size": [
+        77,
+        60
+      ],
+      "pixels": 3081
+    },
+    {
+      "name": "act1_rock_prop_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_05.png",
+      "box": [
+        426,
+        767,
+        533,
+        863
+      ],
+      "size": [
+        104,
+        91
+      ],
+      "pixels": 6607
+    },
+    {
+      "name": "act1_rock_prop_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_06.png",
+      "box": [
+        551,
+        774,
+        683,
+        875
+      ],
+      "size": [
+        130,
+        99
+      ],
+      "pixels": 7241
+    },
+    {
+      "name": "act1_rock_prop_07",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_07.png",
+      "box": [
+        693,
+        763,
+        770,
+        871
+      ],
+      "size": [
+        75,
+        106
+      ],
+      "pixels": 5209
+    },
+    {
+      "name": "act1_rock_prop_08",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_08.png",
+      "box": [
+        785,
+        754,
+        882,
+        867
+      ],
+      "size": [
+        95,
+        111
+      ],
+      "pixels": 6281
+    },
+    {
+      "name": "act1_rock_prop_09",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_09.png",
+      "box": [
+        903,
+        762,
+        1004,
+        867
+      ],
+      "size": [
+        99,
+        101
+      ],
+      "pixels": 5578
+    },
+    {
+      "name": "act1_rock_prop_10",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_10.png",
+      "box": [
+        1024,
+        769,
+        1121,
+        872
+      ],
+      "size": [
+        94,
+        99
+      ],
+      "pixels": 5385
+    },
+    {
+      "name": "act1_rock_prop_11",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_rock_prop_11.png",
+      "box": [
+        1143,
+        781,
+        1233,
+        869
+      ],
+      "size": [
+        85,
+        84
+      ],
+      "pixels": 4414
+    },
+    {
+      "name": "act1_flora_prop_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_01.png",
+      "box": [
+        14,
+        874,
+        145,
+        979
+      ],
+      "size": [
+        129,
+        103
+      ],
+      "pixels": 8571
+    },
+    {
+      "name": "act1_flora_prop_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_02.png",
+      "box": [
+        162,
+        870,
+        287,
+        978
+      ],
+      "size": [
+        123,
+        107
+      ],
+      "pixels": 8130
+    },
+    {
+      "name": "act1_flora_prop_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_03.png",
+      "box": [
+        303,
+        869,
+        423,
+        976
+      ],
+      "size": [
+        118,
+        105
+      ],
+      "pixels": 7731
+    },
+    {
+      "name": "act1_flora_prop_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_04.png",
+      "box": [
+        440,
+        874,
+        567,
+        976
+      ],
+      "size": [
+        125,
+        97
+      ],
+      "pixels": 8013
+    },
+    {
+      "name": "act1_flora_prop_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_05.png",
+      "box": [
+        581,
+        871,
+        706,
+        977
+      ],
+      "size": [
+        119,
+        98
+      ],
+      "pixels": 6788
+    },
+    {
+      "name": "act1_flora_prop_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_06.png",
+      "box": [
+        721,
+        886,
+        843,
+        977
+      ],
+      "size": [
+        118,
+        84
+      ],
+      "pixels": 6573
+    },
+    {
+      "name": "act1_flora_prop_07",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_07.png",
+      "box": [
+        853,
+        889,
+        969,
+        975
+      ],
+      "size": [
+        114,
+        84
+      ],
+      "pixels": 6288
+    },
+    {
+      "name": "act1_flora_prop_08",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_08.png",
+      "box": [
+        982,
+        860,
+        1100,
+        975
+      ],
+      "size": [
+        116,
+        113
+      ],
+      "pixels": 7133
+    },
+    {
+      "name": "act1_flora_prop_09",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_flora_prop_09.png",
+      "box": [
+        1115,
+        865,
+        1234,
+        976
+      ],
+      "size": [
+        117,
+        105
+      ],
+      "pixels": 6785
+    },
+    {
+      "name": "act1_magic_prop_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_01.png",
+      "box": [
+        17,
+        982,
+        153,
+        1103
+      ],
+      "size": [
+        134,
+        115
+      ],
+      "pixels": 9900
+    },
+    {
+      "name": "act1_magic_prop_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_02.png",
+      "box": [
+        180,
+        986,
+        301,
+        1101
+      ],
+      "size": [
+        119,
+        110
+      ],
+      "pixels": 8616
+    },
+    {
+      "name": "act1_magic_prop_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_03.png",
+      "box": [
+        323,
+        997,
+        421,
+        1096
+      ],
+      "size": [
+        96,
+        97
+      ],
+      "pixels": 5284
+    },
+    {
+      "name": "act1_magic_prop_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_04.png",
+      "box": [
+        441,
+        985,
+        559,
+        1099
+      ],
+      "size": [
+        116,
+        96
+      ],
+      "pixels": 7475
+    },
+    {
+      "name": "act1_magic_prop_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_05.png",
+      "box": [
+        575,
+        985,
+        723,
+        1102
+      ],
+      "size": [
+        146,
+        115
+      ],
+      "pixels": 10174
+    },
+    {
+      "name": "act1_magic_prop_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_06.png",
+      "box": [
+        735,
+        989,
+        912,
+        1110
+      ],
+      "size": [
+        175,
+        111
+      ],
+      "pixels": 12909
+    },
+    {
+      "name": "act1_magic_prop_07",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_07.png",
+      "box": [
+        919,
+        990,
+        1089,
+        1102
+      ],
+      "size": [
+        168,
+        110
+      ],
+      "pixels": 10846
+    },
+    {
+      "name": "act1_magic_prop_08",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_magic_prop_08.png",
+      "box": [
+        1099,
+        986,
+        1240,
+        1102
+      ],
+      "size": [
+        139,
+        105
+      ],
+      "pixels": 10536
+    },
+    {
+      "name": "act1_void_floor_01",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_01.png",
+      "box": [
+        13,
+        1114,
+        194,
+        1233
+      ],
+      "size": [
+        174,
+        110
+      ],
+      "pixels": 11419
+    },
+    {
+      "name": "act1_void_floor_02",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_02.png",
+      "box": [
+        210,
+        1120,
+        395,
+        1232
+      ],
+      "size": [
+        182,
+        106
+      ],
+      "pixels": 10362
+    },
+    {
+      "name": "act1_void_floor_03",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_03.png",
+      "box": [
+        413,
+        1115,
+        609,
+        1233
+      ],
+      "size": [
+        193,
+        107
+      ],
+      "pixels": 11512
+    },
+    {
+      "name": "act1_void_floor_04",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_04.png",
+      "box": [
+        625,
+        1117,
+        820,
+        1234
+      ],
+      "size": [
+        193,
+        108
+      ],
+      "pixels": 11139
+    },
+    {
+      "name": "act1_void_floor_05",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_05.png",
+      "box": [
+        832,
+        1113,
+        1035,
+        1232
+      ],
+      "size": [
+        184,
+        99
+      ],
+      "pixels": 11662
+    },
+    {
+      "name": "act1_void_floor_06",
+      "path": "C:\\Users\\jojo3\\Coding\\ProjectTactic\\godot\\assets\\props\\act1\\act1_void_floor_06.png",
+      "box": [
+        1049,
+        1118,
+        1232,
+        1237
+      ],
+      "size": [
+        180,
+        107
+      ],
+      "pixels": 9360
+    }
+  ]
+}

@@ -87,6 +87,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	var is_buff: bool = spell_type == "buff" or ability.get("type", "") == "buff"
 	var bonuses := RunBonuses.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+	el_mult *= CombatFormula.item_elemental_multiplier(caster, spell_type)
 	var boon_bonus: float = el_mult - 1.0
 
 	var dmg := 0
@@ -155,6 +156,7 @@ static func quick_spell(caster: Unit, ability: Dictionary) -> Dictionary:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	var bonuses := RunBonuses.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+	el_mult *= CombatFormula.item_elemental_multiplier(caster, spell_type)
 	var base: float = float(caster.unit_data.base_stats.magic) * (float(ability.get("base_power", 50)) / 100.0)
 	var boosted: int = int(round(base * el_mult))
 	return {

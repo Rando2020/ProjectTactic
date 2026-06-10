@@ -11,8 +11,8 @@ const DAMAGE_KIND_PHYSICAL := "physical"
 const DAMAGE_KIND_MAGICAL := "magical"
 const DAMAGE_KIND_TRUE := "true"
 
-const PHYSICAL_ATTACK_SCALE := 1.20
-const SPELL_POWER_SCALE := 1.00
+const PHYSICAL_ATTACK_SCALE := 1.10
+const SPELL_POWER_SCALE := 0.95
 
 const HIGH_GROUND_STEP_BONUS := 0.10
 const LOW_GROUND_STEP_PENALTY := 0.08
@@ -20,8 +20,8 @@ const MAX_HEIGHT_BONUS := 0.30
 const MAX_HEIGHT_PENALTY := 0.24
 
 const FRONT_MULT := 1.00
-const SIDE_MULT := 1.15
-const BACK_MULT := 1.30
+const SIDE_MULT := 1.10
+const BACK_MULT := 1.25
 
 const BASE_ATTACK_HIT := 88
 const BASE_SPELL_HIT := 100
@@ -41,13 +41,20 @@ const CRIT_DAMAGE_MULT := 1.50
 
 const PHYSICAL_TEMPER_ABSORB_RATIO := 0.35
 const MAGICAL_ETHER_ABSORB_RATIO := 0.35
-const ARMOR_TO_HP_REDUCTION_RATIO := 0.25
+const ARMOR_TO_HP_REDUCTION_RATIO := 0.45
 const PROTECT_DAMAGE_MULT := 0.70
 
 const ELEMENT_LABELS: Dictionary = {
 	"physical":"Physical", "fire":"Fire", "water":"Water", "blizzard":"Ice", "ice":"Ice",
 	"thunder":"Thunder", "wind":"Wind", "holy":"Holy", "dark":"Dark", "resonance":"Resonance",
 }
+
+
+static func item_elemental_multiplier(unit: Unit, element: String) -> float:
+	if not unit or not unit.has_meta("item_elemental_mult"):
+		return 1.0
+	var multipliers: Dictionary = unit.get_meta("item_elemental_mult", {})
+	return float(multipliers.get(normalize_element(element), 1.0))
 
 
 static func calculate_physical_attack(attacker: Unit, target: Unit,

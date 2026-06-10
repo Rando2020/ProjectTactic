@@ -74,7 +74,7 @@ func trigger_flash(unit_id: String, duration_ms: int = 300) -> void:
 	if not _tactical_grid:
 		return
 
-	var unit = _tactical_grid.units.get(unit_id)
+	var unit = _unit_node(unit_id)
 	if not unit:
 		return
 
@@ -94,7 +94,7 @@ func _update_unit_flash_state(unit_id: String, is_flashing: bool) -> void:
 	if not _tactical_grid:
 		return
 
-	var unit = _tactical_grid.units.get(unit_id)
+	var unit = _unit_node(unit_id)
 	if not unit or not unit.visual:
 		return
 
@@ -143,7 +143,7 @@ func trigger_wobble(unit_id: String, duration_ms: int = 150) -> void:
 	if not _tactical_grid:
 		return
 
-	var unit = _tactical_grid.units.get(unit_id)
+	var unit = _unit_node(unit_id)
 	if not unit or not unit.visual:
 		return
 
@@ -181,3 +181,15 @@ func is_paused() -> bool:
 ## Get set of currently flashing unit IDs
 func get_flashing_units() -> Array:
 	return _flashing_units.keys()
+
+
+func _unit_node(unit_id: String) -> Unit:
+	if not _tactical_grid or not is_instance_valid(_tactical_grid):
+		return null
+	var layer: Node = _tactical_grid.get_node_or_null("UnitLayer")
+	if not layer:
+		return null
+	for child in layer.get_children():
+		if child is Unit and child.get("unit_id") == unit_id:
+			return child as Unit
+	return null
