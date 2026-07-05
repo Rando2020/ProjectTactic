@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "title_the_appointed",
+      "type": "ui_image",
+      "path": "/src/assets/ui/title-the-appointed.png",
+      "tags": ["title", "main_menu"]
+    },
+    {
+      "id": "main_menu_button_default",
+      "type": "ui_image",
+      "path": "/src/assets/ui/main-menu-button-default.png",
+      "tags": ["button", "main_menu"]
+    },
+    {
+      "id": "main_menu_button_selected",
+      "type": "ui_image",
+      "path": "/src/assets/ui/main-menu-button-selected.png",
+      "tags": ["button", "selected", "main_menu"]
+    },
+    {
+      "id": "ruined_garden_shrine_tileset",
+      "type": "tileset",
+      "path": "/src/assets/tiles/ruined-garden-shrine-tileset.png",
+      "tags": ["battle", "tiles", "act_1", "shrine"]
+    },
+    {
+      "id": "zane_battle_placeholder",
+      "type": "sprite_set",
+      "directions": {
+        "frontLeft": "/src/assets/characters/zane-front-left.png",
+        "frontRight": "/src/assets/characters/zane-front-right.png",
+        "backLeft": "/src/assets/characters/zane-back-left.png",
+        "backRight": "/src/assets/characters/zane-back-right.png"
+      },
+      "tags": ["party", "battle_sprite", "isometric"]
+    }
+  ]
+}
