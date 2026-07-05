@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "id": "ashvale_null_drake_map",
+  "name": "Eastern Road Breach",
+  "grid": {
+    "type": "isometric_square",
+    "width": 8,
+    "height": 6,
+    "tileSize": { "x": 64, "y": 32 }
+  },
+  "terrainPalette": ["broken_road", "shrine_stone", "grass_edge", "void_fissure"],
+  "tiles": [
+    { "x": 0, "y": 0, "height": 0, "terrainId": "broken_road", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 1, "y": 0, "height": 0, "terrainId": "broken_road", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 2, "y": 0, "height": 1, "terrainId": "shrine_stone", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 3, "y": 0, "height": 1, "terrainId": "shrine_stone", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 4, "y": 0, "height": 0, "terrainId": "grass_edge", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 5, "y": 0, "height": 0, "terrainId": "broken_road", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 6, "y": 0, "height": 0, "terrainId": "broken_road", "surface": null, "blocksMovement": false, "blocksLineOfSight": false },
+    { "x": 7, "y": 0, "height": 0, "terrainId": "grass_edge", "surface": null, "blocksMovement": false, "blocksLineOfSight": false }
+  ],
+  "deploymentZones": {
+    "player": [{ "x": 0, "y": 4 }, { "x": 1, "y": 4 }, { "x": 0, "y": 5 }],
+    "opponent": [{ "x": 6, "y": 1 }, { "x": 7, "y": 2 }]
+  },
+  "camera": { "startX": 3, "startY": 3, "zoom": 1 },
+  "assetRefs": {
+    "tilesetId": "ruined_garden_shrine_tileset",
+    "backgroundId": "ashvale_shrine_road_backdrop"
+  },
+  "notes": "Partial tile list for early renderer validation. Expand to full grid before replacing prototype map data."
+}
