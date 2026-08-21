@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "towns": [
+    {
+      "id": "ashvale",
+      "name": "Ashvale Crossing",
+      "subtitle": "The town beneath the split shrine bell",
+      "region": "vaelthar_lowlands",
+      "element": "fire",
+      "mapPosition": { "x": 18, "y": 58 },
+      "unlockedByDefault": true,
+      "description": "A trade town built around an old Guardian shrine. Since the bell cracked, violet Ether seeps through the market stones at dusk.",
+      "ambientLine": "The shrine bell hums even when there is no wind.",
+      "services": ["inn", "market", "training_yard", "mission_board"],
+      "npcIds": ["mira", "old_bellkeeper_soren", "captain_rusk", "elian_crowe"],
+      "missionIds": ["ashvale_null_drake"],
+      "connectedTownIds": ["mirefen"]
+    },
+    {
+      "id": "mirefen",
+      "name": "Mirefen Reach",
+      "subtitle": "A drowned settlement of blue lanterns",
+      "region": "flooded_lowlands",
+      "element": "water",
+      "mapPosition": { "x": 42, "y": 68 },
+      "unlockedByDefault": false,
+      "description": "A wetlands town where water Ether gathers in the reeds. The people fear that Nerevan's tide has begun answering something beneath the marsh.",
+      "ambientLine": "Every reflection in the marsh looks half a second late.",
+      "services": ["inn", "reed_market", "mission_board"],
+      "npcIds": ["fenwarden_ila", "drowned_scholar", "reed_child"],
+      "missionIds": ["mirefen_reaction_trial"],
+      "connectedTownIds": ["ashvale", "stormglass"]
+    },
+    {
+      "id": "stormglass",
+      "name": "Stormglass Bastion",
+      "subtitle": "A fortress where lightning sleeps in the walls",
+      "region": "high_glass_march",
+      "element": "thunder",
+      "mapPosition": { "x": 68, "y": 36 },
+      "unlockedByDefault": false,
+      "description": "A military bastion carved from black glass and copper. Its towers catch storms and teach soldiers to move between thunderbeats.",
+      "ambientLine": "The air tastes like copper and unfinished warnings.",
+      "services": ["barracks", "glasswright", "mission_board", "timing_trials"],
+      "npcIds": ["bastion_marshal", "glasswright_theo", "storm_acolyte", "serra_valecourt"],
+      "missionIds": ["stormglass_deflect_trial"],
+      "connectedTownIds": ["mirefen"]
+    }
+  ]
+}

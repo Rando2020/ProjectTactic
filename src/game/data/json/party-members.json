@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "partyMembers": [
+    {
+      "id": "zane",
+      "name": "Zane Vale",
+      "role": "Resonant",
+      "startingLevel": 1,
+      "startingJobId": "resonant",
+      "baseStats": { "hp": 320, "mp": 90, "temper": 80, "ether": 120, "power": 14, "spirit": 18, "speed": 10, "move": 4, "jump": 2 },
+      "portraitId": "placeholder_zane",
+      "spriteSetId": "zane_battle_placeholder",
+      "traits": ["guardian_listener", "balanced_caster", "story_anchor"],
+      "cycleArchetypeId": "listener",
+      "bio": "A rare Resonant who hears the pain inside corrupted Guardians instead of only sensing their rage.",
+      "storyHook": "Zane is the proof that the old war was not won cleanly. His gift makes every battlefield a testimony and every spared Guardian a witness."
+    },
+    {
+      "id": "mira",
+      "name": "Mira Vey",
+      "role": "Field Medic",
+      "startingLevel": 1,
+      "startingJobId": "luminary",
+      "baseStats": { "hp": 280, "mp": 115, "temper": 60, "ether": 135, "power": 8, "spirit": 20, "speed": 10, "move": 4, "jump": 2 },
+      "portraitId": "placeholder_mira",
+      "spriteSetId": "mira_battle_placeholder",
+      "traits": ["healer", "cleanse_support", "skeptical_guide"],
+      "cycleArchetypeId": "witness",
+      "bio": "A practical medic who trusts bandages, field notes, and proof more than prophecy.",
+      "storyHook": "Mira turns skepticism into resistance. She records what power wants treated as rumor, hysteria, or battlefield fog."
+    },
+    {
+      "id": "rusk",
+      "name": "Captain Rusk",
+      "role": "Warder",
+      "startingLevel": 1,
+      "startingJobId": "warder",
+      "baseStats": { "hp": 390, "mp": 45, "temper": 145, "ether": 55, "power": 18, "spirit": 8, "speed": 8, "move": 4, "jump": 1 },
+      "portraitId": "placeholder_rusk",
+      "spriteSetId": "rusk_battle_placeholder",
+      "traits": ["frontline_guard", "temper_breaker", "town_defender"],
+      "cycleArchetypeId": "preserver",
+      "bio": "Ashvale's watch captain. He does not understand Resonance, but he understands standing between danger and civilians.",
+      "storyHook": "Rusk embodies the necessary danger of order: walls save people, but walls can also hide the crime that guarantees the next war."
+    }
+  ],
+  "startingPartyIds": ["zane", "mira", "rusk"],
+  "storyRecruitablePartyIds": ["elian", "serra"]
+}

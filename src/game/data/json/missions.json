@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "missions": [
+    {
+      "id": "ashvale_null_drake",
+      "questId": "cracked_bell",
+      "townId": "ashvale",
+      "title": "Eastern Road Breach",
+      "subtitle": "Tutorial skirmish",
+      "biome": "cracked_shrine_road",
+      "recommendedLevel": 1,
+      "difficulty": "story",
+      "objective": {
+        "type": "defeat_boss",
+        "description": "Defeat the Null Drake and protect Ashvale civilians.",
+        "targetEnemyIds": ["null_drake"]
+      },
+      "bonusObjectives": [
+        {
+          "id": "win_within_6_rounds",
+          "description": "Win within 6 rounds",
+          "condition": { "type": "round_limit", "value": 6 }
+        },
+        {
+          "id": "trigger_one_surge",
+          "description": "Trigger one SURGE",
+          "condition": { "type": "event_count", "event": "surge_success", "min": 1 }
+        },
+        {
+          "id": "no_ally_ko",
+          "description": "No ally is KO'd",
+          "condition": { "type": "party_ko_count", "max": 0 }
+        }
+      ],
+      "mapId": "ashvale_null_drake_map",
+      "enemyFormationId": "ashvale_intro_formation",
+      "rewards": {
+        "jp": 30,
+        "gold": 120,
+        "items": [{ "itemId": "vitae_draught", "quantity": 1 }]
+      },
+      "unlocksOnComplete": {
+        "flags": ["completed_intro_battle"],
+        "townIds": ["mirefen"],
+        "questIds": ["road_to_mirefen"]
+      },
+      "tacticalTags": ["tutorial", "guardian_echo", "low_threat"]
+    },
+    {
+      "id": "mirefen_reaction_trial",
+      "questId": "road_to_mirefen",
+      "townId": "mirefen",
+      "title": "Marshlight Reaction Trial",
+      "subtitle": "Elemental reaction skirmish",
+      "biome": "flooded_reed_marsh",
+      "recommendedLevel": 2,
+      "difficulty": "normal",
+      "objective": {
+        "type": "defend_objective",
+        "description": "Use Wet reactions to freeze or electrify enemies before they reach the shrine skiff.",
+        "targetObjectIds": ["shrine_skiff"]
+      },
+      "bonusObjectives": [
+        {
+          "id": "trigger_freeze",
+          "description": "Trigger FREEZE",
+          "condition": { "type": "status_reaction_count", "reactionId": "freeze", "min": 1 }
+        },
+        {
+          "id": "trigger_electrify",
+          "description": "Trigger ELECTRIFY",
+          "condition": { "type": "status_reaction_count", "reactionId": "electrify", "min": 1 }
+        },
+        {
+          "id": "keep_skiff_intact",
+          "description": "Keep the skiff intact",
+          "condition": { "type": "object_survives", "objectId": "shrine_skiff" }
+        }
+      ],
+      "mapId": "mirefen_reaction_trial_map",
+      "enemyFormationId": "mirefen_reaction_formation",
+      "rewards": {
+        "jp": 55,
+        "gold": 180,
+        "items": [{ "itemId": "resonance_phial", "quantity": 1 }]
+      },
+      "unlocksOnComplete": {
+        "flags": ["completed_mirefen_trial"],
+        "townIds": ["stormglass"],
+        "questIds": ["stormglass_trials"]
+      },
+      "tacticalTags": ["water", "ice", "thunder", "reaction_training"]
+    },
+    {
+      "id": "stormglass_deflect_trial",
+      "questId": "stormglass_trials",
+      "townId": "stormglass",
+      "title": "Between Thunderbeats",
+      "subtitle": "Timing and defense trial",
+      "biome": "copper_glass_ramparts",
+      "recommendedLevel": 3,
+      "difficulty": "tactical",
+      "objective": {
+        "type": "survive_and_defeat",
+        "description": "Survive precision strikes and use DEFLECT to halve incoming burst damage.",
+        "roundsToSurvive": 3,
+        "targetEnemyIds": ["storm_warden"]
+      },
+      "bonusObjectives": [
+        {
+          "id": "land_3_deflects",
+          "description": "Land 3 DEFLECTS",
+          "condition": { "type": "event_count", "event": "deflect_success", "min": 3 }
+        },
+        {
+          "id": "no_revive_used",
+          "description": "Win without using revive",
+          "condition": { "type": "ability_uses", "abilityTag": "revive", "max": 0 }
+        },
+        {
+          "id": "defeat_storm_warden_last",
+          "description": "Defeat the Storm Warden last",
+          "condition": { "type": "enemy_defeated_last", "enemyId": "storm_warden" }
+        }
+      ],
+      "mapId": "stormglass_deflect_trial_map",
+      "enemyFormationId": "stormglass_deflect_formation",
+      "rewards": {
+        "jp": 80,
+        "gold": 260,
+        "items": [{ "itemId": "ironcore_shard", "quantity": 1 }]
+      },
+      "unlocksOnComplete": {
+        "flags": ["completed_stormglass_trial"],
+        "townIds": [],
+        "questIds": []
+      },
+      "tacticalTags": ["deflect", "thunder", "positioning", "timing"]
+    }
+  ]
+}

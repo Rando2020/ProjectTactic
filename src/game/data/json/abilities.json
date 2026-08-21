@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "abilities": [
+    {
+      "id": "power_slash",
+      "name": "Power Slash",
+      "jobId": "warder",
+      "learnedAtJobLevel": 1,
+      "type": "active",
+      "tags": ["melee", "physical", "starter"],
+      "targeting": { "shape": "single", "range": 1, "requiresLineOfSight": false, "heightTolerance": 1 },
+      "cost": { "mp": 0, "temper": 0, "cooldownTurns": 0 },
+      "effectSummary": "Basic close-range physical strike.",
+      "animationId": "warder_power_slash",
+      "sfxId": "blade_light_hit"
+    },
+    {
+      "id": "sunder_strike",
+      "name": "Sunder Strike",
+      "jobId": "warder",
+      "learnedAtJobLevel": 2,
+      "type": "active",
+      "tags": ["melee", "physical", "temper_break"],
+      "targeting": { "shape": "single", "range": 1, "requiresLineOfSight": false, "heightTolerance": 1 },
+      "cost": { "mp": 0, "temper": 10, "cooldownTurns": 1 },
+      "effectSummary": "Close-range strike that pressures the target's Temper.",
+      "animationId": "warder_sunder_strike",
+      "sfxId": "blade_heavy_hit"
+    },
+    {
+      "id": "deflect_guard",
+      "name": "Deflect Guard",
+      "jobId": "warder",
+      "learnedAtJobLevel": 1,
+      "type": "reaction",
+      "tags": ["defense", "timing", "reaction"],
+      "effectSummary": "Reaction guard that rewards timing and reduces pressure from direct attacks.",
+      "animationId": "warder_deflect_guard",
+      "sfxId": "shield_deflect"
+    },
+    {
+      "id": "firebrand",
+      "name": "Firebrand",
+      "jobId": "arcanist",
+      "learnedAtJobLevel": 1,
+      "type": "active",
+      "tags": ["magic", "fire", "surface"],
+      "targeting": { "shape": "single", "range": 4, "requiresLineOfSight": true, "heightTolerance": 3 },
+      "cost": { "mp": 12, "temper": 0, "cooldownTurns": 0 },
+      "effectSummary": "Fire spell that can create burning surfaces for reaction play.",
+      "animationId": "arcanist_firebrand",
+      "sfxId": "fire_cast"
+    },
+    {
+      "id": "icebrand",
+      "name": "Icebrand",
+      "jobId": "arcanist",
+      "learnedAtJobLevel": 1,
+      "type": "active",
+      "tags": ["magic", "ice", "control"],
+      "targeting": { "shape": "single", "range": 4, "requiresLineOfSight": true, "heightTolerance": 3 },
+      "cost": { "mp": 12, "temper": 0, "cooldownTurns": 0 },
+      "effectSummary": "Ice spell that supports chilled and freeze reaction setup.",
+      "animationId": "arcanist_icebrand",
+      "sfxId": "ice_cast"
+    },
+    {
+      "id": "mend",
+      "name": "Mend",
+      "jobId": "luminary",
+      "learnedAtJobLevel": 1,
+      "type": "active",
+      "tags": ["healing", "support"],
+      "targeting": { "shape": "single", "range": 4, "requiresLineOfSight": true, "heightTolerance": 3 },
+      "cost": { "mp": 10, "temper": 0, "cooldownTurns": 0 },
+      "effectSummary": "Restores ally HP from a safe support range.",
+      "animationId": "luminary_mend",
+      "sfxId": "heal_cast"
+    }
+  ]
+}
