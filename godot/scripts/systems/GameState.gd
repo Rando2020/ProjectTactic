@@ -2,7 +2,7 @@
 ## Persists player progress (JP, gold, learned abilities, completed stages)
 ## across scene transitions.  Never freed between battles.
 ##
-## Save format (user://save.json):
+## Legacy campaign format (imported by SaveSystem into user://save_1.json):
 ##   version          : int   (must == SAVE_VERSION)
 ##   gold             : int
 ##   completed_stages : Array[String]
@@ -69,8 +69,7 @@ var unit_registry: Dictionary = {}
 
 
 func _ready() -> void:
-	if not load_save():
-		_init_defaults()
+	_init_defaults()
 
 
 func _init_defaults() -> void:
@@ -159,7 +158,6 @@ func apply_loadout_xp(amount: int, reason: String = "") -> Dictionary:
 	pending_rewards["loadout_xp"] = int(pending_rewards.get("loadout_xp", 0)) + amount
 	pending_rewards["loadout_xp_reason"] = reason
 	pending_rewards["loadout_progress"] = result
-	save()
 	return result
 
 
@@ -270,6 +268,8 @@ func set_equipped_abilities(unit_id: String, ability_ids: Array) -> void:
 ## Called by BattleScene on victory.  Awards JP to surviving player units.
 func apply_victory(map_id: String, rewards: Dictionary,
 		player_unit_ids: Array[String]) -> void:
+	if active_run and not active_run.claim_reward("victory"):
+		return
 	var gld: int = rewards.get("gold", 0)
 	var jp_gain: int = rewards.get("jp", 0)
 	gold += gld
@@ -291,11 +291,17 @@ func apply_victory(map_id: String, rewards: Dictionary,
 #  Persistence
 
 func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
+	return get_node("/root/SaveSystem").has_save()
 
 
-## Writes current state to disk.  Silent on failure.
+## SaveSystem owns disk writes for campaign, run and meta progression.
 func save() -> void:
+	get_node("/root/SaveSystem").save()
+
+func load_save() -> bool:
+	return get_node("/root/SaveSystem").load_slot()
+
+func to_dict() -> Dictionary:
 	var unit_jp:        Dictionary = {}
 	var unit_learned:   Dictionary = {}
 	var unit_jobs:      Dictionary = {}
@@ -326,34 +332,10 @@ func save() -> void:
 		"sigil_progress":   sigil_progress.duplicate(),
 	}
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if not file:
-		push_warning("GameState.save: could not open %s for writing." % SAVE_PATH)
-		return
-	file.store_string(JSON.stringify(data, "\t"))
-	file.close()
+	return data
 
-
-## Loads save file.  Returns false if no file or format mismatch.
-## On success populates gold, completed_stages, and per-unit JP/learned.
-func load_save() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if not file:
-		return false
-	var text := file.get_as_text()
-	file.close()
-
-	var parsed: Variant = JSON.parse_string(text)
-	if not parsed is Dictionary:
-		push_warning("GameState.load_save: JSON parse failed or not a dict.")
-		return false
-
-	var data: Dictionary = parsed as Dictionary
-	if data.get("version", 0) != SAVE_VERSION:
-		push_warning("GameState.load_save: version mismatch  starting fresh.")
-		return false
+func restore_progress(data: Dictionary) -> void:
+	unit_registry.clear()
 
 	# Populate registry with defaults first so learnable/base lists are intact
 	_init_defaults()
@@ -405,15 +387,12 @@ func load_save() -> bool:
 		if saved_equipment.has(uid) and saved_equipment[uid] is Dictionary:
 			unit_registry[uid]["equipment"] = (saved_equipment[uid] as Dictionary).duplicate()
 
-	return true
-
 
 ## Wipes the save file and resets in-memory state to defaults.
 func delete_save() -> void:
-	if FileAccess.file_exists(SAVE_PATH):
-		var dir := DirAccess.open("user://")
-		if dir:
-			dir.remove("save.json")
+	get_node("/root/SaveSystem").delete_slot()
+	active_run = null
+	get_node("/root/RunManager").restore_from_run()
 	gold = 0
 	completed_stages.clear()
 	story_flags.clear()
@@ -422,3 +401,5 @@ func delete_save() -> void:
 	sigil_progress.clear()
 	unit_registry.clear()
 	_init_defaults()
+	# Persist the reset so an older legacy file cannot be imported again at startup.
+	save()

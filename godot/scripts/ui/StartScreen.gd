@@ -157,7 +157,12 @@ func _on_new_game_pressed() -> void:
 
 func _on_continue_pressed() -> void:
 	_play_confirm()
-	_set_status("Continue will resume the latest run once saves are wired.")
+	var saves := get_node("/root/SaveSystem")
+	if not saves.load_slot():
+		_set_status(saves.last_error)
+		return
+	music_player.stop()
+	get_tree().change_scene_to_file(saves.continue_scene())
 
 
 func _on_load_pressed() -> void:

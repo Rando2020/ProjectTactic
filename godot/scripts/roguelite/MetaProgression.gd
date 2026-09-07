@@ -10,8 +10,7 @@ var selected_heat_level: int = 0
 var max_heat_unlocked: int = 0
 
 func _ready() -> void:
-	if not load_save():
-		_init_defaults()
+	_init_defaults()
 
 func _init_defaults() -> void:
 	for currency_id in [Currency.SOUL_SHARDS, Currency.OBSIDIAN, Currency.GLYPHS, Currency.BOSS_TOKENS, "phoenix-sigils", "titan-sigils"]:
@@ -81,7 +80,10 @@ func award_stage_rewards(map_id: String) -> Dictionary:
 	return rewards
 
 func save() -> void:
-	var data := {
+	get_node("/root/SaveSystem").save()
+
+func to_dict() -> Dictionary:
+	return {
 		"version": SAVE_VERSION,
 		"currencies": currencies,
 		"permanent_upgrades": permanent_upgrades,
@@ -89,24 +91,11 @@ func save() -> void:
 		"selected_heat_level": selected_heat_level,
 		"max_heat_unlocked": max_heat_unlocked,
 	}
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if not file:
-		push_warning("MetaProgression.save: could not open save path")
-		return
-	file.store_string(JSON.stringify(data, "\t"))
-	file.close()
 
 func load_save() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if not file:
-		return false
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	if not parsed is Dictionary:
-		return false
-	var data: Dictionary = parsed
+	return get_node("/root/SaveSystem").load_slot()
+
+func restore_progress(data: Dictionary) -> void:
 	currencies = data.get("currencies", {}).duplicate()
 	permanent_upgrades = data.get("permanent_upgrades", {}).duplicate()
 	unlocked_flags.clear()
@@ -115,4 +104,3 @@ func load_save() -> bool:
 	selected_heat_level = int(data.get("selected_heat_level", 0))
 	max_heat_unlocked = int(data.get("max_heat_unlocked", 0))
 	_init_defaults()
-	return true

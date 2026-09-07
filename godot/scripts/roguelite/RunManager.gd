@@ -38,19 +38,32 @@ func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: S
 			gs.seed_run_loadout(gs.active_run)
 		gs.active_run.heat_level = heat_level
 		# Initialize run state tracking
-		gs.unit_registry.clear()
+		# Keep character equipment and progression when beginning a new run.
+		for entry: Dictionary in gs.unit_registry.values():
+			for key in ["base_hp", "current_hp", "current_mp", "current_temper", "current_ether"]:
+				entry.erase(key)
 		gs.run_floor_reached = 1
 		gs.run_jp_earned = 0
 		gs.pending_rewards.clear()
 		gs.pending_loot.clear()
+		gs.pending_boon_offers.clear()
 		gs.run_inventory.clear()
 		gs.last_run_death.clear()
 
+	if gs:
+		gs.save()
 	run_started.emit(run_seed, heat_level)
 
 func end_run(victory: bool) -> void:
-	is_run_active = false
 	var gs: Node = get_node_or_null("/root/GameState")
+	if not is_run_active or gs == null or gs.active_run == null:
+		return
+	var saves := get_node("/root/SaveSystem")
+	saves.begin_transaction()
+	is_run_active = false
+	gs.best_floor_reached = maxi(gs.best_floor_reached, gs.active_run.current_floor)
+	if victory:
+		gs.runs_completed += 1
 	if gs and gs.active_run and gs.has_method("apply_loadout_xp"):
 		var end_xp := VowSigilSystem.xp_for_run_end(gs.active_run.current_floor, victory, heat_level)
 		gs.apply_loadout_xp(end_xp, "run_complete" if victory else "run_end")
@@ -64,9 +77,16 @@ func end_run(victory: bool) -> void:
 		meta.save()
 	# Clear run state
 	if gs: gs.active_run = null
+	restore_from_run()
+	saves.commit_transaction()
 	run_ended.emit(victory)
 
 func award_stage_reward(stage_index: int, is_elite: bool = false, is_boss: bool = false) -> Dictionary:
+	var gs := get_node("/root/GameState")
+	if not is_run_active or gs.active_run == null or stage_index != gs.active_run.current_floor:
+		return {}
+	if not gs.active_run.claim_reward("stage"):
+		return {}
 	var rewards := {
 		Currency.SOUL_SHARDS: 4 + stage_index + heat_level,
 		Currency.RUN_AETHER: 15 + (stage_index * 5),
@@ -96,6 +116,7 @@ func add_boon(boon: Dictionary) -> void:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs and gs.active_run:
 		gs.active_run.active_boons.append(boon)
+		gs.save()
 
 func get_reward_multiplier() -> float:
 	return 1.0 + float(heat_level) * 0.12
@@ -109,3 +130,19 @@ func get_total_floors() -> int:
 	var gs: Node = get_node_or_null("/root/GameState")
 	if gs and gs.active_run: return gs.active_run.TOTAL_FLOORS
 	return 10
+
+## Restore mirrors without generating a run, emitting rewards or changing progress.
+func restore_from_run() -> void:
+	var gs := get_node("/root/GameState")
+	var run: RunState = gs.active_run
+	is_run_active = run != null and not run.completed
+	current_stage = run.current_floor if run else 0
+	run_seed = run.seed if run else 0
+	heat_level = run.heat_level if run else 0
+	run_aether = run.run_aether if run else 0
+	active_boons.clear()
+	if run:
+		active_boons.assign(run.active_boons)
+	rng.seed = run_seed
+	if run and not run.rng_state.is_empty():
+		rng.state = int(run.rng_state)

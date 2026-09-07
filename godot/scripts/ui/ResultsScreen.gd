@@ -231,7 +231,6 @@ func _build_ui() -> void:
 		if _gs:
 			_gs.run_floor_reached = 0; _gs.run_jp_earned = 0
 			_gs.run_inventory.clear(); _gs.last_run_death.clear()
-			_gs.runs_completed += 1
 			_gs.best_floor_reached = max(_gs.best_floor_reached, floor)
 	elif is_defeat:
 		btn_text = "Back to the Hearth"
