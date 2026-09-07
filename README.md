@@ -4,6 +4,10 @@
 
 The playable game is now implemented in `godot/`.
 
+Browser delivery uses the Godot `Web` export preset. See
+[Browser build and playtest guide](docs/architecture/browser-delivery.md) for
+local export commands, PR artifacts, deployment, and known demo limitations.
+
 The React/JavaScript code under `src/`, `archive_react/`, and `VaeltharChronicles.jsx` is reference material only unless the user explicitly asks for React work. New gameplay, UI screens, run systems, combat systems, and content integration should be built in Godot/GDScript.
 
 Agents should read `CLAUDE.md`, `ARCHITECTURE.md`, `AI_TASK_PACKETS.md`, and `docs/systems/js-to-godot-migration-backlog.md` before starting implementation work.
