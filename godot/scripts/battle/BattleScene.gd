@@ -329,78 +329,70 @@ func _on_unit_defeated(unit_id: String) -> void:
 		}
 
 
+var _battle_resolved: bool = false
+
 func _on_battle_won(rewards: Dictionary) -> void:
+	if _battle_resolved:
+		return
+	_battle_resolved = true
 	var player_ids: Array[String] = []
 	if battle_manager and is_instance_valid(battle_manager):
 		for uid in battle_manager.units.keys():
 			var unit_ref = battle_manager.units.get(uid)
-			if not is_instance_valid(unit_ref):
-				continue
-			if unit_ref is Unit and unit_ref.team == "player":
+			if is_instance_valid(unit_ref) and unit_ref is Unit and unit_ref.team == "player":
 				player_ids.append(str(uid))
-	var gs: Node = get_node_or_null("/root/GameState")
-	if gs:
-		# Save surviving player units' state for next battle
-		if gs.unit_registry and battle_manager and is_instance_valid(battle_manager):
-			for uid in player_ids:
-				var unit_ref = battle_manager.units.get(uid)
-				if unit_ref is Unit:
-					gs.unit_registry[uid] = {
-						"base_hp": unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0,
-						"current_hp": unit_ref.hp,
-						"current_mp": unit_ref.mp,
-						"current_temper": unit_ref.temper,
-						"current_ether": unit_ref.ether,
-					}
-		# Track JP earned this run
-		gs.run_jp_earned += rewards.get("jp", 0)
-		gs.apply_victory(_map_data.id, rewards, player_ids)
-
-		if gs.active_run:
-			# Generate loot, show spoils, then route to the next run node.
-			var ls    := LootSystem.new()
-			var loot  := ls.generate_battle_loot(_defeated_enemies, gs.active_run.seed, gs.active_run.current_floor)
-			gs.pending_loot.clear()
-			for item in loot: gs.run_inventory.append(item)
-			var elite_n := _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "").size()
-			gs.active_run.elite_kills += elite_n
-
-			var rm: Node = get_node_or_null("/root/RunManager")
-			var floor_num: int = int(gs.active_run.current_floor)
-			var is_boss: bool = floor_num >= 10
-			var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier","") != "")
-			if rm and rm.is_run_active:
-				rm.award_stage_reward(floor_num, has_elite, is_boss)
-
-			battle_ui.show_spoils(rewards, loot)
-			await battle_ui.spoils_continue_requested
-
-			var completed_node: Dictionary = gs.active_run.get_current_node()
-			var node_type := str(completed_node.get("type", "battle"))
-			var loadout_xp: int = VowSigilSystem.xp_for_floor_clear(gs.active_run.current_floor, node_type)
-			if gs.has_method("apply_loadout_xp"):
-				gs.apply_loadout_xp(loadout_xp, node_type)
-			else:
-				gs.active_run.grant_loadout_xp(loadout_xp)
-
-			if is_boss:
-				if rm and rm.is_run_active:
-					rm.end_run(true)
-				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
-				return
-
-			gs.active_run.complete_current_node()
-			var next_nd: Dictionary = gs.active_run.get_current_node()
-			if next_nd.get("type","") == "boon_pick":
+	var gs := get_node("/root/GameState")
+	var saves := get_node("/root/SaveSystem")
+	var rm := get_node("/root/RunManager")
+	saves.begin_transaction()
+	for uid in player_ids:
+		var unit_ref = battle_manager.units.get(uid)
+		if unit_ref is Unit:
+			if not gs.unit_registry.has(uid):
+				gs.unit_registry[uid] = {}
+			# Merge battle vitals without discarding jobs, equipment or learned abilities.
+			gs.unit_registry[uid].merge({
+				"base_hp": unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0,
+				"current_hp": unit_ref.hp, "current_mp": unit_ref.mp,
+				"current_temper": unit_ref.temper, "current_ether": unit_ref.ether,
+			}, true)
+	gs.apply_victory(_map_data.id, rewards, player_ids)
+	var loot: Array = []
+	var was_run: bool = gs.active_run != null
+	var is_boss: bool = false
+	if was_run:
+		var run: RunState = gs.active_run
+		var ls := LootSystem.new()
+		loot = ls.generate_battle_loot(_defeated_enemies, run.seed, run.current_floor)
+		gs.pending_loot.clear()
+		for item in loot:
+			gs.run_inventory.append(item)
+		run.elite_kills += _defeated_enemies.filter(func(e: Dictionary) -> bool: return e.get("elite_tier", "") != "").size()
+		is_boss = run.current_floor >= run.TOTAL_FLOORS
+		var has_elite := _defeated_enemies.any(func(e: Dictionary) -> bool: return e.get("elite_tier", "") != "")
+		rm.award_stage_reward(run.current_floor, has_elite, is_boss)
+		var node_type := str(run.get_current_node().get("type", "battle"))
+		gs.apply_loadout_xp(VowSigilSystem.xp_for_floor_clear(run.current_floor, node_type), node_type)
+		run.complete_current_node()
+		if is_boss:
+			rm.end_run(true)
+		else:
+			var next_nd: Dictionary = run.get_current_node()
+			if next_nd.get("type", "") == "boon_pick":
 				var bs := BoonSystem.new()
-				var owned: Array = gs.active_run.active_boons.map(func(b: Dictionary) -> String: return b.get("id",""))
-				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned, gs.active_run.get_loadout_bonus())
-			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
-			return
-	battle_ui.show_spoils(rewards, [])
+				var owned: Array = run.active_boons.map(func(b: Dictionary) -> String: return b.get("id", ""))
+				gs.pending_boon_offers = bs.generate_offers(run.seed * 17 + run.current_floor * 3, run.current_floor, owned, run.get_loadout_bonus())
+	# Commit currency, loot, XP and the completed node together BEFORE waiting on UI.
+	saves.commit_transaction()
+	battle_ui.show_spoils(rewards, loot)
 	await battle_ui.spoils_continue_requested
-	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
+	var destination := "res://scenes/StageSelect.tscn" if was_run and not is_boss else "res://scenes/ResultsScreen.tscn"
+	get_tree().change_scene_to_file(destination)
+
 func _on_battle_lost() -> void:
+	if _battle_resolved:
+		return
+	_battle_resolved = true
 	_fade_battle_music()
 	await get_tree().create_timer(0.85).timeout
 	var gs: Node = get_node_or_null("/root/GameState")

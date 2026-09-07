@@ -463,8 +463,10 @@ func _on_enter_node(node: Dictionary) -> void:
 	var node_id := str(node.get("id", ""))
 	if not node_id.is_empty():
 		_gs.active_run.select_node(node_id)
+		_gs.save()
 	if node.get("type", "") == "mystery":
 		node = _gs.active_run.resolve_mystery_node(node_id)
+		_gs.save()
 		_resolve_revealed_mystery(node)
 		return
 	match node.get("type","battle"):
@@ -532,6 +534,7 @@ func _on_deployment_confirmed(deployment: Array) -> void:
 	if _gs and _gs.active_run:
 		_gs.active_run.run_deployment = deployment.duplicate(true)
 		_gs.active_run.set_meta("pending_deployment", deployment.duplicate(true))
+		_gs.save()
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 
@@ -589,7 +592,7 @@ func _show_mystery_event(node: Dictionary) -> void:
 
 
 func _apply_mystery_event(event_type: String) -> void:
-	if not _gs or not _gs.active_run:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") != event_type:
 		return
 	match event_type:
 		"mystery_cache":
@@ -678,7 +681,7 @@ func _on_boon_picked(boon: Dictionary) -> void:
 	_accept_boon(boon)
 
 func _accept_boon(boon: Dictionary, replaced_boon_id: String = "") -> void:
-	if not _gs or not _gs.active_run:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") not in ["boon_pick", "mystery_shrine"]:
 		return
 	if not replaced_boon_id.is_empty():
 		for i in range(_gs.active_run.active_boons.size() - 1, -1, -1):
@@ -689,6 +692,7 @@ func _accept_boon(boon: Dictionary, replaced_boon_id: String = "") -> void:
 	_gs.pending_boon_offers.clear()
 	_complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 		_boon_overlay = null
@@ -736,6 +740,7 @@ func _on_boon_skip() -> void:
 	if _gs: _gs.pending_boon_offers.clear()
 	if _gs and _gs.active_run: _complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
 	_build_ui()
 
@@ -755,7 +760,9 @@ func _apply_between_battle_heal() -> void:
 			reg["current_hp"] = min(max_hp, reg.get("current_hp", max_hp) + heal)
 
 func _on_loot_continue() -> void:
-	if _gs: _gs.pending_loot.clear()
+	if _gs:
+		_gs.pending_loot.clear()
+		_gs.save()
 	if _loot_overlay: _loot_overlay.queue_free(); _loot_overlay = null
 	_build_ui()
 
@@ -1060,6 +1067,7 @@ func _on_curse_picked(curse: Dictionary) -> void:
 	if _gs and _gs.active_run:
 		_complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 		_boon_overlay = null
@@ -1111,7 +1119,7 @@ func _show_wanderer_encounter(run: RunState) -> void:
 
 
 func _apply_wanderer_choice(choice_id: String, _run: RunState) -> void:
-	if not _gs:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") != "wanderer":
 		return
 	if not _gs.story_flags.has("met_orren"):
 		_gs.story_flags.append("met_orren")
