@@ -1,0 +1,51 @@
+name: Godot Web
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check Godot source stability
+        run: node tools/check_godot_stability.mjs --skip-godot
+
+      - uses: chickensoft-games/setup-godot@c233594225991af5aec714e52457cc76d6df8fa2 # v2
+        with:
+          version: 4.6.2
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import and export the actual game
+        run: python3 tools/export_godot_web.py
+
+      - name: Upload playable Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-web
+          path: build/web
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload engine diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-web-logs
+          path: build/godot-logs
+          if-no-files-found: ignore
