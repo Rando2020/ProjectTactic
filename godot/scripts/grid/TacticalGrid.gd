@@ -11,6 +11,8 @@ signal unit_visual_position_changed(unit_id: String, world_pos: Vector2)
 @export var tile_thickness: float = 16.0
 @export var map_origin: Vector2 = Vector2(320, 64)
 @export var map_data: MapData
+## Optional imported tile kit. Existing maps keep their current art by default.
+@export var terrain_textures: Dictionary[String, Texture2D] = {}
 
 var tiles: Dictionary = {}           # Vector2i -> Dictionary
 var unit_positions: Dictionary = {}  # Vector2i -> unit_id String
@@ -222,10 +224,12 @@ func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> voi
 
 
 func _uses_art_tile(terrain: String) -> bool:
-	return TERRAIN_TEXTURE_PATHS.has(terrain)
+	return terrain_textures.has(terrain) or TERRAIN_TEXTURE_PATHS.has(terrain)
 
 
 func _texture_for_terrain(terrain: String) -> Texture2D:
+	if terrain_textures.has(terrain):
+		return terrain_textures[terrain]
 	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
 
 

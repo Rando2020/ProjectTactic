@@ -1,0 +1,29 @@
+name: Terrain art
+
+on:
+  pull_request:
+    paths:
+      - 'godot/**'
+      - 'tools/check_terrain_art.py'
+      - '.github/workflows/terrain-art.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: chickensoft-games/setup-godot@c233594225991af5aec714e52457cc76d6df8fa2
+        with:
+          version: 4.6.2
+          use-dotnet: false
+          include-templates: false
+      - run: python3 tools/check_terrain_art.py
+  web:
+    uses: ./.github/workflows/godot-web.yml
