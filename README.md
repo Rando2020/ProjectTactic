@@ -4,6 +4,12 @@
 
 The playable game is now implemented in `godot/`.
 
+For the current Godot slice, export first, then use `npm run dev` to preview
+`build/web`. The historical React reference uses `npm run dev:legacy`.
+The run map supports Save & Title and confirmed abandonment; title Options
+and Load Game are wired. Browser acceptance is still pending on a WebGL2-capable
+secure host.
+
 Browser delivery uses the Godot `Web` export preset. See
 [Browser build and playtest guide](docs/architecture/browser-delivery.md) for
 local export commands, PR artifacts, deployment, and known demo limitations.

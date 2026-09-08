@@ -54,6 +54,19 @@ func load_slot(slot: int = 1) -> bool:
 	last_error = ""
 	return true
 
+## A user-selected manual slot becomes the next Continue checkpoint.
+## On a failed autosave write, retain the prior live state as well as disk save.
+func activate_slot(slot: int) -> bool:
+	var previous := _serialize().duplicate(true)
+	if not load_slot(slot):
+		return false
+	if slot == 1 or save():
+		return true
+	var error := last_error
+	_deserialize(previous)
+	last_error = error
+	return false
+
 func has_save(slot: int = 1) -> bool:
 	if slot < 1 or slot > SLOTS:
 		return false
@@ -74,6 +87,7 @@ func get_summary(slot: int = 1) -> Dictionary:
 		data = _migrate_slot(data)
 	var run: Dictionary = data.get("active_run", {})
 	return {"exists": true, "gold": data["progress"].get("gold", 0),
+		"has_run": not run.is_empty() and not run.get("completed", false),
 		"floor": run.get("floor", 1), "saved_at": data.get("saved_at", "")}
 
 func continue_scene() -> String:

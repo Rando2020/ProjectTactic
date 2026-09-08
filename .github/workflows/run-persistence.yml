@@ -28,3 +28,5 @@ jobs:
         run: node tools/check_godot_stability.mjs --skip-godot
       - name: Cold-process save regressions
         run: python3 tools/check_run_persistence.py
+      - name: Native playability and checkpoint integration
+        run: python3 tools/check_integration_checkpoints.py

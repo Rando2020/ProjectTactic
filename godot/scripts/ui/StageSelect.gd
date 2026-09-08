@@ -151,9 +151,13 @@ func _build_run_screen(run: RunState) -> void:
 
 	var ab_btn := _btn("Abandon", Color(0.93,0.27,0.27))
 	ab_btn.custom_minimum_size.x = 90
-	ab_btn.pressed.connect(_on_abandon)
+	ab_btn.pressed.connect(_confirm_abandon)
 	hh.add_child(ab_btn)
 	_gap(hh, 8)
+
+	var save_btn := _btn("Save & Title", GOLD)
+	save_btn.pressed.connect(_save_and_title)
+	hh.add_child(save_btn)
 
 	# Active boons row
 	if run.active_boons.size() > 0:
@@ -664,6 +668,31 @@ func _on_edit_formation_from_run(run: RunState) -> void:
 	)
 	ds.cancelled.connect(func() -> void: ds.queue_free(); _build_ui())
 	get_tree().current_scene.add_child(ds)
+
+
+func _save_and_title() -> void:
+	var saves := get_node("/root/SaveSystem")
+	if not saves.save():
+		var notice := AcceptDialog.new()
+		notice.title = "Checkpoint not saved"
+		notice.dialog_text = saves.last_error + " Your run is still open."
+		notice.confirmed.connect(notice.queue_free)
+		notice.canceled.connect(notice.queue_free)
+		add_child(notice)
+		notice.popup_centered()
+		return
+	get_tree().change_scene_to_file("res://scenes/StartScreen.tscn")
+
+
+func _confirm_abandon() -> void:
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "Abandon this run?"
+	dialog.dialog_text = "End this run and collect its earned rewards?\nChoose Cancel, then Save & Title if you want to continue later."
+	dialog.ok_button_text = "Abandon run"
+	dialog.confirmed.connect(func() -> void: dialog.queue_free(); _on_abandon())
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
 
 
 func _on_abandon() -> void:

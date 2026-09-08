@@ -92,14 +92,87 @@ func _run() -> void:
 			current_scene._on_abandon()
 			check(snapshot() == after, "repeated abandonment changes nothing")
 			record()
+		"menus":
+			saves.delete_slot(1)
+			var title: Node = load("res://scenes/StartScreen.tscn").instantiate()
+			root.add_child(title)
+			current_scene = title
+			await process_frame
+			check(title._buttons[1].disabled, "Continue disabled without a checkpoint")
+			title._on_options_pressed()
+			var music: HSlider = title._options.find_child("MusicVolume", true, false)
+			music.value = 37
+			var audio := root.get_node("AudioSettings")
+			check(audio.music_volume == 37, "title audio slider updates existing audio owner")
+			audio.music_volume = 80
+			audio.load_settings()
+			check(audio.music_volume == 37, "audio setting persists to disk")
+			title._options._close()
+			await process_frame
+			rm.start_new_run(0, 55)
+			gs.gold = 25
+			gs.active_run.run_deployment = [{"unit_id":"zane", "x":2, "y":4}]
+			check(saves.save(2), "manual fixture checkpoint saved")
+			gs.gold = 75
+			check(saves.save(), "different autosave fixture saved")
+			DirAccess.make_dir_absolute("user://save_1.json.tmp")
+			check(not saves.activate_slot(2) and gs.gold == 75, "failed slot activation restores previous live state")
+			DirAccess.remove_absolute("user://save_1.json.tmp")
+			check(saves.load_slot() and gs.gold == 75, "failed slot activation preserves previous autosave")
+			check(saves.activate_slot(2) and gs.gold == 25, "selected slot activates")
+			gs.gold = 999
+			check(saves.load_slot() and gs.gold == 25, "selected slot becomes Continue autosave")
+			title._refresh_continue()
+			check(not title._buttons[1].disabled and "Floor 1" in title._status_label.text, "Continue shows active checkpoint")
+			title._on_load_pressed()
+			check(is_instance_valid(title._load_dialog), "Load Game opens slot picker")
+			title._load_dialog.queue_free()
+			await continue_from_existing_title(title)
+			var before := snapshot()
+			current_scene._confirm_abandon()
+			var confirmation: ConfirmationDialog
+			for child in current_scene.get_children():
+				if child is ConfirmationDialog: confirmation = child
+			check(confirmation != null and snapshot() == before, "abandon dialog does not end run before confirmation")
+			confirmation.canceled.emit()
+			await process_frame
+			check(snapshot() == before, "cancel abandonment preserves run")
+			DirAccess.make_dir_absolute("user://save_1.json.tmp")
+			current_scene._save_and_title()
+			check(current_scene.scene_file_path.ends_with("StageSelect.tscn") and snapshot() == before, "failed Save and Title keeps run open")
+			DirAccess.remove_absolute("user://save_1.json.tmp")
+			for child in current_scene.get_children():
+				if child is AcceptDialog: child.queue_free()
+			await process_frame
+			current_scene._save_and_title()
+			await process_frame
+			await process_frame
+			check(current_scene.scene_file_path.ends_with("StartScreen.tscn"), "Save and Title returns to title")
+			check(snapshot() == before, "Save and Title preserves complete run without payout")
+			current_scene._on_continue_pressed()
+			await process_frame
+			await process_frame
+			check(current_scene.scene_file_path.ends_with("StageSelect.tscn") and snapshot() == before, "Continue resumes saved session exactly")
 		"abandon":
 			restored("after abandonment")
 			await continue_game("HubScene.tscn")
 			restored("after abandonment after Continue")
+	# Headless tests can exit before confirmation SFX naturally finishes.
+	for player in root.get_node("AudioSettings").get_children():
+		if player is AudioStreamPlayer:
+			player.stop()
+			player.queue_free()
 	if current_scene:
 		current_scene.queue_free()
 		current_scene = null
 	await process_frame
 	await process_frame
+	# Let the audio mixer release stopped playback references before shutdown.
+	await create_timer(0.15).timeout
 	print("Integration mode %s: %d failures" % [mode, failures])
 	quit(1 if failures else 0)
+
+func continue_from_existing_title(title: Node) -> void:
+	title._on_continue_pressed()
+	await process_frame
+	await process_frame

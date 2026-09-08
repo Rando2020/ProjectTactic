@@ -18,7 +18,7 @@ args = parser.parse_args()
 if not sys.platform.startswith('linux'):
     raise SystemExit('Run on Linux/WSL for isolated XDG_DATA_HOME storage.')
 with tempfile.TemporaryDirectory(prefix='tactic-integration-') as directory:
-    for mode in ['prepare', 'before', 'victory', 'boon', 'abandon']:
+    for mode in ['prepare', 'before', 'victory', 'boon', 'abandon', 'menus']:
         result = subprocess.run([
             args.godot, '--headless', '--path', str(ROOT / 'godot'),
             '--script', 'tests/test_integration_checkpoints.gd', '--', mode,

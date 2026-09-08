@@ -50,53 +50,77 @@ See [Godot Web export documentation](https://docs.godotengine.org/en/stable/tuto
 Browser audio may require a click first. Browser storage policies can restrict
 `user://` persistence. This export is not proof of save/resume correctness.
 
-## Inspection against current code
+## Current playability and persistence
 
-Baseline inspected: `21f7673b2feb125660797f7d04c2c25e074b2ae8`.
+The integration includes PR #39's single SaveSystem owner. Continue restores
+seed, selected node, party/equipment/vitals, boons, currencies and RNG state.
+Victory rewards and node advancement are checkpointed together. See
+[the persistence contract](../systems/run-persistence.md).
 
-| Area | Observed implementation | Follow-up |
-|---|---|---|
-| Entry point | `StartScreen.tscn`; New Game routes to the hub | Browser playtest through hub, deployment, battle |
-| Run creation | `RunManager.start_new_run()` creates `GameState.active_run` | Verify lifecycle and reward ownership |
-| Routes | `RunState.create()` already creates branching routes across ten floors | Older architecture statements that branching is future work are stale |
-| Boons | `BoonPickScreen.gd` already exists | Older architecture requests to create a boon screen are stale; verify integration |
-| Main autosave | `GameState.save()` saves character/campaign progression, not `active_run` | Choose one authoritative save contract |
-| Slot save | `SaveSystem` serializes a run, but restore is guarded on the existing `active_run` being non-null | Reproduce cold-start restoration; reconcile `RunManager` fields |
-| Continue / Load | `StartScreen.gd` displays placeholder messages | Wire UI only after the save contract works |
-| Run attrition | `RunState` has deployment data but no explicit carried unit HP field | Complete HP carryover and recovery in a later gameplay PR |
+- Continue is disabled without a valid autosave; an available checkpoint shows
+  its floor or hub and gold. It receives initial keyboard focus.
+- Enter Hub visits the hub without clearing progress. The New Game label is
+  used only when no autosave exists.
+- Load Game lists existing autosave/manual slots and disables missing slots.
+  Selecting a manual slot promotes it to autosave so the next Continue uses it.
+  A failed promotion restores the previous live state and retains the old save.
+  Creating manual slots still uses SaveSystem's API; no manual-save picker is added.
+- Options opens real Game/Music/FX sliders using the existing AudioSettings
+  owner. The settings persist independently of run snapshots.
+- The run map has Save & Title. It checkpoints and returns to the title without
+  ending the run or paying end rewards. If saving fails, the run stays open.
+- Abandon asks for confirmation and explains how to leave without ending a run.
+- The Web title omits Exit because closing a browser tab belongs to the browser.
 
-## Validation for this change
+## Development preview
 
-Locally verified with Godot `4.6.2.stable.official.71f334935`:
+After installing the existing npm dependencies and exporting Godot:
 
-- Existing static checker: passes with 12 pre-existing warnings.
-- Real editor import: passes without engine errors.
-- Release Web export: passes; HTML, JS, WASM and PCK are present, approximately
-  51 MiB total before HTTP compression (approximately 36 MiB WASM / 14 MiB PCK).
-- Headless main-scene startup: no engine errors during a 120-frame smoke run.
-- Existing combat formula test: **9 pass, 1 fail**. Temper HP projection returns
-  45 where the assertion expects 46. Combat code and this test are unchanged by
-  this PR; investigate separately, do not silently adjust the assertion.
+```sh
+npm install
+npm run dev
+```
 
-The available cloud browser could not access the local preview. Browser visual
-and input verification, audio, a full battle, and reload persistence remain
-unverified. Headless startup and successful export do not establish these.
+The default development command now serves `build/web`, with an actionable
+error if the export is missing. Re-export after Godot source changes. The
+historical React application remains available through `npm run dev:legacy`;
+`npm run build` continues to check that reference build.
+
+Use localhost on your own machine or an HTTPS host with WebGL2 support. An
+insecure remote preview is not equivalent to HTTPS or trusted localhost.
+
+## Validation and limits
+
+Godot 4.6.2 editor import and release Web export pass. Native persistence tests
+cover cold startup and exact state restoration. Native integration checks use
+actual Continue, victory, boon, abandonment, audio, and session-exit callbacks.
+They also inject failed checkpoint writes. Tests run in disposable Linux user
+data directories, not player saves. The integration suite runs in GitHub Actions.
+
+The supervised preview now serves the actual Godot launcher. The available
+cloud browser reports missing **WebGL2** and **Secure Context**, before game
+startup. Browser gameplay, IndexedDB durability, input, audio and performance
+remain unverified. No feature detection was weakened to bypass that limitation.
+The shutdown resource-in-use errors were traced to confirmation audio still
+playing when tests exit; the harness stops it and allows mixer cleanup. One
+ObjectDB leak warning remains in the native victory-process fixture, without
+script or engine errors. That warning is not claimed fixed.
+
+The separately known combat formula assertion (45 actual vs 46 expected) is
+unchanged and needs investigation, not a silent expected-value adjustment.
 
 ## Browser acceptance checklist before inviting testers
 
-1. Serve the PR build and confirm title art, fonts, and menu appear without
-   missing resource or script errors in the browser console.
-2. Click New Game, enter the hub, start a run, select its first battle, deploy,
-   move a unit and resolve an action. Confirm rewards return to the run map.
-3. Check the default viewport and a smaller window for clipped controls; verify
-   pointer/keyboard input and audio after the first user interaction.
-4. Repeat on Chromium and Firefox. Safari/mobile performance is a separate
-   compatibility check, not an assumed result.
-5. Treat Continue/Load as unfinished. Do not promise that refreshing resumes a
-   run until the follow-up save lifecycle PR is implemented and tested.
+1. Open the combined Godot Web export on HTTPS or local trusted localhost, with
+   WebGL2 enabled. Confirm the title and fonts appear without console errors.
+2. Test Options, then enter the hub, start a run, deploy, move and perform an
+   action. Win a battle and confirm its rewards and map advancement.
+3. Refresh and Continue before battle, on victory spoils, after boon selection,
+   and after abandonment. Compare party/formation, node/floor, boons and every
+   currency. Rewards must remain owned exactly once.
+4. Test Save & Title, then Continue; cancel Abandon and verify the run remains.
+5. Test keyboard/pointer controls and clipping at the default and smaller window
+   sizes. Repeat on Chromium and Firefox. Safari/mobile needs separate testing.
 
-## Next bounded task
-
-Unify run persistence and wire Continue: reproduce cold-start restoration,
-preserve seed/node/party/boons/currencies, synchronize the run manager, prevent
-duplicate rewards, and test save/load round trips before adding more content.
+Next: obtain browser acceptance on a compatible host before adding more content
+or changing combat balance. Do not merge the source PRs automatically.

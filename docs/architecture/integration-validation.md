@@ -1,5 +1,8 @@
 # Browser delivery and persistence integration validation
 
+Historical validation snapshot before the playability follow-up.
+For current behavior and preview status, see [browser delivery](browser-delivery.md).
+
 Date: 2026-09-08. Branch: `integration/web-run-persistence`.
 
 Combined without merging either pull request or changing main:
