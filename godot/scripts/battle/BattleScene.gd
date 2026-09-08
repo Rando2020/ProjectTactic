@@ -23,6 +23,8 @@ const CAMERA_ZOOM_STEP := 0.08
 ## Set via GameState.selected_map_index before loading this scene.
 ## Kept as @export so you can still override in the editor during dev.
 @export var map_index: int = 0
+## Candidate art for the first run encounter only. Disable for original-art comparison.
+@export var use_first_battle_terrain: bool = true
 
 var _map_data: MapData
 var _defeated_enemies: Array[Dictionary] = []
@@ -75,6 +77,7 @@ func _ready() -> void:
 		_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 
 	_enemy_instance_seq = 0
+	_configure_terrain_art(gs.active_run if gs else null)
 	tactical_grid.initialize_from_map(_map_data)
 
 	_frame_battlefield_camera()
@@ -104,6 +107,12 @@ func _ready() -> void:
 	battle_manager.unit_defeated.connect(_on_unit_defeated)
 	battle_manager.unit_moved.connect(_on_unit_moved)
 	battle_manager.combat_resolver.combat_resolved.connect(_on_combat_resolved)
+
+
+func _configure_terrain_art(run: RunState) -> void:
+	tactical_grid.terrain_textures.clear()
+	if use_first_battle_terrain and run and not run.completed and run.current_floor == 1:
+		tactical_grid.terrain_textures = preload("res://scripts/data/TerrainArtKit.gd").first_battle_textures()
 
 
 func _start_battle_music() -> void:

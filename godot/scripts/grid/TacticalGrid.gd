@@ -228,7 +228,7 @@ func _uses_art_tile(terrain: String) -> bool:
 
 
 func _texture_for_terrain(terrain: String) -> Texture2D:
-	if terrain_textures.has(terrain):
+	if terrain_textures.get(terrain) != null:
 		return terrain_textures[terrain]
 	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
 

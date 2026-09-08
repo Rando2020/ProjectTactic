@@ -23,3 +23,15 @@ static func test_map() -> MapData:
 			map.tile_overrides.append({"x": x, "y": y, "terrain": material,
 				"height": 1 if x >= 6 and y <= 1 else 0})
 	return map
+
+## Visual aliases only: road keeps its movement/fire rules; high ground keeps height.
+static func first_battle_textures() -> Dictionary[String, Texture2D]:
+	var result: Dictionary[String, Texture2D] = {}
+	for terrain in ["grass", "road", "stone", "high_ground", "shallow_water"]:
+		var asset: String = {"road": "dirt", "high_ground": "stone"}.get(terrain, terrain)
+		var path := "res://assets/tiles/terrain_v2/%s.png" % asset
+		if ResourceLoader.exists(path):
+			var texture := load(path) as Texture2D
+			if texture != null:
+				result[terrain] = texture
+	return result
