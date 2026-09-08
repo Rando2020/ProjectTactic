@@ -117,6 +117,7 @@ func _build_ui() -> void:
 	_add_menu_button("Load Game", _on_load_pressed)
 	_add_menu_button("Options", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
+	_add_menu_button("Terrain Lab", _on_terrain_lab_pressed)
 	if not OS.has_feature("web"):
 		_add_menu_button("Exit", _on_exit_pressed)
 
@@ -232,6 +233,11 @@ func _on_credits_pressed() -> void:
 func _on_exit_pressed() -> void:
 	_play_confirm()
 	get_tree().quit()
+
+
+func _on_terrain_lab_pressed() -> void:
+	music_player.stop()
+	get_tree().change_scene_to_file("res://scenes/TerrainArtLab.tscn")
 
 
 func _set_status(message: String) -> void:
