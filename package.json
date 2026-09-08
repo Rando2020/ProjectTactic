@@ -2,11 +2,12 @@
   "name": "vaelthar-chronicles",
   "version": "1.0.0",
   "private": true,
-  "description": "Vaelthar: Eidolon Chronicles — a browser RPG with ATB combat, elemental timing, and 32 Guardians",
+  "description": "Vaelthar: Eidolon Chronicles \u2014 a browser RPG with ATB combat, elemental timing, and 32 Guardians",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode godot",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:legacy": "vite"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -3,6 +3,10 @@ extends RefCounted
 
 const TOTAL_FLOORS := 10
 
+var claimed_rewards: Dictionary = {}
+var run_aether: int = 0
+var rng_state: String = ""
+
 var run_id:        String = ""
 @warning_ignore("shadowed_global_identifier")
 var seed:          int    = 0
@@ -170,19 +174,21 @@ func grant_loadout_xp(amount: int) -> void:
 
 func to_dict() -> Dictionary:
 	return {
-		"run_id": run_id, "seed": seed, "floor": current_floor,
+		"run_id": run_id, "seed": str(seed), "floor": current_floor,
 		"node": current_node, "floor_plan": floor_plan,
 		"active_boons": active_boons, "active_curses": active_curses, "banned_guardian": banned_guardian, "elite_kills": elite_kills,
 		"deaths": deaths, "completed": completed, "started_at": started_at, "heat_level": heat_level,
 		"equipped_vow_id": equipped_vow_id, "equipped_vow_level": equipped_vow_level, "equipped_vow_xp": equipped_vow_xp,
 		"equipped_sigil_id": equipped_sigil_id, "equipped_sigil_level": equipped_sigil_level, "equipped_sigil_xp": equipped_sigil_xp,
 		"run_deployment": run_deployment,
+		"inventory": inventory, "active_wanderer_conditions": active_wanderer_conditions,
+		"claimed_rewards": claimed_rewards, "run_aether": run_aether, "rng_state": rng_state,
 	}
 
 static func from_dict(d: Dictionary) -> RunState:
 	var rs := RunState.new()
 	rs.run_id        = d.get("run_id", "")
-	rs.seed          = d.get("seed", 0)
+	rs.seed          = int(d.get("seed", 0))
 	rs.current_floor = d.get("floor", 1)
 	rs.current_node  = d.get("node", 0)
 	rs.floor_plan    = d.get("floor_plan", [])
@@ -201,4 +207,20 @@ static func from_dict(d: Dictionary) -> RunState:
 	rs.equipped_sigil_level = int(d.get("equipped_sigil_level", 1))
 	rs.equipped_sigil_xp = int(d.get("equipped_sigil_xp", 0))
 	rs.run_deployment = d.get("run_deployment", [])
+	rs.inventory = d.get("inventory", [])
+	rs.active_wanderer_conditions = d.get("active_wanderer_conditions", [])
+	rs.claimed_rewards = d.get("claimed_rewards", {})
+	rs.run_aether = int(d.get("run_aether", 0))
+	rs.rng_state = str(d.get("rng_state", ""))
 	return rs
+
+## Node-scoped reward receipts survive reloads.
+func claim_reward(kind: String) -> bool:
+	var node := get_current_node()
+	if node.is_empty() or node.get("completed", false) or node.get("skipped", false):
+		return false
+	var key := "%s:%s" % [str(node.get("id", current_node)), kind]
+	if claimed_rewards.has(key):
+		return false
+	claimed_rewards[key] = true
+	return true

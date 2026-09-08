@@ -33,6 +33,10 @@ Save and progression live in autoloads.
 
 ## Godot autoloads
 
+Run persistence now uses one checkpoint owner. Read
+[`docs/systems/run-persistence.md`](docs/systems/run-persistence.md) for the current
+snapshot contract, migration, Continue routing and regression commands.
+
 Configured in `godot/project.godot`:
 
 | Autoload | Path | Responsibility |

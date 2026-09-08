@@ -19,6 +19,8 @@ var _button_box: VBoxContainer
 var _status_label: Label
 var _buttons: Array[Button] = []
 var _pulse: float = 0.0
+var _options: Control
+var _load_dialog: AcceptDialog
 
 
 func _ready() -> void:
@@ -115,11 +117,14 @@ func _build_ui() -> void:
 	_add_menu_button("Load Game", _on_load_pressed)
 	_add_menu_button("Options", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
-	_add_menu_button("Exit", _on_exit_pressed)
+	if not OS.has_feature("web"):
+		_add_menu_button("Exit", _on_exit_pressed)
 
 	_status_label = _make_label("Press Enter, Space, or A to select.", 17, DIM, HORIZONTAL_ALIGNMENT_CENTER)
 	_status_label.custom_minimum_size = Vector2(380, 36)
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_button_box.add_child(_status_label)
+	_refresh_continue()
 
 
 func _add_menu_button(label_text: String, callback: Callable) -> void:
@@ -146,7 +151,7 @@ func _add_menu_button(label_text: String, callback: Callable) -> void:
 
 func _focus_first_button() -> void:
 	if not _buttons.is_empty():
-		_buttons[0].grab_focus()
+		_buttons[1 if not _buttons[1].disabled else 0].grab_focus()
 
 
 func _on_new_game_pressed() -> void:
@@ -157,17 +162,66 @@ func _on_new_game_pressed() -> void:
 
 func _on_continue_pressed() -> void:
 	_play_confirm()
-	_set_status("Continue will resume the latest run once saves are wired.")
+	var saves := get_node("/root/SaveSystem")
+	if not saves.load_slot():
+		_set_status(saves.last_error)
+		return
+	music_player.stop()
+	get_tree().change_scene_to_file(saves.continue_scene())
+
+
+func _refresh_continue() -> void:
+	var summary: Dictionary = get_node("/root/SaveSystem").get_summary()
+	_buttons[1].disabled = not summary.get("exists", false)
+	if summary.get("exists", false):
+		_buttons[0].text = "Enter Hub"
+		_set_status("Continue: Floor %d / %dg" % [summary.floor, summary.gold] if summary.get("has_run", false) else "Continue: Hub / %dg" % summary.gold)
+	else:
+		_set_status("Start a new game. Your progress saves at run checkpoints.")
 
 
 func _on_load_pressed() -> void:
 	_play_confirm()
-	_set_status("Load Game is ready for the save-slot screen.")
+	if is_instance_valid(_load_dialog):
+		return
+	_load_dialog = AcceptDialog.new()
+	_load_dialog.title = "Load checkpoint"
+	_load_dialog.ok_button_text = "Cancel"
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 12)
+	_load_dialog.add_child(box)
+	var saves := get_node("/root/SaveSystem")
+	for slot in range(1, 4):
+		var summary: Dictionary = saves.get_summary(slot)
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(440, 52)
+		var label := "Autosave" if slot == 1 else "Slot %d" % slot
+		button.text = "%s: %dg / %s" % [label, summary.gold, "Floor %d" % summary.floor if summary.get("has_run", false) else "Hub"] if summary.get("exists", false) else label + ": Empty or unavailable"
+		button.disabled = not summary.get("exists", false)
+		button.pressed.connect(_load_checkpoint.bind(slot))
+		box.add_child(button)
+	_load_dialog.confirmed.connect(_load_dialog.queue_free)
+	_load_dialog.canceled.connect(_load_dialog.queue_free)
+	add_child(_load_dialog)
+	_load_dialog.popup_centered(Vector2i(480, 280))
+
+
+func _load_checkpoint(slot: int) -> void:
+	var saves := get_node("/root/SaveSystem")
+	if not saves.activate_slot(slot):
+		_set_status(saves.last_error)
+		return
+	music_player.stop()
+	get_tree().change_scene_to_file(saves.continue_scene())
 
 
 func _on_options_pressed() -> void:
 	_play_confirm()
-	_set_status("Options will open audio and display settings next.")
+	if is_instance_valid(_options):
+		return
+	_options = preload("res://scripts/ui/AudioOptions.gd").new()
+	_options.closed.connect(_focus_first_button)
+	add_child(_options)
 
 
 func _on_credits_pressed() -> void:

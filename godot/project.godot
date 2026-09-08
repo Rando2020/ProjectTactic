@@ -27,10 +27,10 @@ config/icon="res://icon.svg"
 VFX="*res://scripts/vfx/VFXManager.gd"
 BattleJuiceEffects="*res://scripts/vfx/BattleJuiceEffects.gd"
 GameState="*res://scripts/systems/GameState.gd"
-SaveSystem="*res://scripts/state/SaveSystem.gd"
 RunManager="*res://scripts/roguelite/RunManager.gd"
 MetaProgression="*res://scripts/roguelite/MetaProgression.gd"
 AudioSettings="*res://scripts/systems/AudioSettings.gd"
+SaveSystem="*res://scripts/state/SaveSystem.gd"
 
 [display]
 
@@ -38,3 +38,7 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method.web="gl_compatibility"

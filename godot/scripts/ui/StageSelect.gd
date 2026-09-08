@@ -151,9 +151,13 @@ func _build_run_screen(run: RunState) -> void:
 
 	var ab_btn := _btn("Abandon", Color(0.93,0.27,0.27))
 	ab_btn.custom_minimum_size.x = 90
-	ab_btn.pressed.connect(_on_abandon)
+	ab_btn.pressed.connect(_confirm_abandon)
 	hh.add_child(ab_btn)
 	_gap(hh, 8)
+
+	var save_btn := _btn("Save & Title", GOLD)
+	save_btn.pressed.connect(_save_and_title)
+	hh.add_child(save_btn)
 
 	# Active boons row
 	if run.active_boons.size() > 0:
@@ -463,8 +467,10 @@ func _on_enter_node(node: Dictionary) -> void:
 	var node_id := str(node.get("id", ""))
 	if not node_id.is_empty():
 		_gs.active_run.select_node(node_id)
+		_gs.save()
 	if node.get("type", "") == "mystery":
 		node = _gs.active_run.resolve_mystery_node(node_id)
+		_gs.save()
 		_resolve_revealed_mystery(node)
 		return
 	match node.get("type","battle"):
@@ -532,6 +538,7 @@ func _on_deployment_confirmed(deployment: Array) -> void:
 	if _gs and _gs.active_run:
 		_gs.active_run.run_deployment = deployment.duplicate(true)
 		_gs.active_run.set_meta("pending_deployment", deployment.duplicate(true))
+		_gs.save()
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 
@@ -589,7 +596,7 @@ func _show_mystery_event(node: Dictionary) -> void:
 
 
 func _apply_mystery_event(event_type: String) -> void:
-	if not _gs or not _gs.active_run:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") != event_type:
 		return
 	match event_type:
 		"mystery_cache":
@@ -663,6 +670,31 @@ func _on_edit_formation_from_run(run: RunState) -> void:
 	get_tree().current_scene.add_child(ds)
 
 
+func _save_and_title() -> void:
+	var saves := get_node("/root/SaveSystem")
+	if not saves.save():
+		var notice := AcceptDialog.new()
+		notice.title = "Checkpoint not saved"
+		notice.dialog_text = saves.last_error + " Your run is still open."
+		notice.confirmed.connect(notice.queue_free)
+		notice.canceled.connect(notice.queue_free)
+		add_child(notice)
+		notice.popup_centered()
+		return
+	get_tree().change_scene_to_file("res://scenes/StartScreen.tscn")
+
+
+func _confirm_abandon() -> void:
+	var dialog := ConfirmationDialog.new()
+	dialog.title = "Abandon this run?"
+	dialog.dialog_text = "End this run and collect its earned rewards?\nChoose Cancel, then Save & Title if you want to continue later."
+	dialog.ok_button_text = "Abandon run"
+	dialog.confirmed.connect(func() -> void: dialog.queue_free(); _on_abandon())
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered()
+
+
 func _on_abandon() -> void:
 	var rm: Node = get_node_or_null("/root/RunManager")
 	if rm and rm.is_run_active: rm.end_run(false)
@@ -678,7 +710,7 @@ func _on_boon_picked(boon: Dictionary) -> void:
 	_accept_boon(boon)
 
 func _accept_boon(boon: Dictionary, replaced_boon_id: String = "") -> void:
-	if not _gs or not _gs.active_run:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") not in ["boon_pick", "mystery_shrine"]:
 		return
 	if not replaced_boon_id.is_empty():
 		for i in range(_gs.active_run.active_boons.size() - 1, -1, -1):
@@ -689,6 +721,7 @@ func _accept_boon(boon: Dictionary, replaced_boon_id: String = "") -> void:
 	_gs.pending_boon_offers.clear()
 	_complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 		_boon_overlay = null
@@ -736,6 +769,7 @@ func _on_boon_skip() -> void:
 	if _gs: _gs.pending_boon_offers.clear()
 	if _gs and _gs.active_run: _complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay: _boon_overlay.queue_free(); _boon_overlay = null
 	_build_ui()
 
@@ -755,7 +789,9 @@ func _apply_between_battle_heal() -> void:
 			reg["current_hp"] = min(max_hp, reg.get("current_hp", max_hp) + heal)
 
 func _on_loot_continue() -> void:
-	if _gs: _gs.pending_loot.clear()
+	if _gs:
+		_gs.pending_loot.clear()
+		_gs.save()
 	if _loot_overlay: _loot_overlay.queue_free(); _loot_overlay = null
 	_build_ui()
 
@@ -1060,6 +1096,7 @@ func _on_curse_picked(curse: Dictionary) -> void:
 	if _gs and _gs.active_run:
 		_complete_current_node_with_loadout_xp("boon_pick")
 	_apply_between_battle_heal()
+	_gs.save()
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 		_boon_overlay = null
@@ -1111,7 +1148,7 @@ func _show_wanderer_encounter(run: RunState) -> void:
 
 
 func _apply_wanderer_choice(choice_id: String, _run: RunState) -> void:
-	if not _gs:
+	if not _gs or not _gs.active_run or _gs.active_run.get_current_node().get("type", "") != "wanderer":
 		return
 	if not _gs.story_flags.has("met_orren"):
 		_gs.story_flags.append("met_orren")
