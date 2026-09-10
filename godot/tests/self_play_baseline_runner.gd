@@ -25,6 +25,9 @@ func _run() -> void:
 		_finish()
 		return
 	await _run_real_battle(mode)
+	# Allow the completed coroutine frame and its RefCounted locals to release
+	# before asking the SceneTree to shut down.
+	await get_tree().process_frame
 	_finish()
 
 
@@ -102,10 +105,27 @@ func _run_real_battle(mode: String) -> void:
 			"hp_lost_player_team": metrics.get("hp_lost_player_team", 0),
 		}))
 
+	# Disconnect every harness-owned edge before freeing the battle. Defeated units
+	# may already have been freed, which BattleTelemetry handles independently.
+	if controller.stalled.is_connected(_on_stalled):
+		controller.stalled.disconnect(_on_stalled)
+	if manager.battle_won.is_connected(_on_battle_won):
+		manager.battle_won.disconnect(_on_battle_won)
+	if manager.battle_lost.is_connected(_on_battle_lost):
+		manager.battle_lost.disconnect(_on_battle_lost)
 	controller.detach()
 	telemetry.detach()
 	Engine.time_scale = 1.0
-	battle_scene.queue_free()
+
+	# `queue_free()` plus immediate SceneTree.quit can leave destruction deferred
+	# until after Godot has started resource shutdown. The headless harness owns the
+	# battle scene exclusively, so synchronous free is safe and makes cleanup exact.
+	remove_child(battle_scene)
+	battle_scene.free()
+	manager = null
+	policy = null
+	controller = null
+	telemetry = null
 	await get_tree().process_frame
 
 
