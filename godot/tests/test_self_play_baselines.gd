@@ -119,7 +119,7 @@ func _run_real_battle(mode: String) -> void:
 		telemetry.record_checkpoint("self-play-timeout", {"reason": _stall_reason})
 
 	var output_path := "user://ai-self-play/%s.json" % mode
-	var exported := telemetry.export_evidence(output_path)
+	var exported := str(telemetry.export_evidence(output_path))
 	_true(not exported.is_empty(), "%s real battle exports telemetry evidence" % mode)
 	_true(FileAccess.file_exists(output_path), "%s real battle evidence file exists" % mode)
 	var evidence: Variant = JSON.parse_string(FileAccess.get_file_as_string(output_path))
