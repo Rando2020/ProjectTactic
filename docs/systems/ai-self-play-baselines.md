@@ -22,18 +22,25 @@ The goal of this phase is not to build a strong AI. It is to establish weak, und
 - `godot/scripts/ai/self_play/SelfPlayController.gd`
   - disables only BattleManager's legacy built-in auto player for the explicit test run
   - listens for real player turns
+  - preserves player turns emitted synchronously while a prior automated action is unwinding
   - asks the policy for a choice
   - records the choice through `BattleTelemetry.record_decision()`
   - executes the action and handles move-then-act turns
   - stops on battle completion or a bounded turn limit
 - `godot/tests/test_self_play_baselines.gd`
-  - policy-selection regression
+  - lightweight deterministic policy-selection regression
+  - does not load the battle runtime
+- `godot/tests/SelfPlayBaselineRunner.tscn`
+  - normal Godot project-scene entry point for real-battle tests
+  - ensures project autoloads initialize the same way they do during gameplay
+- `godot/tests/self_play_baseline_runner.gd`
   - instantiates the real `Battle.tscn`
   - drives the hardcoded Ashvale debug battle in headless mode
   - exports `self_play` evidence for greedy and random-legal policies
 - `tools/check_self_play_baselines.py`
   - imports Godot in isolated user data
-  - runs policy, greedy, random, and a repeated greedy scenario
+  - runs the lightweight policy test separately from the project-scene battle tests
+  - runs greedy, random, and a repeated greedy scenario through the real-battle runner
   - asserts identical seeded greedy trajectories
   - validates both baseline evidence files through the AI producer
   - writes a compact baseline summary
@@ -75,6 +82,24 @@ This keeps four responsibilities separate:
 4. **Telemetry** observes what happened.
 
 A future policy can therefore become much smarter without modifying combat code.
+
+## Runtime boundaries proven by the harness
+
+### Real battles must use normal project startup
+
+The standalone policy regression can run with `godot --script` because it only loads policy code. The real battle cannot use that startup path safely because ProjectTactic's battle runtime depends on project autoload globals.
+
+Real self-play therefore launches `SelfPlayBaselineRunner.tscn` as a normal project scene. This gives `BattleManager`, combat services, and autoload singletons the same initialization model used by gameplay before `Battle.tscn` is instantiated.
+
+Do not collapse the real-battle regression back into a standalone `--script` test unless the battle runtime is later refactored to remove those startup dependencies.
+
+### Player turns can transition synchronously
+
+BattleManager can complete a command, resolve a turn, advance turn order, and emit the next player's `turn_started` signal before the self-play coroutine that issued the previous command has fully unwound.
+
+`SelfPlayController` therefore keeps one pending player unit id whenever a new player turn arrives while the controller is already driving an action. When the current action finishes, the controller verifies that the queued unit is still the active player turn and dispatches it. This prevents legitimate turns from being dropped while keeping enemy turns and completed battles authoritative.
+
+This synchronization behavior is part of the harness contract. Future policy implementations should not add their own turn loops around BattleManager.
 
 ## Initial action space
 
@@ -133,7 +158,7 @@ It is not meant to be the production enemy AI.
 
 The regression instantiates `res://scenes/Battle.tscn`, not a duplicated combat simulator. The existing Ashvale debug map, unit spawning, TacticalGrid, TurnOrder, CombatResolver, ObjectiveTracker, and BattleManager are used.
 
-Before the scene enters the tree, the harness disables only `BattleManager.auto_battle_enabled`. `SelfPlayController` then drives player turns through `select_command()`, `_on_tile_clicked()`, and `_on_unit_clicked()`, preserving the same resolution paths used by the battle UI.
+The normal runner scene creates the battle, disables only `BattleManager.auto_battle_enabled`, and attaches the self-play controller. `SelfPlayController` then drives player turns through `select_command()`, `_on_tile_clicked()`, and `_on_unit_clicked()`, preserving the same resolution paths used by the battle UI.
 
 The battle scene's camera `_process()` callback is disabled for the test because camera shake consumes global random values for presentation. This prevents visual randomness from perturbing the gameplay RNG sequence during determinism checks. Rendering rules and combat state are not changed.
 
@@ -148,6 +173,8 @@ The checker runs the greedy scenario twice with the same seed and compares:
 - complete structured event sequence
 
 A difference fails the baseline regression.
+
+The first successful real greedy execution completed Ashvale with a victory in 12 player turns and 24 recorded decisions. That result is an integration proof for the harness, not a balance target.
 
 ## Evidence
 
@@ -191,6 +218,7 @@ This is acceptable for the first development harness because it avoids editing t
 - The hardcoded Ashvale debug battle is only one scenario and cannot establish game balance.
 - Random-legal can terminate by bounded stall rather than battle completion; that is valid evidence about the weakness of the control policy, not a production gameplay failure.
 - Global gameplay RNG and presentation RNG are not fully separated in the game architecture. The harness disables BattleScene camera processing to protect the deterministic test, but the broader architectural separation should be improved later.
+- BattleManager's synchronous turn transitions are now handled by the self-play controller, but they remain an orchestration detail that future battle refactors must preserve or explicitly change.
 - The adapter currently calls BattleManager helper methods directly. That is intentionally lower risk than modifying the 90KB-plus manager during this phase, but it is technical debt.
 
 ## Next evolution
