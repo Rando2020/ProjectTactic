@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the real self-play baselines, then make the Game Director choose its next prompt."""
+"""Run real self-play, then require the Game Director to advance its own prompt."""
 
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ run([
     "--evidence",
     str(SELF_PLAY_DIR / "greedy.json"),
     str(SELF_PLAY_DIR / "random.json"),
+    str(SELF_PLAY_DIR / "ability.json"),
     "--output-dir",
     str(DIRECTOR_DIR),
 ], "AI Game Director")
@@ -41,10 +42,10 @@ for path in required:
         raise SystemExit(f"Missing Game Director output: {path}")
 
 experiment = json.loads((DIRECTOR_DIR / "next-experiment.json").read_text(encoding="utf-8"))
-if experiment.get("experiment_id") != "exp-ability-aware-action-surface":
-    raise SystemExit(f"Unexpected first self-generated experiment: {experiment.get('experiment_id')}")
-if experiment.get("branch_name") != "feature/ai-ability-action-surface":
-    raise SystemExit("Game Director did not emit the expected bounded branch name")
+if experiment.get("experiment_id") != "exp-deterministic-scenario-matrix":
+    raise SystemExit(f"Director did not advance after ability evidence: {experiment.get('experiment_id')}")
+if experiment.get("branch_name") != "feature/ai-tactical-scenario-matrix":
+    raise SystemExit("Game Director did not emit the expected second-cycle branch name")
 
 prompt = (DIRECTOR_DIR / "next-agent-prompt.md").read_text(encoding="utf-8")
 for required_text in [
@@ -57,6 +58,6 @@ for required_text in [
     if required_text not in prompt:
         raise SystemExit(f"Self-generated prompt missing required guardrail: {required_text}")
 
-print("AI Game Director validation passed.")
+print("AI Game Director feedback-loop validation passed.")
 print(f"Selected next experiment: {experiment['title']}")
 print(f"Self-generated next branch: {experiment['branch_name']}")
