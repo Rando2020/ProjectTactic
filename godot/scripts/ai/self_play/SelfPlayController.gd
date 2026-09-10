@@ -11,6 +11,7 @@ var _max_player_turns := 120
 var _player_turns := 0
 var _driving := false
 var _stopped := false
+var _pending_player_unit_id := ""
 
 
 func attach(
@@ -27,6 +28,7 @@ func attach(
 	_player_turns = 0
 	_driving = false
 	_stopped = false
+	_pending_player_unit_id = ""
 	# Disable the legacy built-in auto player only for this explicit self-play run.
 	_manager.auto_battle_enabled = false
 	if not _manager.turn_started.is_connected(_on_turn_started):
@@ -50,6 +52,7 @@ func detach() -> void:
 	_telemetry = null
 	_driving = false
 	_stopped = true
+	_pending_player_unit_id = ""
 
 
 func player_turn_count() -> int:
@@ -57,12 +60,19 @@ func player_turn_count() -> int:
 
 
 func _on_turn_started(unit_id: String, team: String) -> void:
-	if _stopped or team != "player" or _driving:
+	if _stopped or team != "player":
 		return
 	_player_turns += 1
 	if _player_turns > _max_player_turns:
 		_stopped = true
+		_pending_player_unit_id = ""
 		stalled.emit("Exceeded %d player turns without battle completion." % _max_player_turns)
+		return
+	# BattleManager can synchronously resolve a Wait/Attack into the next unit's
+	# turn before the current self-play coroutine has unwound. Preserve that turn
+	# instead of dropping it while `_driving` is true.
+	if _driving:
+		_pending_player_unit_id = unit_id
 		return
 	_drive_turn.call_deferred(unit_id)
 
@@ -108,6 +118,23 @@ func _drive_turn(unit_id: String) -> void:
 		_record_decision(unit_id, forced_wait, 1, true)
 		_manager.select_command("wait")
 	_driving = false
+	_dispatch_pending_turn()
+
+
+func _dispatch_pending_turn() -> void:
+	if _stopped or _pending_player_unit_id.is_empty():
+		return
+	if _manager == null or not is_instance_valid(_manager):
+		_pending_player_unit_id = ""
+		return
+	var pending_unit_id := _pending_player_unit_id
+	_pending_player_unit_id = ""
+	# Only drive the queued unit if it is still the live player turn. If an enemy
+	# turn or battle completion superseded it, the normal future signal will drive
+	# the next player turn instead.
+	if _manager.current_phase == BattleManager.Phase.PLAYER_TURN \
+			and _manager.active_unit_id == pending_unit_id:
+		_drive_turn.call_deferred(pending_unit_id)
 
 
 func _record_decision(unit_id: String, action: Dictionary, legal_action_count: int, forced := false) -> void:
@@ -135,7 +162,9 @@ func _record_decision(unit_id: String, action: Dictionary, legal_action_count: i
 
 func _on_battle_finished(_rewards: Dictionary) -> void:
 	_stopped = true
+	_pending_player_unit_id = ""
 
 
 func _on_battle_lost() -> void:
 	_stopped = true
+	_pending_player_unit_id = ""
