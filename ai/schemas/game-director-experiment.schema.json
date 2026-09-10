@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projecttactic.local/schemas/game-director-experiment.schema.json",
+  "title": "ProjectTactic Game Director Experiment",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "title",
+    "priority",
+    "goal_pillars",
+    "observation",
+    "hypothesis",
+    "change",
+    "success_metrics",
+    "guardrails",
+    "validation",
+    "rollback",
+    "branch_name",
+    "human_acceptance_questions",
+    "source_evidence_ids"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "experiment_id": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "priority": {"enum": ["blocker", "high", "normal", "discovery"]},
+    "goal_pillars": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "observation": {"type": "string", "minLength": 1},
+    "hypothesis": {"type": "string", "minLength": 1},
+    "change": {"type": "string", "minLength": 1},
+    "success_metrics": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "guardrails": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "validation": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "rollback": {"type": "string", "minLength": 1},
+    "branch_name": {"type": "string", "pattern": "^(feature|fix|docs|art)/[a-z0-9-]+$"},
+    "human_acceptance_questions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "source_evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "unknowns": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}
