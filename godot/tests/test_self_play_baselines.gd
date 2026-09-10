@@ -1,8 +1,5 @@
 extends SceneTree
 
-const BattleSceneResource := preload("res://scenes/Battle.tscn")
-const TelemetryRecorder := preload("res://scripts/ai/BattleTelemetry.gd")
-const Controller := preload("res://scripts/ai/self_play/SelfPlayController.gd")
 const GreedyPolicy := preload("res://scripts/ai/self_play/GreedyDamagePolicy.gd")
 const RandomPolicy := preload("res://scripts/ai/self_play/RandomLegalPolicy.gd")
 
@@ -62,7 +59,20 @@ func _run_real_battle(mode: String) -> void:
 	var policy_seed := 7319 if mode == "greedy" else 27183
 	seed(policy_seed)
 
-	var battle_scene := BattleSceneResource.instantiate()
+	# Load the battle runtime only after project autoload singletons are initialized.
+	# Preloading Battle.tscn from a --script test compiles CombatResolver before the
+	# BattleJuiceEffects autoload identifier exists in that startup path.
+	var battle_resource := load("res://scenes/Battle.tscn") as PackedScene
+	_true(battle_resource != null, "%s loads the real Battle scene after autoload initialization" % mode)
+	if battle_resource == null:
+		return
+	var telemetry_script := load("res://scripts/ai/BattleTelemetry.gd")
+	var controller_script := load("res://scripts/ai/self_play/SelfPlayController.gd")
+	_true(telemetry_script != null and controller_script != null, "%s loads self-play runtime adapters" % mode)
+	if telemetry_script == null or controller_script == null:
+		return
+
+	var battle_scene := battle_resource.instantiate()
 	# Camera shake uses global random numbers for visuals. Disable only BattleScene's
 	# own _process callback so visual noise cannot perturb the gameplay RNG stream.
 	battle_scene.set_process(false)
@@ -71,7 +81,7 @@ func _run_real_battle(mode: String) -> void:
 	var manager := battle_scene.get_node("BattleManager") as BattleManager
 	manager.auto_battle_enabled = false
 
-	var telemetry = TelemetryRecorder.new()
+	var telemetry = telemetry_script.new()
 	var policy: RefCounted
 	if mode == "greedy":
 		policy = GreedyPolicy.new()
@@ -89,7 +99,7 @@ func _run_real_battle(mode: String) -> void:
 		"run_id": "%s-baseline" % mode,
 		"include_timing": false,
 	})
-	var controller = Controller.new()
+	var controller = controller_script.new()
 	controller.attach(manager, policy, telemetry, 90)
 	controller.stalled.connect(_on_stalled)
 	manager.battle_won.connect(_on_battle_won)
