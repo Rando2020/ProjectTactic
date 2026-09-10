@@ -46,8 +46,8 @@ func _test_policy_selection() -> void:
 		"target_position":{"x":4,"y":2},
 		"expected_damage":60,
 		"expected_heal":0,
-		"lethal":false,
-		"lethal_target_count":0,
+		"lethal":true,
+		"lethal_target_count":1,
 		"target_count":2,
 		"status_target_count":2,
 		"mp_cost":12,
@@ -55,7 +55,7 @@ func _test_policy_selection() -> void:
 	var ability_policy = AbilityPolicy.new()
 	_true(ability_policy.uses_ability_actions(), "ability-aware policy explicitly opts into expanded action surface")
 	var ability_choice: Dictionary = ability_policy.choose_action(ability_actions)
-	_eq(ability_choice.get("action_id"), "ability:fire", "ability-aware policy can prefer useful real ability actions")
+	_eq(ability_choice.get("action_id"), "ability:fire", "ability-aware policy can prefer a stronger lethal ability over basic attack")
 
 
 func _choice_key(action: Dictionary) -> String:
