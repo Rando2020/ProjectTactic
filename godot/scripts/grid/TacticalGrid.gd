@@ -242,6 +242,9 @@ func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
 		return null
 	if cache.has(path):
 		return cache[path]
+	if not FileAccess.file_exists(path) and ResourceLoader.exists(path):
+		cache[path] = load(path) as Texture2D
+		return cache[path]
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
 		cache[path] = null
