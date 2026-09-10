@@ -2,7 +2,7 @@ name: AI Self-Play Baselines
 
 on:
   pull_request:
-    branches: [main, feature/ai-producer-loop, feature/ai-battle-telemetry]
+    branches: [main, feature/ai-producer-loop, feature/ai-battle-telemetry, feature/ai-self-play-baselines, feature/ai-game-director-loop]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   self-play:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
