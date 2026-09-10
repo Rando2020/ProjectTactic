@@ -39,7 +39,31 @@ func attach(
 		_manager.battle_lost.connect(_on_battle_lost)
 
 
+func request_stop() -> void:
+	_stopped = true
+	_pending_player_unit_id = ""
+
+
+func is_idle() -> bool:
+	return not _driving
+
+
+func wait_until_idle(max_frames: int = 30) -> bool:
+	request_stop()
+	if not _driving:
+		return true
+	if _manager == null or not is_instance_valid(_manager):
+		return false
+	var tree := _manager.get_tree()
+	for _frame in range(maxi(max_frames, 1)):
+		await tree.process_frame
+		if not _driving:
+			return true
+	return false
+
+
 func detach() -> void:
+	request_stop()
 	if _manager != null and is_instance_valid(_manager):
 		if _manager.turn_started.is_connected(_on_turn_started):
 			_manager.turn_started.disconnect(_on_turn_started)
@@ -50,8 +74,6 @@ func detach() -> void:
 	_manager = null
 	_policy = null
 	_telemetry = null
-	_driving = false
-	_stopped = true
 	_pending_player_unit_id = ""
 
 
@@ -64,8 +86,7 @@ func _on_turn_started(unit_id: String, team: String) -> void:
 		return
 	_player_turns += 1
 	if _player_turns > _max_player_turns:
-		_stopped = true
-		_pending_player_unit_id = ""
+		request_stop()
 		stalled.emit("Exceeded %d player turns without battle completion." % _max_player_turns)
 		return
 	# BattleManager can synchronously resolve a Wait/Attack into the next unit's
@@ -89,16 +110,20 @@ func _drive_turn(unit_id: String) -> void:
 			break
 		var actions := _surface.legal_actions(_manager)
 		if actions.is_empty():
-			_stopped = true
+			request_stop()
 			stalled.emit("No legal action was available for active player unit %s." % unit_id)
 			break
 		var action: Dictionary = _policy.call("choose_action", actions)
 		if action.is_empty():
-			_stopped = true
+			request_stop()
 			stalled.emit("Policy returned no action for active player unit %s." % unit_id)
 			break
 		_record_decision(unit_id, action, actions.size())
 		await _surface.execute_action(_manager, action)
+		# Battle completion can be emitted from inside execute_action. Unwind now so
+		# teardown never has to destroy a controller suspended on an extra frame.
+		if _stopped:
+			break
 		if _manager != null and is_instance_valid(_manager):
 			await _manager.get_tree().process_frame
 		if str(action.get("kind", "")) != "move":
@@ -161,10 +186,8 @@ func _record_decision(unit_id: String, action: Dictionary, legal_action_count: i
 
 
 func _on_battle_finished(_rewards: Dictionary) -> void:
-	_stopped = true
-	_pending_player_unit_id = ""
+	request_stop()
 
 
 func _on_battle_lost() -> void:
-	_stopped = true
-	_pending_player_unit_id = ""
+	request_stop()
