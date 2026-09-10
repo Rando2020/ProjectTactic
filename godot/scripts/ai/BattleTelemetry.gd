@@ -258,7 +258,9 @@ func _connect_unit_signal(unit: Node, signal_name: StringName, method_name: Stri
 		unit.connect(signal_name, callback)
 
 
-func _disconnect_unit_signal(unit: Node, signal_name: StringName, method_name: StringName) -> void:
+func _disconnect_unit_signal(unit: Variant, signal_name: StringName, method_name: StringName) -> void:
+	# Defeated units can be freed before the observer detaches. Keep the argument
+	# dynamic so a stale Object reference can be rejected before typed dispatch.
 	if not is_instance_valid(unit) or not unit.has_signal(signal_name):
 		return
 	var callback := Callable(self, method_name)
