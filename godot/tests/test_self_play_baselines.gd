@@ -2,6 +2,7 @@ extends SceneTree
 
 const GreedyPolicy := preload("res://scripts/ai/self_play/GreedyDamagePolicy.gd")
 const RandomPolicy := preload("res://scripts/ai/self_play/RandomLegalPolicy.gd")
+const AbilityPolicy := preload("res://scripts/ai/self_play/AbilityAwarePolicy.gd")
 
 var _pass := 0
 var _fail := 0
@@ -35,6 +36,26 @@ func _test_policy_selection() -> void:
 		sequence_two.append(_choice_key(random_two.choose_action(actions)))
 	_eq(sequence_one, sequence_two, "random legal policy is deterministic for the same seed")
 	_true(sequence_one.size() == 12, "random legal policy returns a choice each decision")
+
+	var ability_actions := actions.duplicate(true)
+	ability_actions.append({
+		"kind":"ability",
+		"action_id":"ability:fire",
+		"ability_id":"fire",
+		"target_id":"enemy-a",
+		"target_position":{"x":4,"y":2},
+		"expected_damage":60,
+		"expected_heal":0,
+		"lethal":true,
+		"lethal_target_count":1,
+		"target_count":2,
+		"status_target_count":2,
+		"mp_cost":12,
+	})
+	var ability_policy = AbilityPolicy.new()
+	_true(ability_policy.uses_ability_actions(), "ability-aware policy explicitly opts into expanded action surface")
+	var ability_choice: Dictionary = ability_policy.choose_action(ability_actions)
+	_eq(ability_choice.get("action_id"), "ability:fire", "ability-aware policy can prefer a stronger lethal ability over basic attack")
 
 
 func _choice_key(action: Dictionary) -> String:

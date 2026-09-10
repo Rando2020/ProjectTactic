@@ -102,13 +102,17 @@ func _drive_turn(unit_id: String) -> void:
 	if _stopped or _manager == null or _policy == null:
 		return
 	_driving = true
-	# One normal turn can contain a move followed by an attack or wait.
+	# Ability enumeration is explicitly opt-in so the original greedy/random
+	# policies remain stable controls when the action surface expands.
+	var include_abilities := _policy.has_method("uses_ability_actions") \
+			and bool(_policy.call("uses_ability_actions"))
+	# One normal turn can contain a move followed by an attack, ability, or wait.
 	for _step in range(3):
 		if _stopped or _manager.current_phase != BattleManager.Phase.PLAYER_TURN:
 			break
 		if _manager.active_unit_id != unit_id:
 			break
-		var actions := _surface.legal_actions(_manager)
+		var actions := _surface.legal_actions(_manager, include_abilities)
 		if actions.is_empty():
 			request_stop()
 			stalled.emit("No legal action was available for active player unit %s." % unit_id)
@@ -178,6 +182,12 @@ func _record_decision(unit_id: String, action: Dictionary, legal_action_count: i
 			"kind": str(action.get("kind", "")),
 			"legal_action_count": legal_action_count,
 			"lethal": bool(action.get("lethal", false)),
+			"lethal_target_count": int(action.get("lethal_target_count", 0)),
+			"target_count": int(action.get("target_count", 0)),
+			"ability_id": str(action.get("ability_id", "")),
+			"expected_heal": int(action.get("expected_heal", 0)),
+			"status_target_count": int(action.get("status_target_count", 0)),
+			"mp_cost": int(action.get("mp_cost", 0)),
 			"nearest_enemy_distance": int(action.get("nearest_enemy_distance", -1)),
 			"best_attack_damage_after_move": int(action.get("best_attack_damage_after_move", 0)),
 			"forced": forced,

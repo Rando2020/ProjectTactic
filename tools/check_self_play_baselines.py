@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run ProjectTactic baseline self-play against the real Ashvale battle scene."""
+"""Run ProjectTactic self-play controls and ability-aware policy against real Ashvale."""
 
 from __future__ import annotations
 
@@ -48,11 +48,6 @@ def run(
     output = result.stdout + result.stderr
     print(output)
 
-    # Godot 4.6.2 can report project-scene resources still referenced during
-    # process shutdown even after the runner has synchronously freed its battle,
-    # quiesced self-play coroutines, passed every assertion, and returned 0.
-    # Allow only that exact shutdown diagnostic, only for successful real-battle
-    # processes. Every other ERROR line and every SCRIPT ERROR remains fatal.
     successful_real_battle = (
         allow_godot_shutdown_resource_error
         and result.returncode == 0
@@ -91,10 +86,6 @@ def run_mode(mode: str, xdg_dir: Path) -> Path:
             mode,
         ]
     else:
-        # Real battles must run as a normal project scene so project autoloads are
-        # initialized exactly as they are during gameplay. The standalone policy
-        # regression intentionally remains script-based because it has no runtime
-        # dependency on BattleManager or the autoload graph.
         command = [
             args.godot,
             "--headless",
@@ -120,7 +111,6 @@ def run_mode(mode: str, xdg_dir: Path) -> Path:
 
 
 def deterministic_payload(evidence: dict) -> dict:
-    """Return only fields that should be identical for a repeated seeded run."""
     return {
         "source": evidence.get("source"),
         "scenario_id": evidence.get("scenario_id"),
@@ -133,6 +123,17 @@ def deterministic_payload(evidence: dict) -> dict:
         "final_state": evidence.get("context", {}).get("final_state"),
         "events": evidence.get("context", {}).get("events"),
     }
+
+
+def count_ability_decisions(evidence: dict) -> int:
+    count = 0
+    for event in evidence.get("context", {}).get("events", []):
+        if not isinstance(event, dict) or event.get("type") != "decision":
+            continue
+        action_id = str(event.get("payload", {}).get("action_id", ""))
+        if action_id.startswith("ability:"):
+            count += 1
+    return count
 
 
 if not sys.platform.startswith("linux"):
@@ -152,37 +153,43 @@ with tempfile.TemporaryDirectory(prefix="projecttactic-selfplay-") as temp:
     run_mode("policy", temp_root / "policy")
     greedy_path = run_mode("greedy", temp_root / "greedy")
     random_path = run_mode("random", temp_root / "random")
+    ability_path = run_mode("ability", temp_root / "ability")
     greedy_repeat_path = run_mode("greedy", temp_root / "greedy-repeat")
+    ability_repeat_path = run_mode("ability", temp_root / "ability-repeat")
 
     greedy = json.loads(greedy_path.read_text(encoding="utf-8"))
     greedy_repeat = json.loads(greedy_repeat_path.read_text(encoding="utf-8"))
     random_evidence = json.loads(random_path.read_text(encoding="utf-8"))
+    ability = json.loads(ability_path.read_text(encoding="utf-8"))
+    ability_repeat = json.loads(ability_repeat_path.read_text(encoding="utf-8"))
 
     if deterministic_payload(greedy) != deterministic_payload(greedy_repeat):
         raise SystemExit("Greedy self-play trajectory changed across identical seeded runs")
+    if deterministic_payload(ability) != deterministic_payload(ability_repeat):
+        raise SystemExit("Ability-aware self-play trajectory changed across identical seeded runs")
     if greedy.get("metrics", {}).get("outcome") not in {"victory", "defeat"}:
         raise SystemExit("Greedy baseline did not complete the real Ashvale battle")
+    if ability.get("metrics", {}).get("outcome") not in {"victory", "defeat"}:
+        raise SystemExit("Ability-aware policy did not complete the real Ashvale battle")
     if int(greedy.get("metrics", {}).get("decision_count", 0)) <= 0:
         raise SystemExit("Greedy baseline emitted no policy decisions")
     if int(random_evidence.get("metrics", {}).get("decision_count", 0)) <= 0:
         raise SystemExit("Random-legal baseline emitted no policy decisions")
+    if count_ability_decisions(ability) <= 0:
+        raise SystemExit("Ability-aware evidence contains no ability decisions")
 
     args.artifact_dir.mkdir(parents=True, exist_ok=True)
     greedy_copy = args.artifact_dir / "greedy.json"
     random_copy = args.artifact_dir / "random.json"
+    ability_copy = args.artifact_dir / "ability.json"
     shutil.copyfile(greedy_path, greedy_copy)
     shutil.copyfile(random_path, random_copy)
+    shutil.copyfile(ability_path, ability_copy)
 
+    evidence_paths = [greedy_copy, random_copy, ability_copy]
     producer_env = dict(os.environ)
     run(
-        [
-            sys.executable,
-            "tools/ai/producer.py",
-            "validate",
-            "--evidence",
-            str(greedy_copy),
-            str(random_copy),
-        ],
+        [sys.executable, "tools/ai/producer.py", "validate", "--evidence", *map(str, evidence_paths)],
         env=producer_env,
         timeout=60,
         label="AI producer self-play validation",
@@ -193,8 +200,7 @@ with tempfile.TemporaryDirectory(prefix="projecttactic-selfplay-") as temp:
             "tools/ai/producer.py",
             "analyze",
             "--evidence",
-            str(greedy_copy),
-            str(random_copy),
+            *map(str, evidence_paths),
             "--output-dir",
             str(args.artifact_dir / "producer"),
         ],
@@ -218,6 +224,14 @@ with tempfile.TemporaryDirectory(prefix="projecttactic-selfplay-") as temp:
             "player_turns": random_evidence.get("metrics", {}).get("turn_count_player"),
             "decisions": random_evidence.get("metrics", {}).get("decision_count"),
             "hp_lost_player_team": random_evidence.get("metrics", {}).get("hp_lost_player_team"),
+        },
+        "ability": {
+            "outcome": ability.get("metrics", {}).get("outcome"),
+            "player_turns": ability.get("metrics", {}).get("turn_count_player"),
+            "decisions": ability.get("metrics", {}).get("decision_count"),
+            "ability_decisions": count_ability_decisions(ability),
+            "hp_lost_player_team": ability.get("metrics", {}).get("hp_lost_player_team"),
+            "deterministic_repeat": True,
         },
     }
     (args.artifact_dir / "baseline-summary.json").write_text(
