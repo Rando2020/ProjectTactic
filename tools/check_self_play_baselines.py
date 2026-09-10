@@ -40,8 +40,8 @@ def run(command: list[str], *, env: dict[str, str], timeout: int, label: str) ->
 
 def run_mode(mode: str, xdg_dir: Path) -> Path:
     env = dict(os.environ, XDG_DATA_HOME=str(xdg_dir))
-    run(
-        [
+    if mode == "policy":
+        command = [
             args.godot,
             "--headless",
             "--path",
@@ -50,7 +50,23 @@ def run_mode(mode: str, xdg_dir: Path) -> Path:
             "tests/test_self_play_baselines.gd",
             "--",
             mode,
-        ],
+        ]
+    else:
+        # Real battles must run as a normal project scene so project autoloads are
+        # initialized exactly as they are during gameplay. The standalone policy
+        # regression intentionally remains script-based because it has no runtime
+        # dependency on BattleManager or the autoload graph.
+        command = [
+            args.godot,
+            "--headless",
+            "--path",
+            str(GODOT_DIR),
+            "tests/SelfPlayBaselineRunner.tscn",
+            "--",
+            mode,
+        ]
+    run(
+        command,
         env=env,
         timeout=90,
         label=f"Self-play mode {mode}",
