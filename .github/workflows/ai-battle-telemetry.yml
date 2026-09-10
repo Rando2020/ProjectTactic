@@ -1,0 +1,37 @@
+name: AI Battle Telemetry
+
+on:
+  pull_request:
+    branches: [main, feature/ai-producer-loop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: chickensoft-games/setup-godot@c233594225991af5aec714e52457cc76d6df8fa2 # v2
+        with:
+          version: 4.6.2
+          use-dotnet: false
+          include-templates: false
+      - name: Static validation
+        run: node tools/check_godot_stability.mjs --skip-godot
+      - name: Battle telemetry regression
+        run: python3 tools/check_battle_telemetry.py
+      - name: Upload telemetry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-battle-telemetry
+          path: .ai-reports/battle-telemetry/
+          if-no-files-found: error
