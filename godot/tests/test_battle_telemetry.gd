@@ -19,7 +19,7 @@ class FakeUnit:
 	var facing := "S"
 	var current_job_id := ""
 
-	func _init(p_id: String, p_team: String, p_pos: Vector2i, p_job: String) -> void:
+	func configure(p_id: String, p_team: String, p_pos: Vector2i, p_job: String) -> void:
 		unit_id = p_id
 		team = p_team
 		grid_pos = p_pos
@@ -53,8 +53,10 @@ func _init() -> void:
 
 func _run_tests() -> void:
 	var manager := FakeManager.new()
-	var player := FakeUnit.new("zane", "player", Vector2i(1, 2), "vanguard")
-	var enemy := FakeUnit.new("grave-warden", "enemy", Vector2i(4, 2), "warden")
+	var player := FakeUnit.new()
+	player.configure("zane", "player", Vector2i(1, 2), "vanguard")
+	var enemy := FakeUnit.new()
+	enemy.configure("grave-warden", "enemy", Vector2i(4, 2), "warden")
 	manager.units = {player.unit_id: player, enemy.unit_id: enemy}
 	manager.add_child(player)
 	manager.add_child(enemy)
