@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "game": "The Appointed",
+  "project": "ProjectTactic",
+  "north_star": "Create a browser-first tactical roguelike where every run produces tense, legible, expressive decisions that reward mastery, experimentation, and adaptation without collapsing into one solved strategy.",
+  "hard_gates": [
+    "Do not trade correctness, save integrity, deterministic evaluation, or browser playability for a higher fun proxy.",
+    "Do not optimize a single metric such as win rate, damage, turn count, or completion rate in isolation.",
+    "Do not treat self-play as a substitute for human judgment of fun, clarity, surprise, or emotional pacing.",
+    "Do not automatically merge gameplay changes. Every experiment must remain bounded, reversible, and reviewable through a pull request.",
+    "Do not promote a hypothesis into project memory until repeated evidence or human acceptance supports it."
+  ],
+  "pillars": [
+    {
+      "id": "meaningful_decisions",
+      "label": "Meaningful decisions",
+      "weight": 22,
+      "goal": "Most turns should present at least two strategically credible choices with different consequences, not cosmetic option count.",
+      "signals": ["action_entropy", "top_action_dominance", "meaningful_turn_ratio", "counterfactual_value_gap", "move_attack_tradeoffs"],
+      "failure_modes": ["one obvious action dominates", "wait or basic attack solves most states", "choices differ visually but not strategically"]
+    },
+    {
+      "id": "build_expression",
+      "label": "Build expression",
+      "weight": 18,
+      "goal": "Jobs, abilities, boons, equipment, elements, and statuses should create distinct tactical identities and viable combinations.",
+      "signals": ["ability_usage_distribution", "build_diversity", "synergy_frequency", "job_strategy_delta", "boon_strategy_delta"],
+      "failure_modes": ["build choices do not change tactics", "one package is universally best", "abilities are weaker than basic actions"]
+    },
+    {
+      "id": "tactical_mastery",
+      "label": "Tactical mastery",
+      "weight": 18,
+      "goal": "Positioning, terrain, facing, timing, threat management, and sequencing should materially reward better play.",
+      "signals": ["positional_value", "terrain_value", "damage_avoided_by_position", "initiative_value", "policy_skill_gap"],
+      "failure_modes": ["terrain is decorative", "movement is only pathing tax", "better tactical policies barely outperform random play"]
+    },
+    {
+      "id": "tension_pacing",
+      "label": "Tension and pacing",
+      "weight": 14,
+      "goal": "Battles and runs should create pressure, recoverable setbacks, peaks, relief, and decisive endings without grind or dead turns.",
+      "signals": ["turn_count_distribution", "hp_pressure_curve", "comeback_frequency", "dead_turn_ratio", "encounter_duration"],
+      "failure_modes": ["HP sponge fights", "long solved cleanup", "difficulty spikes without counterplay", "no meaningful recovery windows"]
+    },
+    {
+      "id": "replayability_surprise",
+      "label": "Replayability and surprise",
+      "weight": 12,
+      "goal": "Different seeds, encounters, rewards, and party choices should force adaptation while remaining understandable and learnable.",
+      "signals": ["seed_strategy_variance", "encounter_solution_variance", "reward_pick_distribution", "run_path_diversity", "novel_state_frequency"],
+      "failure_modes": ["runs converge", "randomness changes outcomes without changing decisions", "content variety lacks strategic variety"]
+    },
+    {
+      "id": "readability_fairness",
+      "label": "Readability and fairness",
+      "weight": 10,
+      "goal": "Players should understand threats, forecasts, objectives, and consequences well enough to own both wins and losses.",
+      "signals": ["forecast_accuracy", "intent_comprehension", "selection_accuracy", "avoidable_surprise_damage", "human_confusion_rate"],
+      "failure_modes": ["opaque punishment", "misleading previews", "visual state is hard to parse", "losses feel arbitrary"]
+    },
+    {
+      "id": "frictionless_flow",
+      "label": "Frictionless flow",
+      "weight": 6,
+      "goal": "The browser experience should start quickly, preserve runs, and keep the player in tactical decision-making instead of UI or technical friction.",
+      "signals": ["web_start_success", "refresh_continue_success", "input_failures", "time_to_first_decision", "transition_delay"],
+      "failure_modes": ["broken continue", "slow transitions", "input friction", "technical interruption of run momentum"]
+    }
+  ],
+  "experiment_rules": {
+    "max_gameplay_systems_per_experiment": 1,
+    "require_baseline": true,
+    "require_counterfactual": true,
+    "require_success_metrics": true,
+    "require_guardrails": true,
+    "require_rollback": true,
+    "require_human_acceptance_for_player_facing_changes": true,
+    "no_auto_merge": true,
+    "prefer_information_gain_before_balance_changes": true
+  }
+}
