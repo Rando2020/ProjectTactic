@@ -37,7 +37,7 @@ func _score(action: Dictionary) -> float:
 			var damage_value := float(action.get("expected_damage", 0)) * 10.0
 			var heal_value := float(action.get("expected_heal", 0)) * 8.0
 			var status_value := float(action.get("status_target_count", 0)) * 120.0
-			var area_value := max(float(action.get("target_count", 0)) - 1.0, 0.0) * 15.0
+			var area_value: float = maxf(float(action.get("target_count", 0)) - 1.0, 0.0) * 15.0
 			var resource_cost := float(action.get("mp_cost", 0)) * 2.0
 			return lethal_value + damage_value + heal_value + status_value + area_value - resource_cost
 		"attack":
