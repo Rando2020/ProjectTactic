@@ -81,6 +81,12 @@ func _run_real_battle(mode: String) -> void:
 		_stall_reason = "Wall-clock timeout before battle completion."
 		telemetry.record_checkpoint("self-play-timeout", {"reason": _stall_reason})
 
+	# A battle result can be emitted while the controller is still unwinding the
+	# action coroutine that caused it. Stop scheduling new choices and wait for the
+	# in-flight coroutine to become idle before reading final evidence or teardown.
+	var controller_idle: bool = await controller.wait_until_idle(30)
+	_true(controller_idle, "%s self-play controller quiesces before teardown" % mode)
+
 	var output_path := "user://ai-self-play/%s.json" % mode
 	var exported := telemetry.export_evidence(output_path)
 	_true(not exported.is_empty(), "%s real battle exports telemetry evidence" % mode)
