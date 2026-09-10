@@ -5,6 +5,7 @@ const TelemetryRecorder := preload("res://scripts/ai/BattleTelemetry.gd")
 const Controller := preload("res://scripts/ai/self_play/SelfPlayController.gd")
 const GreedyPolicy := preload("res://scripts/ai/self_play/GreedyDamagePolicy.gd")
 const RandomPolicy := preload("res://scripts/ai/self_play/RandomLegalPolicy.gd")
+const AbilityPolicy := preload("res://scripts/ai/self_play/AbilityAwarePolicy.gd")
 
 var _outcome := ""
 var _stall_reason := ""
@@ -19,7 +20,7 @@ func _ready() -> void:
 func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	var mode := str(args[0]) if not args.is_empty() else "greedy"
-	if mode != "greedy" and mode != "random":
+	if mode not in ["greedy", "random", "ability"]:
 		_fail += 1
 		print("FAIL unknown real self-play mode: %s" % mode)
 		_finish()
@@ -34,7 +35,9 @@ func _run() -> void:
 func _run_real_battle(mode: String) -> void:
 	_outcome = ""
 	_stall_reason = ""
-	var policy_seed := 7319 if mode == "greedy" else 27183
+	# Ability-aware uses the same gameplay seed as greedy so differences are due to
+	# policy/action access rather than a different global combat RNG sequence.
+	var policy_seed := 27183 if mode == "random" else 7319
 	seed(policy_seed)
 
 	var battle_scene := BattleSceneResource.instantiate()
@@ -50,6 +53,8 @@ func _run_real_battle(mode: String) -> void:
 	var policy: RefCounted
 	if mode == "greedy":
 		policy = GreedyPolicy.new()
+	elif mode == "ability":
+		policy = AbilityPolicy.new()
 	else:
 		var random_policy := RandomPolicy.new()
 		random_policy.configure(policy_seed)
@@ -99,15 +104,18 @@ func _run_real_battle(mode: String) -> void:
 		_true(int(metrics.get("turn_count_player", 0)) > 0, "%s exercises real player turns" % mode)
 		_eq(evidence.get("source"), "self_play", "%s evidence uses self_play source" % mode)
 		_eq(evidence.get("context", {}).get("policy_id"), str(policy.get("policy_id")), "%s evidence preserves policy identity" % mode)
-		if mode == "greedy":
-			_true(not _outcome.is_empty(), "greedy policy completes the real Ashvale battle within the bounded run")
-		else:
+		if mode == "random":
 			_true(not _outcome.is_empty() or not _stall_reason.is_empty(), "random policy terminates with an outcome or bounded stall")
+		else:
+			_true(not _outcome.is_empty(), "%s policy completes the real Ashvale battle within the bounded run" % mode)
+		if mode == "ability":
+			_true(_count_ability_decisions(evidence) > 0, "ability-aware policy records at least one real ability decision")
 		print("SELF_PLAY_RESULT %s" % JSON.stringify({
 			"policy": str(policy.get("policy_id")),
 			"outcome": metrics.get("outcome", "incomplete"),
 			"player_turns": metrics.get("turn_count_player", 0),
 			"decisions": metrics.get("decision_count", 0),
+			"ability_decisions": _count_ability_decisions(evidence),
 			"hp_lost_player_team": metrics.get("hp_lost_player_team", 0),
 		}))
 
@@ -123,9 +131,6 @@ func _run_real_battle(mode: String) -> void:
 	telemetry.detach()
 	Engine.time_scale = 1.0
 
-	# `queue_free()` plus immediate SceneTree.quit can leave destruction deferred
-	# until after Godot has started resource shutdown. The headless harness owns the
-	# battle scene exclusively, so synchronous free is safe and makes cleanup exact.
 	remove_child(battle_scene)
 	battle_scene.free()
 	manager = null
@@ -133,6 +138,17 @@ func _run_real_battle(mode: String) -> void:
 	controller = null
 	telemetry = null
 	await get_tree().process_frame
+
+
+func _count_ability_decisions(evidence: Dictionary) -> int:
+	var count := 0
+	for event in evidence.get("context", {}).get("events", []):
+		if not event is Dictionary or event.get("type", "") != "decision":
+			continue
+		var action_id := str(event.get("payload", {}).get("action_id", ""))
+		if action_id.begins_with("ability:"):
+			count += 1
+	return count
 
 
 func _on_battle_won(_rewards: Dictionary) -> void:
