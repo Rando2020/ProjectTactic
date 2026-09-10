@@ -23,6 +23,7 @@ The goal of this phase is not to build a strong AI. It is to establish weak, und
   - disables only BattleManager's legacy built-in auto player for the explicit test run
   - listens for real player turns
   - preserves player turns emitted synchronously while a prior automated action is unwinding
+  - exposes an explicit stop-and-quiesce boundary for safe test teardown
   - asks the policy for a choice
   - records the choice through `BattleTelemetry.record_decision()`
   - executes the action and handles move-then-act turns
@@ -36,6 +37,7 @@ The goal of this phase is not to build a strong AI. It is to establish weak, und
 - `godot/tests/self_play_baseline_runner.gd`
   - instantiates the real `Battle.tscn`
   - drives the hardcoded Ashvale debug battle in headless mode
+  - quiesces the controller before evidence export and teardown
   - exports `self_play` evidence for greedy and random-legal policies
 - `tools/check_self_play_baselines.py`
   - imports Godot in isolated user data
@@ -100,6 +102,12 @@ BattleManager can complete a command, resolve a turn, advance turn order, and em
 `SelfPlayController` therefore keeps one pending player unit id whenever a new player turn arrives while the controller is already driving an action. When the current action finishes, the controller verifies that the queued unit is still the active player turn and dispatches it. This prevents legitimate turns from being dropped while keeping enemy turns and completed battles authoritative.
 
 This synchronization behavior is part of the harness contract. Future policy implementations should not add their own turn loops around BattleManager.
+
+### Battle completion must quiesce the controller
+
+A battle result can be emitted from inside the same command execution that a self-play coroutine is awaiting. Destroying the battle or releasing the RefCounted controller immediately can therefore resume a suspended coroutine into released state on the next frame.
+
+The runner now calls `SelfPlayController.wait_until_idle()` after the outcome or bounded stall is observed. The controller stops accepting new decisions, unwinds the active action coroutine, and only then allows telemetry export and scene destruction.
 
 ## Initial action space
 
@@ -174,7 +182,12 @@ The checker runs the greedy scenario twice with the same seed and compares:
 
 A difference fails the baseline regression.
 
-The first successful real greedy execution completed Ashvale with a victory in 12 player turns and 24 recorded decisions. That result is an integration proof for the harness, not a balance target.
+Observed integration results while stabilizing the harness:
+
+- `greedy-damage-v1`: Ashvale victory, 12 player turns, 24 recorded decisions, 175 player-team HP lost
+- `random-legal-v1`: Ashvale victory, 36 player turns, 70 recorded decisions, 438 player-team HP lost
+
+These are integration proofs and baseline comparison points, not balance targets.
 
 ## Evidence
 
@@ -212,6 +225,10 @@ BattleManager currently owns both battle orchestration and several useful tactic
 
 This is acceptable for the first development harness because it avoids editing the large BattleManager solely to expose instrumentation APIs. A future refactor should extract a formal read-only battle query interface when the action surface expands.
 
+Godot 4.6.2 headless normal-scene runs can also emit an exact shutdown diagnostic of the form `ERROR: N resources still in use at exit (run with --verbose for details).` after the runner has passed every assertion and the Godot process itself returned zero. The Python harness permits only this exact diagnostic, only for a real-battle process that contains both the successful test sentinel and a `SELF_PLAY_RESULT` record. Nonzero exits, `SCRIPT ERROR:`, failed test sentinels, and every other `ERROR:` line remain fatal.
+
+This exception is intentionally not used for project import, standalone policy tests, or AI producer commands.
+
 ## Risks and tech debt
 
 - The first action surface excludes active abilities and items, so it cannot yet measure build expression accurately.
@@ -220,6 +237,7 @@ This is acceptable for the first development harness because it avoids editing t
 - Global gameplay RNG and presentation RNG are not fully separated in the game architecture. The harness disables BattleScene camera processing to protect the deterministic test, but the broader architectural separation should be improved later.
 - BattleManager's synchronous turn transitions are now handled by the self-play controller, but they remain an orchestration detail that future battle refactors must preserve or explicitly change.
 - The adapter currently calls BattleManager helper methods directly. That is intentionally lower risk than modifying the 90KB-plus manager during this phase, but it is technical debt.
+- Godot's headless runner still reports shutdown-time retained resources in some successful real-battle processes. The harness exception is tightly scoped, but the retained resources should be identified later with a verbose engine-level cleanup investigation rather than broadening the exception.
 
 ## Next evolution
 
