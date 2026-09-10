@@ -770,6 +770,9 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 
 
 func _texture_from_source(path: String) -> Texture2D:
+	# Exported packs contain imported textures, not the source PNG bytes.
+	if not FileAccess.file_exists(path) and ResourceLoader.exists(path):
+		return load(path) as Texture2D
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
 		return null

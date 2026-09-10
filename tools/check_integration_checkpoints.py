@@ -14,14 +14,16 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--godot', default='godot')
+parser.add_argument('--pack', type=Path, help='Validate callbacks against an exported PCK')
 args = parser.parse_args()
 if not sys.platform.startswith('linux'):
     raise SystemExit('Run on Linux/WSL for isolated XDG_DATA_HOME storage.')
 with tempfile.TemporaryDirectory(prefix='tactic-integration-') as directory:
     for mode in ['prepare', 'before', 'victory', 'boon', 'abandon', 'menus']:
         result = subprocess.run([
-            args.godot, '--headless', '--path', str(ROOT / 'godot'),
-            '--script', 'tests/test_integration_checkpoints.gd', '--', mode,
+            args.godot, '--headless',
+            *(['--main-pack', str(args.pack.resolve())] if args.pack else ['--path', str(ROOT / 'godot')]),
+            '--script', str(ROOT / 'godot/tests/test_integration_checkpoints.gd'), '--', mode,
         ], env=dict(os.environ, XDG_DATA_HOME=directory), capture_output=True,
             text=True, timeout=30)
         output = result.stdout + result.stderr
