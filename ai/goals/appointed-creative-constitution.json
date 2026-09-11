@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "game": "The Appointed: As Above",
+  "purpose": "Durable creative criteria for ChatGPT's project-level direction. This is broader than the tactical self-play scorecard and includes engagement, emotional storytelling, and project identity.",
+  "north_star": "Make The Appointed a deeply replayable tactical roguelike where mastery, adaptation, build expression, anticipation, and emotionally human storytelling reinforce one another, so players remember the decisions and people behind each run rather than only the systems.",
+  "principles": [
+    {
+      "id": "earned_engagement",
+      "weight": 18,
+      "goal": "Create a strong desire for one more turn, encounter, or run through anticipation, agency, surprise, mastery, investment, payoff, and curiosity rather than exploitative compulsion.",
+      "questions": [
+        "What is the player anticipating right now?",
+        "What did the player choose that made the payoff feel earned?",
+        "Does the next reward create a new possibility or mostly increase a number?",
+        "Is there a satisfying rhythm of tension, payoff, relief, and renewed curiosity?"
+      ],
+      "anti_goals": ["retention at any cost", "opaque variable rewards designed only to prolong play", "mandatory grind", "punishment for stopping"]
+    },
+    {
+      "id": "meaningful_tactics",
+      "weight": 18,
+      "goal": "Most important turns should contain multiple strategically credible lines with consequences that reward positioning, sequencing, prediction, and adaptation.",
+      "questions": [
+        "Would a strong player and a weak player make meaningfully different decisions here?",
+        "Is movement strategically valuable or merely a pathing tax?",
+        "Can the player explain why the better line was better after seeing the result?"
+      ],
+      "anti_goals": ["one obvious move solves most turns", "complexity without decisions", "difficulty through hidden information"]
+    },
+    {
+      "id": "build_identity",
+      "weight": 14,
+      "goal": "Jobs, abilities, boons, equipment, elements, statuses, and party composition should change the player's tactical thought process and create memorable run identities.",
+      "questions": [
+        "How does this choice change what the player wants to do next turn?",
+        "What new synergy, tradeoff, or vulnerability appears?",
+        "Would two different builds approach the same map differently?"
+      ],
+      "anti_goals": ["same strategy with larger numbers", "universal best build", "choices that are cosmetically distinct but strategically equivalent"]
+    },
+    {
+      "id": "adaptive_rivalry",
+      "weight": 12,
+      "goal": "Enemies should feel observant, intentional, and capable of pressuring repeated player habits while remaining fair, readable, and beatable through adaptation.",
+      "questions": [
+        "What habit is the enemy responding to?",
+        "How does the game telegraph that adaptation?",
+        "What viable counter-adaptations remain for the player?",
+        "Can the player intentionally change style and make the opponent's old read less valuable?"
+      ],
+      "anti_goals": ["reading future inputs", "hard counters immediately after one success", "rubber-banding", "hidden stat inflation masquerading as intelligence"]
+    },
+    {
+      "id": "human_story",
+      "weight": 18,
+      "goal": "Characters should feel human because they want conflicting things, protect themselves imperfectly, misread one another, change through choices, and leave emotional residue across runs and relationships.",
+      "questions": [
+        "What does each character want in this scene?",
+        "What are they unable or unwilling to say?",
+        "What contradiction makes them specific rather than archetypal?",
+        "What changes after this scene?",
+        "Could this dialogue be moved to another character unchanged? If so, why is the voice not specific enough?",
+        "Can gameplay carry part of the emotional consequence?"
+      ],
+      "anti_goals": ["lore dump as depth", "generic chosen-one dialogue", "interchangeable trauma", "characters speaking only to explain mechanics"]
+    },
+    {
+      "id": "system_story_unity",
+      "weight": 10,
+      "goal": "Mechanics and narrative should express the same themes. Vows, classes, boons, wounds, failures, repeated runs, enemies, bosses, and relationships should be capable of carrying story meaning.",
+      "questions": [
+        "Can this mechanic reveal character or world rather than exist beside the story?",
+        "Can a narrative choice alter tactical behavior in a legible way?",
+        "Can a gameplay failure become emotionally meaningful rather than merely reset progress?"
+      ],
+      "anti_goals": ["cutscene story detached from systems", "mechanics with no thematic consequence", "story choices with no remembered residue"]
+    },
+    {
+      "id": "clarity_and_trust",
+      "weight": 6,
+      "goal": "The player should understand enough about threats and consequences to own wins and losses, even when outcomes contain uncertainty.",
+      "questions": ["Was the important information available?", "Was surprise exciting rather than arbitrary?", "Did the UI communicate the consequence before commitment when it should have?"],
+      "anti_goals": ["gotcha punishment", "misleading forecast", "difficulty through unreadability"]
+    },
+    {
+      "id": "frictionless_browser_flow",
+      "weight": 4,
+      "goal": "The browser prototype should get the player into meaningful decisions quickly, preserve runs, and avoid technical friction breaking momentum.",
+      "questions": ["How long until the first interesting choice?", "Can the player safely leave and continue?", "Do transitions preserve momentum?"],
+      "anti_goals": ["long setup before play", "broken refresh/continue", "technical friction treated as acceptable prototype debt indefinitely"]
+    }
+  ],
+  "creative_rules": {
+    "separate_observation_hypothesis_and_lesson": true,
+    "record_rejections_and_reasons": true,
+    "prefer_information_gain_before_large_balance_changes": true,
+    "require_human_acceptance_for_story_canon_changes": true,
+    "require_human_acceptance_for_player_facing_balance_changes": true,
+    "do_not_optimize_single_engagement_metric": true,
+    "do_not_auto_merge": true,
+    "one_unrelated_gameplay_system_per_experiment": true
+  }
+}
