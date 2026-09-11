@@ -1,0 +1,39 @@
+name: ChatGPT Creative Director Validation
+
+on:
+  pull_request:
+    paths:
+      - 'CHATGPT_GAME_DIRECTOR.md'
+      - 'AGENTS.md'
+      - 'ai/goals/appointed-creative-constitution.json'
+      - 'ai/memory/design-decisions.jsonl'
+      - 'ai/memory/creative-lessons.jsonl'
+      - 'ai/memory/player-feedback.jsonl'
+      - 'ai/memory/story-principles.jsonl'
+      - 'tools/ai/build_chatgpt_brief.py'
+      - '.github/workflows/chatgpt-creative-director.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-creative-memory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate creative constitution JSON
+        run: python -m json.tool ai/goals/appointed-creative-constitution.json >/dev/null
+      - name: Build ChatGPT creative brief
+        run: python tools/ai/build_chatgpt_brief.py
+      - name: Confirm generated brief
+        run: test -s .ai-reports/chatgpt/creative-brief.md
+      - name: Upload creative brief
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatgpt-creative-brief
+          path: .ai-reports/chatgpt/creative-brief.md
+          if-no-files-found: error
