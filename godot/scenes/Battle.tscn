@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d0e22cp1ayo0j"]
 
 [ext_resource type="Script" uid="uid://dplh4s50c7kiu" path="res://scripts/battle/BattleScene.gd" id="1"]
-[ext_resource type="Script" uid="uid://ckv27ayswc8sf" path="res://scripts/battle/BattleManager.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/battle/AdaptiveBattleManager.gd" id="2"]
 [ext_resource type="Script" uid="uid://dgcdtp0dip6ij" path="res://scripts/grid/TacticalGrid.gd" id="3"]
 [ext_resource type="Script" uid="uid://cgurx2swprk8a" path="res://scripts/battle/TurnOrder.gd" id="4"]
 [ext_resource type="Script" uid="uid://bevekfll5u1j4" path="res://scripts/battle/CombatResolver.gd" id="5"]
