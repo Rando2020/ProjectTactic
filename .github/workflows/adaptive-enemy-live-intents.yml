@@ -1,0 +1,42 @@
+name: Adaptive Enemy Live Intent Validation
+
+on:
+  pull_request:
+    paths:
+      - 'godot/scripts/battle/AdaptiveBattleManager.gd'
+      - 'godot/scenes/Battle.tscn'
+      - 'godot/tests/adaptive_enemy_live_runner.gd'
+      - 'godot/tests/adaptive_enemy_live_runner.tscn'
+      - '.github/workflows/adaptive-enemy-live-intents.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adaptive-live-intents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: chickensoft-games/setup-godot@c233594225991af5aec714e52457cc76d6df8fa2
+        with:
+          version: '4.6.2'
+          use-dotnet: false
+      - name: Static validation
+        run: node tools/check_godot_stability.mjs --skip-godot
+      - name: Import project
+        run: godot --headless --path godot --editor --quit
+      - name: Adaptive opponent model regression
+        run: godot --headless --path godot --script res://tests/test_adaptive_opponent_model.gd
+      - name: Live Battle scene adaptive intent smoke test
+        run: godot --headless --path godot res://tests/adaptive_enemy_live_runner.tscn
+      - name: Preserve existing self-play controls with adaptation disabled
+        run: python3 tools/check_self_play_baselines.py
