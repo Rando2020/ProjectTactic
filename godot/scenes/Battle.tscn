@@ -2,13 +2,14 @@
 
 [ext_resource type="Script" uid="uid://dplh4s50c7kiu" path="res://scripts/battle/BattleScene.gd" id="1"]
 [ext_resource type="Script" uid="uid://ckv27ayswc8sf" path="res://scripts/battle/BattleManager.gd" id="2"]
-[ext_resource type="Script" uid="uid://dgcdtp0dip6ij" path="res://scripts/grid/TacticalGrid.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/grid/CinematicTacticalGrid.gd" id="3"]
 [ext_resource type="Script" uid="uid://cgurx2swprk8a" path="res://scripts/battle/TurnOrder.gd" id="4"]
 [ext_resource type="Script" uid="uid://bevekfll5u1j4" path="res://scripts/battle/CombatResolver.gd" id="5"]
 [ext_resource type="Script" uid="uid://qxkumu6c2gar" path="res://scripts/systems/ObjectiveTracker.gd" id="6"]
 [ext_resource type="Script" uid="uid://ba204lsubmkts" path="res://scripts/systems/ElementalSystem.gd" id="7"]
 [ext_resource type="Script" path="res://scripts/battle/PolishedCinematicBattleUI.gd" id="8"]
 [ext_resource type="Script" path="res://scripts/battle/Ashvale3DBackdrop.gd" id="9"]
+[ext_resource type="Script" path="res://scripts/battle/AshvaleBattlePresentation.gd" id="10"]
 
 [node name="BattleScene" type="Node2D" unique_id=1532231646]
 script = ExtResource("1")
@@ -16,6 +17,9 @@ script = ExtResource("1")
 [node name="Ashvale3DBackdrop" type="Node2D" parent="."]
 z_index = 500
 script = ExtResource("9")
+
+[node name="AshvaleBattlePresentation" type="Node2D" parent="."]
+script = ExtResource("10")
 
 [node name="BattleManager" type="Node" parent="." unique_id=2118133252]
 script = ExtResource("2")
