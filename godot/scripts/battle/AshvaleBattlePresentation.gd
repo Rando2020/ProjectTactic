@@ -3,8 +3,8 @@ extends Node2D
 
 ## Orchestrates the Ashvale vertical-slice presentation without changing battle
 ## rules. It listens to existing BattleManager signals and translates them into
-## restrained visual cues: turn focus, movement traces, enemy intent connectors
-## and quiet environmental accents.
+## restrained visual cues: turn focus, movement traces, enemy intent connectors,
+## quiet environmental accents and Ashvale-only unit decluttering.
 
 @export var enabled: bool = true
 @export var ashvale_map_id: String = "ashvale_road_01"
@@ -69,6 +69,7 @@ func _on_battle_started(_display_name: String, _objective: String) -> void:
 	if not _active:
 		return
 	_build_environment_accents()
+	call_deferred("_declutter_units")
 
 
 func _on_turn_started(unit_id: String, team: String) -> void:
@@ -231,6 +232,32 @@ func _add_warm_ground_glow(pos: Vector2i) -> void:
 	var tween := create_tween().set_loops()
 	tween.tween_property(glow, "modulate:a", 0.56, 1.0).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(glow, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
+
+
+func _declutter_units() -> void:
+	if not _active:
+		return
+	for value: Variant in battle_manager.units.values():
+		var unit := value as Unit
+		if unit:
+			_declutter_unit(unit)
+
+
+func _declutter_unit(unit: Unit) -> void:
+	# The cinematic edge HUD already owns names and player HP. Keep enemy HP and
+	# status icons on the field, but remove duplicated labels/team dots/facing
+	# arrows so the sprites remain the dominant shapes.
+	for child in unit.get_children():
+		if child is Label:
+			(child as Label).visible = false
+		elif child is Polygon2D and child.z_index >= 15:
+			(child as Polygon2D).visible = false
+		elif child is ColorRect:
+			var rect := child as ColorRect
+			if rect.size.x <= 16.0:
+				rect.visible = false
+			elif unit.team == "player" and rect.position.y <= -60.0 and rect.size.x >= 48.0:
+				rect.visible = false
 
 
 func _on_battle_finished(_rewards: Dictionary) -> void:

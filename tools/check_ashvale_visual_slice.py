@@ -22,6 +22,8 @@ checks = {
     "intent telegraph uses actor and target ids": '"actor_id"' in presentation and '"target_id"' in presentation,
     "environment accents include water": "_add_water_glint" in presentation,
     "environment accents include warm ground glow": "_add_warm_ground_glow" in presentation,
+    "Ashvale presentation removes duplicate unit labels": "_declutter_units" in presentation and "child is Label" in presentation,
+    "Ashvale presentation preserves enemy HP readability": 'unit.team == "player"' in presentation and "rect.position.y <= -60.0" in presentation,
     "polished UI remains presentation-only subclass": 'extends "res://scripts/battle/CinematicBattleUI.gd"' in polished_ui,
 }
 
