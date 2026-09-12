@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kit": "ashvale-terrain-v1",
+  "tile_size_m": [2.0, 2.0],
+  "elevation_step_m": 1.0,
+  "style": "low-poly painted diorama, muted grounded fantasy",
+  "assets": [
+    "grass-flat","dirt-flat","stone-flat","scorched-ground","shallow-water",
+    "grass-raised","stone-raised","grass-cliff","stone-stairs","wood-bridge",
+    "dirt-path-straight","dirt-path-corner","ruined-wall-short","ruined-wall-corner",
+    "broken-pillar","stone-arch","dead-tree","gravestone","brazier","crate","broken-cart","bush"
+  ],
+  "source": "source-art/blender/generate_ashvale_kit.py",
+  "game_export": "godot/assets/3d/ashvale/*.glb"
+}
