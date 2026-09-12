@@ -1,0 +1,38 @@
+# ProjectTactic Ashvale tactical-diorama palette
+newmtl grass
+Kd 0.23 0.32 0.20
+Ns 10
+
+newmtl dirt
+Kd 0.32 0.24 0.17
+Ns 10
+
+newmtl stone
+Kd 0.28 0.29 0.30
+Ns 10
+
+newmtl darkstone
+Kd 0.18 0.19 0.20
+Ns 10
+
+newmtl wood
+Kd 0.28 0.18 0.12
+Ns 10
+
+newmtl water
+Kd 0.18 0.34 0.40
+d 0.82
+Tr 0.18
+Ns 30
+
+newmtl ember
+Kd 0.48 0.18 0.08
+Ns 10
+
+newmtl moss
+Kd 0.27 0.37 0.22
+Ns 10
+
+newmtl iron
+Kd 0.20 0.21 0.22
+Ns 40

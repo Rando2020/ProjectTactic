@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/dev/Ashvale3DBattleMock.tscn" id="1_mock"]
+
+[node name="Ashvale3DShowcase" type="Node3D"]
+
+[node name="BattleMock" parent="." instance=ExtResource("1_mock")]
