@@ -262,7 +262,6 @@ func _apply_command_icon(button: Button, command_id: String) -> void:
 		return
 	var path: String = str(CinematicUIAssets.COMMAND_ICONS.get(command_id, ""))
 	button.icon = _load_texture(path)
-	button.icon_max_width = 30
 	button.expand_icon = true
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.add_theme_constant_override("icon_max_width", 30)
