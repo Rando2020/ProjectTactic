@@ -5,6 +5,7 @@ on:
     paths:
       - 'godot/**'
       - 'tools/check_terrain_art.py'
+      - 'tools/check_ashvale_visual_slice.py'
       - '.github/workflows/terrain-art.yml'
   workflow_dispatch:
 
@@ -26,5 +27,6 @@ jobs:
           include-templates: false
       - run: python3 tools/check_terrain_art.py
       - run: python3 tools/check_integration_checkpoints.py
+      - run: python3 tools/check_ashvale_visual_slice.py
   web:
     uses: ./.github/workflows/godot-web.yml
