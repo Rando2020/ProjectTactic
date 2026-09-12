@@ -21,3 +21,8 @@
 # Tiny runtime terrain tiles and their review proof are ordinary Git binaries.
 godot/assets/tiles/terrain_v2/*.png -filter -diff -merge -text
 docs/art/terrain-v2-proof.png -filter -diff -merge -text
+
+# The Ashvale modular 3D prototype kit is deliberately tiny (individual pieces are only a few KB).
+# Keep this isolated kit in ordinary Git so connector-authored PRs and CI do not depend on LFS uploads.
+# Larger/final 3D assets remain covered by the repo-wide LFS rules above.
+godot/assets/3d/ashvale/*.glb -filter -diff -merge -text
