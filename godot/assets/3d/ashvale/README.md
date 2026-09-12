@@ -16,7 +16,11 @@ This folder contains the first checked-in modular 3D environment kit for Project
 
 ## First authored scene
 
-`res://scenes/dev/Ashvale3DBattleMock.tscn` is the first hybrid presentation target. It composes these meshes with existing isometric unit sprites, orthographic lighting, elevation, and tactical selection/range markers.
+`res://scenes/dev/Ashvale3DBattleMock.tscn` is the first hybrid presentation target. It composes these meshes with existing isometric unit sprites, orthographic lighting, elevation, and tactical selection/range markers. `Ashvale3DShowcase.tscn` points to this authored scene.
+
+## Validation
+
+The OBJ-based kit passed the existing terrain regression, native integration checkpoints, Godot project import, and actual Web export. The original binary preview GLB was removed after exposing a Git LFS mismatch rather than leaving a fragile asset path in the repo.
 
 ## Quality bar
 
