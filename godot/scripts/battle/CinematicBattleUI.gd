@@ -448,7 +448,10 @@ func _update_party_card(unit: Unit, refs: Dictionary) -> void:
 	if not panel:
 		return
 	panel.visible = true
-	var max_hp := max(unit.unit_data.base_stats.hp if unit.unit_data else unit.hp, 1)
+	var max_hp: int = unit.hp
+	if unit.unit_data:
+		max_hp = unit.unit_data.base_stats.hp
+	max_hp = maxi(max_hp, 1)
 	if name_lbl: name_lbl.text = unit.display_name
 	if job_lbl: job_lbl.text = _pretty_job(unit.current_job_id)
 	if hp_bar:
