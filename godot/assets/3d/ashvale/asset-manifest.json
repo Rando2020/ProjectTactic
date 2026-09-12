@@ -1,9 +1,11 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "kit": "ashvale-terrain-v1",
   "tile_size_m": [2.0, 2.0],
   "elevation_step_m": 1.0,
-  "style": "low-poly painted diorama, muted grounded fantasy",
+  "style": "low-poly painted tactical diorama, muted grounded fantasy",
+  "runtime_format": "obj",
+  "runtime_materials": "godot/assets/3d/ashvale/ashvale-materials.mtl",
   "assets": [
     "grass-flat","dirt-flat","stone-flat","scorched-ground","shallow-water",
     "grass-raised","stone-raised","grass-cliff","stone-stairs","wood-bridge",
@@ -11,5 +13,11 @@
     "broken-pillar","stone-arch","dead-tree","gravestone","brazier","crate","broken-cart","bush"
   ],
   "source": "source-art/blender/generate_ashvale_kit.py",
-  "game_export": "godot/assets/3d/ashvale/*.glb"
+  "runtime_assets": "godot/assets/3d/ashvale/*.obj",
+  "local_blender_export": "godot/assets/3d/ashvale/*.glb",
+  "notes": [
+    "OBJ is the checked-in prototype/runtime format so GitHub connector and CI do not depend on binary LFS uploads.",
+    "The Blender generator remains the canonical editable art source and may export GLB during a local Blender art pass.",
+    "Decorative 3D presentation must not silently replace authoritative tactical grid, movement, collision, or height data."
+  ]
 }
