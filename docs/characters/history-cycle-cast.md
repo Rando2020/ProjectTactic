@@ -1,5 +1,7 @@
 # History Cycle Cast Guide
 
+> **Canon status: Act I surface layer.** The Concord, First Breach, Guardian pain, and regional history-cycle conflicts remain active story material. They are the human-scale political interpretation of Recurrence, not the final cosmological explanation. Characters should be allowed to believe these local explanations for a long time.
+
 ## Narrative North Star
 
 Vaelthar is not telling a simple save-the-kingdom story. The stronger spine is:
@@ -8,9 +10,11 @@ Vaelthar is not telling a simple save-the-kingdom story. The stronger spine is:
 
 The core conflict is not only Guardian corruption or Void Anchors. Those are the visible symptoms. The deeper wound is the Concord: a survival treaty that preserved the world by erasing the people, Guardians, and records that made the survival possible.
 
-## Central Question
+## Act I Central Question
 
-When history repeats, do you preserve the lie that kept people alive, expose the truth that may restart the war, or destroy the cycle entirely?
+When a truth threatens the structures keeping people alive, what are people willing to preserve, expose, or destroy?
+
+This question should work before the player knows anything about the Guide or the Ten Leaves. Later revelations should deepen these conflicts rather than invalidate them.
 
 ## Character Design Rule
 
@@ -131,6 +135,21 @@ This gives the prototype a stronger narrative identity without requiring a dialo
 2. Elian can become cartoonish if he only wants destruction. He needs moments where his methods save people the polite characters would have abandoned.
 3. Serra can become too sympathetic too quickly. Her privilege should remain mechanically useful and morally uncomfortable.
 4. Caldus should not be evil for evil’s sake. He is scarier if his logic works in the short term.
+
+## Relationship To The Deeper Recurrence Story
+
+The Concord is not secretly irrelevant because a larger cosmology exists. It is evidence of the same human tendency at a scale the player can feel: known structures remain attractive because the alternative is uncertain.
+
+Use these characters to keep the late mythology grounded:
+
+- Rusk embodies the defensibility of preservation.
+- Elian embodies the danger and necessity of rupture.
+- Mira forces memory to remain accountable to evidence.
+- Zane tests whether empathy becomes obligation or control.
+- Serra asks whether inheritance can be transformed without pretending it never caused harm.
+- Caldus demonstrates how compassionate goals become horrifying when optimization stops asking what a person is.
+
+Do not let any of them become a mouthpiece for the final answer.
 
 ## Next Recommended Action
 
