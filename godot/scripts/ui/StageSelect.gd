@@ -1084,7 +1084,7 @@ func _show_wanderer_encounter(run: RunState) -> void:
 	_boon_overlay = _overlay()
 	add_child(_boon_overlay)
 
-	var encounter := OrrenArc.get_stage(_gs)
+	var encounter := OrrenArc.get_stage(_gs, run)
 	if encounter.is_empty():
 		_complete_current_node_with_loadout_xp("wanderer")
 		_build_ui()
