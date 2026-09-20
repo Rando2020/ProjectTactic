@@ -10,6 +10,7 @@ class_name CodexScreen
 extends Control
 
 const RecurrenceStory = preload("res://scripts/story/RecurrenceStory.gd")
+const OrrenArc = preload("res://scripts/story/OrrenArc.gd")
 
 signal back_pressed
 
@@ -373,6 +374,7 @@ func _build_empty(parent: Control) -> void:
 func _all_entries() -> Array[Dictionary]:
 	var entries: Array[Dictionary] = _BASE_ENTRIES.duplicate(true)
 	entries.append_array(RecurrenceStory.codex_entries())
+	entries.append_array(OrrenArc.codex_entries())
 	return entries
 
 
