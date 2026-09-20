@@ -33,9 +33,12 @@ var story_flags:          Array[String] = []
 var pending_loot:         Array = []
 var pending_boon_offers:  Array = []
 
-## Last run death context  read by ResultsScreen + HubDialogue
+## Last run context read by ResultsScreen + HubDialogue.
+## Keep this intact until the next run starts so the Hearth can react to what happened.
 var last_run_death: Dictionary = {}
-## Run history  floors completed, used by hub dialogue
+var last_run_floor: int = 0
+var last_run_victory: bool = false
+## Run history used by hub dialogue and future story gates.
 var runs_completed: int = 0
 var best_floor_reached: int = 0
 
@@ -316,6 +319,10 @@ func save() -> void:
 		"gold":             gold,
 		"completed_stages": completed_stages.duplicate(),
 		"story_flags":      story_flags.duplicate(),
+		"last_run_floor":   last_run_floor,
+		"last_run_victory": last_run_victory,
+		"runs_completed":   runs_completed,
+		"best_floor_reached": best_floor_reached,
 		"unit_jp":          unit_jp,
 		"unit_learned":     unit_learned,
 		"unit_jobs":        unit_jobs,
@@ -367,6 +374,10 @@ func load_save() -> bool:
 	story_flags.clear()
 	for flag: Variant in data.get("story_flags", []):
 		story_flags.append(str(flag))
+	last_run_floor = int(data.get("last_run_floor", 0))
+	last_run_victory = bool(data.get("last_run_victory", false))
+	runs_completed = int(data.get("runs_completed", 0))
+	best_floor_reached = int(data.get("best_floor_reached", 0))
 
 	var saved_jp:        Dictionary = data.get("unit_jp", {})
 	var saved_learned:   Dictionary = data.get("unit_learned", {})
@@ -417,6 +428,11 @@ func delete_save() -> void:
 	gold = 0
 	completed_stages.clear()
 	story_flags.clear()
+	last_run_death.clear()
+	last_run_floor = 0
+	last_run_victory = false
+	runs_completed = 0
+	best_floor_reached = 0
 	pending_rewards.clear()
 	vow_progress.clear()
 	sigil_progress.clear()
