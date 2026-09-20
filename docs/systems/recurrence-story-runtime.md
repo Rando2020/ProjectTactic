@@ -281,10 +281,17 @@ The full Godot validation workflow also:
 - Preserve uncertainty around whether the Guide is humanity continued or a new being carrying humanity.
 - Do not confirm Orren's death merely to make Grief easier to explain.
 
+## Orren pacing rule
+
+RunState tracks `orren_story_beat_consumed`.
+
+Once an authored Orren scene resolves, additional Orren encounters in the same descent become a non-advancing interlude. The flag is serialized, so save/continue cannot bypass the pacing gate. A new RunState resets the gate.
+
+This guarantees that Love, the final ordinary promise, and Grief cannot collapse into a single run.
+
 ## Known placeholders
 
 - Orren currently uses text-only presentation and no portrait.
-- The current route generator can surface multiple Orren stages within one descent, which may compress pacing.
 - The Gigas Codex does not yet have a dedicated presentation surface.
 - The Continuance has no runtime encounter implementation.
 - Later Leaves have definitions but no authored unlock arcs.
