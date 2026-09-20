@@ -42,7 +42,7 @@ const _CAT_COLORS := {
 #  CODEX ENTRIES
 #  Each entry: {id, category, flag, title, summary, gameplay_note}
 #  flag = ""  always visible
-#  flag = "some_flag"  only visible when GameState.narrative_flags[flag]
+#  flag = "some_flag"  only visible when GameState.story_flags contains flag
 
 const _BASE_ENTRIES: Array[Dictionary] = [
 	{
