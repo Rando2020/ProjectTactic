@@ -51,16 +51,16 @@ static func stage_id(gs: Node) -> String:
 	return "first"
 
 
-static func get_stage(gs: Node) -> Dictionary:
-	var wanted := stage_id(gs)
+static func get_stage(gs: Node, run: RunState = null) -> Dictionary:
+	var wanted := "interlude" if run != null and run.orren_story_beat_consumed else stage_id(gs)
 	for stage: Dictionary in data().get("stages", []):
 		if str(stage.get("id", "")) == wanted:
 			return stage
 	return {}
 
 
-static func get_choice(gs: Node, choice_id: String) -> Dictionary:
-	var stage := get_stage(gs)
+static func get_choice(gs: Node, run: RunState, choice_id: String) -> Dictionary:
+	var stage := get_stage(gs, run)
 	for choice: Dictionary in stage.get("choices", []):
 		if str(choice.get("id", "")) == choice_id:
 			return choice
@@ -78,7 +78,9 @@ static func jp_reward(run: RunState) -> int:
 static func apply_choice(gs: Node, run: RunState, choice_id: String) -> Dictionary:
 	if gs == null or run == null:
 		return {}
-	var choice := get_choice(gs, choice_id)
+	var stage := get_stage(gs, run)
+	var stage_name := str(stage.get("id", ""))
+	var choice := get_choice(gs, run, choice_id)
 	if choice.is_empty():
 		return {}
 
@@ -91,6 +93,10 @@ static func apply_choice(gs: Node, run: RunState, choice_id: String) -> Dictiona
 	}
 
 	match str(choice.get("effect", "")):
+		"interlude_gold":
+			result["reward_gold"] = gold_reward(run)
+		"interlude_jp":
+			result["reward_jp"] = jp_reward(run)
 		"gold":
 			RecurrenceStory.add_flag(gs, FLAG_MET)
 			result["reward_gold"] = gold_reward(run)
@@ -113,6 +119,9 @@ static func apply_choice(gs: Node, run: RunState, choice_id: String) -> Dictiona
 		"grief":
 			RecurrenceStory.add_flag(gs, FLAG_ABSENT)
 			result["story_event"] = RecurrenceStory.restore_leaf(gs, "grief")
+
+	if stage_name != "interlude":
+		run.orren_story_beat_consumed = true
 
 	if gs.has_method("save"):
 		gs.save()
