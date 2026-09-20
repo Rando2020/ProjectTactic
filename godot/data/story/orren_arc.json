@@ -13,8 +13,18 @@
       "body": "A green lantern flickers beside a broken stair. Orren, a vault-runner with a silver map case, raises one hand before the party reaches for steel.\n\n\"The Anchor rearranges the floors when it feels watched,\" he says. \"Let me mark one truth before it lies again.\"",
       "footer": "For now, Orren is useful.",
       "choices": [
-        {"id": "map", "label": "Trust his map  +{gold}g", "effect": "gold", "tone": "gold"},
-        {"id": "training", "label": "Train at the stair  +{jp} JP", "effect": "jp", "tone": "blue"}
+        {
+          "id": "map",
+          "label": "Trust his map  +{gold}g",
+          "effect": "gold",
+          "tone": "gold"
+        },
+        {
+          "id": "training",
+          "label": "Train at the stair  +{jp} JP",
+          "effect": "jp",
+          "tone": "blue"
+        }
       ]
     },
     {
@@ -23,8 +33,18 @@
       "body": "Orren is kneeling beside a stranger whose leg is bound with a torn map. His silver case is open on the stone. The safe route is already marked.\n\n\"I can carry him or the case,\" Orren says. \"Not both. You do not owe me either.\"",
       "footer": "He does not ask you to stay.",
       "choices": [
-        {"id": "wait", "label": "Stay. We carry him together.  [MOVE -1 THIS DESCENT]", "effect": "wait", "tone": "green"},
-        {"id": "take_route", "label": "Take the route he marked.  +{gold}g", "effect": "gold_without_progress", "tone": "gold"}
+        {
+          "id": "wait",
+          "label": "Stay. We carry him together.  [MOVE -1 THIS DESCENT]",
+          "effect": "wait",
+          "tone": "green"
+        },
+        {
+          "id": "take_route",
+          "label": "Take the route he marked.  +{gold}g",
+          "effect": "gold_without_progress",
+          "tone": "gold"
+        }
       ]
     },
     {
@@ -33,7 +53,12 @@
       "body": "The next time Orren finds you, nobody is bleeding. Nobody is chasing him. He has made tea over a flame too small to warm the stair.\n\n\"It tastes terrible,\" he says. \"Sit anyway.\"\n\nHe tells you he was born near a sea he barely remembers. He keeps drawing coastlines into maps that do not need them.",
       "footer": "There is no reward listed.",
       "choices": [
-        {"id": "sit", "label": "Sit until the lantern gutters.", "effect": "love", "tone": "green"}
+        {
+          "id": "sit",
+          "label": "Sit until the lantern gutters.",
+          "effect": "love",
+          "tone": "green"
+        }
       ]
     },
     {
@@ -42,7 +67,12 @@
       "body": "Orren is waiting before you see the green lantern. He has started doing that now.\n\nHe corrects one of his own marks, complains that Sera's tea is worse than his, and folds the map before you can ask where the new line goes.\n\n\"Next time,\" he says. \"I will show you the door that opens backward.\"",
       "footer": "He says next time as though next time is a place.",
       "choices": [
-        {"id": "promise", "label": "Tell him you will look for the lantern.", "effect": "last_seen", "tone": "green"}
+        {
+          "id": "promise",
+          "label": "Tell him you will look for the lantern.",
+          "effect": "last_seen",
+          "tone": "green"
+        }
       ]
     },
     {
@@ -51,7 +81,12 @@
       "body": "The stair is there. The green lantern is not.\n\nOrren's silver map case rests against the wall, closed. A fresh route line stops halfway through a mark. There is no blood. No body. No departure sign. Nothing in the room explains why the room feels wrong.",
       "footer": "You knew where he was supposed to be.",
       "choices": [
-        {"id": "take_case", "label": "Take the silver map case.", "effect": "grief", "tone": "dim"}
+        {
+          "id": "take_case",
+          "label": "Take the silver map case.",
+          "effect": "grief",
+          "tone": "dim"
+        }
       ]
     },
     {
@@ -60,8 +95,38 @@
       "body": "Another traveler has copied one of Orren's old marks onto the wall. The angle is wrong. You notice immediately.\n\nThe route still works.",
       "footer": "A useful thing can outlive the person who made it. That is not the same as the person remaining.",
       "choices": [
-        {"id": "map_after", "label": "Follow the copied route  +{gold}g", "effect": "gold", "tone": "gold"},
-        {"id": "training_after", "label": "Study the old mark  +{jp} JP", "effect": "jp", "tone": "blue"}
+        {
+          "id": "map_after",
+          "label": "Follow the copied route  +{gold}g",
+          "effect": "gold",
+          "tone": "gold"
+        },
+        {
+          "id": "training_after",
+          "label": "Study the old mark  +{jp} JP",
+          "effect": "jp",
+          "tone": "blue"
+        }
+      ]
+    },
+    {
+      "id": "interlude",
+      "title": "Orren's Mark",
+      "body": "You find Orren again before the descent has had time to become a different story. He does not ask for anything important. He only taps a fresh mark into the wall and points out a route the Anchor has not noticed yet.",
+      "footer": "Not every meeting has to change you.",
+      "choices": [
+        {
+          "id": "interlude_map",
+          "label": "Take the marked route  +{gold}g",
+          "effect": "interlude_gold",
+          "tone": "gold"
+        },
+        {
+          "id": "interlude_training",
+          "label": "Compare notes  +{jp} JP",
+          "effect": "interlude_jp",
+          "tone": "blue"
+        }
       ]
     }
   ]
