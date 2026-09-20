@@ -184,6 +184,9 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 	if gs and gs.get("story_flags") != null:
 		story_flags = gs.story_flags
 	var met_wanderer := story_flags.has("met_orren")
+	var waited_for_orren := story_flags.has("orrens_waited")
+	var expected_orren := story_flags.has("orrens_expected")
+	var orren_absent := story_flags.has("orrens_absent")
 	var active_curses: Array = []
 	var active_boons:  Array = []
 	if gs and gs.get("active_run") and gs.active_run:
@@ -197,7 +200,13 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 
 	# Priority selection
 	var category := "default"
-	if met_wanderer:
+	if orren_absent:
+		category = "orren_absent"
+	elif expected_orren:
+		category = "orren_expected"
+	elif waited_for_orren:
+		category = "orren_waited"
+	elif met_wanderer:
 		category = "met_wanderer"
 	elif runs == 0 and reached_floor == 0:
 		category = "first_run"
@@ -219,18 +228,49 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 		category = "floor_1_3"
 	# Fallback chain
 	var pool: Array = []
-	if category == "met_wanderer":
-		match character_id:
-			"sera":
-				pool = ["\"Orren found you, then. Keep his marks close. The lower stairs move when no one is looking.\""]
-			"varn":
-				pool = ["\"Orren is reckless, but his routes are good. If he says a door is safe, it is safe enough.\""]
-			"volant":
-				pool = ["\"You met Orren? Good. His maps are infuriatingly imprecise and usually correct.\""]
-			_:
-				pool = lines.get("default", [])
-	else:
-		pool = lines.get(category, lines.get("default", []))
+	match category:
+		"orren_absent":
+			match character_id:
+				"sera":
+					pool = ["\"I put out four cups this morning before I remembered. I am leaving the fourth one there.\""]
+				"varn":
+					pool = ["\"No body means no conclusion. It also does not mean you have to pretend the stair looked normal.\""]
+				"volant":
+					pool = ["\"I checked the archive twice. There is no departure mark for Orren. I dislike records that end in the middle of a sentence.\""]
+				_:
+					pool = lines.get("default", [])
+		"orren_expected":
+			match character_id:
+				"sera":
+					pool = ["\"You listen for his lantern hook now. I noticed before you did.\""]
+				"varn":
+					pool = ["\"Orren has become part of your route planning. That is either trust or a tactical error. Usually both.\""]
+				"volant":
+					pool = ["\"He keeps drawing coastlines into inland maps. I stopped correcting him. The maps became easier to recognize.\""]
+				_:
+					pool = lines.get("default", [])
+		"orren_waited":
+			match character_id:
+				"sera":
+					pool = ["\"He told me you stayed. He also told me not to make a thing of it, so naturally I am making exactly this much of it.\""]
+				"varn":
+					pool = ["\"You traded movement for a stranger. Bad route. Good reason. Learn the difference.\""]
+				"volant":
+					pool = ["\"Your descent slowed measurably after the lower stair. Orren called that a successful outcome. I am still examining the definition.\""]
+				_:
+					pool = lines.get("default", [])
+		"met_wanderer":
+			match character_id:
+				"sera":
+					pool = ["\"Orren found you, then. Keep his marks close. The lower stairs move when no one is looking.\""]
+				"varn":
+					pool = ["\"Orren is reckless, but his routes are good. If he says a door is safe, it is safe enough.\""]
+				"volant":
+					pool = ["\"You met Orren? Good. His maps are infuriatingly imprecise and usually correct.\""]
+				_:
+					pool = lines.get("default", [])
+		_:
+			pool = lines.get(category, lines.get("default", []))
 	if pool.is_empty(): return {}
 
 	var raw: String = pool[randi() % pool.size()]
