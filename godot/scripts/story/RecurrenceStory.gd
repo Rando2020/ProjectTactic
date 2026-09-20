@@ -85,7 +85,8 @@ static func restore_leaf(gs: Node, leaf_id: String) -> Dictionary:
 static func guide_stage(gs: Node) -> Dictionary:
 	var count := restored_leaf_count(gs)
 	var selected: Dictionary = {}
-	for stage: Dictionary in manifest().get("guide", {}).get("stages", []):
+	var guide_data: Dictionary = manifest().get("guide", {})
+	for stage: Dictionary in guide_data.get("stages", []):
 		if count >= int(stage.get("min_leaves", 0)):
 			selected = stage
 	return selected
