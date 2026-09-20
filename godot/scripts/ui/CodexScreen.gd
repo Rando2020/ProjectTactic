@@ -9,6 +9,8 @@
 class_name CodexScreen
 extends Control
 
+const RecurrenceStory = preload("res://scripts/story/RecurrenceStory.gd")
+
 signal back_pressed
 
 #  Fonts
@@ -40,165 +42,107 @@ const _CAT_COLORS := {
 #  CODEX ENTRIES
 #  Each entry: {id, category, flag, title, summary, gameplay_note}
 #  flag = ""  always visible
-#  flag = "some_flag"  only visible when GameState.narrative_flags[flag]
+#  flag = "some_flag"  only visible when GameState.story_flags contains flag
 
-const _ENTRIES := [
-	#  Always visible (tutorial / core rules)
+const _BASE_ENTRIES: Array[Dictionary] = [
 	{
-		"id":       "action_points",
+		"id": "action_points",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Action Points",
-		"summary":  "Each unit begins their turn with Action Points (AP). Movement and abilities consume AP. When AP reaches zero, the turn ends. Units regenerate AP at the start of each turn.",
-		"gameplay_note": "Conserving AP for abilities often wins battles.",
+		"flag": "",
+		"title": "Action Points",
+		"summary": "Each unit begins a turn with Action Points. Movement and abilities consume AP, forcing every turn to balance position, pressure, and restraint.",
+		"gameplay_note": "Conserving AP for a decisive ability can matter more than spending every point.",
 	},
 	{
-		"id":       "facing",
+		"id": "facing",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Facing & Flanking",
-		"summary":  "Units face one of four cardinal directions. Attacks from the rear deal bonus damage; attacks from the side deal partial bonus damage. Some abilities require facing a specific direction.",
+		"flag": "",
+		"title": "Facing and Flanking",
+		"summary": "Units face one of four cardinal directions. Rear and side attacks reward careful positioning.",
 		"gameplay_note": "Positioning is as important as raw stats.",
 	},
 	{
-		"id":       "terrain",
+		"id": "terrain",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Terrain",
-		"summary":  "The battlefield has distinct terrain types: grass, stone, road, shrine, water, and more. Each type affects movement cost, elemental interactions, and line of sight.",
-		"gameplay_note": "Shrines restore Ether at turn start. High ground improves ranged accuracy.",
+		"flag": "",
+		"title": "Terrain",
+		"summary": "Grass, stone, roads, shrines, water, height, and hazards change movement, targeting, and elemental interactions.",
+		"gameplay_note": "Read the battlefield before committing to a route.",
 	},
 	{
-		"id":       "hp_temper_ether",
+		"id": "hp_temper_ether",
 		"category": "Combat",
-		"flag":     "",
-		"title":    "HP  Temper  Ether",
-		"summary":  "Three defensive layers stack on each unit. Temper (physical armor) and Ether (magical armor) absorb damage before HP. When HP hits zero, the unit falls.",
-		"gameplay_note": "Abilities that strip Temper before striking HP are high-value openers.",
+		"flag": "",
+		"title": "HP, Temper, Ether",
+		"summary": "Temper and Ether protect against different forms of damage before HP is lost.",
+		"gameplay_note": "Strip the correct defensive layer before spending high-value attacks.",
 	},
 	{
-		"id":       "jobs",
+		"id": "jobs",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Jobs",
-		"summary":  "Every character can advance through Job trees  branching paths of abilities and stat bonuses unlocked with JP. Jobs define a character's combat role but not their identity.",
-		"gameplay_note": "Switching jobs between runs is free. JP persists across jobs.",
+		"flag": "",
+		"title": "Jobs",
+		"summary": "Jobs shape combat roles, unlock abilities, and create long-term progression without defining who a character is.",
+		"gameplay_note": "Job mastery persists beyond a single run.",
 	},
 	{
-		"id":       "boons",
+		"id": "boons",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Guardian Boons",
-		"summary":  "Each run, the Guardians offer boons  powerful effects that stack and interact across the run. Boons come in four rarities: Common, Rare, Legendary, and Unique.",
-		"gameplay_note": "Legendary and Unique boons fundamentally reshape run strategy. Seek synergy.",
+		"flag": "",
+		"title": "Guardian Boons",
+		"summary": "Guardian boons reshape a run through elemental and tactical synergies.",
+		"gameplay_note": "A familiar build is reliable. An unfamiliar boon may open a route you have never learned to trust.",
 	},
 	{
-		"id":       "soul_shards",
+		"id": "soul_shards",
 		"category": "Mechanics",
-		"flag":     "",
-		"title":    "Soul Shards",
-		"summary":  "The permanent meta-progression currency. Earned by completing runs and defeating enemies. Spent at the Last Hearth on permanent upgrades  stat increases, heat unlocks, and Guardian shrine upgrades.",
-		"gameplay_note": "Run Aether converts to Soul Shards at run's end (10:1 ratio).",
+		"flag": "",
+		"title": "Soul Shards",
+		"summary": "A persistent resource carried between descents and spent at the Last Hearth.",
+		"gameplay_note": "Meta-progression makes repetition safer. The story will eventually ask what safety costs.",
 	},
-
-	#  Narrative-gated entries
 	{
-		"id":       "the_mountain",
+		"id": "the_mountain",
 		"category": "The World",
-		"flag":     "first_run_complete",
-		"title":    "The Mountain",
-		"summary":  "The Appointed travel upward through a mountain the world has forgotten. Each floor is a layer of something ancient  sediment of a war older than the kingdoms below. At the top is either answers or annihilation.",
-		"gameplay_note": "Each run traverses ten floors. The summit is floor 10.",
+		"flag": "",
+		"title": "The Returning Road",
+		"summary": "The Appointed descend through places that change while somehow remaining familiar. Routes recur, but never perfectly.",
+		"gameplay_note": "Runs repeat structures without making any individual run unreal.",
 	},
 	{
-		"id":       "the_guardians",
+		"id": "the_guardians",
 		"category": "Lore",
-		"flag":     "first_run_complete",
-		"title":    "The Five Guardians",
-		"summary":  "Ignareth, Nerevan, Torvahk, Luminarch, Vaelthorn. Elemental patrons who offer boons to those who climb. Their motives are their own. Their gifts carry weight.",
-		"gameplay_note": "Each Guardian specializes in a damage element and strategic archetype.",
+		"flag": "",
+		"title": "The Guardians",
+		"summary": "Elemental powers answer from older layers of the world. Their oldest names may predate the civilizations that worship them.",
+		"gameplay_note": "Guardian lore remains intentionally incomplete until later story layers are earned.",
 	},
 	{
-		"id":       "enemies_speak",
-		"category": "Mysteries",
-		"flag":     "enemy_spoke_words",
-		"title":    "They Speak",
-		"summary":  "In the heat of battle, one of them paused. Lowered a weapon. Said something that was not a threat. The party did not know what to do with this.",
-		"gameplay_note": "Some enemies carry dialogue. These encounters are tracked across runs.",
-	},
-	{
-		"id":       "revelation_tier",
+		"id": "heat",
 		"category": "Mechanics",
-		"flag":     "first_run_complete",
-		"title":    "Revelation Tiers",
-		"summary":  "Five tiers of understanding, earned by doing: completing runs, witnessing events, forming relationships, reaching resolutions. Each tier shifts the narrative  what characters see, what enemies say, what the mountain reveals.",
-		"gameplay_note": "Tier 1: The War. Tier 2: The Cracks. Tier 3: The Fallen. Tier 4: The Pattern. Tier 5: The Ascent.",
+		"flag": "",
+		"title": "Heat",
+		"summary": "Optional difficulty modifiers make later descents less predictable and more rewarding.",
+		"gameplay_note": "Heat changes risk. It does not change canon outcomes by itself.",
 	},
 	{
-		"id":       "crack_events",
-		"category": "Characters",
-		"flag":     "first_run_complete",
-		"title":    "Crack Events",
-		"summary":  "Each of the seven carries something they cannot admit. When circumstances force it into the open  the moment is called a Crack. A Crack does not break a character. It lets something through.",
-		"gameplay_note": "Crack events trigger at Tier 2+ Revelation. One per character. Unrepeatable.",
-	},
-	{
-		"id":       "the_seven",
-		"category": "Characters",
-		"flag":     "first_run_complete",
-		"title":    "The Seven",
-		"summary":  "Aeryn, Cael, Brennan, Solan, Mira, Tobias, Seren. Soldiers, scholars, rogues, clergy. They believe they are here to win a war. They are here to answer a question the war was always about.",
-		"gameplay_note": "Each character has a unique story arc, job tree, and true name waiting to be found.",
-	},
-	{
-		"id":       "the_mirror",
-		"category": "Mysteries",
-		"flag":     "first_run_complete",
-		"title":    "The Mirror",
-		"summary":  "A recurring figure. Does not appear the same way twice. Knows things it should not know. Targets one member of the party per encounter  and never the same one consecutively.",
-		"gameplay_note": "Defeating the Mirror earns Revelation. Its dialogue changes across runs.",
-	},
-	{
-		"id":       "heat",
-		"category": "Mechanics",
-		"flag":     "first_run_complete",
-		"title":    "Heat",
-		"summary":  "Optional difficulty modifiers unlocked at the Last Hearth. Higher heat levels add enemy HP, elite spawns, and champion-tier encounters  and multiply reward yields.",
-		"gameplay_note": "Heat 0 is baseline. Each heat tier adds ~12% to reward multiplier.",
-	},
-	{
-		"id":       "elites",
+		"id": "elites",
 		"category": "Combat",
-		"flag":     "first_run_complete",
-		"title":    "Elite Enemies",
-		"summary":  "Elites are variant enemies with elevated stats and a unique modifier: Guardian Marked, Iron-Skinned, Soulbound, Spectral, Enraged, or Hexed. They drop Obsidian  the rare upgrade material.",
-		"gameplay_note": "Champion-tier elites appear at Heat 3+. They carry two modifiers.",
+		"flag": "",
+		"title": "Elite Enemies",
+		"summary": "Elite enemies carry additional traits that force the party to adapt instead of repeating a solved sequence.",
+		"gameplay_note": "Read affixes before committing to a familiar plan.",
 	},
 	{
-		"id":       "wanderers",
+		"id": "wanderers",
 		"category": "Lore",
-		"flag":     "first_run_complete",
-		"title":    "Wanderers",
-		"summary":  "Between floors, the party sometimes encounters figures who do not belong on a battlefield: a cartographer, a refugee, a disgraced cleric. These are Wanderers. Their bargains are strange and their gratitude is real.",
-		"gameplay_note": "Wanderer nodes appear on the run map. Their offers are unique-per-run and do not repeat.",
-	},
-	{
-		"id":       "curses",
-		"category": "Mechanics",
-		"flag":     "first_run_complete",
-		"title":    "Curses",
-		"summary":  "The mountain offers burdens with its gifts. Accepting a Curse grants an immediate boon but imposes a run-long penalty. Some curses are debts. Some are punishments. Some are invitations.",
-		"gameplay_note": "Curse and boon synergies exist. A skilled player can build around them.",
-	},
-	{
-		"id":       "true_names",
-		"category": "Mysteries",
-		"flag":     "enemy_spoke_words",
-		"title":    "True Names",
-		"summary":  "Each of the seven has a name they have forgotten  or was taken from them. The mountain remembers. Fragments surface through encounters, dialogue, and choices. Recovering a true name changes everything.",
-		"gameplay_note": "True name fragments lower Costume Integrity. Full revelation triggers Tier 5 arc content.",
+		"flag": "",
+		"title": "Wanderers",
+		"summary": "Not everyone encountered between battles belongs to the war. Some people simply found a way to keep moving.",
+		"gameplay_note": "Wanderers are opportunities for bargains, testimony, and choices that are not reducible to combat.",
 	},
 ]
+
 
 #  State
 var _active_category: String = "All"
@@ -265,7 +209,7 @@ func _build_header(root: VBoxContainer) -> void:
 	count_lbl.add_theme_font_override("font", _FONT_DISPLAY)
 	count_lbl.add_theme_font_size_override("font_size", 13)
 	count_lbl.add_theme_color_override("font_color", _FG2)
-	count_lbl.text = "%d / %d Entries Unlocked" % [unlocked.size(), _ENTRIES.size()]
+	count_lbl.text = "%d / %d Entries Unlocked" % [unlocked.size(), _all_entries().size()]
 	chip.add_child(count_lbl)
 
 	_hspace(hh, 12)
@@ -426,14 +370,20 @@ func _build_empty(parent: Control) -> void:
 
 #  DATA HELPERS
 
+func _all_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = _BASE_ENTRIES.duplicate(true)
+	entries.append_array(RecurrenceStory.codex_entries())
+	return entries
+
+
 func _unlocked_entries() -> Array:
-	return _ENTRIES.filter(func(e: Dictionary) -> bool:
+	return _all_entries().filter(func(e: Dictionary) -> bool:
 		var flag: String = str(e.get("flag", ""))
 		if flag == "":
 			return true
-		if _gs == null:
+		if _gs == null or _gs.get("story_flags") == null:
 			return false
-		return bool(_gs.narrative_flags.get(flag, false)))
+		return flag in _gs.story_flags)
 
 
 func _filtered_entries() -> Array:

@@ -1,15 +1,12 @@
 ## HubDialogue.gd
-## Four hub characters who react to your run history.
-## Hades-style: they remember what happened and say something specific.
-##
-## Characters:
-##   Sera        The Hearth keeper. Warm, observant, practical.
-##   Varn        Watch veteran. Blunt, tactical, dry.
-##   Volant      Bellkeeper Archivist. Academic, precise, quietly amazed.
-##   The Echo    Appears rarely. Cryptic. Possibly Vaelthorn's voice.
+## Grounded Hearth characters react to run history while the Guide reacts to
+## restored fragments. The Guide should become warmer and more human as the
+## story advances, not more sinister.
 
 class_name HubDialogue
 extends RefCounted
+
+const GuideDialogue = preload("res://scripts/story/GuideDialogue.gd")
 
 const CHARACTERS: Dictionary = {
 
@@ -164,39 +161,6 @@ const CHARACTERS: Dictionary = {
 		},
 	},
 
-	"the_echo": {
-		"name":    "The Echo",
-		"title":   "Origin Unknown",
-		"portrait":"?",
-		"color":   Color(0.66, 0.33, 0.97),
-		"lines": {
-			"first_run": [
-				'"You felt it. The pull toward the Vault. That\'s not courage. That\'s recognition."',
-				'"The resonance knows you. It has for longer than you realise."',
-			],
-			"run_complete": [
-				'"The Anchor falls. The resonance breathes. Neither of us expected this."',
-				'"You shattered it. Now the field is open. Something else will fill it. It always does."',
-			],
-			"had_curses": [
-				'"The curses are not punishments. They are invitations. Some of them, anyway."',
-				'"Vaelthorn\'s Hunger. You know what it costs. You took it anyway. That means something."',
-			],
-			"died_to_anchor": [
-				'"The Anchor does not hate you. It simply doesn\'t know you yet."',
-				'"Void energy recognises holy energy the way fire recognises water. Point that at it."',
-			],
-			"floor_7_9": [
-				'"Floor {floor}. The resonance at that depth is almost aware. Almost."',
-				'"You felt the Anchor\'s attention. That\'s new. That\'s significant."',
-			],
-			"default": [
-				'"..."',
-				'"The resonance shifts when you enter. I notice that."',
-				'"Come back. The Vault will be different. So will you."',
-			],
-		},
-	},
 }
 
 
@@ -207,7 +171,11 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 
 	var lines: Dictionary = char_data.get("lines", {})
 	var death: Dictionary = gs.get("last_run_death") if gs else {}
-	var reached_floor: int = int(gs.get("run_floor_reached")) if gs else 0
+	var reached_floor: int = 0
+	if gs:
+		reached_floor = int(gs.get("last_run_floor")) if gs.get("last_run_floor") != null else int(gs.get("run_floor_reached"))
+		if reached_floor <= 0:
+			reached_floor = int(gs.get("run_floor_reached"))
 	var runs: int = int(gs.get("runs_completed")) if gs else 0
 	var heat:  int = 0
 	var rm: Node = Engine.get_main_loop().root.get_node_or_null("/root/RunManager") if Engine.get_main_loop() else null
@@ -289,16 +257,11 @@ static func get_line(character_id: String, gs: Node) -> Dictionary:
 ## Get lines from all four characters for the current run state.
 static func get_all_lines(gs: Node) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	var reached_floor: int = int(gs.get("run_floor_reached")) if gs else 0
-	# runs not needed here
-	# Echo only appears on interesting runs
-	var last_death: Dictionary = gs.get("last_run_death") if gs else {}
-	var show_echo: bool = reached_floor >= 7 or last_death.get("was_anchor", false) == true or \
-		(gs and gs.get("active_run") and not gs.active_run.active_curses.is_empty())
-	for cid in ["sera","varn","volant"]:
+	var guide_line := GuideDialogue.get_line(gs)
+	if not guide_line.is_empty():
+		result.append(guide_line)
+	for cid in ["sera", "varn", "volant"]:
 		var line := get_line(cid, gs)
-		if not line.is_empty(): result.append(line)
-	if show_echo:
-		var echo_line := get_line("the_echo", gs)
-		if not echo_line.is_empty(): result.append(echo_line)
+		if not line.is_empty():
+			result.append(line)
 	return result

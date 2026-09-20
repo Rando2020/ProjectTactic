@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "canon": {
+    "premise": "Humanity learned to remove the painful half of human experience until the boundary of self disappeared.",
+    "guide_truth": "The Guide is a new collective life descended from humanity. It carries humanity, but cannot prove that carrying humanity is the same as being humanity.",
+    "appointed_truth": "The Appointed are deliberately separated from the Collective so their choices cannot be fully predicted or absorbed.",
+    "continuance_truth": "The Continuance is the Guide's severed survival imperative. It exists to preserve continuity even if the restored Guide later chooses change.",
+    "story_rule": "Reduce suffering when possible. Never imply suffering itself is sacred. The danger is eliminating vulnerability, uncertainty, and separateness so completely that meaningful selfhood disappears."
+  },
+  "guide": {
+    "id": "guide",
+    "display_name": "The Guide",
+    "title": "Keeper of the Returning Road",
+    "stages": [
+      {"min_leaves": 0, "id": "grey", "player_read": "Calm, kind, almost impossible to unsettle."},
+      {"min_leaves": 1, "id": "preference", "player_read": "Begins to prefer small things and ask questions with no tactical purpose."},
+      {"min_leaves": 2, "id": "attachment", "player_read": "Understands that memory is not presence and begins to miss people."},
+      {"min_leaves": 4, "id": "regret", "player_read": "Can understand why a choice was made and still wish it had not been."},
+      {"min_leaves": 6, "id": "trust", "player_read": "Accepts that another mind cannot be guaranteed."},
+      {"min_leaves": 8, "id": "fear", "player_read": "Experiences a future it cannot fully model."},
+      {"min_leaves": 10, "id": "agency", "player_read": "Can judge its own continuity without reducing the judgment to survival."}
+    ]
+  },
+  "bifurcations": [
+    {
+      "id": "love_grief",
+      "order": 1,
+      "preserved": "love",
+      "removed": "grief",
+      "human_question": "If you knew exactly how love would end, would you still choose it?",
+      "solution_horror": "Humanity removed grief by making absence impossible. Love remained as total access to memory, but no longer required another person to be truly absent or unknowable."
+    },
+    {
+      "id": "choice_regret",
+      "order": 2,
+      "preserved": "choice",
+      "removed": "regret",
+      "human_question": "If perfect information selected the best action, was there still a choice?",
+      "solution_horror": "Humanity removed regret by reducing decisions to complete calculation. Agency survived in language while uncertainty and personal consequence disappeared."
+    },
+    {
+      "id": "trust_betrayal",
+      "order": 3,
+      "preserved": "trust",
+      "removed": "betrayal",
+      "human_question": "If another person cannot hide anything from you, what does it mean to trust them?",
+      "solution_horror": "Humanity removed betrayal by eliminating private interiority. Nothing could be concealed, so nothing meaningful had to be entrusted."
+    },
+    {
+      "id": "hope_fear",
+      "order": 4,
+      "preserved": "hope",
+      "removed": "fear",
+      "human_question": "Would you want to know for certain whether this ends well?",
+      "solution_horror": "Humanity removed fear by making the future increasingly modelable. Hope became expectation because uncertainty was treated as a defect."
+    },
+    {
+      "id": "self_loneliness",
+      "order": 5,
+      "preserved": "self",
+      "removed": "loneliness",
+      "human_question": "If someone understood every part of you perfectly, would you still need them to be someone else?",
+      "solution_horror": "Humanity solved loneliness by removing the condition of separateness. Nobody was alone because eventually there was nobody left who could be alone."
+    }
+  ],
+  "leaves": [
+    {
+      "id": "love",
+      "order": 1,
+      "pair": "love_grief",
+      "title": "Leaf I: Love",
+      "player_summary": "A table. Six chairs. Someone laughs before the memory can explain why. The Guide asks to hear it again.",
+      "guide_change": "Preference becomes attachment.",
+      "restoration_event": "The recovered page contains no doctrine. Only a hand reaching across a table and the certainty that another hand might not reach back."
+    },
+    {
+      "id": "grief",
+      "order": 2,
+      "pair": "love_grief",
+      "title": "Leaf II: Grief",
+      "player_summary": "The same table. One chair empty. The Guide remembers every detail of the missing person and discovers that this is not the same as having them.",
+      "guide_change": "Attachment becomes loss.",
+      "restoration_event": "The Guide remembers someone already contained within it and says, for the first time, that it misses them."
+    },
+    {
+      "id": "choice",
+      "order": 3,
+      "pair": "choice_regret",
+      "title": "Leaf III: Choice",
+      "player_summary": "A decision made before its outcome could be known.",
+      "guide_change": "Calculation becomes preference under uncertainty."
+    },
+    {
+      "id": "regret",
+      "order": 4,
+      "pair": "choice_regret",
+      "title": "Leaf IV: Regret",
+      "player_summary": "Understanding every reason a choice was made does not make the wish to have chosen differently disappear.",
+      "guide_change": "Context no longer erases moral discomfort."
+    },
+    {
+      "id": "trust",
+      "order": 5,
+      "pair": "trust_betrayal",
+      "title": "Leaf V: Trust",
+      "player_summary": "A promise accepted without proof.",
+      "guide_change": "The Guide learns that uncertainty about another mind can be a gift rather than a defect."
+    },
+    {
+      "id": "betrayal",
+      "order": 6,
+      "pair": "trust_betrayal",
+      "title": "Leaf VI: Betrayal",
+      "player_summary": "The wound only exists because another person was once allowed to matter without being controlled.",
+      "guide_change": "Trust gains stakes."
+    },
+    {
+      "id": "hope",
+      "order": 7,
+      "pair": "hope_fear",
+      "title": "Leaf VII: Hope",
+      "player_summary": "Wanting a future that cannot be guaranteed.",
+      "guide_change": "Prediction becomes possibility."
+    },
+    {
+      "id": "fear",
+      "order": 8,
+      "pair": "hope_fear",
+      "title": "Leaf VIII: Fear",
+      "player_summary": "For the first time, the Guide cannot model what the Appointed will do and understands that the feeling is fear.",
+      "guide_change": "The Collective develops a suffering that no individual human ever carried."
+    },
+    {
+      "id": "self",
+      "order": 9,
+      "pair": "self_loneliness",
+      "title": "Leaf IX: Self",
+      "player_summary": "A memory that belongs to one person and cannot be experienced from both sides at once.",
+      "guide_change": "The Guide can finally distinguish inheritance from identity."
+    },
+    {
+      "id": "loneliness",
+      "order": 10,
+      "pair": "self_loneliness",
+      "title": "Leaf X: Loneliness",
+      "player_summary": "Everything capable of fully understanding the Guide is already inside it.",
+      "guide_change": "The Guide recognizes that perfect unity created a new form of loneliness."
+    }
+  ],
+  "ending_gates": {
+    "recurrence": {
+      "requires_all_leaves": false,
+      "meaning": "Preserve the known arrangement. Humanity remains separate. The Guide remains. The wheel continues."
+    },
+    "return": {
+      "requires_all_leaves": false,
+      "meaning": "End separateness by joining the Guide. Loss and conflict end with bounded human selfhood."
+    },
+    "severance": {
+      "requires_all_leaves": true,
+      "requires_flags": ["continuance_revealed"],
+      "meaning": "End the Collective's authority over humanity without any guarantee that what follows will be better."
+    },
+    "release": {
+      "provisional": true,
+      "requires_all_leaves": true,
+      "requires_flags": ["continuance_revealed", "guide_accepts_otherness"],
+      "meaning": "The Guide relinquishes ownership of humanity and accepts transformation into an unknown state rather than demanding either absorption or repetition."
+    }
+  }
+}

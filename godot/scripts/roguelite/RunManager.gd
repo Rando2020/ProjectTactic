@@ -45,6 +45,10 @@ func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: S
 		gs.pending_loot.clear()
 		gs.run_inventory.clear()
 		gs.last_run_death.clear()
+		if gs.get("last_run_floor") != null:
+			gs.last_run_floor = 0
+		if gs.get("last_run_victory") != null:
+			gs.last_run_victory = false
 
 	run_started.emit(run_seed, heat_level)
 

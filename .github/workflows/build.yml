@@ -25,6 +25,9 @@ jobs:
       - name: Verify game shell stylesheet exists
         run: test -f src/game/styles/gameShell.css
 
+      - name: Validate recurrence story contract
+        run: python tools/check_recurrence_story.py
+
       - name: Install dependencies
         run: npm install
 
