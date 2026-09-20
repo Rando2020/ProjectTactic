@@ -22,7 +22,7 @@ pair_ids = {pair["id"] for pair in pairs}
 for leaf in leaves:
     assert leaf["pair"] in pair_ids, f"{leaf['id']} references unknown pair {leaf['pair']}"
 
-expected_orren_stages = [
+expected_orren_progression = [
     "first",
     "sacrifice",
     "attachment",
@@ -31,9 +31,11 @@ expected_orren_stages = [
     "after_grief",
 ]
 orren_stages = orren.get("stages", [])
-assert [stage["id"] for stage in orren_stages] == expected_orren_stages, (
+orren_stage_ids = [stage["id"] for stage in orren_stages]
+assert [stage_id for stage_id in orren_stage_ids if stage_id != "interlude"] == expected_orren_progression, (
     "Orren stages must preserve the authored Love/Grief sequence"
 )
+assert orren_stage_ids.count("interlude") == 1, "Orren must define exactly one same-run interlude stage"
 for stage in orren_stages:
     choices = stage.get("choices", [])
     assert choices, f"Orren stage {stage['id']} must offer at least one player action"
