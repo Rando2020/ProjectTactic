@@ -12,13 +12,41 @@
     "display_name": "The Guide",
     "title": "Keeper of the Returning Road",
     "stages": [
-      {"min_leaves": 0, "id": "grey", "player_read": "Calm, kind, almost impossible to unsettle."},
-      {"min_leaves": 1, "id": "preference", "player_read": "Begins to prefer small things and ask questions with no tactical purpose."},
-      {"min_leaves": 2, "id": "attachment", "player_read": "Understands that memory is not presence and begins to miss people."},
-      {"min_leaves": 4, "id": "regret", "player_read": "Can understand why a choice was made and still wish it had not been."},
-      {"min_leaves": 6, "id": "trust", "player_read": "Accepts that another mind cannot be guaranteed."},
-      {"min_leaves": 8, "id": "fear", "player_read": "Experiences a future it cannot fully model."},
-      {"min_leaves": 10, "id": "agency", "player_read": "Can judge its own continuity without reducing the judgment to survival."}
+      {
+        "min_leaves": 0,
+        "id": "grey",
+        "player_read": "Calm, kind, almost impossible to unsettle."
+      },
+      {
+        "min_leaves": 1,
+        "id": "preference",
+        "player_read": "Begins to prefer small things and ask questions with no tactical purpose."
+      },
+      {
+        "min_leaves": 2,
+        "id": "attachment",
+        "player_read": "Understands that memory is not presence and begins to miss people."
+      },
+      {
+        "min_leaves": 4,
+        "id": "regret",
+        "player_read": "Can understand why a choice was made and still wish it had not been."
+      },
+      {
+        "min_leaves": 6,
+        "id": "trust",
+        "player_read": "Accepts that another mind cannot be guaranteed."
+      },
+      {
+        "min_leaves": 8,
+        "id": "fear",
+        "player_read": "Experiences a future it cannot fully model."
+      },
+      {
+        "min_leaves": 10,
+        "id": "agency",
+        "player_read": "Can judge its own continuity without reducing the judgment to survival."
+      }
     ]
   },
   "bifurcations": [
@@ -80,7 +108,7 @@
       "title": "Leaf II: Grief",
       "player_summary": "The same table. One chair empty. The Guide remembers every detail of the missing person and discovers that this is not the same as having them.",
       "guide_change": "Attachment becomes loss.",
-      "restoration_event": "The Guide remembers someone already contained within it and says, for the first time, that it misses them."
+      "restoration_event": "The page remembers the table again. One chair is empty. Every detail of the missing person remains available. The absence remains."
     },
     {
       "id": "choice",
@@ -158,13 +186,18 @@
     },
     "severance": {
       "requires_all_leaves": true,
-      "requires_flags": ["continuance_revealed"],
+      "requires_flags": [
+        "continuance_revealed"
+      ],
       "meaning": "End the Collective's authority over humanity without any guarantee that what follows will be better."
     },
     "release": {
       "provisional": true,
       "requires_all_leaves": true,
-      "requires_flags": ["continuance_revealed", "guide_accepts_otherness"],
+      "requires_flags": [
+        "continuance_revealed",
+        "guide_accepts_otherness"
+      ],
       "meaning": "The Guide relinquishes ownership of humanity and accepts transformation into an unknown state rather than demanding either absorption or repetition."
     }
   }
