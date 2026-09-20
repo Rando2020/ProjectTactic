@@ -1,52 +1,81 @@
 # Content Pipeline
 
 ## Content philosophy
-All combat, story, town, quest, enemy, item, job, and map content should be data-driven wherever possible.
+
+Combat, story, encounters, jobs, items, maps, and progression should be data-driven wherever practical.
+
+The production target is Godot. JavaScript data under `src/` remains reference material unless a task explicitly targets the reference build.
 
 ## Recommended workflow
-1. Write the design in docs.
-2. Add the data object.
-3. Validate the object with simple helper functions.
-4. Render the content in a generic component.
-5. Only then add custom UI polish.
 
-## Data file ownership
-- `data/maps.js`: battlefields, spawns, objectives, rewards.
-- `data/terrain.js`: tile behavior, movement cost, elemental reactions.
-- `data/units.js`: player units and recruits.
-- `data/jobs.js`: job roles, unlocks, passives, abilities.
-- `data/abilities.js`: tactical actions and targeting rules.
-- `data/enemies.js`: enemy stats, AI profiles, drops.
-- `data/items.js`: consumables and key items.
-- `data/equipment.js`: weapons, armor, accessories.
-- `data/story.js`: chapter beat structure.
-- `data/quests.js`: objectives, rewards, flags.
-- `data/towns.js`: world map/town content.
-- `data/factions.js`: trust, reputation, consequences.
-- `data/glossary.js`: lore and system terms.
+1. Define design intent in `docs/`.
+2. Add or update the production data under `godot/data/` or a focused Godot data script.
+3. Add a service/helper under `godot/scripts/` if stateful behavior is required.
+4. Persist only the smallest stable state needed in `godot/scripts/systems/GameState.gd` or the owning run/meta service.
+5. Validate the data contract.
+6. Render it through an existing generic UI or encounter surface.
+7. Add bespoke presentation only after the state and content flow work.
+
+## Production ownership
+
+| Content | Preferred location |
+| --- | --- |
+| Narrative canon | `docs/lore/` |
+| Narrative runtime data | `godot/data/story/` |
+| Narrative runtime services | `godot/scripts/story/` |
+| Battle/map definitions | `godot/scripts/data/` or dedicated `godot/data/` files |
+| Job/class definitions | `godot/scripts/data/` and job system services |
+| Run progression | `godot/scripts/roguelite/`, `godot/scripts/roguelike/` |
+| Persistent state | `godot/scripts/systems/GameState.gd` |
+| Save serialization | `godot/scripts/state/SaveSystem.gd` and production GameState save contract |
+| Player-facing screens | `godot/scripts/ui/`, `godot/scenes/` |
+
+## Recurrence story example
+
+The current narrative follows this pipeline:
+
+- Design truth: `docs/lore/recurrence-narrative-bible.md`
+- Runtime definitions: `godot/data/story/recurrence_manifest.json`
+- State/query service: `godot/scripts/story/RecurrenceStory.gd`
+- Reactive character delivery: `godot/scripts/story/GuideDialogue.gd`
+- Player surfaces: Results, Last Hearth, Codex
+- Validation: `tools/check_recurrence_story.py`
+
+This separation lets authors know the whole truth while players receive only what their progress has earned.
 
 ## Content naming rules
-Use snake_case IDs and readable display names.
+
+Use snake_case stable IDs and readable display names.
 
 Examples:
+
 - `ashvale_road_01`
 - `mirefen_reaction_trial`
+- `recurrence_leaf_love`
+- `continuance_revealed`
 - `sunder_strike`
-- `null_drake`
 
 ## Asset naming rules
-Use stable IDs that match data whenever possible.
+
+Use descriptive lowercase kebab-case file names.
 
 Examples:
-- `portrait_zane.png`
-- `unit_null_drake_idle.png`
-- `tile_shallow_water.png`
-- `icon_thunder.svg`
 
-## Acceptance checklist for new content
-- Has stable ID.
-- Has display name.
-- Has clear player-facing purpose.
-- Has unlock requirements if not available by default.
-- Has test scenario or debug path.
-- Does not use copyrighted names or assets.
+- `zane-portrait-placeholder.png`
+- `null-drake-idle-placeholder.png`
+- `stone-castle-tile.png`
+- `guide-memory-fragment-frame.png`
+
+## Acceptance checklist
+
+New content should:
+
+- Have a stable ID.
+- Have a clear player-facing purpose.
+- Declare unlock or gating requirements when applicable.
+- Live in the production path for the system that owns it.
+- Have a test, validator, debug path, or reproducible acceptance scenario.
+- Preserve existing save compatibility or document migration.
+- Use original or legally safe assets.
+- Update matching documentation.
+- Avoid runtime dependencies on `archive_react/`, `archive_godot/`, or `docs/archive/`.
