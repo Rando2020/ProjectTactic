@@ -6,6 +6,8 @@
 class_name ResultsScreen
 extends Control
 
+const RecurrenceStory = preload("res://scripts/story/RecurrenceStory.gd")
+
 const BG    := Color(0.04, 0.05, 0.08)
 const FG    := Color(0.97, 0.94, 0.87)
 const DIM   := Color(0.45, 0.42, 0.38)
@@ -40,6 +42,16 @@ func _build_ui() -> void:
 	var is_defeat: bool      = not death.is_empty()
 	var is_run_end: bool     = floor > 0 and _gs != null
 	var is_complete: bool    = floor >= 10 and is_defeat == false
+	var story_event: Dictionary = {}
+
+	if is_run_end and _gs:
+		_gs.last_run_floor = floor
+		_gs.last_run_victory = is_complete
+		_gs.best_floor_reached = max(_gs.best_floor_reached, floor)
+		if is_complete:
+			_gs.runs_completed += 1
+		story_event = RecurrenceStory.record_run_outcome(_gs, is_complete, floor, is_defeat)
+		_gs.save()
 
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -72,6 +84,25 @@ func _build_ui() -> void:
 	_space(root, 20)
 	_separator(root)
 	_space(root, 18)
+
+	if not story_event.is_empty():
+		var memory_panel := _bordered_panel(root, Color(0.10, 0.08, 0.13), Color(0.55, 0.44, 0.72))
+		var memory_box := VBoxContainer.new()
+		memory_box.add_theme_constant_override("margin_left", 22)
+		memory_box.add_theme_constant_override("margin_right", 22)
+		memory_box.add_theme_constant_override("margin_top", 18)
+		memory_box.add_theme_constant_override("margin_bottom", 18)
+		memory_box.add_theme_constant_override("separation", 7)
+		memory_panel.add_child(memory_box)
+		_lbl(memory_box, "SOMETHING RETURNED", 10, Color(0.72, 0.63, 0.90))
+		_lbl(memory_box, str(story_event.get("title", "A Sealed Leaf")), 22, FG)
+		var memory_text := Label.new()
+		memory_text.text = str(story_event.get("text", ""))
+		memory_text.add_theme_font_size_override("font_size", 14)
+		memory_text.add_theme_color_override("font_color", Color(0.88, 0.84, 0.91))
+		memory_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		memory_box.add_child(memory_text)
+		_space(root, 16)
 
 	#  DEATH SCREEN
 	if is_defeat and is_run_end:
@@ -230,9 +261,7 @@ func _build_ui() -> void:
 		btn_dest = "res://scenes/HubScene.tscn"
 		if _gs:
 			_gs.run_floor_reached = 0; _gs.run_jp_earned = 0
-			_gs.run_inventory.clear(); _gs.last_run_death.clear()
-			_gs.runs_completed += 1
-			_gs.best_floor_reached = max(_gs.best_floor_reached, floor)
+			_gs.run_inventory.clear()
 	elif is_defeat:
 		btn_text = "Back to the Hearth"
 		btn_col  = Color(0.7, 0.55, 0.55)
@@ -240,8 +269,6 @@ func _build_ui() -> void:
 		if _gs:
 			_gs.run_floor_reached = 0; _gs.run_jp_earned = 0
 			_gs.run_inventory.clear()
-			_gs.last_run_death.clear()
-			_gs.best_floor_reached = max(_gs.best_floor_reached, floor)
 			_gs.active_run = null
 	else:
 		btn_text = "Continue  "
