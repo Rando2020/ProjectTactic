@@ -192,10 +192,24 @@ The slice is complete when:
 9. Guide and Hearth dialogue reflect the arc.
 10. The Godot headless test proves the state sequence deterministically.
 
-## Risk
+## Pacing rule
 
-The current route generator can present multiple Wanderer nodes in a single descent. A highly route-focused player may therefore progress through several Orren stages faster than ideal.
+Orren can advance at most **one authored relationship beat per descent**.
 
-For the vertical slice this is acceptable because it proves the emotional and technical structure.
+After an authored Orren scene resolves, any additional Orren/Wanderer node in that same run becomes a non-advancing interlude. Interludes can still grant a practical reward, but they cannot move the relationship forward or restore another Leaf.
 
-Before final pacing, add a per-run Orren encounter cap or a minimum run-separation rule between orrens_expected, orrens_last_seen, and orrens_absent.
+The pacing lock is serialized in RunState so saving and continuing a run cannot bypass it.
+
+This means the earliest possible sequence spans multiple descents:
+
+1. first useful meeting;
+2. sacrifice decision;
+3. attachment / Love;
+4. ordinary promise;
+5. Empty Stair / Grief.
+
+Declining the sacrifice still consumes that run's authored beat, but the same decision can return on a later descent.
+
+## Remaining risk
+
+The emotional pacing now has a hard minimum, but the player may still miss Orren for several runs depending on route choices. That variability is useful to a point because anticipation grows through absence, but playtesting should confirm it does not become frustration.
