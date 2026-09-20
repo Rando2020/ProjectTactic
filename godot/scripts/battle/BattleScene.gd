@@ -621,6 +621,15 @@ func _spawn_player_units() -> Array[Unit]:
 			if move_pen != 0:
 				unit.unit_data.base_stats.movement = max(1, unit.unit_data.base_stats.movement + move_pen)
 
+	# Apply authored story burdens explicitly. These are not ordinary curses:
+	# the player should feel the narrative cost even if curse aggregation changes.
+	if gs and gs.active_run:
+		var story_move_penalty: int = int(gs.active_run.story_move_penalty)
+		if story_move_penalty != 0:
+			for unit in result:
+				if unit.unit_data and unit.unit_data.base_stats:
+					unit.unit_data.base_stats.move = max(1, unit.unit_data.base_stats.move + story_move_penalty)
+
 	# Restore HP from previous battles in this run
 	if gs and gs.unit_registry:
 		for unit in result:
