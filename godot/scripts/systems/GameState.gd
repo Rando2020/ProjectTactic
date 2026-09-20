@@ -321,6 +321,7 @@ func save() -> void:
 		"story_flags":      story_flags.duplicate(),
 		"last_run_floor":   last_run_floor,
 		"last_run_victory": last_run_victory,
+		"last_run_death":   last_run_death.duplicate(true),
 		"runs_completed":   runs_completed,
 		"best_floor_reached": best_floor_reached,
 		"unit_jp":          unit_jp,
@@ -376,6 +377,8 @@ func load_save() -> bool:
 		story_flags.append(str(flag))
 	last_run_floor = int(data.get("last_run_floor", 0))
 	last_run_victory = bool(data.get("last_run_victory", false))
+	var saved_last_run_death: Variant = data.get("last_run_death", {})
+	last_run_death = (saved_last_run_death as Dictionary).duplicate(true) if saved_last_run_death is Dictionary else {}
 	runs_completed = int(data.get("runs_completed", 0))
 	best_floor_reached = int(data.get("best_floor_reached", 0))
 
