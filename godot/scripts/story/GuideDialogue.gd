@@ -7,6 +7,9 @@ const GUIDE_COLOR := Color(0.76, 0.70, 0.92)
 static func get_line(gs: Node) -> Dictionary:
 	if gs == null:
 		return {}
+	var first_meeting := RecurrenceStory.add_flag(gs, RecurrenceStory.GUIDE_MET_FLAG)
+	if first_meeting and gs.has_method("save"):
+		gs.save()
 	var count := RecurrenceStory.restored_leaf_count(gs)
 	var floor := int(gs.get("last_run_floor")) if gs.get("last_run_floor") != null else int(gs.get("run_floor_reached"))
 	var death: Dictionary = gs.get("last_run_death") if gs.get("last_run_death") != null else {}
