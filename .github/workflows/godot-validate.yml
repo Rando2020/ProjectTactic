@@ -20,6 +20,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate narrative data contract
+        run: python tools/check_recurrence_story.py
+
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
