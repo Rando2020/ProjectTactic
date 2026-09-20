@@ -8,12 +8,14 @@ ProjectTactic's production game lives under `godot/`, so the repository must val
 
 `.github/workflows/godot-validate.yml` runs on pull requests and manual dispatch.
 
-It uses Godot 4.6.2 without .NET and performs two checks:
+It validates the narrative data contract, then uses Godot 4.6.2 without .NET for engine checks:
 
-1. Starts the real project in headless editor mode so project settings, resources, autoloads, scenes, and import-time dependencies are exercised.
-2. Runs `godot/tests/validate_all_scripts.gd`, which recursively loads every GDScript under `res://scripts`.
+1. Runs `tools/check_recurrence_story.py` so malformed Recurrence or Orren story data fails before engine startup.
+2. Starts the real project in headless editor mode so project settings, resources, autoloads, scenes, and import-time dependencies are exercised.
+3. Runs `godot/tests/validate_all_scripts.gd`, which recursively loads every GDScript under `res://scripts`.
+4. Runs targeted Godot story tests when the branch defines them, including the Orren Love / Grief state progression.
 
-A script that cannot be parsed or loaded causes the workflow to fail.
+A malformed story contract or script that cannot be parsed or loaded causes the workflow to fail.
 
 ## Why recursive loading matters
 

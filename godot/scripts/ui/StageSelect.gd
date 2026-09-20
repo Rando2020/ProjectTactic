@@ -4,6 +4,8 @@
 class_name StageSelect
 extends Control
 
+const OrrenArc = preload("res://scripts/story/OrrenArc.gd")
+
 const BG   := Color(0.04, 0.05, 0.08)
 const FG   := Color(0.97, 0.94, 0.87)
 const DIM  := Color(0.45, 0.42, 0.38)
@@ -182,6 +184,16 @@ func _build_run_screen(run: RunState) -> void:
 		br.add_child(count_lbl)
 
 	_build_run_build_panel(root, run)
+	if run.story_move_penalty < 0:
+		var burden_panel := _panel(root, Color(0.075, 0.09, 0.075), Vector2(0, 46))
+		var burden_row := _hbox(burden_panel)
+		burden_row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		burden_row.add_theme_constant_override("margin_left", 24)
+		burden_row.add_theme_constant_override("margin_right", 18)
+		burden_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		_lbl(burden_row, "ORREN'S BURDEN", 10, Color(0.53, 0.94, 0.67))
+		_gap(burden_row, 12)
+		_lbl(burden_row, "You chose to carry someone else's weight. Party movement %d for this descent." % run.story_move_penalty, 12, FG)
 	_space(root, 18)
 
 	# Group floor_plan by floor number, then render one column per floor.
@@ -1072,71 +1084,123 @@ func _show_wanderer_encounter(run: RunState) -> void:
 	_boon_overlay = _overlay()
 	add_child(_boon_overlay)
 
-	var met_before: bool = _gs != null and _gs.story_flags.has("met_orren")
-	var title := "Orren of the Lower Stair" if not met_before else "Orren's Second Mark"
-	var body := "A lantern flickers beside a broken stair. Orren, a vault-runner with a silver map case, raises one hand before your party reaches for steel."
-	if met_before:
-		body = "Orren finds you again between two impossible doors. His map has changed since the last floor, and one route now burns gold-bright."
+	var encounter := OrrenArc.get_stage(_gs, run)
+	if encounter.is_empty():
+		_complete_current_node_with_loadout_xp("wanderer")
+		_build_ui()
+		return
 
 	var vbox := _vbox(_boon_overlay, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	vbox.custom_minimum_size = Vector2(760, 0)
-	_lbl(vbox, "STORY ENCOUNTER", 11, Color(0.53,0.94,0.67), true)
+	vbox.custom_minimum_size = Vector2(780, 0)
+	_lbl(vbox, "STORY ENCOUNTER", 11, Color(0.53, 0.94, 0.67), true)
 	_space(vbox, 8)
-	_lbl(vbox, title, 30, FG, true)
-	_space(vbox, 8)
+	_lbl(vbox, str(encounter.get("title", "The Lower Stair")), 30, FG, true)
+	_space(vbox, 10)
+
 	var story := RichTextLabel.new()
 	story.bbcode_enabled = false
-	story.text = body + "\n\n\"The Anchor rearranges the floors when it feels watched,\" he says. \"Let me mark one truth before it lies again.\""
-	story.add_theme_font_size_override("normal_font_size", 13)
-	story.add_theme_color_override("default_color", Color(0.82,0.80,0.76))
-	story.custom_minimum_size = Vector2(700, 112)
+	story.text = str(encounter.get("body", ""))
+	story.add_theme_font_size_override("normal_font_size", 14)
+	story.add_theme_color_override("default_color", Color(0.84, 0.82, 0.78))
+	story.custom_minimum_size = Vector2(720, 180)
 	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(story)
 	_space(vbox, 16)
 
-	var choices := _hbox(vbox)
-	choices.add_theme_constant_override("separation", 14)
-	var map_btn := _btn("Trust His Map  +%dg" % _wanderer_gold_reward(), GOLD)
-	map_btn.custom_minimum_size = Vector2(260, 54)
-	map_btn.pressed.connect(_apply_wanderer_choice.bind("map", run))
-	choices.add_child(map_btn)
-	var train_btn := _btn("Train At The Stair  +%d JP" % _wanderer_jp_reward(), Color(0.48,0.86,1.0))
-	train_btn.custom_minimum_size = Vector2(260, 54)
-	train_btn.pressed.connect(_apply_wanderer_choice.bind("training", run))
-	choices.add_child(train_btn)
+	var choices := VBoxContainer.new()
+	choices.add_theme_constant_override("separation", 10)
+	choices.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(choices)
 
-	_space(vbox, 12)
-	_lbl(vbox, "Orren will remember which help you accepted.", 11, DIM, true)
+	for choice: Dictionary in encounter.get("choices", []):
+		var tone := str(choice.get("tone", "green"))
+		var btn := _btn(OrrenArc.choice_label(choice, run), _story_tone_color(tone))
+		btn.custom_minimum_size = Vector2(520, 50)
+		btn.pressed.connect(_apply_wanderer_choice.bind(str(choice.get("id", "")), run))
+		choices.add_child(btn)
+
+	var footer := str(encounter.get("footer", ""))
+	if not footer.is_empty():
+		_space(vbox, 14)
+		_lbl(vbox, footer, 11, DIM, true)
 
 
-func _apply_wanderer_choice(choice_id: String, _run: RunState) -> void:
-	if not _gs:
+func _apply_wanderer_choice(choice_id: String, run: RunState) -> void:
+	if not _gs or run == null:
 		return
-	if not _gs.story_flags.has("met_orren"):
-		_gs.story_flags.append("met_orren")
-	var choice_flag := "orrens_%s" % choice_id
-	if not _gs.story_flags.has(choice_flag):
-		_gs.story_flags.append(choice_flag)
-	match choice_id:
-		"map":
-			_gs.gold += _wanderer_gold_reward()
-		"training":
-			_grant_party_jp(_wanderer_jp_reward())
+
+	var result := OrrenArc.apply_choice(_gs, run, choice_id)
+	if result.is_empty():
+		return
+
+	var reward_gold := int(result.get("reward_gold", 0))
+	var reward_jp := int(result.get("reward_jp", 0))
+	if reward_gold > 0:
+		_gs.gold += reward_gold
+	if reward_jp > 0:
+		_grant_party_jp(reward_jp)
+
 	_complete_current_node_with_loadout_xp("wanderer")
 	_gs.save()
+
 	if _boon_overlay:
 		_boon_overlay.queue_free()
 		_boon_overlay = null
-	_build_ui()
+
+	var story_event: Dictionary = result.get("story_event", {})
+	if not story_event.is_empty():
+		_show_story_event(story_event)
+	else:
+		_build_ui()
 
 
-func _wanderer_gold_reward() -> int:
-	return 70 + int(_gs.active_run.current_floor) * 30 if _gs and _gs.active_run else 100
+func _show_story_event(event: Dictionary) -> void:
+	if _boon_overlay:
+		_boon_overlay.queue_free()
+	_boon_overlay = _overlay()
+	add_child(_boon_overlay)
+
+	var vbox := _vbox(_boon_overlay, true)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.custom_minimum_size = Vector2(760, 0)
+	_lbl(vbox, "SEALED LEAF RESTORED", 11, Color(0.72, 0.63, 0.90), true)
+	_space(vbox, 8)
+	_lbl(vbox, str(event.get("title", "A Sealed Leaf")), 30, FG, true)
+	_space(vbox, 14)
+
+	var memory := RichTextLabel.new()
+	memory.bbcode_enabled = false
+	memory.text = str(event.get("text", ""))
+	memory.add_theme_font_size_override("normal_font_size", 15)
+	memory.add_theme_color_override("default_color", Color(0.88, 0.84, 0.91))
+	memory.custom_minimum_size = Vector2(700, 150)
+	memory.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(memory)
+	_space(vbox, 20)
+
+	var cont := _btn("Continue", Color(0.72, 0.63, 0.90))
+	cont.custom_minimum_size = Vector2(220, 48)
+	cont.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	cont.pressed.connect(func() -> void:
+		if _boon_overlay:
+			_boon_overlay.queue_free()
+			_boon_overlay = null
+		_build_ui())
+	vbox.add_child(cont)
 
 
-func _wanderer_jp_reward() -> int:
-	return 18 + int(_gs.active_run.current_floor) * 5 if _gs and _gs.active_run else 24
+func _story_tone_color(tone: String) -> Color:
+	match tone:
+		"gold":
+			return GOLD
+		"blue":
+			return Color(0.48, 0.86, 1.0)
+		"dim":
+			return Color(0.62, 0.58, 0.64)
+		_:
+			return Color(0.53, 0.94, 0.67)
+
 
 func _show_loot(items: Array) -> void:
 	if _loot_overlay: _loot_overlay.queue_free()

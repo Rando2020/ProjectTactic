@@ -4,11 +4,11 @@
 
 This document explains how the Recurrence narrative is represented in the production Godot project.
 
-The story is intentionally split into three layers:
+The story is split into three layers:
 
-1. **Authorial canon** in `docs/lore/recurrence-narrative-bible.md`.
-2. **Runtime data** in `godot/data/story/recurrence_manifest.json`.
-3. **Player-facing delivery** through run results, the Last Hearth, the Codex, companions, and later tactical encounters.
+1. **Authorial canon** in docs/lore/recurrence-narrative-bible.md.
+2. **Runtime data** in godot/data/story/.
+3. **Player-facing delivery** through the run map, Last Hearth, Codex, companions, results, and later tactical encounters.
 
 The game should reveal less than the code knows.
 
@@ -16,37 +16,50 @@ The game should reveal less than the code knows.
 
 | Concern | Location |
 | --- | --- |
-| Persistent campaign state | `godot/scripts/systems/GameState.gd` |
-| Current run state | `godot/scripts/roguelite/RunManager.gd` |
-| Recurrence story service | `godot/scripts/story/RecurrenceStory.gd` |
-| Guide reactive dialogue | `godot/scripts/story/GuideDialogue.gd` |
-| Recurrence definitions | `godot/data/story/recurrence_manifest.json` |
-| Results delivery | `godot/scripts/ui/ResultsScreen.gd` |
-| Hearth delivery | `godot/scripts/ui/HubDialogue.gd` |
-| Codex delivery | `godot/scripts/ui/CodexScreen.gd` |
+| Persistent campaign state | godot/scripts/systems/GameState.gd |
+| Current run state | godot/scripts/roguelike/RunState.gd |
+| Run lifecycle | godot/scripts/roguelite/RunManager.gd |
+| Recurrence story service | godot/scripts/story/RecurrenceStory.gd |
+| Orren relationship service | godot/scripts/story/OrrenArc.gd |
+| Guide reactive dialogue | godot/scripts/story/GuideDialogue.gd |
+| Recurrence definitions | godot/data/story/recurrence_manifest.json |
+| Orren authored content | godot/data/story/orren_arc.json |
+| Run-map delivery | godot/scripts/ui/StageSelect.gd |
+| Hearth delivery | godot/scripts/ui/HubDialogue.gd |
+| Codex delivery | godot/scripts/ui/CodexScreen.gd |
+| Run result delivery | godot/scripts/ui/ResultsScreen.gd |
 
-Do not create a second narrative GameState singleton. The production autoload is `res://scripts/systems/GameState.gd`.
+Do not create a second narrative GameState singleton. The production autoload is res://scripts/systems/GameState.gd.
 
 ## Persistent flags
 
-Recurrence currently uses the existing `GameState.story_flags` array.
+Recurrence uses the existing GameState.story_flags array.
 
-Core flags:
+Core Recurrence flags include:
 
-- `recurrence_guide_met`
-- `recurrence_gigas_discovered`
-- `recurrence_fragment_restored`
-- `recurrence_leaf_love`
-- `recurrence_leaf_grief`
-- future `recurrence_leaf_<leaf_id>` flags
-- `continuance_revealed`
-- `guide_accepts_otherness`
+- recurrence_guide_met
+- recurrence_gigas_discovered
+- recurrence_fragment_restored
+- recurrence_leaf_love
+- recurrence_leaf_grief
+- future recurrence_leaf_<leaf_id> flags
+- continuance_revealed
+- guide_accepts_otherness
 
-This avoids introducing a second save-state model while the vertical slice is still small.
+The opening authored companion slice additionally uses:
+
+- met_orren
+- orrens_waited
+- orrens_expected
+- orrens_last_seen
+- orrens_absent
+- orrens_declined_wait
+
+This keeps the vertical slice inside the existing save model instead of introducing a parallel narrative store.
 
 ## Current playable story slice
 
-The first implementation deliberately proves only the opening bifurcation.
+The opening bifurcation is now earned through Orren of the Lower Stair rather than generic run completion.
 
 ### Before any Leaves
 
@@ -60,63 +73,137 @@ Examples of the intended function:
 
 The player should initially read this as personality, not cosmology.
 
-### Love
+### Orren stage 1: usefulness
 
-The first completed descent restores the Love Leaf.
+The first Orren encounter is transactional.
 
-The result screen interrupts the normal reward summary with **Something Returned** and a short memory rather than a lore explanation.
+He offers:
 
-The Hearth Guide then begins speaking about preference, affection, a table with six chairs, and a memory whose emotional meaning arrives before its factual explanation.
+- gold through a marked route; or
+- JP through training.
 
-### Grief
+The player learns the green lantern and silver map case before being asked to care about the person carrying them.
 
-After Love has been restored, a later failed run reaching at least floor four can restore Grief.
+### Orren stage 2: cost
 
-The trigger is intentionally tied to failure so the roguelite loop can teach that a failed run can still contain something irreversible and meaningful.
+On a later encounter, Orren is carrying a wounded stranger.
 
-The Guide then recognizes a contradiction:
+The player may take the useful route and receive gold or stay to help.
 
-> It possesses every memory of someone and still misses them.
+Staying gives:
 
-This is the first strong evidence that informational preservation may not be the same as continued presence.
+- no immediate reward;
+- party MOVE -1 for the rest of the descent;
+- relationship progression.
 
-## Why only two Leaves are automated
+The movement cost is explicit before selection.
 
-The other eight Leaves are defined in the manifest but are not automatically granted.
+The penalty is stored as RunState.story_move_penalty and applied directly by BattleScene to real unit movement. It is intentionally separate from generic curses.
 
-That is intentional.
+Declining the sacrifice does not permanently fail the relationship. The same gate can appear on a future Orren encounter.
 
-Choice/Regret, Trust/Betrayal, Hope/Fear, and Self/Loneliness require authored companion arcs and tactical situations. Unlocking them from generic run counts would reduce the story to a checklist.
+### Orren stage 3: attachment
 
-Future Leaves should be earned by scenes where the player first experiences the human dilemma and only later receives the cosmological recontextualization.
+After the player has paid the tactical cost, the next meeting contains no emergency and no listed reward.
+
+Orren makes bad tea, talks about a sea he barely remembers, and admits that he draws coastlines into maps that do not need them.
+
+The player can choose to sit with him.
+
+That restores **Leaf I: Love**.
+
+Love therefore means the creation of expectation and attachment, not romance and not a run milestone.
+
+### Orren stage 4: expectation
+
+The next meeting is deliberately ordinary.
+
+Orren is already waiting. He corrects a map, complains about tea, and promises to show the player "the door that opens backward" next time.
+
+The player tells him they will look for the lantern.
+
+No tragedy occurs.
+
+This scene exists because Grief requires a future the player has begun to assume.
+
+### Orren stage 5: absence
+
+A later Wanderer node contains the same stair but not Orren.
+
+The player finds:
+
+- no green lantern;
+- no body;
+- no blood;
+- no departure mark;
+- the silver map case;
+- a route line that stops halfway through a mark.
+
+The player takes the map case.
+
+That restores **Leaf II: Grief**.
+
+The story does not confirm Orren's death.
+
+The important event is that the player knew where he was supposed to be.
+
+### Orren stage 6: continuation without replacement
+
+Future Wanderer nodes do not replay the empty-stair scene.
+
+Someone else may copy an Orren route mark incorrectly. The route still works.
+
+This lets the game demonstrate a central distinction:
+
+A useful pattern can survive a person.
+
+That does not make the pattern the person.
+
+## Guide progression through the slice
+
+Before Love, the Guide notices that the player accepted tactical inefficiency to carry someone else's weight.
+
+After Love, the Guide notices that the player looks for Orren's lantern before reading the route.
+
+After Grief, the Guide remembers every detail of Orren and still cannot answer where he is now.
+
+The Guide becomes more sympathetic as restoration progresses.
+
+Do not write restored emotion as corruption.
+
+## Hearth progression through the slice
+
+Sera, Varn, and Volant also react to Orren.
+
+This keeps the relationship grounded in the social world.
+
+After the empty stair:
+
+- Sera leaves out a fourth cup.
+- Varn refuses to treat absence as proof, while refusing to call the scene normal.
+- Volant is disturbed by an archive record that ends mid-sentence.
+
+## Why the Leaves are not run-count unlocks
+
+RecurrenceStory.record_run_outcome no longer restores Love or Grief automatically.
+
+That is deliberate.
+
+A Leaf should return only after the player has experienced its human problem in play.
+
+Choice / Regret, Trust / Betrayal, Hope / Fear, and Self / Loneliness should follow the same rule.
+
+Do not turn the Ten Leaves into a checklist.
 
 ## Five bifurcations
 
 | Pair | Human question | Gameplay design target |
 | --- | --- | --- |
-| Love / Grief | Would you still love if you knew exactly how it ended? | Protect, attach, lose, remember |
+| Love / Grief | Would you still love if you knew exactly how it ended? | Attach, expect, lose access, remember |
 | Choice / Regret | If perfect information selected the best action, was there still a choice? | A meaningful decision with no optimal preview |
 | Trust / Betrayal | If another person cannot hide anything, what does trust mean? | Delegate or rely on behavior the player cannot fully control |
 | Hope / Fear | Would you want certainty about whether this ends well? | Remove or deny forecast information at a critical moment |
 | Self / Loneliness | If someone understands every part of you, do they still need to be someone else? | Final boundary between Appointed and Guide |
-
-## Guide progression
-
-The Guide should become more likable as restoration progresses.
-
-Do not write restoration as corruption.
-
-The intended progression is:
-
-1. Grey
-2. Preference
-3. Attachment
-4. Regret
-5. Trust
-6. Fear
-7. Agency
-
-Later pain is evidence of restored subjectivity, not evidence that emotion was a mistake.
 
 ## The Continuance
 
@@ -126,9 +213,9 @@ Canonically, it is the survival imperative the Guide separated from itself so co
 
 Implementation direction:
 
-- First introduce it as unexplained corrections to the run.
-- Later let it preserve enemy formations, restore solved states, or resist irreversible choices.
-- Final encounters should make its argument mechanically legible: continuation is safer than an unknown ending.
+- first introduce it as unexplained corrections to the run;
+- later let it preserve enemy formations, restore solved states, or resist irreversible choices;
+- final encounters should make its argument mechanically legible: continuation is safer than an unknown ending.
 
 Do not present the Continuance as sadistic. Its logic should be strong enough that preserving the cycle remains defensible.
 
@@ -141,40 +228,46 @@ The manifest currently defines four conceptual endings:
 - **Severance**: requires all Leaves and Continuance revealed.
 - **Release**: provisional, requires all Leaves, Continuance revealed, and Guide acceptance of otherness.
 
-Release remains provisional until gameplay earns it. Do not build it merely because it sounds like the cleanest compromise.
+Release remains provisional until gameplay earns it.
 
 ## Save behavior
 
-The production GameState now retains:
+The production GameState retains:
 
-- `last_run_floor`
-- `last_run_victory`
-- `runs_completed`
-- `best_floor_reached`
-- `story_flags`
+- last_run_floor
+- last_run_victory
+- last_run_death
+- runs_completed
+- best_floor_reached
+- story_flags
+
+The active RunState includes:
+
+- story_move_penalty
 
 The previous run context survives long enough for the Hearth to react to it and is cleared when a new descent begins.
 
-This is deliberate. Reactive hub dialogue should respond to the run that just happened.
+The Orren movement burden exists only for the current descent and resets with a new RunState.
 
 ## Validation
 
-Run:
+Run the data contract:
 
 ```bash
 python tools/check_recurrence_story.py
 ```
 
-The contract validates:
+Run the Godot story test:
 
-- exactly ten Leaves
-- exactly five bifurcations
-- unique Leaf IDs
-- ordered Leaves 1 through 10
-- valid pair references
-- required runtime and canon files
+```bash
+godot --headless --path godot --script res://tests/test_orren_arc.gd
+```
 
-CI runs this check before the existing web build.
+The full Godot validation workflow also:
+
+- imports the project with Godot 4.6.2;
+- loads every production GDScript;
+- runs the Orren state progression test.
 
 ## Writing guardrails
 
@@ -182,29 +275,39 @@ CI runs this check before the existing web build.
 - Never make suffering itself the lesson.
 - Never make Return visually or morally trivial.
 - Never guarantee Severance produces a better world.
-- Do not let the Guide become a secret moustache-twirling villain.
+- Do not turn the Guide into a secret villain.
 - Use ordinary memories more often than cosmic exposition.
 - Prefer one painful question over a page of explanation.
-- Preserve mystery around whether the Guide is humanity continued or a new being carrying humanity.
+- Preserve uncertainty around whether the Guide is humanity continued or a new being carrying humanity.
+- Do not confirm Orren's death merely to make Grief easier to explain.
+
+## Orren pacing rule
+
+RunState tracks `orren_story_beat_consumed`.
+
+Once an authored Orren scene resolves, additional Orren encounters in the same descent become a non-advancing interlude. The flag is serialized, so save/continue cannot bypass the pacing gate. A new RunState resets the gate.
+
+This guarantees that Love, the final ordinary promise, and Grief cannot collapse into a single run.
 
 ## Known placeholders
 
-- Love and Grief currently use run-level triggers rather than a bespoke companion arc.
-- The Gigas Codex does not yet have a dedicated UI surface.
+- Orren currently uses text-only presentation and no portrait.
+- The Gigas Codex does not yet have a dedicated presentation surface.
 - The Continuance has no runtime encounter implementation.
-- Later Leaves have data definitions but no unlock events.
+- Later Leaves have definitions but no authored unlock arcs.
 - Endings are gates only, not playable scenes.
-- Current Guide portrait remains a placeholder.
+- The Guide portrait remains a placeholder.
 
 ## Next implementation target
 
-Build the **Love / Grief authored vertical slice**:
+Playtest the Love / Grief slice for pacing.
 
-1. Give one companion a relationship arc the player can choose to invest in.
-2. Put that attachment under tactical pressure.
-3. Make preserving the relationship cost a desirable run advantage.
-4. Let a later absence become irreversible.
-5. Restore Grief only after the player already knows what is missing.
-6. Let the Guide ask why complete memory is not enough.
+The key question is not whether the flags work. The key question is whether players begin looking for the green lantern before the game removes it.
 
-That slice should prove the story emotionally before any later bifurcation is automated.
+If progression is too fast, add a minimum run-separation rule between:
+
+- orrens_expected;
+- orrens_last_seen;
+- orrens_absent.
+
+Only after that emotional pacing is convincing should the game begin implementing Choice / Regret.

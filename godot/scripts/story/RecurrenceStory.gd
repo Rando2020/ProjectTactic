@@ -91,14 +91,10 @@ static func guide_stage(gs: Node) -> Dictionary:
 			selected = stage
 	return selected
 
-static func record_run_outcome(gs: Node, victory: bool, floor_reached: int, was_defeat: bool) -> Dictionary:
+static func record_run_outcome(gs: Node, _victory: bool, _floor_reached: int, _was_defeat: bool) -> Dictionary:
 	if gs == null:
 		return {}
 	add_flag(gs, GUIDE_MET_FLAG)
-	if victory and not is_leaf_restored(gs, "love"):
-		return restore_leaf(gs, "love")
-	if was_defeat and floor_reached >= 4 and is_leaf_restored(gs, "love") and not is_leaf_restored(gs, "grief"):
-		return restore_leaf(gs, "grief")
 	if gs.has_method("save"):
 		gs.save()
 	return {}
