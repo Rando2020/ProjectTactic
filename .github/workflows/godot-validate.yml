@@ -1,0 +1,37 @@
+name: Godot Validate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  GODOT_VERSION: "4.6.2"
+
+jobs:
+  godot-validate:
+    name: Godot headless validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: false
+
+      - name: Verify Godot version
+        run: godot --version
+
+      - name: Import project headlessly
+        run: godot --headless --path godot --editor --quit-after 2
+
+      - name: Parse production GDScript
+        run: godot --headless --path godot --script res://tests/validate_all_scripts.gd
