@@ -35,3 +35,6 @@ jobs:
 
       - name: Parse production GDScript
         run: godot --headless --path godot --script res://tests/validate_all_scripts.gd
+
+      - name: Test Orren Love and Grief arc
+        run: godot --headless --path godot --script res://tests/test_orren_arc.gd
