@@ -41,3 +41,6 @@ jobs:
 
       - name: Test Orren Love and Grief arc
         run: godot --headless --path godot --script res://tests/test_orren_arc.gd
+
+      - name: Test Orren presentation contract
+        run: godot --headless --path godot --script res://tests/test_orren_presentation.gd
