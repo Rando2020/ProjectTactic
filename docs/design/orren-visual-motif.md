@@ -50,9 +50,9 @@ After Grief it can continue to represent copied routes and inherited knowledge w
 
 ## Audio motif
 
-The runtime cue ID is `orren_motif`.
+The presentation contract currently routes Orren's motif through the existing `ui_confirm` cue at low volume.
 
-For now it intentionally reuses the existing soft navigation sound at low volume rather than adding a new binary audio asset.
+This indirection lives in `OrrenPresentation.motif_cue_id()`, so a future dedicated original cue can replace it without changing encounter code.
 
 Play it for:
 
@@ -69,7 +69,7 @@ Do **not** play it for:
 
 The missing sound is part of the reveal.
 
-A future original two- or three-note motif can replace the source asset behind the stable `orren_motif` ID.
+A future original two- or three-note motif can replace the cue returned by the presentation contract.
 
 ## Empty Stair reveal order
 
