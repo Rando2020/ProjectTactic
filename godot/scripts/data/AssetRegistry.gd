@@ -485,8 +485,9 @@ static func get_unit_indicator_candidates(team_id: String) -> Array[String]:
 	return candidates
 
 
-## Loads the first valid PNG in a candidate list. Git LFS pointer files and
-## malformed images are ignored so placeholder branches remain playable.
+## Loads the first valid texture in a candidate list. Source PNG bytes support
+## editor checkouts while ResourceLoader supports imported Web-export textures.
+## Git LFS pointer files and malformed images remain safe to skip.
 static func load_first_texture(paths: Array[String]) -> Texture2D:
 	for path in paths:
 		if path.is_empty():
@@ -497,20 +498,22 @@ static func load_first_texture(paths: Array[String]) -> Texture2D:
 				return cached
 			continue
 		var file := FileAccess.open(path, FileAccess.READ)
-		if not file:
-			_texture_cache[path] = false
-			continue
-		var bytes := file.get_buffer(file.get_length())
-		if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
-			_texture_cache[path] = false
-			continue
-		var image := Image.new()
-		if image.load_png_from_buffer(bytes) != OK:
-			_texture_cache[path] = false
-			continue
-		var texture := ImageTexture.create_from_image(image)
-		_texture_cache[path] = texture
-		return texture
+		if file:
+			var bytes := file.get_buffer(file.get_length())
+			if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
+				_texture_cache[path] = false
+				continue
+			var image := Image.new()
+			if image.load_png_from_buffer(bytes) == OK:
+				var source_texture := ImageTexture.create_from_image(image)
+				_texture_cache[path] = source_texture
+				return source_texture
+		if ResourceLoader.exists(path, "Texture2D"):
+			var imported_texture := ResourceLoader.load(path, "Texture2D") as Texture2D
+			if imported_texture:
+				_texture_cache[path] = imported_texture
+				return imported_texture
+		_texture_cache[path] = false
 	return null
 
 

@@ -35,6 +35,7 @@ This stacked change supplies the smallest visually complete generated-art batch 
 - Overlays are intentionally thin and center-clear. Color-vision and low-quality browser scaling checks should continue as more terrain palettes are added.
 - The optional indicators pass automated 18 px silhouette checks, but should be rechecked against final character sprites before character art replaces the current units.
 - Godot 4.6 rejected the base branch's `String.truncate_to_word_length()` call during clean Web validation. This branch replaces it with a local 40-character word-boundary helper so the intended boon-card text remains unchanged in spirit and the clean export can compile.
+- PR #63's source-byte texture path works in editor checkouts but not in exported Web packs, where Godot remaps PNGs to imported textures. The registry now uses `ResourceLoader` as an export-safe fallback, and the tactical grid delegates to that shared loader.
 - The existing combat-formula fixture expects 46 projected temper damage while the current runtime returns 45. This pre-existing gameplay-test mismatch is intentionally not changed here.
 - Several pre-existing Git LFS object IDs return 404 from the repository's LFS server. CI therefore retains its existing pointer-file checkout behavior; restoring those legacy audio and image objects is a separate repository-maintenance task.
 - The next recommended batch is directional road and shallow-water edge variants, followed by brush, shrine, and four Forgotten Field props.
