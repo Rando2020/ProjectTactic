@@ -51,13 +51,16 @@ jobs:
           godot --headless --path godot --script res://tests/test_asset_manifest.gd
 
       - name: Export Godot Web build
-        run: godot --headless --path godot --export-release "Web" ../build/web/index.html
+        run: |
+          mkdir -p build/web
+          godot --headless --path godot --export-release "Web" ../build/web/index.html
 
       - name: Validate Web output
         run: test -s build/web/index.html && test -s build/web/index.pck && test -s build/web/index.wasm
 
       - name: Export direct-battle Web QA build
         run: |
+          mkdir -p build/web-qa
           cp godot/project.godot /tmp/projecttactic-project.godot
           python - <<'PY'
           from pathlib import Path
