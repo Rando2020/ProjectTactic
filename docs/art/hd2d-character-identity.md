@@ -73,6 +73,14 @@ the leading foot and secondary cloth motion. The asset registry exposes the
 pair as Mira's walk loop, which the unit presentation controller selects during
 grid movement.
 
+`mira-cast-01-source.png` is Mira's first identity-preserving action pose. It
+keeps the anchor's costume landmarks and grounded stance while opening the
+spellbook, extending her casting hand, and containing a compact ivory-violet
+effect close to that hand. Its 512x512 RGBA derivative,
+`mira-cast-01.png`, is registered as both Mira's action fallback and `attack`
+animation. The current presentation controller therefore selects it for spell
+casts and returns to the idle loop afterward.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

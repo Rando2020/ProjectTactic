@@ -174,7 +174,7 @@ const UNITS := {
 		"display_name": "Mira",
 		"role": "Mage",
 		"idle": "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
-		"action": "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
+		"action": "res://assets/sprites/units/mira-hd2d-v01/mira-cast-01.png",
 		"portrait": "res://assets/ui/portraits/mira-vey-portrait-v01.png",
 		"animations": {
 			"idle": [
@@ -185,6 +185,7 @@ const UNITS := {
 				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-01.png",
 				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-02.png",
 			],
+			"attack": ["res://assets/sprites/units/mira-hd2d-v01/mira-cast-01.png"],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},
