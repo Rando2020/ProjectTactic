@@ -1293,8 +1293,9 @@ func _story_asset_widget(path: String, min_size: Vector2, alpha: float = 1.0) ->
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	rect.modulate.a = alpha
-	if not path.is_empty() and ResourceLoader.exists(path):
-		rect.texture = load(path)
+	var texture := OrrenPresentation.load_texture(path)
+	if texture:
+		rect.texture = texture
 	return rect
 
 
