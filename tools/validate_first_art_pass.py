@@ -12,8 +12,9 @@ from PIL import Image, ImageChops, ImageStat
 ROOT = Path(__file__).resolve().parents[1]
 GODOT = ROOT / "godot"
 MANIFEST = GODOT / "data" / "asset_manifest.json"
-TERRAINS = ("grass", "grass_flowers", "road", "stone", "high_ground", "shallow_water")
-OVERLAYS = ("selected", "move", "attack", "ability")
+TERRAINS = ("grass", "grass_flowers", "brush", "road", "stone", "high_ground", "shallow_water", "shrine")
+PROPS = ("leafy_bush", "mossy_rock", "tree_stump", "ruin_block")
+OVERLAYS = ("selected", "move", "attack", "ability", "blocked")
 INDICATORS = ("player", "enemy")
 
 
@@ -46,6 +47,12 @@ def main() -> None:
     for asset_id in TERRAINS:
         inspect_png(local_path(theme["terrain"][asset_id]["path"]), (96, 64))
 
+    for asset_id in PROPS:
+        image = inspect_png(local_path(theme["props"][asset_id]["path"]), (96, 96))
+        bounds = image.getchannel("A").getbbox()
+        if bounds is None or bounds[2] - bounds[0] > 82 or bounds[3] - bounds[1] > 80:
+            raise AssertionError(f"{asset_id} prop exceeds the compact gameplay silhouette")
+
     overlay_theme = manifest["tactical_overlays"]["forgotten-field"]
     for asset_id in OVERLAYS:
         image = inspect_png(local_path(overlay_theme[asset_id]["path"]), (96, 48))
@@ -65,7 +72,7 @@ def main() -> None:
     if sum(difference) < 2500:
         raise AssertionError("Player and enemy indicators are too similar at 18 px")
 
-    print("First art pass: OK (6 terrain, 4 overlays, 2 indicators; 96 x 48 footprint)")
+    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators; 96 x 48 footprint)")
 
 
 if __name__ == "__main__":
