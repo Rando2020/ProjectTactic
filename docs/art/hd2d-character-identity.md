@@ -63,6 +63,16 @@ ground line, costume, palette, and camera while introducing only restrained
 breathing and secondary-cloth motion. The asset registry now exposes both frames
 as Mira's looping idle animation.
 
+Mira's first movement pair follows the same one-pose-per-file workflow.
+`mira-walk-01-source.png` and `mira-walk-02-source.png` are separate,
+identity-preserving edits rather than crops from a generated sheet. Their
+512x512 RGBA runtime derivatives live beside the idle pair as
+`mira-walk-01.png` and `mira-walk-02.png`. Both retain the anchor's camera,
+lighting, scale, transparent canvas, and shared ground line while alternating
+the leading foot and secondary cloth motion. The asset registry exposes the
+pair as Mira's walk loop, which the unit presentation controller selects during
+grid movement.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

@@ -181,6 +181,10 @@ const UNITS := {
 				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
 				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-02.png",
 			],
+			"walk": [
+				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-01.png",
+				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-02.png",
+			],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},
