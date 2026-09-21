@@ -34,6 +34,6 @@ This stacked change supplies the smallest visually complete generated-art batch 
 - Generated textures can expose seams when identical tiles meet. The first pass favors low-contrast edges, but a later authored transition pass should add directional road, water-edge, and elevation variants.
 - Overlays are intentionally thin and center-clear. Color-vision and low-quality browser scaling checks should continue as more terrain palettes are added.
 - The optional indicators pass automated 18 px silhouette checks, but should be rechecked against final character sprites before character art replaces the current units.
-- The base branch's script validator currently logs a `BoonPickScreen.gd` parse error for `String.truncate_to_word_length()` but incorrectly exits successfully. This is unrelated to the art batch and should be repaired separately.
+- Godot 4.6 rejected the base branch's `String.truncate_to_word_length()` call during clean Web validation. This branch replaces it with a local 40-character word-boundary helper so the intended boon-card text remains unchanged in spirit and the clean export can compile.
 - The existing combat-formula fixture expects 46 projected temper damage while the current runtime returns 45. This pre-existing gameplay-test mismatch is intentionally not changed here.
 - The next recommended batch is directional road and shallow-water edge variants, followed by brush, shrine, and four Forgotten Field props.

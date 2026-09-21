@@ -19,9 +19,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Validate narrative data contract
         run: python tools/check_recurrence_story.py
+
+      - name: Install art validation dependency
+        run: python -m pip install Pillow
 
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
