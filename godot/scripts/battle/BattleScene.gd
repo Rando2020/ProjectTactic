@@ -426,6 +426,7 @@ func _create_ashvale_map() -> MapData:
 	map.map_width = 10
 	map.map_height = 8
 	map.default_terrain = "grass"
+	map.environment_theme_id = "forgotten-field"
 	map.objective_type = "defeat_all"
 	map.objective_label = "Defeat all enemies"
 	map.reward_gold = 150
