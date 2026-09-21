@@ -118,20 +118,7 @@ func _draw_unit() -> void:
 		stripe.z_index = 11
 		add_child(stripe)
 
-	#  Team-colour indicator (larger, more visible)
-	var dot := ColorRect.new()
-	dot.size = Vector2(10, 10)
-	dot.position = Vector2(14, -63)
-	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
-	dot.z_index = 14
-	add_child(dot)
-	# Add bright outline for contrast
-	var dot_outline := ColorRect.new()
-	dot_outline.size = Vector2(12, 12)
-	dot_outline.position = Vector2(13, -64)
-	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
-	dot_outline.z_index = 13
-	add_child(dot_outline)
+	_draw_team_indicator(is_player)
 
 	#  HP bar (floats just above the sprite head) - enlarged and more visible
 	var hp_bg := ColorRect.new()
@@ -172,6 +159,36 @@ func _draw_unit() -> void:
 	_draw_facing_arrow()
 	_create_selection_outline()
 	_create_status_icons_container()
+
+
+func _draw_team_indicator(is_player: bool) -> void:
+	var indicator_id := "player" if is_player else "enemy"
+	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_unit_indicator_candidates(indicator_id))
+	if texture:
+		var indicator := Sprite2D.new()
+		indicator.texture = texture
+		indicator.centered = true
+		indicator.position = Vector2(19, -58)
+		var texture_size := texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			indicator.scale = Vector2(18.0 / texture_size.x, 18.0 / texture_size.y)
+		indicator.z_index = 14
+		add_child(indicator)
+		return
+
+	# Procedural fallback remains available when optional indicator art is absent.
+	var dot_outline := ColorRect.new()
+	dot_outline.size = Vector2(12, 12)
+	dot_outline.position = Vector2(13, -64)
+	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
+	dot_outline.z_index = 13
+	add_child(dot_outline)
+	var dot := ColorRect.new()
+	dot.size = Vector2(10, 10)
+	dot.position = Vector2(14, -63)
+	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
+	dot.z_index = 14
+	add_child(dot)
 
 
 func _apply_unit_scale() -> void:

@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "tile_footprint": {
+    "width": 96,
+    "height": 48,
+    "side_depth": 16
+  },
+  "environments": {
+    "forgotten-field": {
+      "label": "Forgotten Field",
+      "terrain": {
+        "grass": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-grass-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/grass.png"
+        },
+        "grass_flowers": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-flowering-grass-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/grass.png"
+        },
+        "brush": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-brush-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/grass.png"
+        },
+        "road": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-road-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/road.png"
+        },
+        "stone": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-stone-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/stone.png"
+        },
+        "high_ground": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-high-ground-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/high_ground.png"
+        },
+        "shallow_water": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-shallow-water-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/shallow_water.png"
+        },
+        "shrine": {
+          "path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-shrine-tile-v01.png",
+          "fallback_path": "res://assets/ui/tiles/shrine.png"
+        }
+      },
+      "props": {
+        "leafy_bush": {
+          "path": "res://assets/environments/forgotten-field/props/environment-forgotten-field-leafy-bush-prop-v01.png",
+          "fallback_path": "res://assets/props/leafy_bush.png"
+        },
+        "mossy_rock": {
+          "path": "res://assets/environments/forgotten-field/props/environment-forgotten-field-mossy-rock-prop-v01.png",
+          "fallback_path": "res://assets/props/mossy_rock.png"
+        },
+        "tree_stump": {
+          "path": "res://assets/environments/forgotten-field/props/environment-forgotten-field-tree-stump-prop-v01.png",
+          "fallback_path": "res://assets/props/tree_stump.png"
+        },
+        "ruin_block": {
+          "path": "res://assets/environments/forgotten-field/props/environment-forgotten-field-ruin-block-prop-v01.png",
+          "fallback_path": "res://assets/props/ruin_block.png"
+        }
+      }
+    }
+  },
+  "tactical_overlays": {
+    "forgotten-field": {
+      "selected": {
+        "path": "res://assets/ui/tactical-overlays/ui-tactical-overlay-selected-v01.png",
+        "fallback_path": "res://assets/generated/ui/tile-selected-diamond.png"
+      },
+      "move": {
+        "path": "res://assets/ui/tactical-overlays/ui-tactical-overlay-move-v01.png",
+        "fallback_path": "res://assets/generated/ui/tile-move-diamond.png"
+      },
+      "attack": {
+        "path": "res://assets/ui/tactical-overlays/ui-tactical-overlay-attack-v01.png",
+        "fallback_path": "res://assets/generated/ui/tile-attack-diamond.png"
+      },
+      "ability": {
+        "path": "res://assets/ui/tactical-overlays/ui-tactical-overlay-ability-v01.png",
+        "fallback_path": "res://assets/generated/ui/tile-ability-diamond.png"
+      },
+      "blocked": {
+        "path": "res://assets/ui/tactical-overlays/ui-tactical-overlay-blocked-v01.png",
+        "fallback_path": "res://assets/generated/ui/tile-blocked-diamond.png"
+      }
+    }
+  },
+  "unit_indicators": {
+    "player": {
+      "path": "res://assets/ui/unit-indicators/ui-unit-indicator-player-v01.png"
+    },
+    "enemy": {
+      "path": "res://assets/ui/unit-indicators/ui-unit-indicator-enemy-v01.png"
+    }
+  }
+}

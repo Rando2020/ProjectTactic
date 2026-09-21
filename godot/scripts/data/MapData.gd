@@ -10,6 +10,7 @@ extends Resource
 @export var map_width: int = 10
 @export var map_height: int = 8
 @export var default_terrain: String = "grass"
+@export var environment_theme_id: String = "default"
 @export var max_party_size: int = 4
 @export var required_unit_ids: Array[String] = []
 @export var recommended_unit_ids: Array[String] = []

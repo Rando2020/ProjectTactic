@@ -44,6 +44,8 @@ const PROP_TEXTURE_PATHS := {
 
 var _terrain_texture_cache: Dictionary = {}
 var _prop_texture_cache: Dictionary = {}
+var _overlay_texture_cache: Dictionary = {}
+var _environment_theme_id: String = "default"
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
@@ -81,6 +83,7 @@ func _process(delta: float) -> void:
 func initialize_from_map(p_map_data: MapData) -> void:
 	_configure_layers()
 	map_data = p_map_data
+	_environment_theme_id = map_data.environment_theme_id if map_data else "default"
 	_build_tiles()
 	_draw_base_tiles()
 
@@ -226,11 +229,35 @@ func _uses_art_tile(terrain: String) -> bool:
 
 
 func _texture_for_terrain(terrain: String) -> Texture2D:
-	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
+	var candidates := AssetRegistry.get_environment_candidates(_environment_theme_id, "terrain", terrain)
+	var legacy_path := str(TERRAIN_TEXTURE_PATHS.get(terrain, ""))
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _terrain_texture_cache)
 
 
 func _texture_for_prop(prop_name: String) -> Texture2D:
-	return _texture_from_path(PROP_TEXTURE_PATHS.get(prop_name, ""), _prop_texture_cache)
+	var candidates := AssetRegistry.get_environment_candidates(_environment_theme_id, "props", prop_name)
+	var legacy_path := str(PROP_TEXTURE_PATHS.get(prop_name, ""))
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _prop_texture_cache)
+
+
+func _texture_for_overlay(overlay_id: String) -> Texture2D:
+	var candidates := AssetRegistry.get_overlay_candidates(_environment_theme_id, overlay_id)
+	var legacy_path := AssetRegistry.get_highlight(overlay_id)
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _overlay_texture_cache)
+
+
+func _texture_from_candidates(paths: Array[String], cache: Dictionary) -> Texture2D:
+	for path in paths:
+		var texture := _texture_from_path(path, cache)
+		if texture:
+			return texture
+	return null
 
 
 func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
@@ -524,26 +551,26 @@ func _refresh_highlights() -> void:
 	for child in highlight_layer.get_children():
 		child.queue_free()
 	for pos in move_tiles:
-		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true)
+		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true, "move")
 	for i in path_preview_tiles.size():
 		var pos: Vector2i = path_preview_tiles[i]
 		var alpha: float = 0.48 + min(float(i) * 0.035, 0.32)
-		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.65)
+		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.65, false, "move")
 		_add_path_step_badge(pos, i + 1)
 	for pos in attack_tiles:
-		_add_highlight(pos, Color(1.0, 0.40, 0.0, 0.65), 0.92, true)
+		_add_highlight(pos, Color(1.0, 0.40, 0.0, 0.65), 0.92, true, "attack")
 	for pos in ability_tiles:
-		_add_highlight(pos, Color(0.75, 0.25, 1.0, 0.62), 0.92, true)
+		_add_highlight(pos, Color(0.75, 0.25, 1.0, 0.62), 0.92, true, "ability")
 	# AoE burst preview  hot red, drawn over ability range tiles
 	for pos in aoe_preview_tiles:
-		_add_highlight(pos, Color(1.0, 0.22, 0.1, 0.80), 1.0, true)
+		_add_highlight(pos, Color(1.0, 0.22, 0.1, 0.80), 1.0, true, "attack")
 	# Show AoE tile count if preview is active
 	if not aoe_preview_tiles.is_empty():
 		_add_aoe_tile_count_badge(aoe_preview_tiles)
 	if _is_valid_pos(active_unit_tile):
 		var active_pulse: float = 0.72 + 0.22 * (sin(_highlight_animation_time * 1.4) * 0.5 + 0.5)
 		var active_color: Color = Color(0.25, 0.72, 1.0, active_pulse) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, active_pulse)
-		_add_highlight(active_unit_tile, active_color, 1.06, true)
+		_add_highlight(active_unit_tile, active_color, 1.06, true, "selected")
 		# Add outer glow ring for active unit
 		var glow_ring := Line2D.new()
 		var poly := _diamond_polygon(1.16)
@@ -560,7 +587,8 @@ func _refresh_highlights() -> void:
 		_add_target_lock(target_tile)
 
 
-func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86, animate: bool = false) -> void:
+func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86,
+		animate: bool = false, overlay_id: String = "") -> void:
 	# Calculate animated alpha if this highlight should pulse
 	var final_color := color
 	if animate:
@@ -568,12 +596,28 @@ func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86, 
 		var pulse_alpha := 0.6 + 0.4 * (sin(_highlight_animation_time) * 0.5 + 0.5)
 		final_color = Color(color.r, color.g, color.b, color.a * pulse_alpha)
 
-	var diamond := Polygon2D.new()
-	diamond.color = final_color
-	diamond.polygon = _diamond_polygon(highlight_scale)
-	diamond.position = _grid_to_local(pos)
-	diamond.z_index = _depth_for(pos) + 50
-	highlight_layer.add_child(diamond)
+	var overlay_texture := _texture_for_overlay(overlay_id) if not overlay_id.is_empty() else null
+	if overlay_texture:
+		var overlay := Sprite2D.new()
+		overlay.texture = overlay_texture
+		overlay.centered = true
+		overlay.position = _grid_to_local(pos)
+		var texture_size := overlay_texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			overlay.scale = Vector2(
+				float(tile_size.x) / texture_size.x * highlight_scale,
+				float(tile_size.y) / texture_size.y * highlight_scale
+			)
+		overlay.modulate = Color(1.0, 1.0, 1.0, final_color.a)
+		overlay.z_index = _depth_for(pos) + 50
+		highlight_layer.add_child(overlay)
+	else:
+		var diamond := Polygon2D.new()
+		diamond.color = final_color
+		diamond.polygon = _diamond_polygon(highlight_scale)
+		diamond.position = _grid_to_local(pos)
+		diamond.z_index = _depth_for(pos) + 50
+		highlight_layer.add_child(diamond)
 
 	var rim := Line2D.new()
 	var poly := _diamond_polygon(highlight_scale)
@@ -599,7 +643,7 @@ func _add_selected_tile_guidance() -> void:
 		label = "CAST"
 		color = Color(0.75, 0.30, 1.0, 0.90)
 	# Larger scale and stronger highlight for selected tile
-	_add_highlight(selected_tile, color, 1.14)
+	_add_highlight(selected_tile, color, 1.14, false, "selected")
 	if label != "":
 		_add_tile_badge(selected_tile, label, color)
 	# Add pulsing effect by drawing an outer ring
@@ -615,7 +659,7 @@ func _add_selected_tile_guidance() -> void:
 
 func _add_target_lock(pos: Vector2i) -> void:
 	var color := Color(1.0, 0.88, 0.18, 0.90)
-	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.35), 1.20)
+	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.35), 1.20, false, "attack")
 
 	# Arrow shadow for depth
 	var arrow_shadow := Polygon2D.new()
