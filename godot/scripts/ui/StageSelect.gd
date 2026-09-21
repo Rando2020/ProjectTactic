@@ -1200,7 +1200,7 @@ func _show_story_event(event: Dictionary) -> void:
 func _play_orren_motif() -> void:
 	var audio_settings := get_node_or_null("/root/AudioSettings")
 	if audio_settings and audio_settings.has_method("play_sfx"):
-		audio_settings.play_sfx("orren_motif", -13.0)
+		audio_settings.play_sfx(OrrenPresentation.motif_cue_id(), -13.0)
 
 
 func _build_orren_motif(parent: Control, stage_id: String) -> void:
