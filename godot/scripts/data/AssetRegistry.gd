@@ -186,6 +186,7 @@ const UNITS := {
 				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-02.png",
 			],
 			"attack": ["res://assets/sprites/units/mira-hd2d-v01/mira-cast-01.png"],
+			"guard": ["res://assets/sprites/units/mira-hd2d-v01/mira-guard-01.png"],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},

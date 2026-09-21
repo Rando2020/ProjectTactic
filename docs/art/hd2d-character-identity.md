@@ -81,6 +81,13 @@ effect close to that hand. Its 512x512 RGBA derivative,
 animation. The current presentation controller therefore selects it for spell
 casts and returns to the idle loop afterward.
 
+`mira-guard-01-source.png` completes Mira's initial presentation-state set.
+The pose retains the closed spellbook as a defensive focus, lowers her stance,
+and pulls both arms inward without adding an attacker, damage, or magic. Its
+512x512 RGBA derivative, `mira-guard-01.png`, is registered as Mira's `guard`
+animation, so receiving a hit now triggers a character-specific reaction before
+returning to idle.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
