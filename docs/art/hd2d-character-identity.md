@@ -47,6 +47,16 @@ The other generated party sheets require a new generation pass: their poses
 overlap neighboring cells and cannot be safely normalized by equal-width crops.
 They remain source candidates only and are not referenced by runtime code.
 
+## Mira anchor frame
+
+Mira's animation rebuild now starts from individually generated poses. The
+approved full-resolution anchor lives at
+`source-art/generated/character-frames/mira-vey-v01/mira-idle-01-source.png`.
+Its 512x512 nearest-neighbor runtime derivative lives at
+`godot/assets/sprites/units/mira-hd2d-v01/mira-idle-01.png` and preserves RGBA
+transparency. Battle and asset registries use this stable idle path while later
+poses are generated from the anchor as an identity reference.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

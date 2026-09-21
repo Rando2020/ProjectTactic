@@ -32,7 +32,7 @@ var _last_death_info:  Dictionary = {}
 
 const SPRITE_PATHS := {
 	"zane":         "res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
-	"mira":         "res://assets/sprites/units/mira.png",
+	"mira":         "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
 	"kael":         "res://assets/sprites/units/kael.png",
 	"lyra":         "res://assets/sprites/units/lyra.png",
 	"null_drake":   "res://assets/sprites/units/null_drake.png",
