@@ -43,3 +43,24 @@ static func lantern_asset_path() -> String:
 
 static func map_case_asset_path() -> String:
 	return AssetRegistry.get_story_character_asset("orren", "map_case")
+
+
+static func load_texture(path: String) -> Texture2D:
+	if path.is_empty():
+		return null
+	if path.ends_with(".svg"):
+		if not FileAccess.file_exists(path):
+			return null
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file == null:
+			return null
+		var svg_text := file.get_as_text()
+		file.close()
+		var image := Image.new()
+		var err := image.load_svg_from_string(svg_text, 1.0)
+		if err != OK:
+			return null
+		return ImageTexture.create_from_image(image)
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null
