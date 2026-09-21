@@ -26,6 +26,8 @@ Current placeholder portrait direction:
 
 The placeholder is deliberately original vector art and can later be replaced by a higher-detail portrait without changing any runtime IDs.
 
+The SVG source is rasterized at runtime through `OrrenPresentation.load_texture()` instead of depending on Godot's import cache. This keeps the presentation reliable in headless/browser-oriented validation environments.
+
 ### Green lantern
 
 The lantern is the attachment cue.
@@ -90,7 +92,7 @@ The player should ideally notice the problem before reading it.
 
 - Assets: `godot/assets/characters/`, `godot/assets/ui/`
 - Asset IDs: `godot/scripts/data/AssetRegistry.gd`
-- Presentation rules: `godot/scripts/story/OrrenPresentation.gd`
+- Presentation rules and vector loading: `godot/scripts/story/OrrenPresentation.gd`
 - Encounter UI: `godot/scripts/ui/StageSelect.gd`
 - Audio cue ID: `godot/scripts/systems/AudioSettings.gd`
 - Presentation validation: `godot/tests/test_orren_presentation.gd`
