@@ -19,7 +19,7 @@ This stacked change supplies the smallest visually complete generated-art batch 
 - `python tools/validate_first_art_pass.py` checks manifest paths, exact canvases, useful transparency, overlay center clarity, 18 px indicator silhouettes, and player/enemy distinction.
 - `godot --headless --path godot --script res://tests/test_asset_manifest.gd` verifies preferred-path loading and an intentionally missing preferred file falling through to a valid legacy texture.
 - The Godot validation workflow imports resources, parses production scripts, runs the asset contract checks, and exports the Web preset.
-- The same workflow makes a temporary direct-battle QA export without changing the committed main scene, serves it locally, and captures the playable Ashvale battle in Chrome at 1920 x 1080 with device scale factor 1. The two PNGs are uploaded as the `forgotten-field-browser-captures` workflow artifact.
+- The same workflow makes a temporary direct-battle QA export without changing the committed main scene, serves it locally, waits through Chrome DevTools until Godot's loading overlay is hidden, and captures the playable Ashvale battle at 1920 x 1080 with device scale factor 1. The two PNGs are uploaded as the `forgotten-field-browser-captures` workflow artifact.
 
 ## Replacement workflow
 
