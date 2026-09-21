@@ -13,9 +13,6 @@ const SFX_STREAMS := {
 	"spell_cast": preload("res://assets/audio/sfx/spell-cast.wav"),
 	"victory": preload("res://assets/audio/sfx/victory-chime.wav"),
 	"defeat": preload("res://assets/audio/sfx/defeat-sting.wav"),
-	# Orren's recurring cue intentionally reuses the soft navigation chime.
-	# The Empty Stair omits this cue; silence is part of the storytelling.
-	"orren_motif": preload("res://assets/audio/nav.wav"),
 }
 
 var game_volume: int = 100
