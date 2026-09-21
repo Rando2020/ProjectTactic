@@ -265,20 +265,7 @@ func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
 		return null
 	if cache.has(path):
 		return cache[path]
-	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		cache[path] = null
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
-		cache[path] = null
-		return null
-	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
-	if err != OK:
-		cache[path] = null
-		return null
-	var texture := ImageTexture.create_from_image(image)
+	var texture := AssetRegistry.load_first_texture([path])
 	cache[path] = texture
 	return texture
 

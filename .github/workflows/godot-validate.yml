@@ -23,21 +23,80 @@ jobs:
       - name: Validate narrative data contract
         run: python tools/check_recurrence_story.py
 
+      - name: Install art validation dependency
+        run: python -m pip install Pillow websocket-client
+
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
         with:
           version: ${{ env.GODOT_VERSION }}
           use-dotnet: false
-          include-templates: false
+          include-templates: true
 
       - name: Verify Godot version
         run: godot --version
 
       - name: Import project headlessly
-        run: godot --headless --path godot --editor --quit-after 2
+        run: godot --headless --path godot --import
 
       - name: Parse production GDScript
         run: godot --headless --path godot --script res://tests/validate_all_scripts.gd
 
       - name: Test Orren Love and Grief arc
         run: godot --headless --path godot --script res://tests/test_orren_arc.gd
+
+      - name: Validate manifest-backed art batch
+        run: |
+          python tools/validate_first_art_pass.py
+          godot --headless --path godot --script res://tests/test_asset_manifest.gd
+
+      - name: Export Godot Web build
+        run: |
+          mkdir -p build/web
+          godot --headless --path godot --export-release "Web" ../build/web/index.html
+
+      - name: Validate Web output
+        run: test -s build/web/index.html && test -s build/web/index.pck && test -s build/web/index.wasm
+
+      - name: Export direct-battle Web QA build
+        run: |
+          mkdir -p build/web-qa
+          cp godot/project.godot /tmp/projecttactic-project.godot
+          python - <<'PY'
+          from pathlib import Path
+          project = Path("godot/project.godot")
+          text = project.read_text(encoding="utf-8")
+          text = text.replace(
+              'run/main_scene="res://scenes/StartScreen.tscn"',
+              'run/main_scene="res://scenes/Battle.tscn"',
+          )
+          project.write_text(text, encoding="utf-8")
+          PY
+          godot --headless --path godot --export-release "Web" ../build/web-qa/index.html
+          mv /tmp/projecttactic-project.godot godot/project.godot
+
+      - name: Capture battle in browser at normal zoom
+        run: |
+          mkdir -p docs/qa/browser-captures
+          python -m http.server 8000 --directory build/web-qa >/tmp/projecttactic-http.log 2>&1 &
+          server_pid=$!
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1920,1080 \
+            --remote-debugging-port=9222 --remote-allow-origins='*' \
+            --user-data-dir=/tmp/projecttactic-chrome \
+            http://127.0.0.1:8000/index.html >/tmp/projecttactic-chrome.log 2>&1 &
+          browser_pid=$!
+          trap 'kill "$browser_pid" "$server_pid"' EXIT
+          python tools/capture_browser_screenshots.py \
+            --first docs/qa/browser-captures/ashvale-battle-loaded.png \
+            --second docs/qa/browser-captures/ashvale-battle-settled.png
+          test -s docs/qa/browser-captures/ashvale-battle-loaded.png
+          test -s docs/qa/browser-captures/ashvale-battle-settled.png
+
+      - name: Upload browser captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: forgotten-field-browser-captures
+          path: docs/qa/browser-captures/*.png
+          if-no-files-found: error
