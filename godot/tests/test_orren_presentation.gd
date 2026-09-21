@@ -20,7 +20,7 @@ func _initialize() -> void:
 		OrrenPresentation.map_case_asset_path(),
 	]:
 		_expect_true(not path.is_empty(), "Orren asset path is registered: %s" % path)
-		_expect_true(ResourceLoader.exists(path), "Orren asset imports successfully: %s" % path)
+		_expect_true(OrrenPresentation.load_texture(path) != null, "Orren vector renders successfully: %s" % path)
 
 	_expect_eq(OrrenPresentation.motif_cue_id(), "ui_confirm", "Orren motif routes through existing low-volume UI cue")
 
