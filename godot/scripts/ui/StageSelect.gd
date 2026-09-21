@@ -1097,6 +1097,15 @@ func _show_wanderer_encounter(run: RunState) -> void:
 	_space(vbox, 8)
 	_lbl(vbox, str(encounter.get("title", "The Lower Stair")), 30, FG, true)
 	_space(vbox, 10)
+	var portrait_path := AssetRegistry.get_story_portrait("orren")
+	if ResourceLoader.exists(portrait_path):
+		var portrait := TextureRect.new()
+		portrait.texture = load(portrait_path)
+		portrait.custom_minimum_size = Vector2(720, 240)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		vbox.add_child(portrait)
+		_space(vbox, 10)
 
 	var story := RichTextLabel.new()
 	story.bbcode_enabled = false

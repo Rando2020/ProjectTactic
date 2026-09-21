@@ -344,10 +344,19 @@ func _build_dialogue_panel() -> PanelContainer:
 		var name_row := HBoxContainer.new()
 		name_row.add_theme_constant_override("separation", 6)
 		bubble.add_child(name_row)
-		var portrait := Label.new()
-		portrait.text = line_data.get("portrait","?")
-		portrait.add_theme_font_size_override("font_size", 18)
-		name_row.add_child(portrait)
+		var portrait_path := str(line_data.get("portrait", ""))
+		if not portrait_path.is_empty() and ResourceLoader.exists(portrait_path):
+			var portrait := TextureRect.new()
+			portrait.texture = load(portrait_path)
+			portrait.custom_minimum_size = Vector2(52, 64)
+			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			name_row.add_child(portrait)
+		else:
+			var portrait_fallback := Label.new()
+			portrait_fallback.text = portrait_path if not portrait_path.is_empty() else "?"
+			portrait_fallback.add_theme_font_size_override("font_size", 18)
+			name_row.add_child(portrait_fallback)
 		var name_col := VBoxContainer.new()
 		name_row.add_child(name_col)
 		var nlbl := Label.new()

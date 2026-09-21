@@ -57,7 +57,7 @@ static func get_line(gs: Node) -> Dictionary:
 		"line": line,
 		"name": "The Guide",
 		"title": "Keeper of the Returning Road",
-		"portrait": "?",
+		"portrait": "res://assets/ui/portraits/guide-portrait-v01.png",
 		"color": GUIDE_COLOR,
 		"category": str(RecurrenceStory.guide_stage(gs).get("id", "grey")),
 	}
