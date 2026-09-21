@@ -23,6 +23,12 @@ static func should_play_motif(stage_id: String) -> bool:
 	return has_orren(stage_id)
 
 
+static func motif_cue_id() -> String:
+	# Reuse an existing cue until Orren receives a dedicated original audio asset.
+	# Keeping this indirection means presentation code will not change later.
+	return "ui_confirm"
+
+
 static func node_asset_part(stage_id: String) -> String:
 	return "map_case" if stage_id in ABSENCE_STAGES else "lantern"
 
