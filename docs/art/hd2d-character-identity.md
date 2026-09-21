@@ -37,11 +37,15 @@ six 362x724 transparent cells under
 - `zane-attack-01.png`
 - `zane-guard-01.png`
 
-The live battle currently uses `zane-idle-01.png`; the asset registry also owns
-the attack path. `Unit.gd` forces nearest-neighbor filtering so browser camera
-zoom does not blur authored pixels. Animation sequencing remains a follow-up and
-must use these named frames rather than interpreting the original source sheet
-at runtime.
+The live battle uses these frames through a presentation-only `AnimatedSprite2D`
+controller. Idle loops continuously; movement briefly selects the walk loop;
+physical attacks and spell casts select attack; receiving a hit selects guard.
+Every transient state returns to idle. `Unit.gd` forces nearest-neighbor filtering
+so browser camera zoom does not blur authored pixels.
+
+The other generated party sheets require a new generation pass: their poses
+overlap neighboring cells and cannot be safely normalized by equal-width crops.
+They remain source candidates only and are not referenced by runtime code.
 
 ## Current placeholders and risks
 

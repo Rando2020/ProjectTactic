@@ -11,6 +11,10 @@ extends Resource
 @export var portrait: Texture2D
 @export var sprite_sheet: Texture2D
 
+## Optional presentation-only animation paths keyed by idle/walk/attack/guard.
+## Kept out of exported save data; BattleScene populates this from AssetRegistry.
+var visual_frames: Dictionary = {}
+
 ## Elemental affinity multipliers applied to incoming spell damage.
 ## Keys: "fire" "blizzard" "thunder" "wind" "holy" "dark"
 ## Values: 2.0=very weak  1.5=weak  1.0=neutral  0.5=resist  0.0=immune

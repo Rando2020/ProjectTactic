@@ -155,6 +155,18 @@ const UNITS := {
 		"idle": "res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
 		"action": "res://assets/sprites/units/zane-hd2d-v01/zane-attack-01.png",
 		"portrait": "res://assets/ui/portraits/zane-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
+				"res://assets/sprites/units/zane-hd2d-v01/zane-idle-02.png",
+			],
+			"walk": [
+				"res://assets/sprites/units/zane-hd2d-v01/zane-walk-01.png",
+				"res://assets/sprites/units/zane-hd2d-v01/zane-walk-02.png",
+			],
+			"attack": ["res://assets/sprites/units/zane-hd2d-v01/zane-attack-01.png"],
+			"guard": ["res://assets/sprites/units/zane-hd2d-v01/zane-guard-01.png"],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"mira": {

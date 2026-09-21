@@ -761,6 +761,9 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 		var tex := _texture_from_source(SPRITE_PATHS[id])
 		if tex:
 			data.sprite_sheet = tex
+	var asset_entry := AssetRegistry.get_unit(id)
+	if asset_entry.has("animations"):
+		data.visual_frames = asset_entry.get("animations", {}).duplicate(true)
 
 	var unit: Unit = unit_scene.instantiate()
 	unit.unit_data = data

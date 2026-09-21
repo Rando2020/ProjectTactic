@@ -10,6 +10,7 @@ const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
 		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
+	attacker.play_visual_animation("attack", 0.34)
 	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
@@ -103,6 +104,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 
 func resolve_spell(caster: Unit, target: Unit,
 		spell_type: String, base_power: int) -> Dictionary:
+	caster.play_visual_animation("attack", 0.4)
 	_play_sfx("spell_cast", -2.5)
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var element := CombatFormula.normalize_element(spell_type)
