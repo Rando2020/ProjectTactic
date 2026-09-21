@@ -5,6 +5,7 @@ class_name StageSelect
 extends Control
 
 const OrrenArc = preload("res://scripts/story/OrrenArc.gd")
+const OrrenPresentation = preload("res://scripts/story/OrrenPresentation.gd")
 
 const BG   := Color(0.04, 0.05, 0.08)
 const FG   := Color(0.97, 0.94, 0.87)
@@ -1090,11 +1091,17 @@ func _show_wanderer_encounter(run: RunState) -> void:
 		_build_ui()
 		return
 
+	var stage_id := str(encounter.get("id", ""))
+	if OrrenPresentation.should_play_motif(stage_id):
+		_play_orren_motif()
+
 	var vbox := _vbox(_boon_overlay, true)
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	vbox.custom_minimum_size = Vector2(780, 0)
+	vbox.custom_minimum_size = Vector2(820, 0)
 	_lbl(vbox, "STORY ENCOUNTER", 11, Color(0.53, 0.94, 0.67), true)
 	_space(vbox, 8)
+	_build_orren_motif(vbox, stage_id)
+	_space(vbox, 12)
 	_lbl(vbox, str(encounter.get("title", "The Lower Stair")), 30, FG, true)
 	_space(vbox, 10)
 
@@ -1188,6 +1195,108 @@ func _show_story_event(event: Dictionary) -> void:
 			_boon_overlay = null
 		_build_ui())
 	vbox.add_child(cont)
+
+
+func _play_orren_motif() -> void:
+	var audio_settings := get_node_or_null("/root/AudioSettings")
+	if audio_settings and audio_settings.has_method("play_sfx"):
+		audio_settings.play_sfx(OrrenPresentation.motif_cue_id(), -13.0)
+
+
+func _build_orren_motif(parent: Control, stage_id: String) -> void:
+	var absence := not OrrenPresentation.has_orren(stage_id)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(760, 188)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var frame := StyleBoxFlat.new()
+	frame.bg_color = Color(0.035, 0.05, 0.05, 0.96)
+	frame.border_color = Color(0.24, 0.52, 0.38, 0.28) if not absence else Color(0.42, 0.44, 0.47, 0.18)
+	frame.set_border_width_all(1)
+	frame.set_corner_radius_all(8)
+	frame.content_margin_left = 18
+	frame.content_margin_right = 18
+	frame.content_margin_top = 14
+	frame.content_margin_bottom = 14
+	panel.add_theme_stylebox_override("panel", frame)
+	parent.add_child(panel)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 22)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_child(row)
+
+	if absence:
+		var empty_portrait := PanelContainer.new()
+		empty_portrait.custom_minimum_size = Vector2(126, 150)
+		var empty_style := StyleBoxFlat.new()
+		empty_style.bg_color = Color(0.025, 0.03, 0.033, 0.8)
+		empty_style.border_color = Color(0.5, 0.52, 0.55, 0.12)
+		empty_style.set_border_width_all(1)
+		empty_portrait.add_theme_stylebox_override("panel", empty_style)
+		row.add_child(empty_portrait)
+	else:
+		row.add_child(_story_asset_widget(
+			OrrenPresentation.portrait_asset_path(),
+			Vector2(126, 150),
+			1.0))
+
+	var object_box := VBoxContainer.new()
+	object_box.custom_minimum_size = Vector2(330, 150)
+	object_box.add_theme_constant_override("separation", 8)
+	row.add_child(object_box)
+
+	var object_row := HBoxContainer.new()
+	object_row.add_theme_constant_override("separation", 24)
+	object_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	object_box.add_child(object_row)
+
+	if absence:
+		var empty_lantern := PanelContainer.new()
+		empty_lantern.custom_minimum_size = Vector2(92, 92)
+		var empty_lantern_style := StyleBoxFlat.new()
+		empty_lantern_style.bg_color = Color(0.02, 0.025, 0.028, 0.65)
+		empty_lantern_style.border_color = Color(0.42, 0.46, 0.45, 0.14)
+		empty_lantern_style.set_border_width_all(1)
+		empty_lantern_style.set_corner_radius_all(46)
+		empty_lantern.add_theme_stylebox_override("panel", empty_lantern_style)
+		object_row.add_child(empty_lantern)
+	else:
+		var lantern := _story_asset_widget(
+			OrrenPresentation.lantern_asset_path(),
+			Vector2(92, 92),
+			1.0)
+		object_row.add_child(lantern)
+		var pulse := lantern.create_tween()
+		pulse.set_loops()
+		pulse.tween_property(lantern, "modulate:a", 0.68, 1.15).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(lantern, "modulate:a", 1.0, 1.15).set_trans(Tween.TRANS_SINE)
+
+	object_row.add_child(_story_asset_widget(
+		OrrenPresentation.map_case_asset_path(),
+		Vector2(126, 76),
+		1.0))
+
+	var signature := Label.new()
+	signature.text = "GREEN LANTERN   /   SILVER MAP CASE" if not absence else "                         SILVER MAP CASE"
+	signature.add_theme_font_override("font", _FONT_HEADER)
+	signature.add_theme_font_size_override("font_size", 9)
+	signature.add_theme_color_override("font_color",
+		Color(0.46, 0.82, 0.58) if not absence else Color(0.48, 0.49, 0.50))
+	signature.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	object_box.add_child(signature)
+
+
+func _story_asset_widget(path: String, min_size: Vector2, alpha: float = 1.0) -> TextureRect:
+	var rect := TextureRect.new()
+	rect.custom_minimum_size = min_size
+	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	rect.modulate.a = alpha
+	var texture := OrrenPresentation.load_texture(path)
+	if texture:
+		rect.texture = texture
+	return rect
 
 
 func _story_tone_color(tone: String) -> Color:
@@ -1429,8 +1538,16 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool,
 		ic = skip_lbl
 	else:
 		var ntype: String = str(node.get("type", "battle"))
-		ic = _node_icon_widget(ntype, str(meta["icon"]),
-			accent if is_cur else DIM.darkened(0.15), Vector2(38, 38))
+		if ntype == "wanderer" and _gs and _gs.story_flags.has("met_orren"):
+			var orren_stage := OrrenArc.stage_id(_gs)
+			var part := OrrenPresentation.node_asset_part(orren_stage)
+			ic = _story_asset_widget(
+				AssetRegistry.get_story_character_asset("orren", part),
+				Vector2(42, 42),
+				0.9 if is_cur else 0.45)
+		else:
+			ic = _node_icon_widget(ntype, str(meta["icon"]),
+				accent if is_cur else DIM.darkened(0.15), Vector2(38, 38))
 	ic.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	ic.offset_top = 2
 	btn.add_child(ic)
