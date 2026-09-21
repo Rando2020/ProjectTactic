@@ -283,6 +283,14 @@ const UI := {
 	},
 }
 
+const STORY_CHARACTERS := {
+	"orren": {
+		"portrait": "res://assets/characters/orren-portrait-placeholder.svg",
+		"lantern": "res://assets/ui/orren-green-lantern.svg",
+		"map_case": "res://assets/ui/orren-silver-map-case.svg",
+	},
+}
+
 const CURRENCIES := {
 	"soul_shards": "res://assets/generated/icons/currency-soul-shards-icon.png",
 	"obsidian": "res://assets/generated/icons/currency-obsidian-icon.png",
@@ -401,6 +409,10 @@ static func get_job_icon(job_id: String) -> String:
 
 static func get_vfx(vfx_id: String) -> String:
 	return VFX.get(vfx_id, "")
+
+static func get_story_character_asset(character_id: String, part: String) -> String:
+	return STORY_CHARACTERS.get(character_id, {}).get(part, "")
+
 
 static func get_currency_icon(currency_id: String) -> String:
 	return CURRENCIES.get(currency_id.replace("-", "_"), "")
