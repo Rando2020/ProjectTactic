@@ -18,3 +18,9 @@
 *.gltf filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
 
+# Keep the small vertical-slice runtime batch available to clean CI checkouts.
+# The repository's legacy LFS store currently has missing objects, and these
+# reviewed assets total only about 104 KB.
+godot/assets/environments/forgotten-field/tiles/*-v01.png -filter -diff -merge -text
+godot/assets/ui/tactical-overlays/*-v01.png -filter -diff -merge -text
+godot/assets/ui/unit-indicators/*-v01.png -filter -diff -merge -text
