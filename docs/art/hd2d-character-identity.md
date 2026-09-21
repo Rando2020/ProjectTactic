@@ -24,6 +24,25 @@ replace the existing battle sprites.
 The lantern/VFX source composition lives in `source-art/generated/story/` and
 must be separated into individual transparent textures before integration.
 
+## Zane normalization contract
+
+Zane is the first runtime proof. His 2172x724 six-pose source sheet is split into
+six 362x724 transparent cells under
+`godot/assets/sprites/units/zane-hd2d-v01/`:
+
+- `zane-idle-01.png`
+- `zane-idle-02.png`
+- `zane-walk-01.png`
+- `zane-walk-02.png`
+- `zane-attack-01.png`
+- `zane-guard-01.png`
+
+The live battle currently uses `zane-idle-01.png`; the asset registry also owns
+the attack path. `Unit.gd` forces nearest-neighbor filtering so browser camera
+zoom does not blur authored pixels. Animation sequencing remains a follow-up and
+must use these named frames rather than interpreting the original source sheet
+at runtime.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

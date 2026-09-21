@@ -93,6 +93,8 @@ func _draw_unit() -> void:
 	if unit_data and unit_data.sprite_sheet:
 		_sprite = Sprite2D.new()
 		_sprite.texture = unit_data.sprite_sheet
+		# Pixel units must remain crisp when the camera zooms over the 2.5D board.
+		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		var tex_size := unit_data.sprite_sheet.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
 			var target_size: float = 80.0 if is_player else 95.0

@@ -31,7 +31,7 @@ var _enemy_instance_seq: int = 0
 var _last_death_info:  Dictionary = {}
 
 const SPRITE_PATHS := {
-	"zane":         "res://assets/sprites/units/zane.png",
+	"zane":         "res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
 	"mira":         "res://assets/sprites/units/mira.png",
 	"kael":         "res://assets/sprites/units/kael.png",
 	"lyra":         "res://assets/sprites/units/lyra.png",
