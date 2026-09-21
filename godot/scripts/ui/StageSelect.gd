@@ -5,6 +5,7 @@ class_name StageSelect
 extends Control
 
 const OrrenArc = preload("res://scripts/story/OrrenArc.gd")
+const OrrenPresentation = preload("res://scripts/story/OrrenPresentation.gd")
 
 const BG   := Color(0.04, 0.05, 0.08)
 const FG   := Color(0.97, 0.94, 0.87)
@@ -1091,7 +1092,7 @@ func _show_wanderer_encounter(run: RunState) -> void:
 		return
 
 	var stage_id := str(encounter.get("id", ""))
-	if stage_id in ["first", "sacrifice", "attachment", "last_seen", "interlude"]:
+	if OrrenPresentation.should_play_motif(stage_id):
 		_play_orren_motif()
 
 	var vbox := _vbox(_boon_overlay, true)
@@ -1203,7 +1204,7 @@ func _play_orren_motif() -> void:
 
 
 func _build_orren_motif(parent: Control, stage_id: String) -> void:
-	var absence := stage_id in ["absence", "after_grief"]
+	var absence := not OrrenPresentation.has_orren(stage_id)
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(760, 188)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -1235,7 +1236,7 @@ func _build_orren_motif(parent: Control, stage_id: String) -> void:
 		row.add_child(empty_portrait)
 	else:
 		row.add_child(_story_asset_widget(
-			AssetRegistry.get_story_character_asset("orren", "portrait"),
+			OrrenPresentation.portrait_asset_path(),
 			Vector2(126, 150),
 			1.0))
 
@@ -1261,7 +1262,7 @@ func _build_orren_motif(parent: Control, stage_id: String) -> void:
 		object_row.add_child(empty_lantern)
 	else:
 		var lantern := _story_asset_widget(
-			AssetRegistry.get_story_character_asset("orren", "lantern"),
+			OrrenPresentation.lantern_asset_path(),
 			Vector2(92, 92),
 			1.0)
 		object_row.add_child(lantern)
@@ -1271,7 +1272,7 @@ func _build_orren_motif(parent: Control, stage_id: String) -> void:
 		pulse.tween_property(lantern, "modulate:a", 1.0, 1.15).set_trans(Tween.TRANS_SINE)
 
 	object_row.add_child(_story_asset_widget(
-		AssetRegistry.get_story_character_asset("orren", "map_case"),
+		OrrenPresentation.map_case_asset_path(),
 		Vector2(126, 76),
 		1.0))
 
@@ -1538,7 +1539,7 @@ func _node_card(meta: Dictionary, is_cur: bool, is_done: bool, _is_future: bool,
 		var ntype: String = str(node.get("type", "battle"))
 		if ntype == "wanderer" and _gs and _gs.story_flags.has("met_orren"):
 			var orren_stage := OrrenArc.stage_id(_gs)
-			var part := "map_case" if orren_stage in ["absence", "after_grief"] else "lantern"
+			var part := OrrenPresentation.node_asset_part(orren_stage)
 			ic = _story_asset_widget(
 				AssetRegistry.get_story_character_asset("orren", part),
 				Vector2(42, 42),
