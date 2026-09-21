@@ -12,13 +12,19 @@ func _initialize() -> void:
 	var footprint: Dictionary = manifest.get("tile_footprint", {})
 	_expect_eq(Vector2i(int(footprint.get("width", 0)), int(footprint.get("height", 0))), Vector2i(96, 48), "tile footprint is 96 x 48")
 
-	for terrain_id in ["grass", "grass_flowers", "road", "stone", "high_ground", "shallow_water"]:
+	for terrain_id in ["grass", "grass_flowers", "brush", "road", "stone", "high_ground", "shallow_water", "shrine"]:
 		var candidates := AssetRegistryScript.get_environment_candidates("forgotten-field", "terrain", terrain_id)
 		_expect_true(candidates.size() == 2, "%s has preferred and fallback paths" % terrain_id)
 		_expect_true(candidates.size() > 0 and FileAccess.file_exists(candidates[0]), "%s preferred art exists" % terrain_id)
 		_expect_true(AssetRegistryScript.load_first_texture(candidates) != null, "%s resolves to a texture" % terrain_id)
 
-	for overlay_id in ["selected", "move", "attack", "ability"]:
+	for prop_id in ["leafy_bush", "mossy_rock", "tree_stump", "ruin_block"]:
+		var candidates := AssetRegistryScript.get_environment_candidates("forgotten-field", "props", prop_id)
+		_expect_true(candidates.size() == 2, "%s has preferred and fallback prop paths" % prop_id)
+		_expect_true(candidates.size() > 0 and FileAccess.file_exists(candidates[0]), "%s preferred prop art exists" % prop_id)
+		_expect_true(AssetRegistryScript.load_first_texture(candidates) != null, "%s prop resolves to a texture" % prop_id)
+
+	for overlay_id in ["selected", "move", "attack", "ability", "blocked"]:
 		var candidates := AssetRegistryScript.get_overlay_candidates("forgotten-field", overlay_id)
 		_expect_true(candidates.size() == 2, "%s overlay has preferred and fallback paths" % overlay_id)
 		_expect_true(candidates.size() > 0 and FileAccess.file_exists(candidates[0]), "%s overlay art exists" % overlay_id)
