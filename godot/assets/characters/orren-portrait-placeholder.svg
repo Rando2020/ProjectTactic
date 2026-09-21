@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="320" viewBox="0 0 256 320">
+  <rect width="256" height="320" fill="#11161a"/>
+  <circle cx="186" cy="102" r="52" fill="#2c8c5f" opacity="0.16"/>
+  <circle cx="186" cy="102" r="32" fill="#66da8c" opacity="0.10"/>
+  <path d="M76 283 C73 231 83 194 108 176 C89 159 84 131 92 106 C102 74 129 56 161 61 C188 66 204 88 203 116 C202 143 190 163 173 176 C201 193 217 232 216 283 Z" fill="#303840"/>
+  <path d="M104 107 C111 78 132 65 158 67 C181 69 194 88 193 113 C191 138 178 157 158 166 C139 164 119 153 109 137 C102 126 100 117 104 107 Z" fill="#b6a48f"/>
+  <path d="M101 108 C105 74 130 52 164 58 C185 61 199 73 205 95 C185 89 167 91 152 99 C135 108 120 112 101 108 Z" fill="#25292c"/>
+  <path d="M112 129 C123 135 134 135 145 131" fill="none" stroke="#5a4f45" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="127" cy="113" r="3" fill="#202829"/>
+  <circle cx="166" cy="111" r="3" fill="#202829"/>
+  <path d="M88 212 C116 196 158 194 191 210 L178 282 H96 Z" fill="#242b31"/>
+  <path d="M101 202 C118 223 159 234 187 207" fill="none" stroke="#6d7a83" stroke-width="12"/>
+  <path d="M96 219 C126 235 151 239 186 226" fill="none" stroke="#3f8c67" stroke-width="5"/>
+  <path d="M179 200 L210 251" stroke="#aeb5b9" stroke-width="8" stroke-linecap="round"/>
+  <path d="M174 206 L205 257" stroke="#4b5258" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="200" cy="256" r="9" fill="#70dd93" opacity="0.8"/>
+  <rect x="18" y="278" width="220" height="24" fill="#0b0e10" opacity="0.9"/>
+  <text x="128" y="295" text-anchor="middle" fill="#c8d2ce" font-family="serif" font-size="14" letter-spacing="2">ORREN • LOWER STAIR</text>
+</svg>
