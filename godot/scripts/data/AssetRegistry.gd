@@ -176,6 +176,12 @@ const UNITS := {
 		"idle": "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
 		"action": "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
 		"portrait": "res://assets/ui/portraits/mira-vey-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
+				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-02.png",
+			],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"kael": {

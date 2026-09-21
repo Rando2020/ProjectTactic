@@ -57,6 +57,12 @@ Its 512x512 nearest-neighbor runtime derivative lives at
 transparency. Battle and asset registries use this stable idle path while later
 poses are generated from the anchor as an identity reference.
 
+`mira-idle-02-source.png` was generated as an identity-preserving edit of that
+anchor. Its runtime derivative, `mira-idle-02.png`, preserves the same canvas,
+ground line, costume, palette, and camera while introducing only restrained
+breathing and secondary-cloth motion. The asset registry now exposes both frames
+as Mira's looping idle animation.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
