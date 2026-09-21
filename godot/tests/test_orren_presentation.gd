@@ -1,8 +1,6 @@
 extends SceneTree
 
 const OrrenPresentation = preload("res://scripts/story/OrrenPresentation.gd")
-const AudioSettingsScript = preload("res://scripts/systems/AudioSettings.gd")
-
 var _pass := 0
 var _fail := 0
 
@@ -24,7 +22,7 @@ func _initialize() -> void:
 		_expect_true(not path.is_empty(), "Orren asset path is registered: %s" % path)
 		_expect_true(ResourceLoader.exists(path), "Orren asset imports successfully: %s" % path)
 
-	_expect_true(AudioSettingsScript.SFX_STREAMS.has("orren_motif"), "Orren audio motif is registered")
+	_expect_eq(OrrenPresentation.motif_cue_id(), "ui_confirm", "Orren motif routes through existing low-volume UI cue")
 
 	if _fail > 0:
 		push_error("Orren presentation test failed: %d failure(s), %d pass(es)" % [_fail, _pass])
