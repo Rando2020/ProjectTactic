@@ -31,7 +31,7 @@ func _initialize() -> void:
 
 	var fallback_texture := AssetRegistryScript.load_first_texture([
 		"res://assets/does-not-exist/intentional-missing-file.png",
-		"res://assets/ui/tiles/grass.png",
+		"res://assets/environments/forgotten-field/tiles/environment-forgotten-field-grass-tile-v01.png",
 	])
 	_expect_true(fallback_texture != null, "missing preferred file falls back without failure")
 
