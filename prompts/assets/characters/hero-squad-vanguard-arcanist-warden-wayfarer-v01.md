@@ -62,10 +62,14 @@ Generate one role and one pose per output. Contact sheets, pose grids, turnaroun
 
 ### Warden
 
-- Protective field anchor.
-- Worn shield and practical heavy cloth.
-- Widest stable hero silhouette.
-- Moss and iron-blue accent.
+- Protective field anchor and practical guardian.
+- Widest stable hero silhouette, but still contained within one battlefield tile.
+- Worn medium tower shield with a clipped or rounded top, held beside the torso rather than covering it.
+- Short practical mace or reinforced baton kept close to the body.
+- Layered heavy cloth beneath weathered iron plates, with visible knee and shoulder articulation.
+- Moss and iron-blue accent limited to shield cloth, binding, and one shoulder detail.
+- Calm braced stance with bent knees and clearly separated feet.
+- No oversized fantasy shield, full body wall, giant hammer, cape wings, or glowing barrier.
 
 ### Wayfarer
 
@@ -90,6 +94,22 @@ Output: one character only; genuinely transparent background; intended for norma
 
 Avoid: floor, cast shadow, pedestal, scenery, aura cloud, spell burst, floating runes, staff, giant book, wide cape, text, border, UI, contact sheet, multiple poses, cropped clothing, celebrity likeness, anime exaggeration, chibi proportions, glossy armor, watermark.
 
+## Warden idle generation prompt
+
+Use case: stylized-concept
+
+Asset type: one production-ready tactical RPG battlefield idle sprite
+
+Primary request: Create the original Warden from The Appointed hero squad as one individual transparent asset. Match the accepted Vanguard and Arcanist references in camera, adult scale, weathered material rendering, tonal range, southwest lighting, and painterly pixel-adjacent edge treatment. Make the Warden the broadest and most stable hero silhouette without copying the Vanguard's triangular duelist stance.
+
+Subject: grounded adult protective field anchor; worn medium tower shield with clipped or rounded top held beside the torso so the head, chest, and shield rim remain separately readable; short practical mace or reinforced baton kept close to the body; layered charcoal heavy cloth under weathered iron plates; articulated knees and shoulders; restrained moss and iron-blue accents; small pale-gold repair seams; calm vigilant human face.
+
+Composition: fixed three-quarter isometric battlefield view from approximately 30 degrees above; body and attention facing down-right; low braced ready stance with bent knees; both feet visible and separated on one bottom-center baseline; shield creates width but does not hide the full torso; all equipment inside the frame.
+
+Output: one character only; genuinely transparent background; intended for normalization to 128 × 128 and display at 80 px over a 96 × 48 tile.
+
+Avoid: full body wall, oversized shield, shield wider than the character is tall, giant hammer, long spear, cape wings, glowing barrier, magic dome, floor, cast shadow, pedestal, scenery, aura cloud, text, border, UI, contact sheet, multiple poses, cropped equipment, celebrity likeness, anime exaggeration, chibi proportions, glossy armor, watermark.
+
 ## File names
 
 `character-{role}-{idle|action}-v01.png`.
@@ -103,6 +123,9 @@ Accept only when:
 - Head, hands, compact focus, and both feet remain separable.
 - Violet remains an accent rather than the primary silhouette.
 - Alpha background is genuinely transparent.
+- Warden reads as a protector in grayscale at 80 px.
+- Shield, head, torso, weapon hand, and both feet remain separately readable.
+- Warden is broader than Arcanist without exceeding the accepted tile-scale silhouette.
 
 Reject when:
 
@@ -111,6 +134,8 @@ Reject when:
 - The pose depends on particles or color to read.
 - Equipment touches the canvas boundary.
 - Robes merge into one dark, illegible column.
+- Warden's shield hides the head, both feet, or entire torso.
+- Warden reads as a boss, siege object, or oversized paladin.
 
 ## Review checklist
 

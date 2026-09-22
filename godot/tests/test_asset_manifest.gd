@@ -35,7 +35,7 @@ func _initialize() -> void:
 		_expect_true(candidates.size() == 1, "%s indicator is optional and manifest-backed" % team_id)
 		_expect_true(AssetRegistryScript.load_first_texture(candidates) != null, "%s indicator resolves to a texture" % team_id)
 
-	for unit_id in ["zane", "mira", "void_cultist"]:
+	for unit_id in ["zane", "mira", "kael", "void_cultist", "null_drake"]:
 		var candidates := AssetRegistryScript.get_character_candidates(unit_id)
 		_expect_true(candidates.size() == 2, "%s character has preferred and fallback paths" % unit_id)
 		_expect_true(candidates.size() > 0 and FileAccess.file_exists(candidates[0]), "%s preferred character art exists" % unit_id)
@@ -45,7 +45,9 @@ func _initialize() -> void:
 	_expect_true(missing_character.is_empty(), "unmapped character safely requests the legacy fallback")
 	var character_entries: Dictionary = manifest.get("characters", {})
 	_expect_eq(str(character_entries.get("mira", {}).get("art_id", "")), "character-arcanist", "Mira maps to Arcanist")
+	_expect_eq(str(character_entries.get("kael", {}).get("art_id", "")), "character-warden", "Kael maps to Warden")
 	_expect_eq(str(character_entries.get("void_cultist", {}).get("art_id", "")), "enemy-hollow-cantor", "Void Cultist maps to Hollow Cantor")
+	_expect_eq(str(character_entries.get("null_drake", {}).get("art_id", "")), "enemy-hollow-bulwark", "Null Drake maps to Hollow Bulwark")
 	for unit_id in character_entries:
 		_expect_true(str(character_entries[unit_id].get("art_id", "")) != "enemy-hollow-lancer", "Hollow Lancer remains reserved")
 	var procedural_character_fallback := AssetRegistryScript.load_first_texture([
