@@ -50,6 +50,9 @@ jobs:
           python tools/validate_first_art_pass.py
           godot --headless --path godot --script res://tests/test_asset_manifest.gd
 
+      - name: Validate responsive battle HUD layout
+        run: godot --headless --path godot --script res://tests/test_battle_hud_layout.gd
+
       - name: Export Godot Web build
         run: |
           mkdir -p build/web
@@ -82,7 +85,7 @@ jobs:
           server_pid=$!
           browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           "$browser" --headless --no-sandbox --disable-dev-shm-usage \
-            --force-device-scale-factor=1 --window-size=1920,1080 \
+            --force-device-scale-factor=1 --window-size=1600,900 \
             --remote-debugging-port=9222 --remote-allow-origins='*' \
             --user-data-dir=/tmp/projecttactic-chrome \
             http://127.0.0.1:8000/index.html >/tmp/projecttactic-chrome.log 2>&1 &
@@ -90,9 +93,11 @@ jobs:
           trap 'kill "$browser_pid" "$server_pid"' EXIT
           python tools/capture_browser_screenshots.py \
             --first docs/qa/browser-captures/ashvale-battle-loaded.png \
-            --second docs/qa/browser-captures/ashvale-battle-settled.png
+            --second docs/qa/browser-captures/ashvale-battle-settled.png \
+            --compact docs/qa/browser-captures/ashvale-battle-compact-1366x768.png
           test -s docs/qa/browser-captures/ashvale-battle-loaded.png
           test -s docs/qa/browser-captures/ashvale-battle-settled.png
+          test -s docs/qa/browser-captures/ashvale-battle-compact-1366x768.png
 
       - name: Upload browser captures
         uses: actions/upload-artifact@v4

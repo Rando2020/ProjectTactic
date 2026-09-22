@@ -4,6 +4,7 @@ extends CanvasLayer
 signal spoils_continue_requested
 
 const DISPLAY_FONT := preload("res://assets/fonts/TrajanPro-Regular.ttf")
+const BattleHudLayout := preload("res://scripts/ui/BattleHudLayout.gd")
 
 var battle_manager: BattleManager
 
@@ -59,6 +60,8 @@ var _fx_slider: HSlider
 var _game_value_label: Label
 var _music_value_label: Label
 var _fx_value_label: Label
+var _right_panel_bg: ColorRect
+var _right_panel_root: VBoxContainer
 var _is_player_turn: bool = false
 var _can_move_now: bool = false
 var _can_act_now: bool = false
@@ -90,21 +93,23 @@ func setup(manager: BattleManager) -> void:
 
 func _ready() -> void:
 	_build_ui()
+	_layout_persistent_hud()
+	var viewport := get_viewport()
+	if viewport and not viewport.size_changed.is_connected(_layout_persistent_hud):
+		viewport.size_changed.connect(_layout_persistent_hud)
 
 
 func _build_ui() -> void:
-	# Dark background panel on right half
-	var bg := ColorRect.new()
-	bg.color = Color(0.035, 0.045, 0.065, 0.82)
-	bg.position = Vector2(908, 8)
-	bg.size = Vector2(360, 704)
-	add_child(bg)
+	# Persistent controls live in a responsive right rail so the battlefield
+	# center remains visible at normal browser zoom.
+	_right_panel_bg = ColorRect.new()
+	_right_panel_bg.color = Color(0.035, 0.045, 0.065, 0.90)
+	add_child(_right_panel_bg)
 
-	var root := VBoxContainer.new()
-	root.position = Vector2(916, 14)
-	root.size = Vector2(344, 690)
-	root.add_theme_constant_override("separation", 6)
-	add_child(root)
+	_right_panel_root = VBoxContainer.new()
+	_right_panel_root.add_theme_constant_override("separation", 6)
+	add_child(_right_panel_root)
+	var root := _right_panel_root
 
 	# Mission header
 	_mission_label = Label.new()
@@ -200,7 +205,7 @@ func _build_ui() -> void:
 	# Command buttons
 	root.add_child(_section_label("COMMANDS"))
 	var btn_row := HBoxContainer.new()
-	btn_row.add_theme_constant_override("separation", 6)
+	btn_row.add_theme_constant_override("separation", int(BattleHudLayout.COMMAND_GAP))
 	root.add_child(btn_row)
 	_move_btn   = _cmd_btn(btn_row, "Move",   _on_move)
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
@@ -278,6 +283,16 @@ func _build_ui() -> void:
 	_build_loadout_strip()
 	_build_action_preview_panel()
 	_build_settings_overlay()
+
+
+func _layout_persistent_hud() -> void:
+	if not _right_panel_bg or not _right_panel_root:
+		return
+	var rect := BattleHudLayout.right_sidebar_rect(get_viewport().get_visible_rect().size)
+	_right_panel_bg.position = rect.position
+	_right_panel_bg.size = rect.size
+	_right_panel_root.position = rect.position + Vector2(8.0, 6.0)
+	_right_panel_root.size = rect.size - Vector2(16.0, 14.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -877,7 +892,8 @@ func _stat_label(parent: Control, prefix: String) -> Label:
 func _cmd_btn(parent: Control, label: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = label
-	btn.custom_minimum_size = Vector2(96, 40)
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.disabled = true
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
