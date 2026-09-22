@@ -109,11 +109,25 @@
         "fallback_path": "res://assets/sprites/units/mira.png"
       }
     },
+    "kael": {
+      "art_id": "character-warden",
+      "idle": {
+        "path": "res://assets/characters/character-warden-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/kael.png"
+      }
+    },
     "void_cultist": {
       "art_id": "enemy-hollow-cantor",
       "idle": {
         "path": "res://assets/characters/enemy-hollow-cantor-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/void_cultist.png"
+      }
+    },
+    "null_drake": {
+      "art_id": "enemy-hollow-bulwark",
+      "idle": {
+        "path": "res://assets/characters/enemy-hollow-bulwark-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/null_drake.png"
       }
     }
   }

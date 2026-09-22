@@ -16,7 +16,7 @@ TERRAINS = ("grass", "grass_flowers", "brush", "road", "stone", "high_ground", "
 PROPS = ("leafy_bush", "mossy_rock", "tree_stump", "ruin_block")
 OVERLAYS = ("selected", "move", "attack", "ability", "blocked")
 INDICATORS = ("player", "enemy")
-CHARACTERS = ("zane", "mira", "void_cultist")
+CHARACTERS = ("zane", "mira", "kael", "void_cultist", "null_drake")
 
 
 def local_path(resource_path: str) -> Path:
@@ -73,6 +73,7 @@ def main() -> None:
     if sum(difference) < 2500:
         raise AssertionError("Player and enemy indicators are too similar at 18 px")
 
+    character_bounds: dict[str, tuple[int, int, int, int]] = {}
     for unit_id in CHARACTERS:
         entry = manifest["characters"][unit_id]["idle"]
         image = inspect_png(local_path(entry["path"]), (128, 128))
@@ -83,16 +84,41 @@ def main() -> None:
             raise AssertionError(f"{unit_id} character does not use the shared vertical canvas")
         if not 54 <= (bounds[0] + bounds[2]) / 2 <= 74:
             raise AssertionError(f"{unit_id} character is not centered on the foot anchor")
+        character_bounds[unit_id] = bounds
+
+        art_id = manifest["characters"][unit_id]["art_id"]
+        runtime_size = 95 if art_id.startswith("enemy-") else 80
+        reduced = image.resize((runtime_size, runtime_size), Image.Resampling.LANCZOS)
+        reduced_alpha = reduced.getchannel("A")
+        visible_pixels = sum(1 for value in reduced_alpha.get_flattened_data() if value >= 64)
+        if visible_pixels < runtime_size * 6:
+            raise AssertionError(f"{unit_id} loses too much silhouette at {runtime_size} px")
+        grayscale = reduced.convert("L")
+        visible_values = [
+            gray
+            for gray, alpha in zip(grayscale.get_flattened_data(), reduced_alpha.get_flattened_data())
+            if alpha >= 64
+        ]
+        if not visible_values or max(visible_values) - min(visible_values) < 48:
+            raise AssertionError(f"{unit_id} lacks grayscale separation at {runtime_size} px")
 
     character_entries = manifest["characters"]
     if character_entries["mira"]["art_id"] != "character-arcanist":
         raise AssertionError("Mira must map to the Arcanist art role")
+    if character_entries["kael"]["art_id"] != "character-warden":
+        raise AssertionError("Kael must map to the Warden art role")
     if character_entries["void_cultist"]["art_id"] != "enemy-hollow-cantor":
         raise AssertionError("Void Cultist must map to the Hollow Cantor art role")
+    if character_entries["null_drake"]["art_id"] != "enemy-hollow-bulwark":
+        raise AssertionError("Null Drake must map to the Hollow Bulwark art role")
     if any(entry["art_id"] == "enemy-hollow-lancer" for entry in character_entries.values()):
         raise AssertionError("Hollow Lancer must remain reserved for a compatible gameplay unit")
+    if character_bounds["kael"][2] - character_bounds["kael"][0] <= character_bounds["mira"][2] - character_bounds["mira"][0]:
+        raise AssertionError("Warden must remain broader than Arcanist")
+    if character_bounds["null_drake"][2] - character_bounds["null_drake"][0] <= character_bounds["void_cultist"][2] - character_bounds["void_cultist"][0]:
+        raise AssertionError("Hollow Bulwark must remain broader than Hollow Cantor")
 
-    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 3 characters; 96 x 48 footprint)")
+    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 5 characters; 96 x 48 footprint)")
 
 
 if __name__ == "__main__":

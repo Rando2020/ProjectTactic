@@ -62,8 +62,14 @@ Generate one role and one pose per output. Contact sheets, pose grids, lineups, 
 
 ### Hollow Bulwark
 
-- Broad defensive mass with damaged shield architecture.
-- Reads through width and weight.
+- Broad defensive mass with damaged civic shield architecture.
+- Combat-facing art role for the current `null_drake` tank gameplay ID.
+- Low, heavy stance with high HP and Temper implied through width and layered protection.
+- Large battered rectangular shield with a missing section that creates readable negative space.
+- Short cleaver or broken civic blade held close to the body.
+- Thick ash cloth and weathered iron, with the same empty face-plane family language as Lancer and Cantor.
+- Reads through width, weight, and shield shape before color.
+- No dragon head, tail, wings, claws, scales, horns, spear, or caster focus.
 
 ### Hollow Stray
 
@@ -90,6 +96,24 @@ Output: one enemy only; genuinely transparent background; intended for normaliza
 
 Avoid: spear, polearm, staff, giant book, microphone, musical-note symbols, open screaming mouth, skull, zombie anatomy, gore, horns, wings, glossy demonic armor, neon aura, floor, cast shadow, pedestal, scenery, text, border, UI, contact sheet, multiple poses, cropped cloth, watermark.
 
+## Hollow Bulwark idle generation prompt
+
+Use case: stylized-concept
+
+Asset type: one production-ready tactical RPG battlefield enemy idle sprite
+
+Primary request: Create one original Hollow Bulwark as an individual transparent asset. Match the accepted Hollow Lancer and Hollow Cantor references in camera, adult scale, empty-identity language, weathered material treatment, tonal range, southwest lighting, and painterly pixel-adjacent edges. Replace their narrow and medium silhouettes with a broad low defensive mass suitable for a slow high-HP melee tank.
+
+Subject: adult people-shaped remnant; smooth empty face plane under a low damaged helm or split hood; broad shoulders; layered ash cloth under heavy worn iron; large battered rectangular civic shield held beside the torso, with one missing corner or deliberate cutout that creates readable negative space; short cleaver or broken civic blade held close to the body; repeated insignia rubbed smooth; restrained violet-black seams at shield fractures and armor gaps; small muted rust-red enemy accent.
+
+Combat-role evidence: this art maps to gameplay ID `null_drake`, whose current role is explicitly tanky melee with role `tank`, high HP and Temper, movement 3, speed 5, physical attacks, and block-and-positioning teaching intent. Express those mechanics through mass, stance, and shield architecture only. Do not introduce draconic anatomy from the legacy name.
+
+Composition: fixed three-quarter isometric tactical view from approximately 30 degrees above; body and attention facing down-left; low braced idle stance; both feet visible and separated on one bottom-center baseline; shield creates width but does not cover the face plane or both feet; all equipment inside frame.
+
+Output: one enemy only; genuinely transparent background; intended for normalization to 128 × 128 and display at 95 px over a 96 × 48 tile.
+
+Avoid: dragon head, reptile anatomy, tail, wings, claws, scales, horns, spear, polearm, staff, caster focus, giant weapon, full-body shield wall, glowing barrier, skull, zombie anatomy, gore, glossy demonic armor, neon aura, floor, cast shadow, pedestal, scenery, text, border, UI, contact sheet, multiple poses, cropped shield, watermark.
+
 ## File names
 
 `enemy-hollow-{role}-{idle|attack}-v01.png` and `enemy-hollow-{role}-elite-{idle|attack}-v01.png`.
@@ -103,6 +127,9 @@ Accept only when:
 - Empty face, chest focus, free hand, and both feet remain separable.
 - Silhouette does not read as a spear user, knight, zombie, or generic robed mage.
 - Alpha background is genuinely transparent.
+- Bulwark reads as a slow defensive melee tank in grayscale at 95 px.
+- Shield, empty face plane, torso, weapon hand, and both feet remain separately readable.
+- Bulwark is broader than Cantor without becoming a boss-scale silhouette.
 
 Reject when:
 
@@ -111,13 +138,17 @@ Reject when:
 - Face becomes a skull, mouth, or gore cavity.
 - Equipment touches the canvas boundary.
 - Robes collapse into one illegible black column.
+- Bulwark reads as a dragon, lancer, caster, or oversized fortress.
+- Shield hides the face plane, both feet, or the entire torso.
 
 ## Runtime mapping decision
 
 - `mira` maps to `character-arcanist`.
 - `void_cultist` maps to `enemy-hollow-cantor`.
+- `null_drake` maps to `enemy-hollow-bulwark` based on its explicit tanky-melee role, high HP and Temper, low mobility, and block-and-positioning intent.
 - `enemy-hollow-lancer` remains reserved until a compatible gameplay unit is introduced.
-- Do not force Hollow roles onto Null Drake or Storm Imp without a separate gameplay and narrative review.
+- The legacy display name Null Drake remains a taxonomy mismatch to resolve separately.
+- Do not force a Hollow role onto Storm Imp without a separate gameplay and narrative review.
 
 ## Review checklist
 
