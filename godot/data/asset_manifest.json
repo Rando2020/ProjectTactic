@@ -102,10 +102,17 @@
         "fallback_path": "res://assets/sprites/units/zane.png"
       }
     },
-    "void_cultist": {
-      "art_id": "enemy-hollow-lancer",
+    "mira": {
+      "art_id": "character-arcanist",
       "idle": {
-        "path": "res://assets/characters/enemy-hollow-lancer-idle-v01.png",
+        "path": "res://assets/characters/character-arcanist-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/mira.png"
+      }
+    },
+    "void_cultist": {
+      "art_id": "enemy-hollow-cantor",
+      "idle": {
+        "path": "res://assets/characters/enemy-hollow-cantor-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/void_cultist.png"
       }
     }
