@@ -205,7 +205,7 @@ func _build_ui() -> void:
 	# Command buttons
 	root.add_child(_section_label("COMMANDS"))
 	var btn_row := HBoxContainer.new()
-	btn_row.add_theme_constant_override("separation", 6)
+	btn_row.add_theme_constant_override("separation", int(BattleHudLayout.COMMAND_GAP))
 	root.add_child(btn_row)
 	_move_btn   = _cmd_btn(btn_row, "Move",   _on_move)
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
@@ -892,7 +892,8 @@ func _stat_label(parent: Control, prefix: String) -> Label:
 func _cmd_btn(parent: Control, label: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = label
-	btn.custom_minimum_size = Vector2(96, 40)
+	btn.custom_minimum_size = Vector2(0, 40)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.disabled = true
 	btn.pressed.connect(callback)
 	parent.add_child(btn)

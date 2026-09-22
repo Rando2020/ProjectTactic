@@ -6,6 +6,9 @@ const RIGHT_PANEL_BREAKPOINT := 1600.0
 const RIGHT_PANEL_MARGIN := 12.0
 const RIGHT_PANEL_TOP := 8.0
 const RIGHT_PANEL_MAX_HEIGHT := 704.0
+const RIGHT_PANEL_HORIZONTAL_PADDING := 16.0
+const COMMAND_GAP := 6.0
+const COMMAND_BUTTON_COUNT := 4
 
 
 static func right_sidebar_rect(viewport_size: Vector2) -> Rect2:
@@ -13,3 +16,9 @@ static func right_sidebar_rect(viewport_size: Vector2) -> Rect2:
 	var panel_height: float = minf(RIGHT_PANEL_MAX_HEIGHT, maxf(0.0, viewport_size.y - RIGHT_PANEL_TOP * 2.0))
 	var panel_x: float = maxf(RIGHT_PANEL_MARGIN, viewport_size.x - panel_width - RIGHT_PANEL_MARGIN)
 	return Rect2(panel_x, RIGHT_PANEL_TOP, panel_width, panel_height)
+
+
+static func command_button_width(panel_width: float) -> float:
+	var content_width := panel_width - RIGHT_PANEL_HORIZONTAL_PADDING
+	var gaps_width := COMMAND_GAP * float(COMMAND_BUTTON_COUNT - 1)
+	return (content_width - gaps_width) / float(COMMAND_BUTTON_COUNT)
