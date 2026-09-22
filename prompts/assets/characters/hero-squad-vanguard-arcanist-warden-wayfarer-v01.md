@@ -2,29 +2,120 @@
 
 - Asset IDs: `character-vanguard`, `character-arcanist`, `character-warden`, `character-wayfarer`
 - Intended use: battlefield idle and action silhouettes, future portraits
-- Generation tool: image generator with character consistency support
-- Generation date: fill at generation time
-- Status: prompt-ready
+- Generation tool: transparent-capable image generator with character-reference support
+- Generation date: 2026-09-22 for the idle pilot
+- Status: runtime-tested prompt contract
 
-## Shared prompt
+## Production objective
 
-Design an original four-person tactical RPG squad from a civilization recovering fragments of erased identity. Three-quarter isometric battlefield view, grounded adult proportions, weathered medieval-fantasy materials, restrained gold repair motifs, charcoal and parchment base palette, soft southwest key light, transparent background. Crisp silhouette at 80 px display height, feet aligned at bottom-center, consistent camera and scale, painterly pixel-adjacent finish.
+Create original tactical sprites that remain readable in the Godot Web battle, not standalone character illustrations. The final runtime canvas is 128 × 128 transparent PNG, while Godot displays player units at approximately 80 px maximum dimension over a 96 × 48 isometric tile.
 
-Vanguard: forward-driving duelist, asymmetric half-plate and scarred short cloak, broad triangular stance. Arcanist: deliberate memory scholar, layered robe-coat and compact focus device, narrow vertical silhouette with controlled violet accent. Warden: protective field anchor, worn shield and practical heavy cloth, widest stable silhouette with moss and iron-blue accent. Wayfarer: mobile scout and survivor, travel wraps, compact bow or hooked blade, open diagonal silhouette with faded rust accent.
+Generate one role and one pose per output. Contact sheets, pose grids, turnarounds, captions, and environment plates are automatic rejections.
 
-Generate each hero as a separate 128 × 128 transparent idle frame and a separate restrained action frame. Keep weapons within canvas and preserve identical foot position.
+## Shared world and rendering contract
+
+- Civilization: survivors recovering fragments of erased identity.
+- Materials: weathered medieval-fantasy iron, practical cloth, worn leather, restrained pale-gold repair seams.
+- Palette: charcoal and parchment base with one role accent.
+- Rendering: painterly pixel-adjacent finish, crisp outer contour, simplified internal detail, no photoreal pores or noisy micro-texture.
+- Light: soft southwest key light from upper left, cool ambient shadow, no rim-light halo.
+- Proportions: grounded adult, approximately seven heads tall, neither chibi nor superheroic.
+- Camera: fixed three-quarter isometric battlefield view, camera elevated approximately 30 degrees.
+- Player facing: body and attention face down-right toward the battlefield center.
+
+## Exact runtime output contract
+
+- Output one genuinely transparent PNG with one character only.
+- Normalize to an exact 128 × 128 canvas.
+- Keep every visible pixel within x 8 to 120 and y 4 to 124.
+- Place both feet on the same baseline at y 120 to 124.
+- Center the midpoint between the feet at x 64, tolerance 6 px.
+- Preserve transparent space beneath the feet. Do not draw a floor, shadow, pedestal, glow pool, or tile.
+- Keep weapons, cloth, hair, and effects at least 4 px from every canvas edge.
+- The complete silhouette must remain identifiable when reduced to 80 × 80.
+- Avoid isolated one-pixel features, fine facial dependence, or low-contrast edges.
+- Use shape, stance, and equipment before accent color to communicate role.
+
+## Accepted style reference
+
+`godot/assets/characters/character-vanguard-idle-v01.png` is the accepted player reference for camera, material weathering, tonal range, edge treatment, and adult scale. New heroes must look as though they belong to the same squad without copying the Vanguard's face, armor arrangement, cloak shape, or triangular silhouette.
+
+## Role specifications
+
+### Vanguard
+
+- Forward-driving duelist.
+- Asymmetric half-plate, scarred short cloak, practical sword.
+- Broad triangular stance.
+- Restrained cool-blue player accent.
+
+### Arcanist
+
+- Deliberate memory scholar and battlefield caster.
+- Narrow vertical silhouette that contrasts with the Vanguard.
+- Layered knee-length robe-coat over light practical armor.
+- Compact palm-sized focus device held close to the torso, shaped like a repaired memory lens or folding astrolabe.
+- One hand controls the focus while the other remains readable and relaxed.
+- Controlled violet accent limited to the focus, one cloth panel, and small seam details.
+- No long staff, giant book, wide cape, floating orbitals, or large spell effect.
+- Expression is observant and self-possessed, not theatrical.
+
+### Warden
+
+- Protective field anchor.
+- Worn shield and practical heavy cloth.
+- Widest stable hero silhouette.
+- Moss and iron-blue accent.
+
+### Wayfarer
+
+- Mobile scout and survivor.
+- Travel wraps with compact bow or hooked blade.
+- Open diagonal silhouette.
+- Faded rust accent.
+
+## Arcanist idle generation prompt
+
+Use case: stylized-concept
+
+Asset type: one production-ready tactical RPG battlefield idle sprite
+
+Primary request: Create the original Arcanist from The Appointed hero squad as one individual transparent asset. Match the accepted Vanguard reference in camera, adult scale, material weathering, tonal range, southwest lighting, and painterly pixel-adjacent edge treatment, while preserving a distinct narrow vertical silhouette.
+
+Subject: deliberate adult memory scholar; layered charcoal and parchment knee-length robe-coat over light weathered armor; compact repaired memory-lens or folding-astrolabe focus held near the torso; one hand controlling it and one hand clearly visible; observant human face; restrained violet accent on the focus and one cloth panel; small pale-gold repair seams.
+
+Composition: fixed three-quarter isometric battlefield view from approximately 30 degrees above; facing down-right; restrained ready idle stance; entire figure visible; both feet on one bottom-center baseline; all cloth and equipment inside the frame.
+
+Output: one character only; genuinely transparent background; intended for normalization to 128 × 128 and display at 80 px.
+
+Avoid: floor, cast shadow, pedestal, scenery, aura cloud, spell burst, floating runes, staff, giant book, wide cape, text, border, UI, contact sheet, multiple poses, cropped clothing, celebrity likeness, anime exaggeration, chibi proportions, glossy armor, watermark.
 
 ## File names
 
 `character-{role}-{idle|action}-v01.png`.
 
-## Exclusions
+## Acceptance and rejection gates
 
-No franchise likeness, superhero posing, fashion editorial lighting, anime face exaggeration, chibi proportions, modern firearms, floating feet, opaque scenery, text, or excessive particle effects.
+Accept only when:
+
+- Role reads as Arcanist in grayscale at 80 px.
+- Camera and foot anchor match the Vanguard.
+- Head, hands, compact focus, and both feet remain separable.
+- Violet remains an accent rather than the primary silhouette.
+- Alpha background is genuinely transparent.
+
+Reject when:
+
+- The output reads as a portrait, concept-art plate, or standing front-view illustration.
+- A floor, shadow, glow pool, or opaque background is present.
+- The pose depends on particles or color to read.
+- Equipment touches the canvas boundary.
+- Robes merge into one dark, illegible column.
 
 ## Review checklist
 
-- Roles readable as silhouettes
-- Shared world, distinct identities
-- Consistent camera, scale, feet, and light
-- Faces remain human and specific without celebrity resemblance
+- Shared squad world, distinct role silhouette
+- Consistent camera, scale, baseline, and southwest light
+- Human and specific face without celebrity resemblance
+- Readable at 80 px on grass, road, and stone
+- No collision with HP bar, team indicator, or tile overlays

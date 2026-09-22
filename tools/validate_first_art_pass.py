@@ -16,7 +16,7 @@ TERRAINS = ("grass", "grass_flowers", "brush", "road", "stone", "high_ground", "
 PROPS = ("leafy_bush", "mossy_rock", "tree_stump", "ruin_block")
 OVERLAYS = ("selected", "move", "attack", "ability", "blocked")
 INDICATORS = ("player", "enemy")
-CHARACTERS = ("zane", "void_cultist")
+CHARACTERS = ("zane", "mira", "void_cultist")
 
 
 def local_path(resource_path: str) -> Path:
@@ -84,7 +84,15 @@ def main() -> None:
         if not 54 <= (bounds[0] + bounds[2]) / 2 <= 74:
             raise AssertionError(f"{unit_id} character is not centered on the foot anchor")
 
-    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 2 characters; 96 x 48 footprint)")
+    character_entries = manifest["characters"]
+    if character_entries["mira"]["art_id"] != "character-arcanist":
+        raise AssertionError("Mira must map to the Arcanist art role")
+    if character_entries["void_cultist"]["art_id"] != "enemy-hollow-cantor":
+        raise AssertionError("Void Cultist must map to the Hollow Cantor art role")
+    if any(entry["art_id"] == "enemy-hollow-lancer" for entry in character_entries.values()):
+        raise AssertionError("Hollow Lancer must remain reserved for a compatible gameplay unit")
+
+    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 3 characters; 96 x 48 footprint)")
 
 
 if __name__ == "__main__":
