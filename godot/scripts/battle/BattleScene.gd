@@ -758,10 +758,12 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	data.abilities = _to_string_array(abilities)
 	data.elemental_affinities = affinities
 
-	if SPRITE_PATHS.has(id):
-		var tex := _texture_from_source(SPRITE_PATHS[id])
-		if tex:
-			data.sprite_sheet = tex
+	var sprite_candidates := AssetRegistry.get_character_candidates(id)
+	if SPRITE_PATHS.has(id) and SPRITE_PATHS[id] not in sprite_candidates:
+		sprite_candidates.append(SPRITE_PATHS[id])
+	var tex := AssetRegistry.load_first_texture(sprite_candidates)
+	if tex:
+		data.sprite_sheet = tex
 
 	var unit: Unit = unit_scene.instantiate()
 	unit.unit_data = data
@@ -777,19 +779,6 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 		unit.name = id
 	return unit
 
-
-func _texture_from_source(path: String) -> Texture2D:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
-		return null
-	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
-	if err != OK:
-		return null
-	return ImageTexture.create_from_image(image)
 
 func _to_string_array(values: Array) -> Array[String]:
 	var result: Array[String] = []

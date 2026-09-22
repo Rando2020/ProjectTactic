@@ -25,3 +25,4 @@ godot/assets/environments/forgotten-field/tiles/*-v01.png -filter -diff -merge -
 godot/assets/environments/forgotten-field/props/*-v01.png -filter -diff -merge -text
 godot/assets/ui/tactical-overlays/*-v01.png -filter -diff -merge -text
 godot/assets/ui/unit-indicators/*-v01.png -filter -diff -merge -text
+godot/assets/characters/*-v01.png -filter -diff -merge -text

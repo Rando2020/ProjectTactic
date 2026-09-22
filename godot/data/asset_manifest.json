@@ -93,5 +93,21 @@
     "enemy": {
       "path": "res://assets/ui/unit-indicators/ui-unit-indicator-enemy-v01.png"
     }
+  },
+  "characters": {
+    "zane": {
+      "art_id": "character-vanguard",
+      "idle": {
+        "path": "res://assets/characters/character-vanguard-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/zane.png"
+      }
+    },
+    "void_cultist": {
+      "art_id": "enemy-hollow-lancer",
+      "idle": {
+        "path": "res://assets/characters/enemy-hollow-lancer-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/void_cultist.png"
+      }
+    }
   }
 }
