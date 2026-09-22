@@ -194,9 +194,12 @@ const UNITS := {
 		"id": "kael",
 		"display_name": "Kael",
 		"role": "Guardian",
-		"idle": "res://assets/sprites/units/kael-idle-isometric.png",
-		"action": "res://assets/sprites/units/kael-idle-isometric.png",
+		"idle": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
+		"action": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
 		"portrait": "res://assets/ui/portraits/kael-portrait-v01.png",
+		"animations": {
+			"idle": ["res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png"],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"lyra": {

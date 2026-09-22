@@ -88,6 +88,21 @@ and pulls both arms inward without adding an attacker, damage, or magic. Its
 animation, so receiving a hit now triggers a character-specific reaction before
 returning to idle.
 
+## Kael anchor frame
+
+Kael now follows the same one-pose-per-file production workflow. His approved
+full-resolution anchor, `source-art/generated/character-frames/kael-v01/kael-idle-01-source.png`,
+uses the detailed portrait as the identity authority and the older candidate
+sheet only as an equipment-and-silhouette reference. The frame establishes his
+scarred face, dark beard, gray-brown fur mantle, muted forest-green scarf,
+battered plate, tall shield, and compact warhammer as reproducible landmarks.
+
+The 512x512 RGBA runtime derivative lives at
+`godot/assets/sprites/units/kael-hd2d-v01/kael-idle-01.png`. Both Kael's idle
+and temporary action fallback point to this asset, and the registry exposes it
+as a one-frame idle animation. Later poses should be generated from this anchor
+rather than cropped from the overlapping candidate sheet.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
