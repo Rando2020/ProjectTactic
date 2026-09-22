@@ -43,11 +43,11 @@ func _initialize() -> void:
 
 	var missing_character := AssetRegistryScript.get_character_candidates("intentional_missing_unit")
 	_expect_true(missing_character.is_empty(), "unmapped character safely requests the legacy fallback")
-	var character_fallback := AssetRegistryScript.load_first_texture([
+	var procedural_character_fallback := AssetRegistryScript.load_first_texture([
 		"res://assets/characters/intentional-missing-character.png",
-		AssetRegistryScript.get_character_candidates("zane")[1],
+		"res://assets/sprites/units/intentional-missing-legacy-character.png",
 	])
-	_expect_true(character_fallback != null, "missing preferred character falls back without failure")
+	_expect_true(procedural_character_fallback == null, "missing character textures safely request the procedural fallback")
 
 	var fallback_texture := AssetRegistryScript.load_first_texture([
 		"res://assets/does-not-exist/intentional-missing-file.png",
