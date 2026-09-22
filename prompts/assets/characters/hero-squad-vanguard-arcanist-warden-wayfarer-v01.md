@@ -73,10 +73,13 @@ Generate one role and one pose per output. Contact sheets, pose grids, turnaroun
 
 ### Wayfarer
 
-- Mobile scout and survivor.
-- Travel wraps with compact bow or hooked blade.
-- Open diagonal silhouette.
-- Faded rust accent.
+- Mobile scout, ranged controller, and survivor for the current `lyra` gameplay ID.
+- Lean open silhouette with travel wraps, light shoulder protection, and a short weathered cloak panel that cannot merge with the legs.
+- Compact recurved bow held low across the body, with a small hip quiver and one clearly readable free hand.
+- Forward-ready weight and separated feet communicate movement without using a running pose.
+- Faded rust and muted teal accents limited to bow wrapping, scarf, and one cloth panel.
+- Reads as an experienced pathfinder through equipment economy and alert posture, not exposed skin or exaggerated fantasy styling.
+- No longbow taller than the character, dual blades, hood covering the face, floor shadow, drawn arrow, or active attack effect.
 
 ## Arcanist idle generation prompt
 
@@ -110,6 +113,24 @@ Output: one character only; genuinely transparent background; intended for norma
 
 Avoid: full body wall, oversized shield, shield wider than the character is tall, giant hammer, long spear, cape wings, glowing barrier, magic dome, floor, cast shadow, pedestal, scenery, aura cloud, text, border, UI, contact sheet, multiple poses, cropped equipment, celebrity likeness, anime exaggeration, chibi proportions, glossy armor, watermark.
 
+## Wayfarer idle generation prompt
+
+Use case: stylized-concept
+
+Asset type: one production-ready tactical RPG battlefield idle sprite
+
+Primary request: Create the original Wayfarer from The Appointed hero squad as one individual transparent asset. Match the accepted Vanguard, Arcanist, and Warden references in camera, adult scale, material weathering, tonal range, southwest lighting, and painterly pixel-adjacent edge treatment. Preserve a lean open diagonal silhouette that remains distinct from the Vanguard's broad sword stance and the Arcanist's vertical robe silhouette.
+
+Subject: alert adult pathfinder and ranged battlefield controller; practical travel wraps over light weathered armor; one short asymmetric cloak panel that does not merge with the legs; compact recurved bow held low across the body without a drawn arrow; small hip quiver; one clearly visible free hand; restrained faded-rust scarf and muted-teal bow wrapping; pale-gold repair seams; focused human face visible beneath swept-back hair or a shallow open hood.
+
+Combat-role evidence: this art maps to gameplay ID `lyra`, a Scout with movement 4, jump 2, speed 9, physical ranged attacks, minimum range 2, Pin Shot slow, Long Shot, Quickstep, Rain of Arrows, Smoke Screen, and Shadow Step progression. Express mobility, range control, and terrain awareness through a compact bow, economical equipment, and an alert forward-ready stance. Do not depict an attack in progress.
+
+Composition: fixed three-quarter isometric battlefield view from approximately 30 degrees above; body and attention facing down-right; relaxed but forward-ready idle stance; both feet visible and separated on one bottom-center baseline; bow and quiver fully inside frame; clear negative space between bow, torso, free hand, cloak, and legs.
+
+Output: one character only; genuinely transparent background; intended for normalization to 128 × 128 and display at 80 px over a 96 × 48 tile.
+
+Avoid: drawn arrow, attack pose, arrow volley, smoke cloud, teleport effect, longbow taller than the character, crossbow, dual blades, giant hooked weapon, face-obscuring hood, wide cape, floor, cast shadow, pedestal, scenery, aura, text, border, UI, contact sheet, multiple poses, cropped equipment, celebrity likeness, anime exaggeration, chibi proportions, glossy armor, watermark.
+
 ## File names
 
 `character-{role}-{idle|action}-v01.png`.
@@ -126,6 +147,9 @@ Accept only when:
 - Warden reads as a protector in grayscale at 80 px.
 - Shield, head, torso, weapon hand, and both feet remain separately readable.
 - Warden is broader than Arcanist without exceeding the accepted tile-scale silhouette.
+- Wayfarer reads as a mobile ranged scout in color and grayscale at 80 px.
+- Bow, head, free hand, short cloak panel, quiver, and both feet remain separately readable.
+- Wayfarer remains leaner than Vanguard and Warden without collapsing into Arcanist's vertical silhouette.
 
 Reject when:
 
@@ -136,6 +160,8 @@ Reject when:
 - Robes merge into one dark, illegible column.
 - Warden's shield hides the head, both feet, or entire torso.
 - Warden reads as a boss, siege object, or oversized paladin.
+- Wayfarer reads as a melee rogue, static archer tower, hooded assassin, or active attack pose.
+- Bow, cloak, or quiver touches the canvas edge or merges with both legs.
 
 ## Review checklist
 

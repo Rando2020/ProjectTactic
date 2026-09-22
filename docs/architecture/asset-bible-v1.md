@@ -81,7 +81,7 @@ Overlays must remain legible for common color-vision differences. Shape and edge
 
 The hero prompt pack uses the stable roles Vanguard, Arcanist, Warden, and Wayfarer. These are art-production labels and do not rename current gameplay IDs until a separate data migration is approved.
 
-The manifest `characters` section is the adapter between those art-production roles and current gameplay IDs. Each unit pose lists a preferred versioned asset and a legacy fallback. The accepted mappings are Zane to Vanguard, Mira to Arcanist, Kael to Warden, Void Cultist to Hollow Cantor, and Null Drake to Hollow Bulwark without changing combat IDs, display names, or balance data. Hollow Lancer remains a reserved art role until a compatible reach unit exists. Null Drake to Hollow Bulwark is a combat-role mapping based on its explicit slow, high-HP tank profile; its legacy display name remains a separate taxonomy concern.
+The manifest `characters` section is the adapter between those art-production roles and current gameplay IDs. Each unit pose lists a preferred versioned asset and a legacy fallback. The accepted mappings are Zane to Vanguard, Mira to Arcanist, Kael to Warden, Lyra to Wayfarer, Void Cultist to Hollow Cantor, Null Drake to Hollow Bulwark, and Storm Imp to Hollow Stray without changing combat IDs, display names, or balance data. Hollow Lancer remains a reserved art role until a compatible reach unit exists. Null Drake to Hollow Bulwark and Storm Imp to Hollow Stray are combat-role mappings based on explicit tank and fast-flanker profiles; their legacy display names remain separate taxonomy concerns.
 
 ## VFX contract
 

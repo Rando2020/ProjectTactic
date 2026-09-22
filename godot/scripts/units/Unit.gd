@@ -73,6 +73,7 @@ func _initialize_from_data(data: UnitData) -> void:
 
 func _draw_unit() -> void:
 	var is_player := team == "player"
+	var hud_bar_y := -66.0
 
 	#  Isometric ground shadow (ellipse at feet level = y 0)
 	# This flat oval sells the "standing on the tile" look.
@@ -100,6 +101,8 @@ func _draw_unit() -> void:
 			_sprite.scale = Vector2(sprite_scale, sprite_scale)
 		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
 		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
+		var sprite_top := _sprite.position.y - tex_size.y * _sprite.scale.y * 0.5
+		hud_bar_y = min(hud_bar_y, sprite_top - 8.0)
 		_sprite.z_index = 10
 		add_child(_sprite)
 	else:
@@ -118,12 +121,12 @@ func _draw_unit() -> void:
 		stripe.z_index = 11
 		add_child(stripe)
 
-	_draw_team_indicator(is_player)
+	_draw_team_indicator(is_player, hud_bar_y)
 
 	#  HP bar (floats just above the sprite head) - enlarged and more visible
 	var hp_bg := ColorRect.new()
 	hp_bg.size = Vector2(50, 6)
-	hp_bg.position = Vector2(-25, -66)
+	hp_bg.position = Vector2(-25, hud_bar_y)
 	hp_bg.color = Color(0.04, 0.04, 0.04)
 	hp_bg.z_index = 14
 	add_child(hp_bg)
@@ -131,14 +134,14 @@ func _draw_unit() -> void:
 	# HP bar background outline for better visibility
 	var hp_border := ColorRect.new()
 	hp_border.size = Vector2(52, 8)
-	hp_border.position = Vector2(-26, -67)
+	hp_border.position = Vector2(-26, hud_bar_y - 1.0)
 	hp_border.color = Color(0.0, 0.0, 0.0, 0.5)
 	hp_border.z_index = 13
 	add_child(hp_border)
 
 	_hp_bar = ColorRect.new()
 	_hp_bar.size = Vector2(50, 6)
-	_hp_bar.position = Vector2(-25, -66)
+	_hp_bar.position = Vector2(-25, hud_bar_y)
 	_hp_bar.color = Color(0.2, 0.85, 0.3)
 	_hp_bar.z_index = 15
 	add_child(_hp_bar)
@@ -150,7 +153,7 @@ func _draw_unit() -> void:
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
 	lbl.add_theme_constant_override("outline_size", 2)
-	lbl.position = Vector2(-20, -72)
+	lbl.position = Vector2(-20, hud_bar_y - 13.0)
 	lbl.size = Vector2(40, 12)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.z_index = 15
@@ -161,14 +164,14 @@ func _draw_unit() -> void:
 	_create_status_icons_container()
 
 
-func _draw_team_indicator(is_player: bool) -> void:
+func _draw_team_indicator(is_player: bool, hud_bar_y: float) -> void:
 	var indicator_id := "player" if is_player else "enemy"
 	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_unit_indicator_candidates(indicator_id))
 	if texture:
 		var indicator := Sprite2D.new()
 		indicator.texture = texture
 		indicator.centered = true
-		indicator.position = Vector2(19, -58)
+		indicator.position = Vector2(19, hud_bar_y + 3.0)
 		var texture_size := texture.get_size()
 		if texture_size.x > 0.0 and texture_size.y > 0.0:
 			indicator.scale = Vector2(18.0 / texture_size.x, 18.0 / texture_size.y)
@@ -179,13 +182,13 @@ func _draw_team_indicator(is_player: bool) -> void:
 	# Procedural fallback remains available when optional indicator art is absent.
 	var dot_outline := ColorRect.new()
 	dot_outline.size = Vector2(12, 12)
-	dot_outline.position = Vector2(13, -64)
+	dot_outline.position = Vector2(13, hud_bar_y - 3.0)
 	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
 	dot_outline.z_index = 13
 	add_child(dot_outline)
 	var dot := ColorRect.new()
 	dot.size = Vector2(10, 10)
-	dot.position = Vector2(14, -63)
+	dot.position = Vector2(14, hud_bar_y - 2.0)
 	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
 	dot.z_index = 14
 	add_child(dot)

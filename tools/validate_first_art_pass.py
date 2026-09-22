@@ -16,7 +16,7 @@ TERRAINS = ("grass", "grass_flowers", "brush", "road", "stone", "high_ground", "
 PROPS = ("leafy_bush", "mossy_rock", "tree_stump", "ruin_block")
 OVERLAYS = ("selected", "move", "attack", "ability", "blocked")
 INDICATORS = ("player", "enemy")
-CHARACTERS = ("zane", "mira", "kael", "void_cultist", "null_drake")
+CHARACTERS = ("zane", "mira", "kael", "lyra", "void_cultist", "null_drake", "storm_imp")
 
 
 def local_path(resource_path: str) -> Path:
@@ -101,24 +101,38 @@ def main() -> None:
         ]
         if not visible_values or max(visible_values) - min(visible_values) < 48:
             raise AssertionError(f"{unit_id} lacks grayscale separation at {runtime_size} px")
+        visible_colors = [
+            rgb
+            for rgb, alpha in zip(reduced.convert("RGB").get_flattened_data(), reduced_alpha.get_flattened_data())
+            if alpha >= 64
+        ]
+        colored_pixels = sum(1 for rgb in visible_colors if max(rgb) - min(rgb) >= 12)
+        if colored_pixels < runtime_size * 2:
+            raise AssertionError(f"{unit_id} loses role color separation at {runtime_size} px")
 
     character_entries = manifest["characters"]
     if character_entries["mira"]["art_id"] != "character-arcanist":
         raise AssertionError("Mira must map to the Arcanist art role")
     if character_entries["kael"]["art_id"] != "character-warden":
         raise AssertionError("Kael must map to the Warden art role")
+    if character_entries["lyra"]["art_id"] != "character-wayfarer":
+        raise AssertionError("Lyra must map to the Wayfarer art role")
     if character_entries["void_cultist"]["art_id"] != "enemy-hollow-cantor":
         raise AssertionError("Void Cultist must map to the Hollow Cantor art role")
     if character_entries["null_drake"]["art_id"] != "enemy-hollow-bulwark":
         raise AssertionError("Null Drake must map to the Hollow Bulwark art role")
+    if character_entries["storm_imp"]["art_id"] != "enemy-hollow-stray":
+        raise AssertionError("Storm Imp must map to the Hollow Stray art role")
     if any(entry["art_id"] == "enemy-hollow-lancer" for entry in character_entries.values()):
         raise AssertionError("Hollow Lancer must remain reserved for a compatible gameplay unit")
     if character_bounds["kael"][2] - character_bounds["kael"][0] <= character_bounds["mira"][2] - character_bounds["mira"][0]:
         raise AssertionError("Warden must remain broader than Arcanist")
     if character_bounds["null_drake"][2] - character_bounds["null_drake"][0] <= character_bounds["void_cultist"][2] - character_bounds["void_cultist"][0]:
         raise AssertionError("Hollow Bulwark must remain broader than Hollow Cantor")
+    if character_bounds["lyra"][2] - character_bounds["lyra"][0] >= character_bounds["zane"][2] - character_bounds["zane"][0]:
+        raise AssertionError("Wayfarer must remain leaner than Vanguard")
 
-    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 5 characters; 96 x 48 footprint)")
+    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 7 characters; 96 x 48 footprint)")
 
 
 if __name__ == "__main__":

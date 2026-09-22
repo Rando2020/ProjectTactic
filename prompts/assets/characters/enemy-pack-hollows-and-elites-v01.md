@@ -73,8 +73,13 @@ Generate one role and one pose per output. Contact sheets, pose grids, lineups, 
 
 ### Hollow Stray
 
-- Mobile irregular silhouette with scavenged light equipment.
-- Reads through asymmetry and forward motion.
+- Mobile irregular skirmisher for the current `storm_imp` gameplay ID.
+- Lean asymmetrical silhouette with scavenged light equipment and a forward-ready stance.
+- Split ash-cloth mantle with one short trailing panel, leaving both legs clearly visible.
+- Compact broken civic relay or forked conductor held close to one hand, with the other hand open and readable.
+- Violet-black seams and restrained cold-blue conductor marks imply unstable Ether without an active lightning effect.
+- Reads through asymmetry, speed, and magical skirmisher intent before color.
+- No horns, tail, wings, hovering pose, claws, imp anatomy, spear, heavy shield, or active spell burst.
 
 ### Elites
 
@@ -114,6 +119,24 @@ Output: one enemy only; genuinely transparent background; intended for normaliza
 
 Avoid: dragon head, reptile anatomy, tail, wings, claws, scales, horns, spear, polearm, staff, caster focus, giant weapon, full-body shield wall, glowing barrier, skull, zombie anatomy, gore, glossy demonic armor, neon aura, floor, cast shadow, pedestal, scenery, text, border, UI, contact sheet, multiple poses, cropped shield, watermark.
 
+## Hollow Stray idle generation prompt
+
+Use case: stylized-concept
+
+Asset type: one production-ready tactical RPG battlefield enemy idle sprite
+
+Primary request: Create one original Hollow Stray as an individual transparent asset. Match the accepted Hollow Lancer, Hollow Cantor, and Hollow Bulwark references in camera, adult scale, empty-identity language, weathered material treatment, tonal range, southwest lighting, and painterly pixel-adjacent edges. Replace their reach, ritual, and tank silhouettes with a lean asymmetrical magical skirmisher built for rapid flanking.
+
+Subject: adult people-shaped remnant; smooth empty face plane under a broken shallow hood that does not obscure the head shape; light worn iron on one shoulder and opposite forearm; split ash-cloth mantle with one short trailing panel; both legs exposed and readable; compact broken civic relay or forked conductor held close to one hand; other hand open; rubbed insignia; violet-black seams concentrated along one arm and the conductor; restrained cold-blue marks on the conductor; small muted rust-red enemy accent.
+
+Combat-role evidence: this art maps to gameplay ID `storm_imp`, whose role is explicitly fast flanker with movement 4, jump 2, speed 10, HP 75, Magic 42, Ether 80, Thunderstrike chain damage, and Void Pulse silence. Express speed, magical threat, and irregular arrival through lean asymmetry, light equipment, and a compact conductor only. Do not use the legacy imp anatomy, hovering pose, horns, tail, or active lightning.
+
+Composition: fixed three-quarter isometric tactical view from approximately 30 degrees above; body and attention facing down-left; forward-ready but stationary idle stance; both feet visible and separated on one bottom-center baseline; one shoulder slightly advanced; clear negative space between conductor, open hand, mantle, torso, and legs; all equipment inside frame.
+
+Output: one enemy only; genuinely transparent background; intended for normalization to 128 × 128 and display at 95 px over a 96 × 48 tile.
+
+Avoid: horns, tail, wings, hovering, imp anatomy, claws, exposed monster skin, active lightning bolt, chain-lightning effect, void blast, spell cloud, spear, polearm, staff, shield, heavy armor, skull, zombie anatomy, gore, glossy demonic armor, neon aura, floor, cast shadow, pedestal, scenery, text, border, UI, contact sheet, multiple poses, cropped cloth, watermark.
+
 ## File names
 
 `enemy-hollow-{role}-{idle|attack}-v01.png` and `enemy-hollow-{role}-elite-{idle|attack}-v01.png`.
@@ -130,6 +153,9 @@ Accept only when:
 - Bulwark reads as a slow defensive melee tank in grayscale at 95 px.
 - Shield, empty face plane, torso, weapon hand, and both feet remain separately readable.
 - Bulwark is broader than Cantor without becoming a boss-scale silhouette.
+- Hollow Stray reads as a fast magical skirmisher in color and grayscale at 95 px.
+- Empty face plane, conductor, open hand, short mantle panel, torso, and both feet remain separately readable.
+- Hollow Stray is leaner and more asymmetrical than Cantor without copying Lancer's spear diagonal.
 
 Reject when:
 
@@ -140,15 +166,18 @@ Reject when:
 - Robes collapse into one illegible black column.
 - Bulwark reads as a dragon, lancer, caster, or oversized fortress.
 - Shield hides the face plane, both feet, or the entire torso.
+- Hollow Stray reads as a horned imp, hovering creature, spear user, armored knight, or active spell effect.
+- Mantle or conductor merges with both legs or touches the canvas edge.
 
 ## Runtime mapping decision
 
 - `mira` maps to `character-arcanist`.
 - `void_cultist` maps to `enemy-hollow-cantor`.
 - `null_drake` maps to `enemy-hollow-bulwark` based on its explicit tanky-melee role, high HP and Temper, low mobility, and block-and-positioning intent.
+- `storm_imp` maps to `enemy-hollow-stray` based on its explicit fast-flanker role, movement 4, jump 2, speed 10, high Magic and Ether, chain lightning, and silence control.
 - `enemy-hollow-lancer` remains reserved until a compatible gameplay unit is introduced.
 - The legacy display name Null Drake remains a taxonomy mismatch to resolve separately.
-- Do not force a Hollow role onto Storm Imp without a separate gameplay and narrative review.
+- The legacy Storm Imp creature description remains a taxonomy mismatch to resolve separately; the Hollow Stray art intentionally excludes imp anatomy.
 
 ## Review checklist
 

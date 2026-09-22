@@ -116,6 +116,13 @@
         "fallback_path": "res://assets/sprites/units/kael.png"
       }
     },
+    "lyra": {
+      "art_id": "character-wayfarer",
+      "idle": {
+        "path": "res://assets/characters/character-wayfarer-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/lyra.png"
+      }
+    },
     "void_cultist": {
       "art_id": "enemy-hollow-cantor",
       "idle": {
@@ -128,6 +135,13 @@
       "idle": {
         "path": "res://assets/characters/enemy-hollow-bulwark-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/null_drake.png"
+      }
+    },
+    "storm_imp": {
+      "art_id": "enemy-hollow-stray",
+      "idle": {
+        "path": "res://assets/characters/enemy-hollow-stray-idle-v01.png",
+        "fallback_path": "res://assets/sprites/units/storm_imp.png"
       }
     }
   }
