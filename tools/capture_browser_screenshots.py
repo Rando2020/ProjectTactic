@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wait for a Godot Web canvas to finish loading, then capture two frames."""
+"""Wait for a Godot Web canvas, then capture live and settled frames."""
 
 from __future__ import annotations
 
@@ -101,9 +101,6 @@ def main() -> None:
         time.sleep(2.0)
         message_id += 1
         capture(connection, message_id, args.first)
-        time.sleep(6.0)
-        message_id += 1
-        capture(connection, message_id, args.second)
         if args.compact:
             message_id += 1
             command(
@@ -119,9 +116,14 @@ def main() -> None:
                     "screenHeight": args.compact_height,
                 },
             )
-            time.sleep(2.0)
+            time.sleep(1.0)
             message_id += 1
             capture(connection, message_id, args.compact)
+            message_id += 1
+            command(connection, message_id, "Emulation.clearDeviceMetricsOverride")
+        time.sleep(6.0)
+        message_id += 1
+        capture(connection, message_id, args.second)
     finally:
         connection.close()
 
