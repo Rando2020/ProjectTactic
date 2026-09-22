@@ -16,6 +16,7 @@ TERRAINS = ("grass", "grass_flowers", "brush", "road", "stone", "high_ground", "
 PROPS = ("leafy_bush", "mossy_rock", "tree_stump", "ruin_block")
 OVERLAYS = ("selected", "move", "attack", "ability", "blocked")
 INDICATORS = ("player", "enemy")
+CHARACTERS = ("zane", "void_cultist")
 
 
 def local_path(resource_path: str) -> Path:
@@ -72,7 +73,18 @@ def main() -> None:
     if sum(difference) < 2500:
         raise AssertionError("Player and enemy indicators are too similar at 18 px")
 
-    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators; 96 x 48 footprint)")
+    for unit_id in CHARACTERS:
+        entry = manifest["characters"][unit_id]["idle"]
+        image = inspect_png(local_path(entry["path"]), (128, 128))
+        bounds = image.getchannel("A").getbbox()
+        if bounds is None:
+            raise AssertionError(f"{unit_id} character has no visible silhouette")
+        if bounds[1] > 10 or bounds[3] < 118:
+            raise AssertionError(f"{unit_id} character does not use the shared vertical canvas")
+        if not 54 <= (bounds[0] + bounds[2]) / 2 <= 74:
+            raise AssertionError(f"{unit_id} character is not centered on the foot anchor")
+
+    print("Forgotten Field art: OK (8 terrain, 4 props, 5 overlays, 2 indicators, 2 characters; 96 x 48 footprint)")
 
 
 if __name__ == "__main__":

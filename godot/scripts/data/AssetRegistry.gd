@@ -485,6 +485,16 @@ static func get_unit_indicator_candidates(team_id: String) -> Array[String]:
 	return candidates
 
 
+## Resolves a gameplay unit ID to its preferred art-role pose and legacy
+## fallback. Art-production roles can evolve without renaming gameplay data.
+static func get_character_candidates(unit_id: String, pose: String = "idle") -> Array[String]:
+	var candidates: Array[String] = []
+	var characters: Dictionary = get_manifest().get("characters", {})
+	var unit_entry: Dictionary = characters.get(unit_id, {})
+	_append_entry_paths(candidates, unit_entry.get(pose, {}))
+	return candidates
+
+
 ## Loads the first valid texture in a candidate list. Source PNG bytes support
 ## editor checkouts while ResourceLoader supports imported Web-export textures.
 ## Git LFS pointer files and malformed images remain safe to skip.

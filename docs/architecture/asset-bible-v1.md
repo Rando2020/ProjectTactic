@@ -81,6 +81,8 @@ Overlays must remain legible for common color-vision differences. Shape and edge
 
 The hero prompt pack uses the stable roles Vanguard, Arcanist, Warden, and Wayfarer. These are art-production labels and do not rename current gameplay IDs until a separate data migration is approved.
 
+The manifest `characters` section is the adapter between those art-production roles and current gameplay IDs. Each unit pose lists a preferred versioned asset and a legacy fallback. The initial pilot maps Zane to Vanguard and Void Cultist to Hollow Lancer without changing combat IDs, display names, or balance data.
+
 ## VFX contract
 
 - Transparent sprite sheets, consistent frame dimensions and origin.

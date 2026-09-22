@@ -35,6 +35,20 @@ func _initialize() -> void:
 		_expect_true(candidates.size() == 1, "%s indicator is optional and manifest-backed" % team_id)
 		_expect_true(AssetRegistryScript.load_first_texture(candidates) != null, "%s indicator resolves to a texture" % team_id)
 
+	for unit_id in ["zane", "void_cultist"]:
+		var candidates := AssetRegistryScript.get_character_candidates(unit_id)
+		_expect_true(candidates.size() == 2, "%s character has preferred and fallback paths" % unit_id)
+		_expect_true(candidates.size() > 0 and FileAccess.file_exists(candidates[0]), "%s preferred character art exists" % unit_id)
+		_expect_true(AssetRegistryScript.load_first_texture(candidates) != null, "%s character resolves to a texture" % unit_id)
+
+	var missing_character := AssetRegistryScript.get_character_candidates("intentional_missing_unit")
+	_expect_true(missing_character.is_empty(), "unmapped character safely requests the legacy fallback")
+	var procedural_character_fallback := AssetRegistryScript.load_first_texture([
+		"res://assets/characters/intentional-missing-character.png",
+		"res://assets/sprites/units/intentional-missing-legacy-character.png",
+	])
+	_expect_true(procedural_character_fallback == null, "missing character textures safely request the procedural fallback")
+
 	var fallback_texture := AssetRegistryScript.load_first_texture([
 		"res://assets/does-not-exist/intentional-missing-file.png",
 		"res://assets/environments/forgotten-field/tiles/environment-forgotten-field-grass-tile-v01.png",
