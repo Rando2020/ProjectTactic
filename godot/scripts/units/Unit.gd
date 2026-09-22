@@ -41,6 +41,7 @@ var _facing_arrow_shadow: Polygon2D
 var _selection_ring: Line2D
 var _selection_glow: Polygon2D
 var _status_icons_container: Node2D
+var _hud_bar_y: float = -66.0
 
 ## Returns the main visual element for effects (sprite if available, else body_rect)
 var visual: Node:
@@ -73,7 +74,7 @@ func _initialize_from_data(data: UnitData) -> void:
 
 func _draw_unit() -> void:
 	var is_player := team == "player"
-	var hud_bar_y := -66.0
+	_hud_bar_y = -66.0
 
 	#  Isometric ground shadow (ellipse at feet level = y 0)
 	# This flat oval sells the "standing on the tile" look.
@@ -102,7 +103,7 @@ func _draw_unit() -> void:
 		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
 		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
 		var sprite_top := _sprite.position.y - tex_size.y * _sprite.scale.y * 0.5
-		hud_bar_y = min(hud_bar_y, sprite_top - 8.0)
+		_hud_bar_y = min(_hud_bar_y, sprite_top - 8.0)
 		_sprite.z_index = 10
 		add_child(_sprite)
 	else:
@@ -121,12 +122,12 @@ func _draw_unit() -> void:
 		stripe.z_index = 11
 		add_child(stripe)
 
-	_draw_team_indicator(is_player, hud_bar_y)
+	_draw_team_indicator(is_player, _hud_bar_y)
 
 	#  HP bar (floats just above the sprite head) - enlarged and more visible
 	var hp_bg := ColorRect.new()
 	hp_bg.size = Vector2(50, 6)
-	hp_bg.position = Vector2(-25, hud_bar_y)
+	hp_bg.position = Vector2(-25, _hud_bar_y)
 	hp_bg.color = Color(0.04, 0.04, 0.04)
 	hp_bg.z_index = 14
 	add_child(hp_bg)
@@ -134,14 +135,14 @@ func _draw_unit() -> void:
 	# HP bar background outline for better visibility
 	var hp_border := ColorRect.new()
 	hp_border.size = Vector2(52, 8)
-	hp_border.position = Vector2(-26, hud_bar_y - 1.0)
+	hp_border.position = Vector2(-26, _hud_bar_y - 1.0)
 	hp_border.color = Color(0.0, 0.0, 0.0, 0.5)
 	hp_border.z_index = 13
 	add_child(hp_border)
 
 	_hp_bar = ColorRect.new()
 	_hp_bar.size = Vector2(50, 6)
-	_hp_bar.position = Vector2(-25, hud_bar_y)
+	_hp_bar.position = Vector2(-25, _hud_bar_y)
 	_hp_bar.color = Color(0.2, 0.85, 0.3)
 	_hp_bar.z_index = 15
 	add_child(_hp_bar)
@@ -153,7 +154,7 @@ func _draw_unit() -> void:
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
 	lbl.add_theme_constant_override("outline_size", 2)
-	lbl.position = Vector2(-20, hud_bar_y - 13.0)
+	lbl.position = Vector2(-20, _hud_bar_y - 13.0)
 	lbl.size = Vector2(40, 12)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.z_index = 15
@@ -557,7 +558,7 @@ func _update_status_icons() -> void:
 		icon.text = str(display["icon"])
 		icon.add_theme_font_size_override("font_size", 14)
 		icon.add_theme_color_override("font_color", display["color"] as Color)
-		icon.position = Vector2(icon_idx * 16 - 16, -82)  # Row of icons above HP bar
+		icon.position = Vector2(icon_idx * 16 - 16, _hud_bar_y - 26.0)
 		icon.z_index = 20
 		_status_icons_container.add_child(icon)
 		icon_idx += 1

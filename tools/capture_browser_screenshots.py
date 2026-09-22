@@ -78,6 +78,9 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=45.0)
     parser.add_argument("--first", type=Path, required=True)
     parser.add_argument("--second", type=Path, required=True)
+    parser.add_argument("--compact", type=Path)
+    parser.add_argument("--compact-width", type=int, default=1366)
+    parser.add_argument("--compact-height", type=int, default=768)
     args = parser.parse_args()
 
     ws_url = devtools_target(args.port, args.timeout)
@@ -101,10 +104,31 @@ def main() -> None:
         time.sleep(6.0)
         message_id += 1
         capture(connection, message_id, args.second)
+        if args.compact:
+            message_id += 1
+            command(
+                connection,
+                message_id,
+                "Emulation.setDeviceMetricsOverride",
+                {
+                    "width": args.compact_width,
+                    "height": args.compact_height,
+                    "deviceScaleFactor": 1,
+                    "mobile": False,
+                    "screenWidth": args.compact_width,
+                    "screenHeight": args.compact_height,
+                },
+            )
+            time.sleep(2.0)
+            message_id += 1
+            capture(connection, message_id, args.compact)
     finally:
         connection.close()
 
-    print(f"Browser captures: {args.first}, {args.second}")
+    captures = [args.first, args.second]
+    if args.compact:
+        captures.append(args.compact)
+    print("Browser captures: " + ", ".join(str(path) for path in captures))
 
 
 if __name__ == "__main__":

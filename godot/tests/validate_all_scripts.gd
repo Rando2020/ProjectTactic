@@ -51,4 +51,7 @@ func _validate_script(path: String) -> void:
 	if script == null:
 		_failures.append(path)
 		return
+	if script is Script and not (script as Script).can_instantiate():
+		_failures.append("%s (script cannot instantiate)" % path)
+		return
 	_loaded_count += 1
