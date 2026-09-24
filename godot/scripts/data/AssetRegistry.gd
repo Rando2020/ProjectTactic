@@ -195,7 +195,7 @@ const UNITS := {
 		"display_name": "Kael",
 		"role": "Guardian",
 		"idle": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
-		"action": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
+		"action": "res://assets/sprites/units/kael-hd2d-v01/kael-attack-01.png",
 		"portrait": "res://assets/ui/portraits/kael-portrait-v01.png",
 		"animations": {
 			"idle": [
@@ -206,6 +206,7 @@ const UNITS := {
 				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-01.png",
 				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-02.png",
 			],
+			"attack": ["res://assets/sprites/units/kael-hd2d-v01/kael-attack-01.png"],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},

@@ -121,6 +121,14 @@ boot while transferring Kael's weight across the planted screen-right leg. Its
 cloak motion without changing his equipment. The registry now exposes both
 frames as Kael's complete heavy walk loop.
 
+`kael-attack-01-source.png` is Kael's first identity-preserving action pose. It
+uses a wide planted stance, compact downward-diagonal hammer strike, raised
+shield, compressed fur, and backward-driven scarf and cloak folds to communicate
+controlled impact without effects or motion blur. Its 512x512 RGBA derivative,
+`kael-attack-01.png`, is registered as both Kael's action fallback and `attack`
+animation, so physical attacks now select his character-specific strike before
+returning to idle.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
