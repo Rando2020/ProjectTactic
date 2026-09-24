@@ -109,6 +109,13 @@ ground line stable while limiting motion to the armored chest, fur mantle,
 scarf, cloak folds, and a slight inward shield tilt. The registry now exposes
 both frames as Kael's looping idle animation.
 
+`kael-walk-01-source.png` establishes the first half of Kael's heavy movement
+cycle. It advances the screen-right boot, keeps the opposite boot grounded,
+angles the shield slightly forward, and counter-swings the lowered hammer while
+preserving his guardian mass. Its 512x512 RGBA derivative,
+`kael-walk-01.png`, is registered as Kael's temporary one-frame walk state until
+the opposing step is approved.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
