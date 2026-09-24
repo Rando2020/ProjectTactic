@@ -113,8 +113,13 @@ both frames as Kael's looping idle animation.
 cycle. It advances the screen-right boot, keeps the opposite boot grounded,
 angles the shield slightly forward, and counter-swings the lowered hammer while
 preserving his guardian mass. Its 512x512 RGBA derivative,
-`kael-walk-01.png`, is registered as Kael's temporary one-frame walk state until
-the opposing step is approved.
+`kael-walk-01.png`, establishes the first step.
+
+`kael-walk-02-source.png` supplies the opposing step, advancing the screen-left
+boot while transferring Kael's weight across the planted screen-right leg. Its
+512x512 RGBA derivative, `kael-walk-02.png`, reverses the hammer, scarf, fur, and
+cloak motion without changing his equipment. The registry now exposes both
+frames as Kael's complete heavy walk loop.
 
 ## Current placeholders and risks
 

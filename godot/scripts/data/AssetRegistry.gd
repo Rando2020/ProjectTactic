@@ -202,7 +202,10 @@ const UNITS := {
 				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
 				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-02.png",
 			],
-			"walk": ["res://assets/sprites/units/kael-hd2d-v01/kael-walk-01.png"],
+			"walk": [
+				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-01.png",
+				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-02.png",
+			],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},
