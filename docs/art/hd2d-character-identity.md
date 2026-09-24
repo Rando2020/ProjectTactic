@@ -103,6 +103,12 @@ and temporary action fallback point to this asset, and the registry exposes it
 as a one-frame idle animation. Later poses should be generated from this anchor
 rather than cropped from the overlapping candidate sheet.
 
+`kael-idle-02-source.png` is an identity-preserving breathing edit of that
+anchor. Its 512x512 RGBA derivative, `kael-idle-02.png`, keeps the boots and
+ground line stable while limiting motion to the armored chest, fur mantle,
+scarf, cloak folds, and a slight inward shield tilt. The registry now exposes
+both frames as Kael's looping idle animation.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

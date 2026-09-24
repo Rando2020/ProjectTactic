@@ -198,7 +198,10 @@ const UNITS := {
 		"action": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
 		"portrait": "res://assets/ui/portraits/kael-portrait-v01.png",
 		"animations": {
-			"idle": ["res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png"],
+			"idle": [
+				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
+				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-02.png",
+			],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},
