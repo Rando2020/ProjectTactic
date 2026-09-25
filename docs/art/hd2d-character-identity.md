@@ -129,6 +129,13 @@ controlled impact without effects or motion blur. Its 512x512 RGBA derivative,
 animation, so physical attacks now select his character-specific strike before
 returning to idle.
 
+`kael-guard-01-source.png` completes Kael's initial presentation-state set. It
+lowers his center of gravity, advances the shield across his torso, keeps his
+face visible, and tucks the hammer near his hip without adding an attacker or
+impact effect. Its 512x512 RGBA derivative, `kael-guard-01.png`, is registered
+as Kael's `guard` animation, so receiving a hit now triggers his shield-braced
+reaction before returning to idle.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.

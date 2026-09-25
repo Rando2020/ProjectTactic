@@ -207,6 +207,7 @@ const UNITS := {
 				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-02.png",
 			],
 			"attack": ["res://assets/sprites/units/kael-hd2d-v01/kael-attack-01.png"],
+			"guard": ["res://assets/sprites/units/kael-hd2d-v01/kael-guard-01.png"],
 		},
 		"prompt_source": PROMPT_SOURCE,
 	},
