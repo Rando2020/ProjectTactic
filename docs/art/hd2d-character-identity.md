@@ -148,10 +148,15 @@ botanical armor, high quiver, and lowered dark-wood longbow as reproducible
 landmarks.
 
 The 512x512 RGBA runtime derivative lives at
-`godot/assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png`. Both Lyra's idle
-and temporary action fallback point to this asset, and the registry exposes it
-as a one-frame idle animation. Later poses should be generated from this anchor
-rather than cropped from the overlapping candidate sheet.
+`godot/assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png`. Lyra's temporary
+action fallback still points to this anchor. Later poses should be generated
+from it rather than cropped from the overlapping candidate sheet.
+
+`lyra-idle-02-source.png` is the identity-preserving breathing companion. It
+keeps both boots, the quiver, every arrow, and the longbow design locked while
+limiting motion to the shoulders, hood, scarf, loose hair, braid, cloak hem,
+and a restrained inward bow tilt. Its 512x512 RGBA derivative,
+`lyra-idle-02.png`, joins the anchor in the registry's two-frame idle loop.
 
 ## Current placeholders and risks
 
