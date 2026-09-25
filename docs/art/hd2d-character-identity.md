@@ -136,6 +136,23 @@ impact effect. Its 512x512 RGBA derivative, `kael-guard-01.png`, is registered
 as Kael's `guard` animation, so receiving a hit now triggers his shield-braced
 reaction before returning to idle.
 
+## Lyra anchor frame
+
+Lyra now follows the individual-frame production workflow. Her approved
+full-resolution anchor,
+`source-art/generated/character-frames/lyra-v01/lyra-idle-01-source.png`, uses
+the detailed portrait as the identity authority and the older candidate sheet
+only for equipment and silhouette guidance. The frame establishes her pale
+gray-green eyes, dark braid, weathered deep-teal hood and cloak, restrained
+botanical armor, high quiver, and lowered dark-wood longbow as reproducible
+landmarks.
+
+The 512x512 RGBA runtime derivative lives at
+`godot/assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png`. Both Lyra's idle
+and temporary action fallback point to this asset, and the registry exposes it
+as a one-frame idle animation. Later poses should be generated from this anchor
+rather than cropped from the overlapping candidate sheet.
+
 ## Current placeholders and risks
 
 - Pixel sheets are candidate source art, not production atlases.
