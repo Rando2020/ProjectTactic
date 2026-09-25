@@ -152,38 +152,85 @@ const UNITS := {
 		"id": "zane",
 		"display_name": "Zane",
 		"role": "Swordsman",
-		"idle": "res://assets/sprites/units/zane-idle-isometric.png",
-		"action": "res://assets/sprites/units/zane-idle-isometric.png",
-		"portrait": "res://assets/sprites/units/zane-idle-isometric.png",
+		"idle": "res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
+		"action": "res://assets/sprites/units/zane-hd2d-v01/zane-attack-01.png",
+		"portrait": "res://assets/ui/portraits/zane-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/zane-hd2d-v01/zane-idle-01.png",
+				"res://assets/sprites/units/zane-hd2d-v01/zane-idle-02.png",
+			],
+			"walk": [
+				"res://assets/sprites/units/zane-hd2d-v01/zane-walk-01.png",
+				"res://assets/sprites/units/zane-hd2d-v01/zane-walk-02.png",
+			],
+			"attack": ["res://assets/sprites/units/zane-hd2d-v01/zane-attack-01.png"],
+			"guard": ["res://assets/sprites/units/zane-hd2d-v01/zane-guard-01.png"],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"mira": {
 		"id": "mira",
 		"display_name": "Mira",
 		"role": "Mage",
-		"idle": "res://assets/sprites/units/mira-idle-isometric.png",
-		"action": "res://assets/sprites/units/mira-idle-isometric.png",
-		"portrait": "res://assets/sprites/units/mira-idle-isometric.png",
+		"idle": "res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
+		"action": "res://assets/sprites/units/mira-hd2d-v01/mira-cast-01.png",
+		"portrait": "res://assets/ui/portraits/mira-vey-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-01.png",
+				"res://assets/sprites/units/mira-hd2d-v01/mira-idle-02.png",
+			],
+			"walk": [
+				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-01.png",
+				"res://assets/sprites/units/mira-hd2d-v01/mira-walk-02.png",
+			],
+			"attack": ["res://assets/sprites/units/mira-hd2d-v01/mira-cast-01.png"],
+			"guard": ["res://assets/sprites/units/mira-hd2d-v01/mira-guard-01.png"],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"kael": {
 		"id": "kael",
 		"display_name": "Kael",
 		"role": "Guardian",
-		"idle": "res://assets/sprites/units/kael-idle-isometric.png",
-		"action": "res://assets/sprites/units/kael-idle-isometric.png",
-		"portrait": "res://assets/sprites/units/kael-idle-isometric.png",
+		"idle": "res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
+		"action": "res://assets/sprites/units/kael-hd2d-v01/kael-attack-01.png",
+		"portrait": "res://assets/ui/portraits/kael-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-01.png",
+				"res://assets/sprites/units/kael-hd2d-v01/kael-idle-02.png",
+			],
+			"walk": [
+				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-01.png",
+				"res://assets/sprites/units/kael-hd2d-v01/kael-walk-02.png",
+			],
+			"attack": ["res://assets/sprites/units/kael-hd2d-v01/kael-attack-01.png"],
+			"guard": ["res://assets/sprites/units/kael-hd2d-v01/kael-guard-01.png"],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
 	"lyra": {
 		"id": "lyra",
 		"display_name": "Lyra",
 		"role": "Archer",
-		"idle": "res://assets/sprites/units/lyra-idle-isometric.png",
-		"action": "res://assets/sprites/units/lyra-idle-isometric.png",
-		"portrait": "res://assets/sprites/units/lyra-idle-isometric.png",
+		"idle": "res://assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png",
+		"action": "res://assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png",
+		"portrait": "res://assets/ui/portraits/lyra-portrait-v01.png",
+		"animations": {
+			"idle": [
+				"res://assets/sprites/units/lyra-hd2d-v01/lyra-idle-01.png",
+				"res://assets/sprites/units/lyra-hd2d-v01/lyra-idle-02.png",
+			],
+		},
 		"prompt_source": PROMPT_SOURCE,
 	},
+}
+
+const STORY_PORTRAITS := {
+	"orren": "res://assets/ui/portraits/orren-portrait-v01.png",
+	"guide": "res://assets/ui/portraits/guide-portrait-v01.png",
 }
 
 const ENEMIES := {
@@ -392,6 +439,9 @@ static func get_prop(prop_id: String) -> String:
 
 static func get_unit(unit_id: String) -> Dictionary:
 	return UNITS.get(unit_id, ENEMIES.get(unit_id, {}))
+
+static func get_story_portrait(character_id: String) -> String:
+	return STORY_PORTRAITS.get(character_id, "")
 
 static func get_highlight(highlight_id: String) -> String:
 	return HIGHLIGHTS.get(highlight_id, "")

@@ -36,6 +36,7 @@ var current_job_id: String
 var _hp_bar: ColorRect
 var _body_rect: ColorRect
 var _sprite: Sprite2D
+var _animated_sprite: AnimatedSprite2D
 var _facing_arrow: Polygon2D
 var _facing_arrow_shadow: Polygon2D
 var _selection_ring: Line2D
@@ -45,6 +46,8 @@ var _status_icons_container: Node2D
 ## Returns the main visual element for effects (sprite if available, else body_rect)
 var visual: Node:
 	get:
+		if _animated_sprite and is_instance_valid(_animated_sprite):
+			return _animated_sprite
 		if _sprite and is_instance_valid(_sprite):
 			return _sprite
 		if _body_rect and is_instance_valid(_body_rect):
@@ -90,9 +93,40 @@ func _draw_unit() -> void:
 	#  Sprite or coloured-square fallback
 	# IMPORTANT: the unit's world origin represents the character's FEET.
 	# All sprites and rects are offset upward so their bottom sits at y = 0.
-	if unit_data and unit_data.sprite_sheet:
+	if unit_data and not unit_data.visual_frames.is_empty():
+		_animated_sprite = AnimatedSprite2D.new()
+		var frames := SpriteFrames.new()
+		if frames.has_animation("default"):
+			frames.remove_animation("default")
+		for animation_name: String in unit_data.visual_frames:
+			var animation_paths: Array = unit_data.visual_frames.get(animation_name, [])
+			if animation_paths.is_empty():
+				continue
+			frames.add_animation(animation_name)
+			frames.set_animation_loop(animation_name, animation_name == "idle")
+			frames.set_animation_speed(animation_name, 2.0 if animation_name == "idle" else 7.0)
+			for frame_path: Variant in animation_paths:
+				var path := str(frame_path)
+				if ResourceLoader.exists(path):
+					frames.add_frame(animation_name, load(path))
+		_animated_sprite.sprite_frames = frames
+		_animated_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		var idle_texture: Texture2D = frames.get_frame_texture("idle", 0) if frames.has_animation("idle") and frames.get_frame_count("idle") > 0 else unit_data.sprite_sheet
+		if idle_texture:
+			var tex_size := idle_texture.get_size()
+			var target_size: float = 80.0 if is_player else 95.0
+			var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
+			_animated_sprite.scale = Vector2(sprite_scale, sprite_scale)
+			_animated_sprite.position = Vector2(0, -tex_size.y * sprite_scale * 0.5)
+		_animated_sprite.z_index = 10
+		add_child(_animated_sprite)
+		if frames.has_animation("idle") and frames.get_frame_count("idle") > 0:
+			_animated_sprite.play("idle")
+	elif unit_data and unit_data.sprite_sheet:
 		_sprite = Sprite2D.new()
 		_sprite.texture = unit_data.sprite_sheet
+		# Pixel units must remain crisp when the camera zooms over the 2.5D board.
+		_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		var tex_size := unit_data.sprite_sheet.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
 			var target_size: float = 80.0 if is_player else 95.0
@@ -247,6 +281,7 @@ func _update_hp_bar() -> void:
 
 ## Flash red on hit, restore normal colour.
 func animate_hit() -> void:
+	play_visual_animation("guard", 0.28)
 	var start_pos := position
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -368,12 +403,28 @@ func move_to(new_pos: Vector2i) -> void:
 	grid_pos = new_pos
 	var delta := new_pos - old_pos
 	if delta != Vector2i.ZERO:
+		play_visual_animation("walk", 0.32)
 		if abs(delta.x) >= abs(delta.y):
 			set_facing("E" if delta.x > 0 else "W")
 		else:
 			set_facing("S" if delta.y > 0 else "N")
 	moved.emit(unit_id, old_pos, new_pos)
 	has_moved = true
+
+
+func play_visual_animation(animation_name: String, return_delay: float = 0.3) -> void:
+	if not _animated_sprite or not _animated_sprite.sprite_frames:
+		return
+	if not _animated_sprite.sprite_frames.has_animation(animation_name):
+		return
+	if _animated_sprite.sprite_frames.get_frame_count(animation_name) == 0:
+		return
+	_animated_sprite.play(animation_name)
+	if animation_name != "idle":
+		get_tree().create_timer(return_delay).timeout.connect(func() -> void:
+			if is_instance_valid(_animated_sprite) and not is_defeated:
+				_animated_sprite.play("idle")
+		)
 
 
 func set_facing(new_facing: String) -> void:

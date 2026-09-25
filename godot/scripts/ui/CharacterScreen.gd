@@ -5,10 +5,10 @@ const DISPLAY_FONT := preload("res://assets/fonts/TrajanPro-Regular.ttf")
 const UNIT_IDS: Array[String] = ["zane", "mira", "kael", "lyra"]
 const TABS: Array[String] = ["Status", "Jobs", "Abilities", "Equipment"]
 const PORTRAITS := {
-	"zane": ["res://assets/sprites/units/zane-idle-isometric.png"],
-	"mira": ["res://assets/sprites/units/mira-idle-isometric.png"],
-	"kael": ["res://assets/sprites/units/kael-idle-isometric.png"],
-	"lyra": ["res://assets/sprites/units/lyra-idle-isometric.png"],
+	"zane": ["res://assets/ui/portraits/zane-portrait-v01.png", "res://assets/sprites/units/zane-idle-isometric.png"],
+	"mira": ["res://assets/ui/portraits/mira-vey-portrait-v01.png", "res://assets/sprites/units/mira-idle-isometric.png"],
+	"kael": ["res://assets/ui/portraits/kael-portrait-v01.png", "res://assets/sprites/units/kael-idle-isometric.png"],
+	"lyra": ["res://assets/ui/portraits/lyra-portrait-v01.png", "res://assets/sprites/units/lyra-idle-isometric.png"],
 }
 const BASE_STATS := {
 	"zane": {"level": 11, "hp": 320, "mp": 90, "move": 4, "jump": 2, "speed": 8, "physical": 42, "magic": 48, "bravery": 80, "faith": 70},
