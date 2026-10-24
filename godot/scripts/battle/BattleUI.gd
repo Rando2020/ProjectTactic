@@ -1577,6 +1577,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(0, 44)
 		btn.flat = true
+		if ab_id == "quickstep":
+			btn.tooltip_text = str(ab.get("description", ""))
+			var show_quickstep_preview := func() -> void:
+				if battle_manager and battle_manager.active_command == "ability":
+					var actor: Unit = battle_manager._living_unit(battle_manager.active_unit_id)
+					if actor:
+						battle_manager.action_preview_changed.emit(ForecastCalculator.spell(actor, actor, ab))
+			btn.mouse_entered.connect(show_quickstep_preview)
+			btn.focus_entered.connect(show_quickstep_preview)
 		var st_btn := StyleBoxFlat.new()
 		st_btn.bg_color = el_col.darkened(0.82)
 		st_btn.border_color = el_col.darkened(0.35)
@@ -1648,11 +1657,18 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 
 		if rng > 0:
 			var rng_lbl := Label.new()
-			rng_lbl.text = "%d" % rng
+			var min_range := int(ab.get("min_range", 1))
+			rng_lbl.text = "%d-%d" % [min_range, rng] if min_range > 1 else "%d" % rng
 			rng_lbl.add_theme_font_size_override("font_size", 10)
 			rng_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 			rng_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			stat_row.add_child(rng_lbl)
+		if ab_id == "quickstep":
+			var tradeoff := Label.new()
+			tradeoff.text = "1 move; spends action"
+			tradeoff.add_theme_font_size_override("font_size", 10)
+			tradeoff.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			stat_row.add_child(tradeoff)
 
 		# Shape badge  right-aligned.
 		if not shape_label.is_empty():

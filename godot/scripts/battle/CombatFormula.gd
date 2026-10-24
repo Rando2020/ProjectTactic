@@ -144,10 +144,21 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 	}
 
 
-static func calculate_heal(caster: Unit, base_power: int, flat_bonus: int = 0) -> Dictionary:
-	var raw := float(_stat_value(caster, "magic", 0)) * (float(base_power) / 100.0)
-	var amount := maxi(0, int(round(raw)) + flat_bonus)
-	return {"kind":"heal", "raw":int(round(raw)), "heal":amount, "explain":["Magic %d" % int(round(raw)), "Flat +%d" % flat_bonus]}
+## Healing power is a flat HP amount, not a percentage of caster Magic.
+## Read-only projection: callers supply the existing run bonus; no effects or
+## boon consumption occur here. Match Unit.heal's existing upper HP cap.
+static func calculate_heal(target: Unit, base_power: int, flat_bonus: int = 0) -> Dictionary:
+	var amount := base_power + flat_bonus
+	var hp_before := target.hp if target else 0
+	var hp_after := mini(hp_before + amount, _stat_value(target, "hp", hp_before)) if target else amount
+	var healed := hp_after - hp_before
+	var explain: Array[String] = ["Heal %d" % base_power]
+	if flat_bonus != 0:
+		explain.append("Flat %+d" % flat_bonus)
+	if healed != amount:
+		explain.append("Missing HP %d" % healed)
+	return {"kind": "heal", "raw": base_power, "incoming_heal": amount,
+		"heal": healed, "hp_before": hp_before, "hp_after": hp_after, "explain": explain}
 
 
 static func project_physical_armor_result(target: Unit, incoming_damage: int) -> Dictionary:

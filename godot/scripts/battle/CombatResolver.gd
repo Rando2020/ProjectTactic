@@ -179,9 +179,9 @@ func resolve_spell(caster: Unit, target: Unit,
 
 func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
-	heal_amount += int(bonuses.get("heal_bonus", 0))
+	var formula := CombatFormula.calculate_heal(target, heal_amount, int(bonuses.get("heal_bonus", 0)))
 	var before_hp := target.hp
-	target.heal(heal_amount)
+	target.heal(int(formula["heal"]))
 	heal_amount = target.hp - before_hp
 	_play_sfx("spell_cast", -4.0)
 	var vfx_n := get_node_or_null("/root/VFX")

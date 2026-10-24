@@ -45,6 +45,7 @@ var is_resolving_action: bool = false
 var action_lifecycle := preload("res://scripts/battle/ActionLifecycle.gd").new()
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
+var _player_turn_serial: int = 0 # Reject delayed Quickstep contact from an expired turn.
 var auto_battle_enabled: bool = AUTO_BATTLE_TEST_MODE
 var battle_speed_multiplier: float = AUTO_BATTLE_TEST_SPEED
 var _last_enemy_intents: Dictionary = {}
@@ -137,6 +138,7 @@ func _run_tick() -> void:
 
 
 func _begin_player_turn() -> void:
+	_player_turn_serial += 1
 	var unit: Unit = _living_unit(active_unit_id)
 	active_unit_has_moved = false
 	active_unit_has_acted = false
@@ -362,9 +364,10 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		details["affinity_label"] = str(formula.get("affinity_label", ""))
 		details["modifier_breakdown"] = _intent_formula_breakdown(formula, spell_type)
 	elif kind == "heal":
-		var heal_formula := CombatFormula.calculate_heal(unit, int(ability.get("base_power", 100)), 0)
+		var bonuses: Dictionary = RunBonusesUtil.for_current_run()
+		var heal_formula := CombatFormula.calculate_heal(target, int(ability.get("base_power", 100)), int(bonuses.get("heal_bonus", 0)))
 		details["damage"] = -int(heal_formula.get("heal", 0))
-		details["target_hp_after"] = min(target.hp + int(heal_formula.get("heal", 0)), target.unit_data.base_stats.hp)
+		details["target_hp_after"] = int(heal_formula["hp_after"])
 	return details
 
 
@@ -399,9 +402,8 @@ func _ability_target_in_range(unit: Unit, target: Unit, ability: Dictionary) -> 
 	if not unit or not target:
 		return false
 	var distance := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
-	var max_range := int(ability.get("range", ability.get("attack_range_max", 1)))
-	var min_range := int(ability.get("min_range", ability.get("attack_range_min", 0)))
-	return distance >= min_range and distance <= max_range
+	var bounds := AbilityDB.get_range(ability)
+	return distance >= bounds.x and distance <= bounds.y
 
 
 func _intent_formula_breakdown(formula: Dictionary, element: String) -> Array[String]:
@@ -914,7 +916,7 @@ func cancel_pending_action() -> void:
 	tactical_grid.clear_highlights()
 	action_preview_changed.emit({})
 	tactical_grid.clear_target_lock()
-	command_hint_changed.emit("Cancelled. Choose Move, Attack, Ability, or Wait.")
+	command_hint_changed.emit("Cancelled. Move or Wait to finish your turn." if active_unit_has_acted else "Cancelled. Choose Move, Attack, Ability, or Wait.")
 	_emit_action_state()
 
 func select_command(command: String) -> void:
@@ -977,6 +979,8 @@ func select_command(command: String) -> void:
 			var usable: Array = []
 			for ab_id in ab_unit.unit_data.abilities:
 				var ab: Dictionary = AbilityDB.get_ability(ab_id)
+				if ab_id == "quickstep" and not _can_quickstep(ab_unit):
+					continue
 				if _silence_allows_ability(ab_unit, ab) and ab_unit.mp >= ab.get("mp_cost", 0):
 					usable.append(ab_id)
 			ability_mode_started.emit(usable)
@@ -996,16 +1000,31 @@ func select_ability(ability_id: String) -> void:
 	if unit.mp < ability.get("mp_cost", 0):
 		log_message.emit("Not enough MP!")
 		return
+	if ability_id == "quickstep" and not _can_quickstep(unit):
+		command_hint_changed.emit("Quickstep: move first, then spend your action to move once more.")
+		return
 	selected_ability_id = ability_id
 	active_command = "ability_target"
 	tactical_grid.clear_highlights()
 	action_preview_changed.emit({})
 	_emit_action_state()
 	command_hint_changed.emit("%s: click a purple CAST tile or target." % ability.get("display_name", ability_id))
-	var range_val: int = ability.get("range", 1)
+	var bounds := AbilityDB.get_range(ability)
+	var range_val: int = bounds.y
 	var target_type: String = ability.get("target_type", "enemy")
 	# Self-cast or range-0  resolve immediately on the caster's tile
 	if target_type == "self" or range_val == 0:
+		if ability_id == "quickstep":
+			var turn_serial := _player_turn_serial
+			var caster_id := unit.unit_id
+			var accepted := await _execute_ability(unit, unit, ability)
+			if accepted:
+				await _finish_player_action()
+			else:
+				await _recover_action()
+				if turn_serial == _player_turn_serial and current_phase == Phase.PLAYER_TURN and active_unit_id == caster_id:
+					cancel_pending_action()
+			return
 		if ability.has("aoe_type"):
 			active_unit_has_acted = await _execute_aoe_ability(unit, unit.grid_pos, ability)
 		else:
@@ -1013,12 +1032,42 @@ func select_ability(ability_id: String) -> void:
 		await _finish_player_action()
 		return
 	var ab_range := GridSystem.get_attack_range(
-		unit.grid_pos, ability.get("min_range", 1), range_val, map_data.map_width, map_data.map_height
+		unit.grid_pos, bounds.x, bounds.y, map_data.map_width, map_data.map_height
 	)
 	tactical_grid.show_ability_range(ab_range)
 
 
 #  Ability execution
+
+## A reposition trades the unused action for one ordinary move, never another action.
+func _can_quickstep(caster: Unit) -> bool:
+	return is_instance_valid(caster) and caster.hp > 0 and caster.team == "player" \
+		and current_phase == Phase.PLAYER_TURN and _living_unit(active_unit_id) == caster \
+		and active_unit_has_moved and not active_unit_has_acted and caster.can_act() \
+		and "quickstep" in caster.unit_data.abilities \
+		and caster.mp >= int(AbilityDB.get_ability("quickstep").mp_cost)
+
+
+func _execute_quickstep(caster: Unit, target: Unit, skip_setup: bool) -> bool:
+	if skip_setup or target != caster or not _can_quickstep(caster):
+		return false
+	var turn_serial := _player_turn_serial
+	if not await _present_action(caster, caster.grid_pos, "cast", caster):
+		return false
+	if turn_serial != _player_turn_serial or not _can_quickstep(caster):
+		return false
+	caster.mp -= int(AbilityDB.get_ability("quickstep").mp_cost)
+	active_unit_has_acted = true
+	active_unit_has_moved = false
+	caster.has_acted = true
+	caster.has_moved = false
+	tactical_grid.clear_highlights()
+	active_command = ""
+	selected_ability_id = ""
+	last_ability_used = "Quickstep"
+	log_message.emit("%s uses Quickstep: action spent, one more move." % caster.display_name)
+	return true
+
 
 ## Preserve the admission contract for existing action/cost callers.
 func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
@@ -1031,10 +1080,17 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 ## direct result, not a later net HP delta (which could include other effects).
 ## skip_setup=true leaves MP, presentation and target logging to the AoE wrapper.
 func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionary,
-		skip_setup: bool = false) -> Dictionary:
+		skip_setup: bool = false, source_status_requires_hit: bool = false) -> Dictionary:
 	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
 		return {"executed": false, "outcome": {}}
 	if not _silence_allows_ability(caster, ability):
+		return {"executed": false, "outcome": {}}
+	if ability.get("id", "") == "quickstep":
+		var accepted := await _execute_quickstep(caster, target, skip_setup)
+		return {"executed": accepted, "outcome": {}}
+	# Long Shot's dead zone applies at admission and contact, not to AoE/chain hops.
+	var check_range: bool = not skip_setup and ability.get("id", "") == "long_shot"
+	if check_range and not _ability_target_in_range(caster, target, ability):
 		return {"executed": false, "outcome": {}}
 	if target and target.grid_pos != caster.grid_pos:
 		_face_toward(caster, target.grid_pos)
@@ -1044,6 +1100,8 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		# Revalidate after presentation: Silence may arrive after planning/admission.
 		if not _silence_allows_ability(caster, ability):
 			return {"executed": false, "outcome": {}}
+		if check_range and not _ability_target_in_range(caster, target, ability):
+			return {"executed": false, "outcome": {}}
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
 		active_command = ""
@@ -1052,6 +1110,8 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 	var spell_type: String = ability.get("spell_type", "fire")
 	var base_power:  int   = ability.get("base_power", 100)
 	var ab_name:     String = ability.get("display_name", "?")
+	# Chain falloff may round a damaging source to zero power, not status-only.
+	var status_requires_hit := source_status_requires_hit or AbilityDB.secondary_status_requires_hit(ability)
 
 	#  Buff abilities (Haste, Protect, )
 	if spell_type == "buff" or ability.get("type", "") == "buff":
@@ -1091,9 +1151,9 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 				log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
 		if result.get("counter", false):
 			_execute_counter_attack(target, caster)
-		# Status after hit
+		# Authored secondary status follows this recipient's actual hit, not damage.
 		var se_data: Dictionary = ability.get("status_effect", {})
-		if not se_data.is_empty():
+		if not se_data.is_empty() and (not status_requires_hit or not result.get("missed", false)):
 			_try_apply_status(target, se_data)
 		# JP award for physical ability
 		if not skip_setup:
@@ -1124,9 +1184,9 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 
 	if not skip_setup:
 		log_message.emit("%s casts %s on %s! %s" % [caster.display_name, ab_name, target.display_name, _combat_outcome_text(spell_result)])
-	# Status
+	# Ground/on-cast effects above are independent; only this secondary is gated.
 	var se_data2: Dictionary = ability.get("status_effect", {})
-	if not se_data2.is_empty():
+	if not se_data2.is_empty() and (not status_requires_hit or not spell_result.get("missed", false)):
 		_try_apply_status(target, se_data2)
 	return {"executed": true, "outcome": spell_result}
 
@@ -1183,7 +1243,7 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 			var tgt: Unit = chain_targets[i]
 			var chain_ab  := ability.duplicate()
 			chain_ab["base_power"] = int(float(ability.get("base_power", 100)) * power_mult)
-			var execution := await _execute_ability_with_result(caster, tgt, chain_ab, true)
+			var execution := await _execute_ability_with_result(caster, tgt, chain_ab, true, AbilityDB.secondary_status_requires_hit(ability))
 			if execution["executed"]:
 				var outcome_text := _combat_outcome_text(execution["outcome"])
 				if not outcome_text.is_empty():
@@ -1707,6 +1767,7 @@ func _finish_player_action() -> void:
 		_emit_action_state()
 
 func _end_player_turn() -> void:
+	_player_turn_serial += 1
 	var unit: Unit = _living_unit(active_unit_id)
 	if unit:
 		unit.end_turn()
@@ -1740,7 +1801,7 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 	var path_cost := _movement_path_cost(path)
 	var height_delta: int = int(dest_tile.get("height", 0)) - int(start_tile.get("height", 0))
 	var terrain_name := str(dest_tile.get("terrain", "unknown")).replace("_", " ").capitalize()
-	var note := "%s tile. Turn continues after moving." % terrain_name
+	var note := "%s tile. %s" % [terrain_name, "Moving ends your turn; action already spent." if active_unit_has_acted else "Turn continues after moving."]
 	if height_delta > 0:
 		note = "Climb +%d height. %s" % [height_delta, note]
 	elif height_delta < 0:
@@ -1762,6 +1823,7 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 		"height_label": "Height %d -> %d" % [int(start_tile.get("height", 0)), int(dest_tile.get("height", 0))],
 		"status_preview": "Move cost %d / %d" % [path_cost, unit.unit_data.base_stats.move],
 		"note": note,
+		"ends_turn": active_unit_has_acted,
 	}
 
 
@@ -1783,6 +1845,8 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 	if not caster or grid_pos not in tactical_grid.ability_tiles:
 		return {}
 	var target := _unit_at_pos(grid_pos)
+	if ability.get("id", "") == "long_shot" and (not target or not _ability_target_in_range(caster, target, ability)):
+		return {}
 	if not target:
 		# AoE with no unit under cursor  show basic info
 		var area_fc := ForecastCalculator.quick_spell(caster, ability)
@@ -1835,13 +1899,17 @@ func _with_position_context(preview: Dictionary, actor: Unit, target: Unit) -> D
 
 
 func _with_run_bonus_context(preview: Dictionary, actor: Unit, target: Unit) -> Dictionary:
+	# Quickstep's movement grant makes no attack and earns no JP. Keep its
+	# action/MP explanation without decorating it with attack-only run bonuses.
+	if int(preview.get("movement_granted", 0)) > 0:
+		return preview
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var notes: Array[String] = []
 	var element := str(preview.get("element", "physical"))
 	var element_mult: float = 1.0
 	if bonuses.has("elemental_mult") and bonuses["elemental_mult"] is Dictionary:
 		element_mult = float(bonuses["elemental_mult"].get(element, 1.0))
-	if element != "physical" and element_mult != 1.0:
+	if not bool(preview.get("is_heal", false)) and element != "physical" and element_mult != 1.0:
 		notes.append("Boon: %s %+d%% damage" % [element.capitalize(), int(round((element_mult - 1.0) * 100.0))])
 	if bool(preview.get("is_heal", false)) and int(bonuses.get("heal_bonus", 0)) != 0:
 		notes.append("Boon: healing %+d" % int(bonuses.get("heal_bonus", 0)))

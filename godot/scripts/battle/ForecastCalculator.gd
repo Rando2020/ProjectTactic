@@ -80,20 +80,32 @@ static func attack(attacker: Unit, target: Unit,
 
 static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		tile_caster: Dictionary = {}, tile_target: Dictionary = {}) -> Dictionary:
+	if ability.get("id", "") == "quickstep":
+		return {
+			"visible": true, "mode": "Ability", "ability_name": "Quickstep",
+			"actor_name": caster.display_name, "target_name": caster.display_name,
+			"element": "physical", "element_icon": "P", "element_color": ELEMENT_COLORS.physical,
+			"damage": 0, "damage_min": 0, "damage_max": 0, "jp_gain": 0,
+			"hp_before": caster.hp, "hp_after": caster.hp, "max_hp": _max_hp(caster),
+			"mp_cost": int(ability.get("mp_cost", 0)), "hit_pct": 100,
+			"amount_label": "MOVE AGAIN", "consumes_action": true, "movement_granted": 1,
+			"status_preview": "One movement; action spent",
+			"note": "%d MP + action. After moving only. No attack or ability afterward. Move or Wait ends the turn." % int(ability.get("mp_cost", 0)),
+		}
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	var base_power: int = int(ability.get("base_power", 50))
 	var mp_cost: int = int(ability.get("mp_cost", 0))
 	var is_heal: bool = spell_type in ["heal", "cure"] or ability.get("type", "") == "heal"
 	var is_buff: bool = spell_type == "buff" or ability.get("type", "") == "buff"
 	var bonuses := RunBonuses.for_current_run()
-	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
+	var el_mult: float = 1.0 if is_heal else float(bonuses["elemental_mult"].get(spell_type, 1.0))
 	var boon_bonus: float = el_mult - 1.0
 
 	var dmg := 0
 	var heal := 0
 	var formula: Dictionary = {}
 	if is_heal:
-		formula = CombatFormula.calculate_heal(caster, base_power, int(bonuses.get("heal_bonus", 0)))
+		formula = CombatFormula.calculate_heal(target, base_power, int(bonuses.get("heal_bonus", 0)))
 		heal = int(formula.get("heal", 0))
 	elif is_buff:
 		dmg = 0
@@ -126,7 +138,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		"damage_max":     int(formula.get("crit_damage", dmg)) if int(formula.get("crit_pct", 0)) > 0 else dmg,
 		"crit_damage":    int(formula.get("crit_damage", dmg)),
 		"hp_before":      target.hp,
-		"hp_after":       max(target.hp - dmg, 0) if not is_heal else min(target.hp + heal, _max_hp(target)),
+		"hp_after":       max(target.hp - dmg, 0) if not is_heal else int(formula["hp_after"]),
 		"max_hp":         _max_hp(target),
 		"heal":           heal,
 		"is_heal":        is_heal,
@@ -139,7 +151,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		"hit_pct":        int(formula.get("hit_pct", 100)),
 		"crit_pct":       int(formula.get("crit_pct", 0)),
 		"formula_explain": formula.get("explain", []),
-		"modifier_breakdown": _compact_breakdown(formula, _run_damage_notes(spell_type, bonuses)),
+		"modifier_breakdown": _compact_breakdown(formula, _run_damage_notes("heal" if is_heal else spell_type, bonuses)),
 		"status_preview": status_text,
 		"aoe_note":       ("%d-tile radius" % aoe_r) if aoe_r > 0 else "",
 		"jp_gain":        jp,
@@ -205,7 +217,8 @@ static func _status_preview(ability: Dictionary) -> String:
 	var dur: int = int(se.get("duration", 1))
 	if sid.is_empty() or dur >= 90:
 		return ""
-	return "Applies: %s (%dt)" % [sid.replace("_", " ").capitalize(), dur]
+	var timing := "On hit" if AbilityDB.secondary_status_requires_hit(ability) else "Applies"
+	return "%s: %s (%dt)" % [timing, sid.replace("_", " ").capitalize(), dur]
 
 
 static func _affinity_label(affinity: float) -> String:

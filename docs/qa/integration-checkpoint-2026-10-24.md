@@ -1,5 +1,12 @@
 # Verified integration checkpoint — 2026-10-24
 
+> **Historical checkpoint, not current deployment status.** The source, no-publication
+> statements and clean-source limitations below describe this earlier integration
+> task. Later PR #72–#74 delivery, scoped runtime hydration, CI and graphical
+> evidence are recorded in the [delivery ledger](../production/delivery-ledger.md).
+> Read the [live build-info.json](https://rando2020.github.io/ProjectTactic/tactics/build-info.json)
+> for the version deployed now; do not treat baseline `717d256` as current or blocked.
+
 This is a bounded Godot checkpoint, **not a completed combat redesign**. The
 Recurrence story, existing run structure and gameplay intent were preserved.
 No source push, main merge, deployment, or remote CI run was performed by this

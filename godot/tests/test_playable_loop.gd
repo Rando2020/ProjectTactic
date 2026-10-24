@@ -70,6 +70,13 @@ func _run() -> void:
 	await _check_melee_poses(manager)
 	await _check_action_lifecycle(manager, unit)
 	if "quickstep" in unit.unit_data.abilities:
+		manager.select_command("move")
+		var first_moves: Array = manager.tactical_grid.move_tiles
+		check(not first_moves.is_empty(), "Scout has a legal first movement before Quickstep")
+		if not first_moves.is_empty():
+			await manager._on_tile_clicked(first_moves.front())
+		check(manager.active_unit_has_moved and not manager.active_unit_has_acted, "First movement leaves Quickstep action available")
+		var before_quickstep := unit.grid_pos
 		var hp_before := unit.hp
 		manager.select_ability("quickstep")
 		check(manager.is_resolving_action, "Casting locks player commands during anticipation")
@@ -78,8 +85,8 @@ func _run() -> void:
 		await get_tree().create_timer(0.8).timeout
 		check(not manager.is_resolving_action, "Casting releases command lock after recovery")
 		await get_tree().create_timer(0.3).timeout
-		check(unit.hp == hp_before, "Self buff does not attack the caster")
-		check(manager.active_unit_has_acted and not manager.active_unit_has_moved, "Ability first leaves movement available")
+		check(unit.hp == hp_before, "Quickstep does not attack the caster")
+		check(manager.active_unit_has_acted and not manager.active_unit_has_moved, "Quickstep spends action and reopens movement")
 		unit.tick_statuses()
 		check(unit.hp == hp_before, "Beneficial magnitude is not damage over time")
 		manager.select_command("move")
@@ -87,7 +94,7 @@ func _run() -> void:
 		check(not moves.is_empty(), "Movement remains available after acting")
 		if not moves.is_empty():
 			await manager._on_tile_clicked(moves.back())
-			check(unit.grid_pos != before, "Act-then-move executes")
+			check(unit.grid_pos != before_quickstep, "Quickstep's second movement executes")
 	# Synchronous authoritative spell results must not apply a second time later.
 	var test_target := Unit.new()
 	test_target.unit_data = unit.unit_data

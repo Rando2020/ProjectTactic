@@ -119,7 +119,8 @@ func check_miss(chain: bool) -> void:
 			seed(candidate)
 			break
 	var ability := AbilityDB.get_ability("thunderstrike").duplicate(true)
-	# Existing status-on-miss behavior is deliberately preserved, not redesigned.
+	# Intentional later rules correction: damaging secondary status now requires
+	# this recipient's actual hit. All existing feedback and cost checks remain.
 	ability["status_effect"] = {"id": "slow", "duration": 2}
 	var accepted: bool
 	if chain:
@@ -132,7 +133,7 @@ func check_miss(chain: bool) -> void:
 	check(results[0].get("missed", false), label + " actual hit roll missed")
 	check(target.hp == 90 and target.ether == 90, label + " miss consumes no HP or Ether")
 	check(results[0].get("applied_hp_damage", -1) == 0, label + " miss result has zero applied HP")
-	check(target.has_status("slow"), label + " existing status-on-miss is unchanged")
+	check(not target.has_status("slow"), label + " damaging miss applies no secondary status")
 	var line := "Storm Imp: MISS (0 HP)" if chain else "Zane casts Thunderstrike on Storm Imp! MISS (0 HP)"
 	check(logs.count(line) == 1, label + " miss is not mislabeled immunity or damage")
 	print("Outcome fixture %s: result=%s; logs=%s" % [label, str(results[0]), str(logs)])

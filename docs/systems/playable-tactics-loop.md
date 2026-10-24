@@ -2,6 +2,11 @@
 
 The Godot Web build is the playable entry point. The React design/prototype screens remain available under `?legacy` and `?dev`. This is an original tactical RPG prototype, not a reproduction of copyrighted game content.
 
+The [live public build metadata](https://rando2020.github.io/ProjectTactic/tactics/build-info.json)
+identifies the current deployment; see the [dated delivery ledger](../production/delivery-ledger.md)
+for release evidence and limits. Prototype 3D is opt-in through Practice → View &
+quality settings → Sprites active → Show 3D; it is not the default presentation.
+
 ## Player loop
 
 1. Play / Visit the Hearth, then Begin Descent.
@@ -23,9 +28,31 @@ The Godot Web build is the playable entry point. The React design/prototype scre
 - `tools/prepare_playable_web.py` and `web/compressed-wasm-loader.js`: preserve exact exported engine bytes in gzip and split engine/game data into 3 MiB parts; the loader reassembles them on the client, keeping individual static assets below host limits. Requires browser DecompressionStream support in addition to Godot's WebGL2 and secure-context requirements.
 - GitHub Pages builds React plus Godot at `dist/tactics`. The Godot validation workflow also uploads the standalone playable export.
 
-## Validation
+## Clean checkout and validation
 
-Run `python tools/check_playable_loop.py /path/to/godot` using Godot 4.6.2. It creates an isolated save directory, launches the normal project with a test scene, rejects runtime script errors and checks manual turn idling, action-before-movement, support effects, progression, two generated-floor victories, reward advancement, spoils routing, boon selection and checkpoint restoration. Automation exercises production commands and resolution; it does not establish human enjoyment or balance.
+Install Git LFS and the official **Godot `4.6.3.stable.official.7d41c59c4`**
+(non-.NET) engine; release exports require matching **4.6.3 export templates**.
+Start from current `main`, not an earlier delivery hash, unless deliberately
+reproducing a historical checkpoint:
+
+```sh
+GIT_LFS_SKIP_SMUDGE=1 git clone --branch main https://github.com/Rando2020/ProjectTactic.git
+cd ProjectTactic
+git lfs install --local
+git lfs fetch --include='godot/**' --exclude='' origin HEAD
+git lfs checkout 'godot/**'
+godot --version  # expected: 4.6.3.stable.official.7d41c59c4
+godot --headless --path godot --editor --import --quit
+python tools/check_playable_loop.py
+```
+
+Hydrate only the current `godot/**` runtime scope; do not use a blanket historical
+LFS fetch/checkout to fix unrelated archived pointers. Inspect logs as well as
+exit codes: import can exit zero while reporting missing resources or script
+errors. The [Pages gate](../../tools/export_pages_web.py) rejects those failures
+before publishing. Known shutdown-resource diagnostics are retained, not hidden.
+
+Run `python tools/check_playable_loop.py /path/to/godot` with the same engine. It creates an isolated save directory, launches the normal project with a test scene, rejects runtime script errors and checks manual turn idling, action-before-movement, support effects, progression, two generated-floor victories, reward advancement, spoils routing, boon selection and checkpoint restoration. Automation exercises production commands and resolution; it does not establish human enjoyment or balance.
 
 Build:
 
@@ -47,6 +74,11 @@ Serve the output over HTTPS. For GitHub Pages use the deploy workflow after revi
 - Existing asynchronous VFX can leave resource-leak warnings at headless exit. Runtime script errors are test failures.
 - Human balance, difficulty, full ten-floor completion, loss/retry presentation and device testing remain acceptance tasks.
 
-## Review scope
+## Historical integration review scope
 
-This branch builds on `97574e8` (PR #70), preserving the unmerged terrain/art/HUD stack, and targets main for an integrated review. Those inherited commits are included, not silently merged. Review their existing PRs alongside this integration. No commit is made directly to main and no merge is authorized by this document.
+The original integration built on `97574e8` (PR #70), preserving the then-unmerged
+terrain/art/HUD stack for review rather than silently merging it. That checkpoint
+was subsequently integrated through PR #72; PR #73 repaired Pages and PR #74
+added the later shared-party checkpoint. See the [delivery ledger](../production/delivery-ledger.md)
+for exact merged/deployed identities. This historical scope is not a pending merge
+blocker, and this document does not authorize future merges.

@@ -1,6 +1,87 @@
 # Current delivery ledger
 
-## 2026-10-24: Appointed UI kit (current)
+This ledger records dated evidence, not a permanent claim about the live version.
+For public deployment identity, read the [live build-info.json](https://rando2020.github.io/ProjectTactic/tactics/build-info.json)
+and compare it with the intended reviewed commit. Earlier entries remain historical
+checkpoints, including their then-current restrictions, blockers and next steps;
+they do not override the newer verified delivery below.
+
+## 2026-10-24: shared-party playable release (latest verified delivery)
+
+### Delivered identity and access
+
+- **Public game:** [GitHub Pages tactical descent](https://rando2020.github.io/ProjectTactic/tactics/).
+  Live metadata rechecked at 11:03 UTC returned source
+  `c80a025930a7e27c6fc2def169b82b1e23d1e3f5` and engine
+  `4.6.3.stable.official.7d41c59c4`.
+- **Owner-only game:** [Appointed Site](https://appointed-tactics.zzziah.chatgpt.site/),
+  updated at `2026-10-24T10:41:22Z`; owner-only access is unchanged. Hosted source
+  `33aca3974dcf3ebc4f37e92e4567398326fb28ed` packages production export source
+  `c5563585f49a2c09b8b19b6b3f83b8474fbd459e`, with tree
+  `a5667343e47548eaca8f51e36acb9f70ecc96e28`. That is the same tree as public
+  `c80a0259`, not the same commit ancestry. Its build-info records that equivalence.
+  An authentication gate is not permission to broaden access or evidence that the
+  public deployment is blocked.
+
+Reviewed main history:
+
+| Delivery | Merged source |
+| --- | --- |
+| [PR #72: integrated playable checkpoint](https://github.com/Rando2020/ProjectTactic/pull/72) | `567461c5c249a8379316b3fc02fd8e6c4728ddf1` |
+| [PR #73: Pages hydration / fail-closed export repair](https://github.com/Rando2020/ProjectTactic/pull/73) | `3a59c9a5d622c31360a4b8d6181cd92990294cfc` |
+| [PR #74: shared party, Silence, spell outcomes and browser input QA](https://github.com/Rando2020/ProjectTactic/pull/74) | `c80a025930a7e27c6fc2def169b82b1e23d1e3f5` |
+
+`5d489e`, `2cac025` and `717d256` are earlier checkpoints, **not the latest live
+source or present deployment blockers**. In particular, earlier unhydrated-checkout
+failures must not be generalized to current Godot runtime assets: current CI uses
+scoped hydration and the Pages repair is merged. See the [clean-checkout commands](../systems/playable-tactics-loop.md#clean-checkout-and-validation).
+
+### Player-visible scope
+
+The release retains the reviewed tactical loop, readable HUD, Cancel/Move repair,
+combat/progression safety and Recurrence story. Kael, Mira and Zane use original
+shared-rig profiles when explicitly enabled: **Practice → View & quality settings
+→ Sprites active → Show 3D**. Sprites remain the default; these are prototypes,
+not final art or a completed full-roster 3D conversion. Silence is checked
+consistently for magical versus physical actions on both teams. Spell feedback
+reports applied HP/Ether outcomes, including immunity and each chain hop, rather
+than nominal spell power. The Pages export repair remains included.
+
+### Evidence and its boundaries
+
+- Post-merge [Build 40086630980](https://github.com/Rando2020/ProjectTactic/actions/runs/40086630980)
+  and [Pages 40086631051](https://github.com/Rando2020/ProjectTactic/actions/runs/40086631051)
+  succeeded. The Pages build log contains zero Godot `ERROR` / `WARNING` lines;
+  this is an export-specific observation, not a claim that all tests are warning-free.
+- Final PR head `ed417b755f7186589b97962f8f6bba7624c5c644` has the same
+  `a5667343` tree. [Godot Validate 40086250617](https://github.com/Rando2020/ProjectTactic/actions/runs/40086250617)
+  passed actual Chrome mouse input: **seven clicks / nine checkpoints**, covering
+  menu Cancel, target Cancel and legal movement. This is local CI exported-runtime
+  input evidence, **not a full encounter or deployed spell/encounter playtest**.
+  Production excludes the QA observer. See [browser QA](../qa/browser-combat-smoke.md).
+- Native software-rendered practice separately sampled all three characters'
+  silhouettes, idle/walk/facing, Mira's Cure, Zane's Thunderstrike and physical
+  attack. A focused `c5563585` recheck confirmed the corrected immunity/chain log
+  against actual target HP and full log-line readability at 150% UI scale.
+  These bounded observations are not exhaustive animation, hardware-GPU, 4K
+  gameplay, mobile or full-encounter acceptance; fine book detail and hit/defeat
+  frame sampling remain limited.
+- Known intermittent ObjectDB/resource-at-exit diagnostics and the 19 static
+  unused/shadowed-name warnings remain documented. No general leak fix or
+  all-green/no-warning claim is made. The managed browser's WebGL2 limitation
+  remains environment-specific; it does not erase the distinct CI browser result.
+- Missing/unsupported skill IDs, support/special effects, surface interactions,
+  equipment/mastery/progression completeness and long-run balance remain open.
+  Two historical elite overlays remain unavailable. Do not advertise the entire
+  ability catalog or tactical redesign as complete.
+
+**Not deployed in this release:** the separate Quickstep / Long Shot choice slice,
+healing-preview contract and hit-gated secondary-effect work. Their isolated
+branches are future candidates, not evidence of current live behavior. Review and
+verify any later code update separately; this documentation reconciliation itself
+changes no runtime, publication or access setting.
+
+## 2026-10-24: Appointed UI kit (historical checkpoint; superseded)
 
 Reconciled 4ecffd5 and private hosted source 550605e869ea314495be6f240a8a07f6c2d18d7a. User authorized original on-brand UI creation and integration independently of pending gameplay observations. Source branch feature/appointed-ui-kit; implementation 5d489e0be26da215a651516d7a9842207c1faceb. Unrelated files preserved; no public push, PR or merge needed.
 
