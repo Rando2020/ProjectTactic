@@ -462,8 +462,7 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 		"heal":
 			var heal_ability: Dictionary = intent.get("ability", {})
 			if not heal_ability.is_empty():
-				await _execute_ability(unit, unit, heal_ability)
-				active_unit_has_acted = true
+				active_unit_has_acted = await _execute_ability(unit, unit, heal_ability)
 		"retreat":
 			await _enemy_move_to(unit, _intent_move_to(intent, unit.grid_pos), "%s retreats to recover." % unit.display_name)
 		"spell":
@@ -472,10 +471,9 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 			if target and target.hp > 0 and not ability.is_empty():
 				last_ability_used = ability.get("display_name", "an ability")
 				if _ability_has_area_effect(ability):
-					await _execute_aoe_ability(unit, target.grid_pos, ability)
+					active_unit_has_acted = await _execute_aoe_ability(unit, target.grid_pos, ability)
 				else:
-					await _execute_ability(unit, target, ability)
-				active_unit_has_acted = true
+					active_unit_has_acted = await _execute_ability(unit, target, ability)
 		"attack":
 			var attack_target: Unit = units.get(str(intent.get("target_id", "")))
 			if attack_target and attack_target.hp > 0:
@@ -514,7 +512,7 @@ func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
 		"heal":
 			var heal_ability: Dictionary = intent.get("ability", {})
 			var max_hp: int = unit.unit_data.base_stats.hp if unit.unit_data else unit.hp
-			return not heal_ability.is_empty() and unit.mp >= int(heal_ability.get("mp_cost", 0)) and unit.hp > 0 and unit.hp < max_hp
+			return _silence_allows_ability(unit, heal_ability) and unit.mp >= int(heal_ability.get("mp_cost", 0)) and unit.hp > 0 and unit.hp < max_hp
 		"retreat":
 			var retreat_pos: Vector2i = _intent_move_to(intent, unit.grid_pos)
 			var retreat_max_hp: int = unit.unit_data.base_stats.hp if unit.unit_data else unit.hp
@@ -540,7 +538,7 @@ func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
 				return false
 			if str(ability.get("target_type", "enemy")) != "enemy":
 				return false
-			if unit.mp < int(ability.get("mp_cost", 0)):
+			if not _silence_allows_ability(unit, ability) or unit.mp < int(ability.get("mp_cost", 0)):
 				return false
 			return _ability_target_in_range(unit, spell_target, ability)
 	return false
@@ -617,9 +615,20 @@ func _nearest_player(unit: Unit) -> Unit:
 	return best
 
 
+## Silence blocks ordinary magical casting, not physical techniques, for either team.
+## Missing/unknown classification is never a physical exception. Anchor pulses use
+## their separate encounter path and do not enter ordinary ability casting.
+func _silence_allows_ability(unit: Unit, ability: Dictionary) -> bool:
+	if not is_instance_valid(unit) or ability.is_empty():
+		return false
+	return not unit.has_status("silence") or CombatFormula.normalize_element(str(ability.get("spell_type", ""))) == "physical"
+
+
 func _find_enemy_ability(unit: Unit, spell_type: String, target_type: String = "") -> Dictionary:
 	for ab_id: String in unit.unit_data.abilities:
 		var ability := AbilityDB.get_ability(ab_id)
+		if not _silence_allows_ability(unit, ability):
+			continue
 		if ability.get("spell_type", "") != spell_type:
 			continue
 		if target_type != "" and ability.get("target_type", "enemy") != target_type:
@@ -652,6 +661,8 @@ func _find_kill_spell(unit: Unit) -> Dictionary:
 			continue
 		for ab_id: String in unit.unit_data.abilities:
 			var ability := AbilityDB.get_ability(ab_id)
+			if not _silence_allows_ability(unit, ability):
+				continue
 			if ability.get("target_type", "enemy") != "enemy" or ability.get("spell_type", "") == "cure":
 				continue
 			if unit.mp < int(ability.get("mp_cost", 0)):
@@ -676,6 +687,8 @@ func _find_best_spell_intent(unit: Unit) -> Dictionary:
 			continue
 		for ab_id: String in unit.unit_data.abilities:
 			var ability := AbilityDB.get_ability(ab_id)
+			if not _silence_allows_ability(unit, ability):
+				continue
 			if ability.get("target_type", "enemy") != "enemy" or ability.get("spell_type", "") == "cure":
 				continue
 			if unit.mp < int(ability.get("mp_cost", 0)):
@@ -961,13 +974,10 @@ func select_command(command: String) -> void:
 			var ab_unit: Unit = _living_unit(active_unit_id)
 			if not ab_unit:
 				return
-			if ab_unit.has_status("silence"):
-				log_message.emit("%s is silenced!" % ab_unit.display_name)
-				return
 			var usable: Array = []
 			for ab_id in ab_unit.unit_data.abilities:
 				var ab: Dictionary = AbilityDB.get_ability(ab_id)
-				if ab_unit.mp >= ab.get("mp_cost", 0):
+				if _silence_allows_ability(ab_unit, ab) and ab_unit.mp >= ab.get("mp_cost", 0):
 					usable.append(ab_id)
 			ability_mode_started.emit(usable)
 
@@ -978,9 +988,11 @@ func select_ability(ability_id: String) -> void:
 	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
-	if active_unit_has_acted or unit.has_status("silence") or ability_id not in unit.unit_data.abilities:
+	if active_unit_has_acted or ability_id not in unit.unit_data.abilities:
 		return
 	var ability: Dictionary = AbilityDB.get_ability(ability_id)
+	if not _silence_allows_ability(unit, ability):
+		return
 	if unit.mp < ability.get("mp_cost", 0):
 		log_message.emit("Not enough MP!")
 		return
@@ -1014,10 +1026,15 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		skip_setup: bool = false) -> bool:
 	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
 		return false
+	if not _silence_allows_ability(caster, ability):
+		return false
 	if target and target.grid_pos != caster.grid_pos:
 		_face_toward(caster, target.grid_pos)
 	if not skip_setup:
 		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target):
+			return false
+		# Revalidate after presentation: Silence may arrive after planning/admission.
+		if not _silence_allows_ability(caster, ability):
 			return false
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
@@ -1117,7 +1134,11 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 ## Execute an AoE ability centred on a grid tile.
 ## Deducts MP once, logs once, then hits every valid unit in the pattern.
 func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> bool:
+	if not _silence_allows_ability(caster, ability):
+		return false
 	if not await _present_action(caster, center, "cast"):
+		return false
+	if not _silence_allows_ability(caster, ability):
 		return false
 	if center != caster.grid_pos:
 		_face_toward(caster, center)

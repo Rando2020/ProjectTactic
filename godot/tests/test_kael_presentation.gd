@@ -225,7 +225,7 @@ func check_unit_integration() -> void:
 		check(not is_instance_valid(old_rig), "old viewport owner is freed")
 	unit.free()
 	var other := make_unit("zane")
-	check(other._rig3d.get_script().resource_path.ends_with("Humanoid3D.gd"), "other supported characters keep their existing rig")
+	check(other._rig3d.get_script().resource_path.ends_with("ZaneRigPresentation.gd"), "Zane selects its approved imported profile while Kael remains unchanged")
 	other.free()
 	# Substitute a real invalid PackedScene in the resource cache, not a mock adapter.
 	# This exercises the Unit factory failure branch without renaming production files.

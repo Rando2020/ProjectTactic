@@ -16,7 +16,9 @@ RUNNER = Path(__file__).with_name('check_playable_loop.py')
 EXPECTED = {
     'test_combat_formula.tscn', 'test_combat_execution.tscn',
     'test_turn_order.tscn', 'test_progression_speed.tscn', 'test_cancel_move_input.tscn',
-    'test_kael_presentation.tscn', 'test_terrain_cleanup.tscn',
+    'test_silence_contract.tscn',
+    'test_kael_presentation.tscn', 'test_mira_presentation.tscn', 'test_zane_presentation.tscn',
+    'test_shared_rig_presentation.tscn', 'test_terrain_cleanup.tscn',
     'test_recovered_assets.gd', 'test_ui_readability.gd', 'test_playable_loop.tscn',
 }
 

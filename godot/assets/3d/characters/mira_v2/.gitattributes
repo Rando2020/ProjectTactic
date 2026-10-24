@@ -1,0 +1,2 @@
+# Frozen original local prototype; raw bytes scoped to this asset only.
+/mira_v2.glb -filter -diff -merge -text
