@@ -357,7 +357,7 @@ func animate_death() -> void:
 #  Combat
 
 func receive_damage(amount: int, damage_type: String) -> Dictionary:
-	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
+	var result := {"hp_damage": 0, "applied_hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
 	var projection: Dictionary
 	match damage_type:
 		"physical":
@@ -369,6 +369,9 @@ func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	result["hp_damage"] = int(projection.get("hp_damage", 0))
 	result["temper_damage"] = int(projection.get("temper_damage", 0))
 	result["ether_damage"] = int(projection.get("ether_damage", 0))
+	# Keep projected damage for existing potency/boon consumers. Feedback uses
+	# direct HP loss, capped here before defeat callbacks or secondary effects.
+	result["applied_hp_damage"] = mini(maxi(hp, 0), int(result["hp_damage"]))
 	hp = maxi(hp - int(result["hp_damage"]), 0)
 	temper = maxi(temper - int(result["temper_damage"]), 0)
 	ether = maxi(ether - int(result["ether_damage"]), 0)
@@ -632,12 +635,20 @@ func enable_3d_prototype() -> void:
 	if is_instance_valid(_rig3d):
 		return
 	var archetype := str(get_meta("archetype_id", unit_id))
-	var imported_kael := archetype == "kael"
-	_rig3d = preload("res://scripts/presentation/KaelRigPresentation.gd").new() if imported_kael else preload("res://scripts/presentation/Humanoid3D.gd").new()
+	var imported_character := archetype in ["kael", "mira", "zane"]
+	match archetype:
+		"kael":
+			_rig3d = preload("res://scripts/presentation/KaelRigPresentation.gd").new()
+		"mira":
+			_rig3d = preload("res://scripts/presentation/MiraRigPresentation.gd").new()
+		"zane":
+			_rig3d = preload("res://scripts/presentation/ZaneRigPresentation.gd").new()
+		_:
+			_rig3d = preload("res://scripts/presentation/Humanoid3D.gd").new()
 	_rig3d.skin_id = archetype
 	_rig3d.z_index = 10
 	add_child(_rig3d)
-	if imported_kael and not _rig3d.is_available():
+	if imported_character and not _rig3d.is_available():
 		# Failed imports must leave the original sprite visible, not an empty unit.
 		remove_child(_rig3d)
 		_rig3d.queue_free()
@@ -682,4 +693,4 @@ func cast_origin_world() -> Vector2:
 	return _rig3d.hand_world_position() if is_instance_valid(_rig3d) else global_position + Vector2(0, -30)
 
 func supports_3d_presentation() -> bool:
-	return str(get_meta("archetype_id", unit_id)) in ["kael", "zane", "void_cultist"]
+	return str(get_meta("archetype_id", unit_id)) in ["kael", "mira", "zane", "void_cultist"]

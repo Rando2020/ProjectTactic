@@ -14,7 +14,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {
-			"damage": 0, "hp_damage": 0, "temper_damage": 0, "ether_damage": 0,
+			"damage": 0, "hp_damage": 0, "applied_hp_damage": 0, "temper_damage": 0, "ether_damage": 0,
 			"missed": true, "hit_pct": hit_pct, "formula_explain": formula.get("explain", []),
 		}
 		_show_miss(target)
@@ -89,6 +89,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		"incoming_damage": incoming_damage,
 		"formula_explain": formula.get("explain", []),
 		"hp_damage": actual_hp_damage,
+		"applied_hp_damage": dmg_result["applied_hp_damage"],
 		"temper_damage": dmg_result.get("temper_damage", 0),
 		"ether_damage": dmg_result.get("ether_damage", 0),
 		"height_bonus": formula.get("height_mult", 1.0),
@@ -111,7 +112,7 @@ func resolve_spell(caster: Unit, target: Unit,
 	var formula := CombatFormula.calculate_magical_attack(caster, target, element, base_power, {"power_mult": el_mult})
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
-		var miss_result := {"damage":0, "hp_damage":0, "missed":true, "spell_type":element, "hit_pct":hit_pct}
+		var miss_result := {"damage":0, "hp_damage":0, "applied_hp_damage":0, "temper_damage":0, "ether_damage":0, "missed":true, "spell_type":element, "hit_pct":hit_pct}
 		_show_miss(target)
 		combat_resolved.emit(miss_result)
 		return miss_result
@@ -164,6 +165,7 @@ func resolve_spell(caster: Unit, target: Unit,
 		"incoming_damage": final_damage,
 		"formula_explain": formula.get("explain", []),
 		"hp_damage": actual_hp_damage,
+		"applied_hp_damage": dmg_result["applied_hp_damage"],
 		"ether_damage": dmg_result.get("ether_damage", 0),
 		"spell_type": element,
 		"affinity": affinity,

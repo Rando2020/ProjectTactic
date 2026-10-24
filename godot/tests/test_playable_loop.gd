@@ -394,8 +394,8 @@ func _check_melee_poses(manager: BattleManager) -> void:
 
 func _check_shared_rigs(manager: BattleManager) -> void:
 	var actors: Array[Unit] = []
-	# All facades obey the same gameplay phases; only the two legacy appearances
-	# still share procedural joint motion. Kael owns a distinct imported skeleton.
+	# All facades obey the same gameplay phases. Kael and Zane use the same
+	# imported motion contract; the cultist retains its procedural presentation.
 	for id in ["kael", "zane", "void_cultist"]:
 		var actor := Unit.new()
 		actor.unit_data = manager.units["kael" if id == "kael" else "zane"].unit_data
@@ -403,9 +403,9 @@ func _check_shared_rigs(manager: BattleManager) -> void:
 		add_child(actor)
 		actor.enable_3d_prototype()
 		actors.append(actor)
-		if id == "kael":
-			check(actor._rig3d.skeleton.get_bone_count() == 16, "Imported Kael retains tested skeleton")
-			check(actor._rig3d.viewport.size == Vector2i(160,160), "Kael uses controlled pixel source")
+		if id in ["kael", "zane"]:
+			check(actor._rig3d.get("skeleton") is Skeleton3D and actor._rig3d.skeleton.get_bone_count() == 16, "Imported character retains tested skeleton: " + id)
+			check(actor._rig3d.viewport.size == Vector2i(160,160), "Imported character uses controlled pixel source: " + id)
 		else:
 			check(actor._rig3d.rig.get_bone_count() == 11, "Legacy rig retains humanoid joints")
 			check(actor._rig3d.viewport.size == Vector2i(192,192), "Legacy viewport retains bounded render size")
@@ -429,10 +429,13 @@ func _check_shared_rigs(manager: BattleManager) -> void:
 	for actor in actors:
 		actor._rig3d.play("anticipation")
 		actor._rig3d._process(0.16)
-	check(actors[1]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(actors[2]._rig3d.rig.get_bone_pose_rotation(3)), "Legacy appearances retain shared sword motion")
-	check(not actors[1]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(Quaternion.IDENTITY), "Legacy anticipation rotates shoulder bone")
+	check(actors[1]._rig3d.get("skeleton") is Skeleton3D
+		and actors[1]._rig3d.skeleton.get_bone_pose(actors[1]._rig3d.skeleton.find_bone("upper_arm.R")).is_equal_approx(
+			actors[0]._rig3d.skeleton.get_bone_pose(actors[0]._rig3d.skeleton.find_bone("upper_arm.R"))),
+		"Imported Kael and Zane retain shared authored windup")
+	check(not actors[2]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(Quaternion.IDENTITY), "Legacy cultist anticipation still rotates shoulder bone")
 	check(actors[0]._rig3d.player.current_animation == "slash" and actors[0]._rig3d.player.current_animation_position > 0.0, "Imported Kael samples authored windup")
-	check(actors[1]._rig3d.skin_id != actors[2]._rig3d.skin_id, "Legacy rig retains distinct appearance definitions")
+	check(actors[1]._rig3d.skin_id != actors[2]._rig3d.skin_id, "Imported and legacy rigs retain distinct appearance definitions")
 	for actor in actors:
 		actor.animate_death()
 		check(actor._rig3d.state == "defeat", "Death drives shared defeat animation")
