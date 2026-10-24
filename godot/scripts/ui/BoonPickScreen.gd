@@ -180,7 +180,7 @@ func _build_boon_card(boon: Dictionary) -> Control:
 
 	# Description (small)
 	var desc_lbl = Label.new()
-	desc_lbl.text = str(boon.get("desc", "")).truncate_to_word_length(40)
+	desc_lbl.text = _truncate_at_word_boundary(str(boon.get("desc", "")), 40)
 	desc_lbl.add_theme_font_size_override("font_size", 9)
 	desc_lbl.add_theme_color_override("font_color", DIM)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -312,6 +312,16 @@ func _show_replacement_modal(incoming_boon: Dictionary) -> void:
 		boon_selected.emit(incoming_boon, str(replaced.get("id", "")))
 	)
 	btn_row.add_child(confirm_btn)
+
+
+func _truncate_at_word_boundary(text: String, max_length: int) -> String:
+	if text.length() <= max_length:
+		return text
+	var shortened := text.left(max_length)
+	var last_space := shortened.rfind(" ")
+	if last_space > 0:
+		shortened = shortened.left(last_space)
+	return shortened + "..."
 
 
 func _get_rarity_color(rarity: String) -> Color:

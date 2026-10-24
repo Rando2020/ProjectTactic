@@ -9,6 +9,7 @@ This is intentionally lightweight. The first goal is to prevent scattered image 
 ```txt
 src/assets/assetRegistry.js
 godot/scripts/data/AssetRegistry.gd
+godot/data/asset_manifest.json
 ```
 
 ## What the registry does
@@ -26,11 +27,11 @@ The registry maps gameplay concepts to planned asset paths:
 - VFX sheets
 - Guardian summon illustrations
 
-## What the registry does not do yet
+## Godot runtime loading
 
-The registry does not load images by itself.
+Godot now reads the JSON manifest for environment themes, tactical overlays, and optional unit indicators. Each entry may declare a preferred `path` and a `fallback_path`. `AssetRegistry.load_first_texture()` skips missing files, malformed PNGs, and Git LFS pointer files. The grid keeps its procedural tile and overlay drawing as the final fallback.
 
-It also does not require every referenced asset file to exist today. The current registry acts as a stable contract for future generated assets.
+The registry still does not require every preferred asset file to exist. That is intentional so a prompt pack can land before its final art batch.
 
 ## Browser usage
 
@@ -54,16 +55,23 @@ Example:
 ```gdscript
 var zane = AssetRegistry.get_unit("zane")
 var portrait_path = zane.get("portrait", "")
+
+var terrain_paths = AssetRegistry.get_environment_candidates(
+    map_data.environment_theme_id,
+    "terrain",
+    "grass"
+)
 ```
 
 ## Recommended integration order
 
-1. Use tile highlight assets in grid overlays.
-2. Use portrait assets in turn order UI.
-3. Use idle sprites for player and enemy units.
-4. Use command icons in battle command UI.
-5. Use elemental VFX sheets in combat resolution.
-6. Use Guardian illustrations in ability and summon presentation.
+1. Replace the `forgotten-field` terrain paths with approved art.
+2. Replace tactical overlays and optional unit indicators.
+3. Use portrait assets in turn order UI.
+4. Use idle sprites for player and enemy units.
+5. Use command icons in battle command UI.
+6. Use elemental VFX sheets in combat resolution.
+7. Use Guardian illustrations in ability and summon presentation.
 
 ## Naming standard
 

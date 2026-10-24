@@ -23,7 +23,7 @@ const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
 const DEMO_PACE := 0.45
 const MIN_WAIT := 0.03
-const AUTO_BATTLE_TEST_MODE := true
+const AUTO_BATTLE_TEST_MODE := false
 const AUTO_BATTLE_TEST_SPEED := 2.0
 
 enum Phase { INACTIVE, TICK, PLAYER_TURN, ENEMY_TURN, RESOLVE, CHECK_OBJECTIVE, VICTORY, DEFEAT }
@@ -42,6 +42,7 @@ var selected_ability_id: String = ""
 ## Most recent attack/ability name  read by BattleScene for death-context recording.
 var last_ability_used: String = ""
 var is_resolving_action: bool = false
+var action_lifecycle := preload("res://scripts/battle/ActionLifecycle.gd").new()
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
 var auto_battle_enabled: bool = AUTO_BATTLE_TEST_MODE
@@ -71,6 +72,8 @@ func _timer(seconds: float) -> SceneTreeTimer:
 
 
 func _exit_tree() -> void:
+	action_lifecycle.cancel()
+	is_resolving_action = false
 	if auto_battle_enabled:
 		Engine.time_scale = 1.0
 
@@ -187,6 +190,10 @@ func _begin_enemy_turn() -> void:
 	command_hint_changed.emit(str(intent.get("summary", "Enemy is acting...")))
 	await _timer(0.50).timeout
 	await _execute_enemy_intent(unit, intent)
+	await _recover_action()
+	if not is_instance_valid(unit):
+		_set_phase(Phase.RESOLVE)
+		return
 	unit.end_turn()
 	_process_terrain_hazards(unit)
 	turn_ended.emit(active_unit_id)
@@ -228,79 +235,6 @@ func _anchor_pulse(anchor: Unit) -> void:
 
 	await _timer(0.3).timeout
 
-
-func _run_enemy_ai(unit: Unit) -> void:
-	var closest_player: Unit = null
-	var closest_dist: int = 9999
-	for uid in units:
-		var u: Unit = _living_unit(str(uid))
-		if not u:
-			continue
-		if u.team == "player" and u.hp > 0:
-			var dist := GridSystem.manhattan(unit.grid_pos, u.grid_pos)
-			if dist < closest_dist:
-				closest_dist = dist
-				closest_player = u
-	if not closest_player:
-		return
-	if closest_dist <= unit.unit_data.base_stats.attack_range_max:
-		var tile_att := tactical_grid.get_tile(unit.grid_pos)
-		var tile_tar := tactical_grid.get_tile(closest_player.grid_pos)
-		var result := combat_resolver.resolve_attack(unit, closest_player, tile_att, tile_tar)
-		if result.get("missed", false):
-			log_message.emit("%s attacks but misses! (blind)" % unit.display_name)
-		else:
-			var ftag := " [BACK ATTACK!]" if result.get("flank","") == "back" \
-				else (" [flank]" if result.get("flank","") == "side" else "")
-			log_message.emit("%s hits %s for %d dmg!%s" % [unit.display_name, closest_player.display_name, result.get("hp_damage", 0), ftag])
-		# Counter-attack
-		if result.get("counter", false):
-			_timer(0.6).timeout.connect(
-				func() -> void: _execute_counter_attack(closest_player, unit))
-	else:
-		var occupied: Array = []
-		for uid in units:
-			var u: Unit = _living_unit(str(uid))
-			if not u:
-				continue
-			if u.unit_id != unit.unit_id and u.hp > 0:
-				occupied.append(u.grid_pos)
-		var reachable := GridSystem.get_move_range(
-			unit.grid_pos, unit.unit_data.base_stats.move,
-			tactical_grid.tiles, occupied, map_data.map_width, map_data.map_height,
-			unit.unit_data.base_stats.jump
-		)
-		var best_tile := unit.grid_pos
-		var best_dist := closest_dist
-		for tile_pos in reachable:
-			var d := GridSystem.manhattan(tile_pos, closest_player.grid_pos)
-			if d < best_dist:
-				best_dist = d
-				best_tile = tile_pos
-		if best_tile != unit.grid_pos:
-			var old_pos := unit.grid_pos
-			unit.move_to(best_tile)
-			log_message.emit("%s advances." % unit.display_name)
-			unit_moved.emit(unit.unit_id, old_pos, best_tile)
-			await tactical_grid.move_unit_visual(unit.unit_id, old_pos, best_tile)
-			await _timer(0.20).timeout
-			active_unit_has_moved = true
-			closest_dist = GridSystem.manhattan(unit.grid_pos, closest_player.grid_pos)
-			if closest_dist <= unit.unit_data.base_stats.attack_range_max:
-				_face_toward(unit, closest_player.grid_pos)
-				var tile_att2 := tactical_grid.get_tile(unit.grid_pos)
-				var tile_tar2 := tactical_grid.get_tile(closest_player.grid_pos)
-				var result2 := combat_resolver.resolve_attack(unit, closest_player, tile_att2, tile_tar2)
-				active_unit_has_acted = true
-				if result2.get("missed", false):
-					log_message.emit("%s attacks after moving but misses!" % unit.display_name)
-				else:
-					log_message.emit("%s moves in and hits %s for %d dmg!" % [unit.display_name, closest_player.display_name, result2.get("hp_damage", 0)])
-				if result2.get("counter", false):
-					_timer(0.6).timeout.connect(
-						func() -> void: _execute_counter_attack(closest_player, unit))
-		else:
-			log_message.emit("%s holds." % unit.display_name)
 
 func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
 	var hp_ratio := float(unit.hp) / float(max(unit.unit_data.base_stats.hp, 1))
@@ -411,7 +345,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 		var formula := {}
 		if spell_type == "physical":
-			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
 		else:
 			var base_power: int = int(ability.get("base_power", 100))
 			var bonuses: Dictionary = RunBonusesUtil.for_current_run()
@@ -528,7 +462,7 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 		"heal":
 			var heal_ability: Dictionary = intent.get("ability", {})
 			if not heal_ability.is_empty():
-				_execute_ability(unit, unit, heal_ability)
+				await _execute_ability(unit, unit, heal_ability)
 				active_unit_has_acted = true
 		"retreat":
 			await _enemy_move_to(unit, _intent_move_to(intent, unit.grid_pos), "%s retreats to recover." % unit.display_name)
@@ -538,19 +472,19 @@ func _execute_enemy_intent(unit: Unit, intent: Dictionary) -> void:
 			if target and target.hp > 0 and not ability.is_empty():
 				last_ability_used = ability.get("display_name", "an ability")
 				if _ability_has_area_effect(ability):
-					_execute_aoe_ability(unit, target.grid_pos, ability)
+					await _execute_aoe_ability(unit, target.grid_pos, ability)
 				else:
-					_execute_ability(unit, target, ability)
+					await _execute_ability(unit, target, ability)
 				active_unit_has_acted = true
 		"attack":
 			var attack_target: Unit = units.get(str(intent.get("target_id", "")))
 			if attack_target and attack_target.hp > 0:
-				_enemy_attack(unit, attack_target)
+				await _enemy_attack(unit, attack_target)
 		"advance":
 			var chase_target: Unit = units.get(str(intent.get("target_id", "")))
 			var moved: bool = await _enemy_move_to(unit, _intent_move_to(intent, unit.grid_pos), "%s advances." % unit.display_name)
 			if chase_target and chase_target.hp > 0 and GridSystem.manhattan(unit.grid_pos, chase_target.grid_pos) <= unit.unit_data.base_stats.attack_range_max:
-				_enemy_attack(unit, chase_target, true)
+				await _enemy_attack(unit, chase_target, true)
 			elif moved:
 				log_message.emit("%s cannot reach an attack after advancing." % unit.display_name)
 		_:
@@ -639,7 +573,10 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 	var tile_att := tactical_grid.get_tile(unit.grid_pos)
 	var tile_tar := tactical_grid.get_tile(target.grid_pos)
 	last_ability_used = "a basic attack"
-	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar)
+	var attack_kind := "arrow" if unit.unit_data.base_stats.attack_range_max > 1 else "slash"
+	if not await _present_action(unit, target.grid_pos, attack_kind, target):
+		return
+	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar, attack_kind)
 	active_unit_has_acted = true
 	if result.get("missed", false):
 		log_message.emit("%s attacks but misses!" % unit.display_name)
@@ -647,7 +584,7 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 		var verb := "moves in and hits" if after_move else "hits"
 		log_message.emit("%s %s %s for %d dmg!" % [unit.display_name, verb, target.display_name, result.get("hp_damage", 0)])
 	if result.get("counter", false):
-		_timer(0.6).timeout.connect(func() -> void: _execute_counter_attack(target, unit))
+		_execute_counter_attack(target, unit)
 
 
 func _enemy_move_to(unit: Unit, pos: Vector2i, message: String) -> bool:
@@ -827,7 +764,7 @@ func _auto_try_attack(unit: Unit) -> bool:
 		return false
 	action_preview_changed.emit(_attack_preview_for_tile(target.grid_pos))
 	await _timer(0.10).timeout
-	_on_unit_clicked(target.unit_id)
+	await _on_unit_clicked(target.unit_id)
 	return true
 
 
@@ -957,13 +894,18 @@ func confirm_pending_action() -> void:
 
 
 func cancel_pending_action() -> void:
+	if is_resolving_action:
+		return
+	active_command = ""
+	selected_ability_id = ""
+	tactical_grid.clear_highlights()
 	action_preview_changed.emit({})
 	tactical_grid.clear_target_lock()
 	command_hint_changed.emit("Cancelled. Choose Move, Attack, Ability, or Wait.")
 	_emit_action_state()
 
 func select_command(command: String) -> void:
-	if current_phase != Phase.PLAYER_TURN:
+	if current_phase != Phase.PLAYER_TURN or is_resolving_action:
 		return
 	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
@@ -977,7 +919,10 @@ func select_command(command: String) -> void:
 		command_hint_changed.emit("Choose Move or Wait.")
 		return
 	active_command = command
-	tactical_grid.clear_target_lock()
+	selected_ability_id = ""
+	tactical_grid.clear_highlights()
+	action_preview_changed.emit({})
+	_emit_action_state()
 	match command:
 		"move":
 			command_hint_changed.emit("Move: click a blue GO tile.")
@@ -1028,13 +973,12 @@ func select_command(command: String) -> void:
 
 
 func select_ability(ability_id: String) -> void:
-	if current_phase != Phase.PLAYER_TURN:
+	if current_phase != Phase.PLAYER_TURN or is_resolving_action:
 		return
 	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
-	if active_unit_has_acted:
-		log_message.emit("%s has already acted." % unit.display_name)
+	if active_unit_has_acted or unit.has_status("silence") or ability_id not in unit.unit_data.abilities:
 		return
 	var ability: Dictionary = AbilityDB.get_ability(ability_id)
 	if unit.mp < ability.get("mp_cost", 0):
@@ -1042,17 +986,19 @@ func select_ability(ability_id: String) -> void:
 		return
 	selected_ability_id = ability_id
 	active_command = "ability_target"
+	tactical_grid.clear_highlights()
+	action_preview_changed.emit({})
+	_emit_action_state()
 	command_hint_changed.emit("%s: click a purple CAST tile or target." % ability.get("display_name", ability_id))
 	var range_val: int = ability.get("range", 1)
 	var target_type: String = ability.get("target_type", "enemy")
 	# Self-cast or range-0  resolve immediately on the caster's tile
 	if target_type == "self" or range_val == 0:
 		if ability.has("aoe_type"):
-			_execute_aoe_ability(unit, unit.grid_pos, ability)
+			active_unit_has_acted = await _execute_aoe_ability(unit, unit.grid_pos, ability)
 		else:
-			_execute_ability(unit, unit, ability)
-		active_unit_has_acted = true
-		_end_player_turn()
+			active_unit_has_acted = await _execute_ability(unit, unit, ability)
+		await _finish_player_action()
 		return
 	var ab_range := GridSystem.get_attack_range(
 		unit.grid_pos, ability.get("min_range", 1), range_val, map_data.map_width, map_data.map_height
@@ -1065,10 +1011,14 @@ func select_ability(ability_id: String) -> void:
 ## Execute ability against a single target.
 ## skip_setup=true skips MP deduction, UI cleanup, and per-target log spam (used by AoE wrapper).
 func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
-		skip_setup: bool = false) -> void:
+		skip_setup: bool = false) -> bool:
+	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
+		return false
 	if target and target.grid_pos != caster.grid_pos:
 		_face_toward(caster, target.grid_pos)
 	if not skip_setup:
+		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target):
+			return false
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
 		active_command = ""
@@ -1079,8 +1029,10 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 	var ab_name:     String = ability.get("display_name", "?")
 
 	#  Buff abilities (Haste, Protect, )
-	if spell_type == "buff":
-		var se_data: Dictionary = ability.get("status_effect", {})
+	if spell_type == "buff" or ability.get("type", "") == "buff":
+		var se_data: Dictionary = ability.get("status_effect", {}).duplicate(true)
+		if target == caster:
+			se_data["duration"] = int(se_data.get("duration", 1)) + 1
 		var vfx_node := get_node_or_null("/root/VFX")
 		if vfx_node and not se_data.is_empty():
 			var vfx := vfx_node as VFXManager
@@ -1089,38 +1041,35 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 				"protect": vfx.play_protect(target.grid_pos)
 				_:         vfx.play_aura(target.grid_pos, Color(0.6, 0.8, 1.0))
 		if not se_data.is_empty():
-			_timer(0.25).timeout.connect(
-				func() -> void: _try_apply_status(target, se_data))
+			_try_apply_status(target, se_data)
 		if not skip_setup:
 			log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
-		return
+		return true
 
 	#  Heal
-	if spell_type == "cure":
+	if spell_type == "cure" or ability.get("type", "") == "heal":
 		combat_resolver.resolve_heal(caster, target, base_power)
 		if not skip_setup:
 			log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
-		return
+		return true
 
 	#  Physical
 	if spell_type == "physical":
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
 		var ab_vfx: String = ability.get("vfx_mode", "slash")
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx)
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power})
 		if not skip_setup:
 			if result.get("missed", false):
 				log_message.emit("%s swings but misses! (blind)" % caster.display_name)
 			else:
 				log_message.emit("%s uses %s!" % [caster.display_name, ab_name])
 		if result.get("counter", false):
-			_timer(0.6).timeout.connect(
-				func() -> void: _execute_counter_attack(target, caster))
+			_execute_counter_attack(target, caster)
 		# Status after hit
 		var se_data: Dictionary = ability.get("status_effect", {})
 		if not se_data.is_empty():
-			_timer(0.3).timeout.connect(
-				func() -> void: _try_apply_status(target, se_data))
+			_try_apply_status(target, se_data)
 		# JP award for physical ability
 		if not skip_setup:
 			_award_jp(caster, "action_used")
@@ -1128,7 +1077,7 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		if target.hp <= 0:
 			_check_volatile_explosion(target)
 			_check_boon_on_kill(caster, target)
-		return
+		return true
 
 	#  Spell (elemental / dark / etc.)
 	combat_resolver.resolve_spell(caster, target, spell_type, base_power)
@@ -1161,13 +1110,15 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 	# Status
 	var se_data2: Dictionary = ability.get("status_effect", {})
 	if not se_data2.is_empty():
-		_timer(0.3).timeout.connect(
-			func() -> void: _try_apply_status(target, se_data2))
+		_try_apply_status(target, se_data2)
+	return true
 
 
 ## Execute an AoE ability centred on a grid tile.
 ## Deducts MP once, logs once, then hits every valid unit in the pattern.
-func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> void:
+func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> bool:
+	if not await _present_action(caster, center, "cast"):
+		return false
 	if center != caster.grid_pos:
 		_face_toward(caster, center)
 	caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
@@ -1183,28 +1134,29 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 		var chain_targets := _chain_targets(center, ability, caster)
 		if chain_targets.is_empty():
 			log_message.emit("(no target to chain from)")
-			return
+			return true
 		var falloff: float = ability.get("chain_falloff", 0.40)
 		var power_mult     := 1.0
 		for i: int in range(chain_targets.size()):
 			var tgt: Unit = chain_targets[i]
 			var chain_ab  := ability.duplicate()
 			chain_ab["base_power"] = int(float(ability.get("base_power", 100)) * power_mult)
-			_execute_ability(caster, tgt, chain_ab, i > 0)  # skip_setup on hops
+			await _execute_ability(caster, tgt, chain_ab, true)  # skip_setup on hops
 			if i == 0:
 				log_message.emit("%s - %d dmg" % [tgt.display_name, chain_ab["base_power"]])
 			else:
 				log_message.emit("arcs to %s - %d dmg" % [tgt.display_name, chain_ab["base_power"]])
 			power_mult *= (1.0 - falloff)
-		return
+		return true
 
 	#  All other shapes
 	var aoe_targets := _get_aoe_targets(center, ability, caster)
 	if aoe_targets.is_empty():
 		log_message.emit("(no targets in burst)")
-		return
+		return true
 	for tgt: Unit in aoe_targets:
-		_execute_ability(caster, tgt, ability, true)
+		await _execute_ability(caster, tgt, ability, true)
+	return true
 
 
 ## Returns the unit step in the dominant axis from `from` toward `to`.
@@ -1458,40 +1410,6 @@ func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> voi
 			counter_unit.display_name, result.get("hp_damage", 0)])
 
 
-func _try_enemy_spell(unit: Unit) -> bool:
-	if unit.unit_data.abilities.is_empty():
-		return false
-	var ab_list: Array = unit.unit_data.abilities.duplicate()
-	ab_list.shuffle()
-	for ab_id: String in ab_list:
-		var ab: Dictionary = AbilityDB.get_ability(ab_id)
-		if unit.mp < ab.get("mp_cost", 0):
-			continue
-		var spell_range: int = ab.get("range", 1)
-		# Self-cast AoE (range == 0)  cast on self immediately
-		if spell_range == 0 and ab.has("aoe_type"):
-			_execute_aoe_ability(unit, unit.grid_pos, ab)
-			return true
-		var target_type: String = ab.get("target_type", "enemy")
-		for uid: String in units:
-			var target: Unit = _living_unit(str(uid))
-			if not target:
-				continue
-			if target.hp <= 0:
-				continue
-			var is_valid := (target_type == "enemy" and target.team == "player") or \
-							(target_type == "ally" and target.team == unit.team and target != unit)
-			if not is_valid:
-				continue
-			if GridSystem.manhattan(unit.grid_pos, target.grid_pos) <= spell_range:
-				if ab.has("aoe_type"):
-					_execute_aoe_ability(unit, target.grid_pos, ab)
-				else:
-					_execute_ability(unit, target, ab)
-				return true
-	return false
-
-
 #  Input handlers
 
 ## Called every time the mouse crosses into a new grid tile.
@@ -1593,7 +1511,7 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 	if active_command in ["attack", "ability_target"]:
 		var clicked_unit := _unit_at_pos(grid_pos)
 		if clicked_unit:
-			_on_unit_clicked(clicked_unit.unit_id)
+			await _on_unit_clicked(clicked_unit.unit_id)
 			return
 	if active_command == "move" and grid_pos in tactical_grid.move_tiles:
 		is_resolving_action = true
@@ -1612,6 +1530,10 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 				and _tiles_moved_this_turn >= _im_b.get("iron_momentum_min_move", 0):
 			_iron_momentum_primed = true
 		is_resolving_action = false
+		_emit_action_state()
+		if active_unit_has_acted:
+			_end_player_turn()
+			return
 		if _iron_momentum_primed:
 			command_hint_changed.emit(" Iron Momentum! +30%% bonus damage on next attack. Choose Attack, Ability, or Wait.")
 		else:
@@ -1624,9 +1546,8 @@ func _on_tile_clicked(grid_pos: Vector2i) -> void:
 			return   # single-target abilities require clicking a unit
 		if grid_pos not in tactical_grid.ability_tiles:
 			return
-		_execute_aoe_ability(unit, grid_pos, ability)
-		active_unit_has_acted = true
-		_end_player_turn()
+		active_unit_has_acted = await _execute_aoe_ability(unit, grid_pos, ability)
+		await _finish_player_action()
 
 
 func _on_unit_clicked(unit_id: String) -> void:
@@ -1654,6 +1575,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 		var tile_tar := tactical_grid.get_tile(target.grid_pos)
 		var atk_vfx: String = "arrow" if attacker.unit_data.base_stats.attack_range_max > 1 else "slash"
 		last_ability_used = "a basic attack"
+		if not await _present_action(attacker, target.grid_pos, atk_vfx, target):
+			return
 		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
 		tactical_grid.clear_highlights()
 		active_command = ""
@@ -1664,8 +1587,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 				else (" [flank]" if result.get("flank","") == "side" else "")
 			log_message.emit("%s hits %s for %d dmg!%s" % [attacker.display_name, target.display_name, result.get("hp_damage", 0), ftag])
 		if result.get("counter", false):
-			_timer(0.6).timeout.connect(
-				func() -> void: _execute_counter_attack(target, attacker))
+			_execute_counter_attack(target, attacker)
 		active_unit_has_acted = true
 
 		#  Tactical boon follow-ups (player attacks only)
@@ -1685,6 +1607,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 
 		# Reaping Step: grant free move if a kill was scored
 		if _reaping_step_pending:
+			await _recover_action()
 			_reaping_step_pending = false
 			active_unit_has_moved = false
 			var rs_tiles: int = tb_bonuses.get("reaping_step_range", 3)
@@ -1693,7 +1616,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 				_run_reaping_step_auto.call_deferred(attacker)
 			return   # don't end turn yet  player may still move
 
-		_end_player_turn()
+		await _finish_player_action()
 	elif active_command == "ability_target" and selected_ability_id != "":
 		var target: Unit = units.get(unit_id)
 		if not target or target.hp <= 0:
@@ -1716,12 +1639,29 @@ func _on_unit_clicked(unit_id: String) -> void:
 			return
 		last_ability_used = ability.get("display_name", selected_ability_id)
 		if ability.has("aoe_type"):
-			_execute_aoe_ability(caster, target.grid_pos, ability)
+			active_unit_has_acted = await _execute_aoe_ability(caster, target.grid_pos, ability)
 		else:
-			_execute_ability(caster, target, ability)
-		active_unit_has_acted = true
-		_end_player_turn()
+			active_unit_has_acted = await _execute_ability(caster, target, ability)
+		await _finish_player_action()
 
+
+func _finish_player_action() -> void:
+	await _recover_action()
+	if not active_unit_has_acted:
+		cancel_pending_action()
+		return
+	var enemy_alive := false
+	for candidate in units.values():
+		if is_instance_valid(candidate) and candidate.team == "enemy" and candidate.hp > 0:
+			enemy_alive = true
+	if active_unit_has_moved or not enemy_alive or auto_battle_enabled:
+		_end_player_turn()
+	else:
+		active_command = ""
+		selected_ability_id = ""
+		action_preview_changed.emit({})
+		command_hint_changed.emit("Action complete. Move or Wait to finish your turn.")
+		_emit_action_state()
 
 func _end_player_turn() -> void:
 	var unit: Unit = _living_unit(active_unit_id)
@@ -1928,7 +1868,8 @@ func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Diction
 func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> int:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	if spell_type == "physical":
-		return _predict_attack_damage(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
+		var physical := CombatFormula.calculate_physical_attack(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
+		return int(physical.get("hp_damage", 0))
 	var base_power: int = int(ability.get("base_power", 100))
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
@@ -2347,3 +2288,30 @@ func _on_boon_effect(signal_name: String, data: Dictionary) -> void:
 		"apply_echo_strike":
 			# Handled separately - second hit will be triggered
 			pass
+
+
+## Shared primary-action lifecycle for both teams and all targeted abilities.
+func _present_action(actor: Unit, destination: Vector2i, kind: String, target: Unit = null) -> bool:
+	var ticket: int = action_lifecycle.begin(actor, target)
+	if ticket == 0:
+		return false
+	is_resolving_action = true
+	_emit_action_state()
+	var effects := get_node_or_null("/root/VFX") as VFXManager
+	if effects:
+		await effects.present_action(actor, destination, kind, func() -> bool: return action_lifecycle.presentation_valid(ticket))
+	if not action_lifecycle.contact(ticket):
+		if action_lifecycle.phase == "idle":
+			is_resolving_action = false
+		return false
+	if kind == "slash" and actor.melee_pose == "anticipation":
+		actor.set_melee_pose("contact")
+	return true
+
+func _recover_action() -> void:
+	var ticket: int = action_lifecycle.ticket
+	if action_lifecycle.recover(ticket):
+		await _timer(0.22).timeout
+		action_lifecycle.finish(ticket)
+	if action_lifecycle.phase == "idle":
+		is_resolving_action = false

@@ -9,6 +9,11 @@ extends RefCounted
 # without repeatedly changing gameplay data.
 
 const PROMPT_SOURCE := "docs/prompts/demo-asset-generation.md"
+const MANIFEST_PATH := "res://data/asset_manifest.json"
+
+static var _manifest_cache: Dictionary = {}
+static var _manifest_loaded := false
+static var _texture_cache: Dictionary = {}
 
 const TILES := {
 	"grass": {
@@ -431,3 +436,105 @@ static func get_ui_icon(icon_id: String) -> String:
 
 static func get_parchment(part: String) -> String:
 	return UI.get("parchment", {}).get(part, "")
+
+
+## Returns the runtime manifest, or an empty dictionary when the file is absent
+## or invalid. The battle renderer treats an empty result as a request to use
+## its existing procedural and legacy-path fallbacks.
+static func get_manifest() -> Dictionary:
+	if _manifest_loaded:
+		return _manifest_cache
+	_manifest_loaded = true
+	if not FileAccess.file_exists(MANIFEST_PATH):
+		return _manifest_cache
+	var file := FileAccess.open(MANIFEST_PATH, FileAccess.READ)
+	if not file:
+		return _manifest_cache
+	var parsed = JSON.parse_string(file.get_as_text())
+	if parsed is Dictionary:
+		_manifest_cache = parsed
+	else:
+		push_warning("Asset manifest is invalid JSON; using runtime fallbacks.")
+	return _manifest_cache
+
+
+## Resolves preferred and fallback paths for an environment asset without
+## loading it. Keeping both candidates lets web exports survive a missing,
+## rejected, or not-yet-generated art file.
+static func get_environment_candidates(theme_id: String, asset_group: String, asset_id: String) -> Array[String]:
+	var candidates: Array[String] = []
+	var themes: Dictionary = get_manifest().get("environments", {})
+	var theme: Dictionary = themes.get(theme_id, themes.get("default", {}))
+	var entry = theme.get(asset_group, {}).get(asset_id, {})
+	_append_entry_paths(candidates, entry)
+	return candidates
+
+
+static func get_overlay_candidates(theme_id: String, overlay_id: String) -> Array[String]:
+	var candidates: Array[String] = []
+	var overlay_themes: Dictionary = get_manifest().get("tactical_overlays", {})
+	var theme: Dictionary = overlay_themes.get(theme_id, overlay_themes.get("default", {}))
+	_append_entry_paths(candidates, theme.get(overlay_id, {}))
+	return candidates
+
+
+static func get_unit_indicator_candidates(team_id: String) -> Array[String]:
+	var candidates: Array[String] = []
+	var indicators: Dictionary = get_manifest().get("unit_indicators", {})
+	_append_entry_paths(candidates, indicators.get(team_id, indicators.get("default", {})))
+	return candidates
+
+
+## Resolves a gameplay unit ID to its preferred art-role pose and legacy
+## fallback. Art-production roles can evolve without renaming gameplay data.
+static func get_character_candidates(unit_id: String, pose: String = "idle") -> Array[String]:
+	var candidates: Array[String] = []
+	var characters: Dictionary = get_manifest().get("characters", {})
+	var unit_entry: Dictionary = characters.get(unit_id, {})
+	_append_entry_paths(candidates, unit_entry.get(pose, {}))
+	return candidates
+
+
+## Loads the first valid texture in a candidate list. Source PNG bytes support
+## editor checkouts while ResourceLoader supports imported Web-export textures.
+## Git LFS pointer files and malformed images remain safe to skip.
+static func load_first_texture(paths: Array[String]) -> Texture2D:
+	for path in paths:
+		if path.is_empty():
+			continue
+		if _texture_cache.has(path):
+			var cached = _texture_cache[path]
+			if cached is Texture2D:
+				return cached
+			continue
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file:
+			var bytes := file.get_buffer(file.get_length())
+			if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
+				_texture_cache[path] = false
+				continue
+			var image := Image.new()
+			if image.load_png_from_buffer(bytes) == OK:
+				var source_texture := ImageTexture.create_from_image(image)
+				_texture_cache[path] = source_texture
+				return source_texture
+		if ResourceLoader.exists(path, "Texture2D"):
+			var imported_texture := ResourceLoader.load(path, "Texture2D") as Texture2D
+			if imported_texture:
+				_texture_cache[path] = imported_texture
+				return imported_texture
+		_texture_cache[path] = false
+	return null
+
+
+static func _append_entry_paths(target: Array[String], entry) -> void:
+	if entry is String:
+		if not entry.is_empty():
+			target.append(entry)
+		return
+	if not entry is Dictionary:
+		return
+	for key in ["path", "fallback_path"]:
+		var path := str(entry.get(key, ""))
+		if not path.is_empty() and path not in target:
+			target.append(path)

@@ -35,16 +35,71 @@ var current_job_id: String
 
 var _hp_bar: ColorRect
 var _body_rect: ColorRect
+var _rig3d: Node2D
 var _sprite: Sprite2D
 var _facing_arrow: Polygon2D
 var _facing_arrow_shadow: Polygon2D
 var _selection_ring: Line2D
 var _selection_glow: Polygon2D
 var _status_icons_container: Node2D
+var _hud_bar_y: float = -66.0
+
+# Authored anchors normalize the generated 1280px canvases to a common foot origin.
+# Body height is calibrated independently of weapon extents (no bounding-box zoom).
+const MELEE_POSES := {
+	"anticipation": {"path": "res://assets/characters/character-vanguard-anticipation-v01.png", "anchor": Vector2(656, 1155), "body_height": 930.0},
+	"contact": {"path": "res://assets/characters/character-vanguard-contact-v01.png", "anchor": Vector2(625, 1145), "body_height": 980.0},
+}
+var melee_pose := "idle"
+var _idle_visual: Dictionary = {}
+var _pose_textures: Dictionary = {}
+
+func set_melee_pose(pose: String) -> bool:
+	if is_instance_valid(_rig3d):
+		_rig3d.play(pose)
+		melee_pose = pose
+		return true
+	if not is_instance_valid(_sprite) or unit_id != "kael":
+		return false
+	if pose == "idle":
+		reset_melee_pose()
+		return true
+	if not MELEE_POSES.has(pose):
+		return false
+	var spec: Dictionary = MELEE_POSES[pose]
+	if not _pose_textures.has(pose):
+		if not ResourceLoader.exists(spec.path):
+			return false
+		_pose_textures[pose] = load(spec.path) as Texture2D
+	var texture := _pose_textures[pose] as Texture2D
+	if texture == null:
+		return false
+	if _idle_visual.is_empty():
+		_idle_visual = {"texture": _sprite.texture, "position": _sprite.position,
+			"scale": _sprite.scale, "offset": _sprite.offset}
+	_sprite.texture = texture
+	_sprite.scale = Vector2.ONE * (76.0 / float(spec.body_height))
+	_sprite.offset = texture.get_size() * 0.5 - Vector2(spec.anchor)
+	_sprite.position = Vector2.ZERO
+	melee_pose = pose
+	return true
+
+func reset_melee_pose() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("idle")
+	if is_instance_valid(_sprite) and not _idle_visual.is_empty():
+		_sprite.texture = _idle_visual.texture
+		_sprite.position = _idle_visual.position
+		_sprite.scale = _idle_visual.scale
+		_sprite.offset = _idle_visual.offset
+	_idle_visual.clear()
+	melee_pose = "idle"
 
 ## Returns the main visual element for effects (sprite if available, else body_rect)
 var visual: Node:
 	get:
+		if is_instance_valid(_rig3d):
+			return _rig3d
 		if _sprite and is_instance_valid(_sprite):
 			return _sprite
 		if _body_rect and is_instance_valid(_body_rect):
@@ -55,6 +110,9 @@ var visual: Node:
 func _ready() -> void:
 	if unit_data and unit_id.is_empty():
 		_initialize_from_data(unit_data)
+	var gs := get_node_or_null("/root/GameState")
+	if gs and gs.practice_session.get("rig3d", false) and supports_3d_presentation():
+		enable_3d_prototype()
 
 
 func _initialize_from_data(data: UnitData) -> void:
@@ -73,6 +131,7 @@ func _initialize_from_data(data: UnitData) -> void:
 
 func _draw_unit() -> void:
 	var is_player := team == "player"
+	_hud_bar_y = -66.0
 
 	#  Isometric ground shadow (ellipse at feet level = y 0)
 	# This flat oval sells the "standing on the tile" look.
@@ -100,6 +159,8 @@ func _draw_unit() -> void:
 			_sprite.scale = Vector2(sprite_scale, sprite_scale)
 		# Sprite2D origin is at texture centre; shift up so bottom (feet) = y 0.
 		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
+		var sprite_top := _sprite.position.y - tex_size.y * _sprite.scale.y * 0.5
+		_hud_bar_y = min(_hud_bar_y, sprite_top - 8.0)
 		_sprite.z_index = 10
 		add_child(_sprite)
 	else:
@@ -118,25 +179,12 @@ func _draw_unit() -> void:
 		stripe.z_index = 11
 		add_child(stripe)
 
-	#  Team-colour indicator (larger, more visible)
-	var dot := ColorRect.new()
-	dot.size = Vector2(10, 10)
-	dot.position = Vector2(14, -63)
-	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
-	dot.z_index = 14
-	add_child(dot)
-	# Add bright outline for contrast
-	var dot_outline := ColorRect.new()
-	dot_outline.size = Vector2(12, 12)
-	dot_outline.position = Vector2(13, -64)
-	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
-	dot_outline.z_index = 13
-	add_child(dot_outline)
+	_draw_team_indicator(is_player, _hud_bar_y)
 
 	#  HP bar (floats just above the sprite head) - enlarged and more visible
 	var hp_bg := ColorRect.new()
 	hp_bg.size = Vector2(50, 6)
-	hp_bg.position = Vector2(-25, -66)
+	hp_bg.position = Vector2(-25, _hud_bar_y)
 	hp_bg.color = Color(0.04, 0.04, 0.04)
 	hp_bg.z_index = 14
 	add_child(hp_bg)
@@ -144,14 +192,14 @@ func _draw_unit() -> void:
 	# HP bar background outline for better visibility
 	var hp_border := ColorRect.new()
 	hp_border.size = Vector2(52, 8)
-	hp_border.position = Vector2(-26, -67)
+	hp_border.position = Vector2(-26, _hud_bar_y - 1.0)
 	hp_border.color = Color(0.0, 0.0, 0.0, 0.5)
 	hp_border.z_index = 13
 	add_child(hp_border)
 
 	_hp_bar = ColorRect.new()
 	_hp_bar.size = Vector2(50, 6)
-	_hp_bar.position = Vector2(-25, -66)
+	_hp_bar.position = Vector2(-25, _hud_bar_y)
 	_hp_bar.color = Color(0.2, 0.85, 0.3)
 	_hp_bar.z_index = 15
 	add_child(_hp_bar)
@@ -163,7 +211,7 @@ func _draw_unit() -> void:
 	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0))
 	lbl.add_theme_constant_override("outline_size", 2)
-	lbl.position = Vector2(-20, -72)
+	lbl.position = Vector2(-20, _hud_bar_y - 13.0)
 	lbl.size = Vector2(40, 12)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.z_index = 15
@@ -172,6 +220,36 @@ func _draw_unit() -> void:
 	_draw_facing_arrow()
 	_create_selection_outline()
 	_create_status_icons_container()
+
+
+func _draw_team_indicator(is_player: bool, hud_bar_y: float) -> void:
+	var indicator_id := "player" if is_player else "enemy"
+	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_unit_indicator_candidates(indicator_id))
+	if texture:
+		var indicator := Sprite2D.new()
+		indicator.texture = texture
+		indicator.centered = true
+		indicator.position = Vector2(19, hud_bar_y + 3.0)
+		var texture_size := texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			indicator.scale = Vector2(18.0 / texture_size.x, 18.0 / texture_size.y)
+		indicator.z_index = 14
+		add_child(indicator)
+		return
+
+	# Procedural fallback remains available when optional indicator art is absent.
+	var dot_outline := ColorRect.new()
+	dot_outline.size = Vector2(12, 12)
+	dot_outline.position = Vector2(13, hud_bar_y - 3.0)
+	dot_outline.color = Color(0.0, 0.0, 0.0, 0.6)
+	dot_outline.z_index = 13
+	add_child(dot_outline)
+	var dot := ColorRect.new()
+	dot.size = Vector2(10, 10)
+	dot.position = Vector2(14, hud_bar_y - 2.0)
+	dot.color = Color(0.3, 0.7, 1.0) if is_player else Color(1.0, 0.35, 0.35)
+	dot.z_index = 14
+	add_child(dot)
 
 
 func _apply_unit_scale() -> void:
@@ -247,6 +325,8 @@ func _update_hp_bar() -> void:
 
 ## Flash red on hit, restore normal colour.
 func animate_hit() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("hit")
 	var start_pos := position
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -264,6 +344,8 @@ func animate_hit() -> void:
 
 ## Flash white and drift upward slightly on death.
 func animate_death() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("defeat")
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.65).set_delay(0.18)
@@ -276,25 +358,20 @@ func animate_death() -> void:
 
 func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
+	var projection: Dictionary
 	match damage_type:
 		"physical":
-			var effective: int = int(amount * 0.7) if has_status("protect") else amount
-			var absorbed: int = min(temper, int(effective * 0.35))
-			temper = max(temper - absorbed, 0)
-			var hp_dmg: int = max(1, effective - int(absorbed * 0.25))
-			hp = max(hp - hp_dmg, 0)
-			result["hp_damage"] = hp_dmg
-			result["temper_damage"] = absorbed
+			projection = CombatFormula.project_physical_armor_result(self, amount)
 		"magical":
-			var absorbed: int = min(ether, int(amount * 0.35))
-			ether = max(ether - absorbed, 0)
-			var hp_dmg: int = max(1, amount - int(absorbed * 0.25))
-			hp = max(hp - hp_dmg, 0)
-			result["hp_damage"] = hp_dmg
-			result["ether_damage"] = absorbed
+			projection = CombatFormula.project_magical_armor_result(self, amount)
 		_:
-			hp = max(hp - amount, 0)
-			result["hp_damage"] = amount
+			projection = {"hp_damage": maxi(0, amount)}
+	result["hp_damage"] = int(projection.get("hp_damage", 0))
+	result["temper_damage"] = int(projection.get("temper_damage", 0))
+	result["ether_damage"] = int(projection.get("ether_damage", 0))
+	hp = maxi(hp - int(result["hp_damage"]), 0)
+	temper = maxi(temper - int(result["temper_damage"]), 0)
+	ether = maxi(ether - int(result["ether_damage"]), 0)
 	hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
 	temper_changed.emit(unit_id, temper, unit_data.base_stats.max_temper)
 	_update_hp_bar()
@@ -344,7 +421,7 @@ func tick_statuses() -> void:
 	var to_remove: Array[String] = []
 	for s in statuses:
 		# Damage-over-time (poison, burn)
-		if s.magnitude > 0.0 and hp > 0:
+		if s.status_id in ["burn", "poison", "bleed"] and s.magnitude > 0.0 and hp > 0:
 			var dmg: int = max(1, int(unit_data.base_stats.hp * s.magnitude))
 			hp = max(hp - dmg, 0)
 			hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
@@ -379,6 +456,8 @@ func move_to(new_pos: Vector2i) -> void:
 func set_facing(new_facing: String) -> void:
 	if new_facing not in ["N", "E", "S", "W"]:
 		return
+	if is_instance_valid(_rig3d):
+		_rig3d.face({"N": Vector2i(0,-1), "E": Vector2i(1,0), "S": Vector2i(0,1), "W": Vector2i(-1,0)}[new_facing])
 	facing = new_facing
 	_update_facing_arrow()
 
@@ -479,6 +558,10 @@ func set_active(is_active: bool) -> void:
 #  Turn lifecycle
 
 func begin_turn() -> void:
+	# Defend promises protection only until this unit's next turn.
+	# Clear it here so a consecutive Defend can establish a fresh waiting interval.
+	if has_status("defending"):
+		remove_status("defending")
 	has_acted = false
 	has_moved = false
 	if _body_rect:
@@ -496,7 +579,10 @@ func end_turn() -> void:
 func get_effective_speed() -> int:
 	var base_speed: int = unit_data.base_stats.speed if unit_data else 6
 	if has_status("haste"): return int(base_speed * 1.5)
-	if has_status("slow"): return int(base_speed * 0.5)
+	if has_status("slow"):
+		var slowed := int(base_speed * 0.5)
+		# Positive-speed units must reach an end_turn for Slow to expire.
+		return maxi(1, slowed) if base_speed > 0 else slowed
 	return base_speed
 
 
@@ -537,7 +623,63 @@ func _update_status_icons() -> void:
 		icon.text = str(display["icon"])
 		icon.add_theme_font_size_override("font_size", 14)
 		icon.add_theme_color_override("font_color", display["color"] as Color)
-		icon.position = Vector2(icon_idx * 16 - 16, -82)  # Row of icons above HP bar
+		icon.position = Vector2(icon_idx * 16 - 16, _hud_bar_y - 26.0)
 		icon.z_index = 20
 		_status_icons_container.add_child(icon)
 		icon_idx += 1
+
+func enable_3d_prototype() -> void:
+	if is_instance_valid(_rig3d):
+		return
+	var archetype := str(get_meta("archetype_id", unit_id))
+	var imported_kael := archetype == "kael"
+	_rig3d = preload("res://scripts/presentation/KaelRigPresentation.gd").new() if imported_kael else preload("res://scripts/presentation/Humanoid3D.gd").new()
+	_rig3d.skin_id = archetype
+	_rig3d.z_index = 10
+	add_child(_rig3d)
+	if imported_kael and not _rig3d.is_available():
+		# Failed imports must leave the original sprite visible, not an empty unit.
+		remove_child(_rig3d)
+		_rig3d.queue_free()
+		_rig3d = null
+		return
+	set_facing(facing)
+	if is_instance_valid(_sprite):
+		_sprite.hide()
+
+func set_walk_presentation(walking: bool) -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("walk" if walking else "idle")
+
+func face_action(destination: Vector2i) -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.face(destination - grid_pos)
+
+func recover_melee_pose() -> void:
+	if is_instance_valid(_rig3d) and _rig3d.state == "contact":
+		_rig3d.play("recovery")
+	elif is_instance_valid(_rig3d) and _rig3d.state == "cast_release":
+		_rig3d.play("cast_recovery")
+
+func disable_3d_prototype() -> void:
+	if not is_instance_valid(_rig3d):
+		return
+	reset_melee_pose()
+	var old_rig := _rig3d
+	_rig3d = null
+	remove_child(old_rig)
+	old_rig.queue_free()
+	if is_instance_valid(_sprite):
+		_sprite.show()
+
+func set_cast_pose(pose: String) -> bool:
+	if not is_instance_valid(_rig3d):
+		return false
+	_rig3d.play("cast_" + pose)
+	return true
+
+func cast_origin_world() -> Vector2:
+	return _rig3d.hand_world_position() if is_instance_valid(_rig3d) else global_position + Vector2(0, -30)
+
+func supports_3d_presentation() -> bool:
+	return str(get_meta("archetype_id", unit_id)) in ["kael", "zane", "void_cultist"]

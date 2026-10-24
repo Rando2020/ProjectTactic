@@ -9,6 +9,7 @@ Store reusable AI prompts here so assets and design ideas can be regenerated con
 - `character-design/` - character sheets, class outfits, enemy variants.
 - `environment-design/` - towns, ruins, battle maps, lighting, biome art direction.
 - `ui-design/` - menus, HUD, skill buttons, status icons, battle timeline.
+- `assets/` - versioned, runtime-contract prompt packs for the Godot vertical slice.
 
 ## Naming convention
 

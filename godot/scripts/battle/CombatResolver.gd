@@ -9,8 +9,8 @@ signal combat_resolved(result: Dictionary)
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
-		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
-	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target)
+		vfx_mode: String = "slash", is_counter: bool = false, mods: Dictionary = {}) -> Dictionary:
+	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target, mods)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {
@@ -70,8 +70,9 @@ func resolve_attack(attacker: Unit, target: Unit,
 
 	if target.hp <= 0:
 		if vfx_n:
-			get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(target.grid_pos))
-			get_tree().create_timer(0.38).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(target.grid_pos))
+			var death_pos := target.grid_pos
+			get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
+			get_tree().create_timer(0.38).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
 	elif target.has_method("animate_hit"):
 		target.animate_hit()
 
@@ -131,7 +132,6 @@ func resolve_spell(caster: Unit, target: Unit,
 			"wind": vfx.play_wind(target.grid_pos)
 			"holy": vfx.play_holy(target.grid_pos)
 			"dark": vfx.play_dark(target.grid_pos)
-		await get_tree().create_timer(0.18).timeout
 		vfx.play_damage_number(target.grid_pos, int(formula.get("hp_damage", final_damage)), num_color)
 
 	var dmg_result := target.receive_damage(final_damage, "magical")
@@ -150,8 +150,9 @@ func resolve_spell(caster: Unit, target: Unit,
 	BattleJuiceEffects.trigger_hit([target.unit_id], spell_intensity, 60, 250, 120)
 
 	if target.hp <= 0 and vfx_n:
-		get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(target.grid_pos))
-		get_tree().create_timer(0.42).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(target.grid_pos))
+		var death_pos := target.grid_pos
+		get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
+		get_tree().create_timer(0.42).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
 	elif target.has_method("animate_hit"):
 		target.animate_hit()
 
@@ -177,7 +178,9 @@ func resolve_spell(caster: Unit, target: Unit,
 func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	heal_amount += int(bonuses.get("heal_bonus", 0))
+	var before_hp := target.hp
 	target.heal(heal_amount)
+	heal_amount = target.hp - before_hp
 	_play_sfx("spell_cast", -4.0)
 	var vfx_n := get_node_or_null("/root/VFX")
 	if vfx_n:

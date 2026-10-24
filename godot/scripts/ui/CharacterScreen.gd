@@ -483,7 +483,10 @@ func _stats_for(uid: String) -> Dictionary:
 	base["mp"] = int(base.get("mp", 1)) + int(bonuses.get("max_ether", 0))
 	base["physical"] = int(base.get("physical", 0)) + int(bonuses.get("physical", 0))
 	base["magic"] = int(base.get("magic", 0)) + int(bonuses.get("magic", 0))
-	base["speed"] = int(base.get("speed", 0)) + int(bonuses.get("speed", 0))
+	var configured_speed := int(base.get("speed", 0))
+	base["speed"] = configured_speed + int(bonuses.get("speed", 0))
+	if configured_speed > 0:
+		base["speed"] = maxi(1, int(base["speed"]))
 	return base
 
 

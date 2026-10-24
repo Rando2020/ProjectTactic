@@ -34,5 +34,4 @@ godot/.godot/
 godot/.codex_appdata/
 godot/godot_*.log
 godot/android/
-godot/export_presets.cfg
 godot/*.import

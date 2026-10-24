@@ -1,6 +1,10 @@
 class_name TacticalGrid
 extends Node2D
 
+signal terrain_redrawn
+
+var terrain_view: Node2D
+
 signal tile_clicked(grid_pos: Vector2i)
 signal unit_clicked(unit_id: String)
 signal tile_hovered(grid_pos: Vector2i)
@@ -44,6 +48,8 @@ const PROP_TEXTURE_PATHS := {
 
 var _terrain_texture_cache: Dictionary = {}
 var _prop_texture_cache: Dictionary = {}
+var _overlay_texture_cache: Dictionary = {}
+var _environment_theme_id: String = "default"
 var move_tiles: Array[Vector2i] = []
 var attack_tiles: Array[Vector2i] = []
 var ability_tiles: Array[Vector2i] = []
@@ -63,6 +69,7 @@ var _show_grid_overlay: bool = true
 func _ready() -> void:
 	_configure_layers()
 	if map_data:
+		_environment_theme_id = map_data.environment_theme_id
 		_build_tiles()
 		_draw_base_tiles()
 
@@ -81,6 +88,7 @@ func _process(delta: float) -> void:
 func initialize_from_map(p_map_data: MapData) -> void:
 	_configure_layers()
 	map_data = p_map_data
+	_environment_theme_id = map_data.environment_theme_id if map_data else "default"
 	_build_tiles()
 	_draw_base_tiles()
 
@@ -120,7 +128,7 @@ func _build_tiles() -> void:
 
 func _draw_base_tiles() -> void:
 	for child in get_children():
-		if child != highlight_layer and child != unit_layer:
+		if child != highlight_layer and child != unit_layer and child != terrain_view:
 			child.queue_free()
 
 	var draw_positions: Array = tiles.keys()
@@ -145,6 +153,7 @@ func _draw_base_tiles() -> void:
 	_draw_props()
 	if _show_grid_overlay:
 		_draw_grid_overlay()
+	terrain_redrawn.emit()
 
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
@@ -168,18 +177,20 @@ func _add_exposed_faces(pos: Vector2i, world: Vector2, base_color: Color) -> voi
 	var south := Vector2i(pos.x, pos.y + 1)
 	var east := Vector2i(pos.x + 1, pos.y)
 	var south_height := _height_at(south)
+	var south_depth := exposed_face_depth(pos, south)
 	var east_height := _height_at(east)
+	var east_depth := exposed_face_depth(pos, east)
 
 	if not tiles.has(south) or south_height < height:
 		var left_face := Polygon2D.new()
 		left_face.polygon = PackedVector2Array([
 			Vector2(-half_w, 0),
 			Vector2(0, half_h),
-			Vector2(0, half_h + tile_thickness),
-			Vector2(-half_w, tile_thickness),
+			Vector2(0, half_h + south_depth),
+			Vector2(-half_w, south_depth),
 		])
 		left_face.position = world
-		left_face.color = base_color.darkened(0.35)
+		left_face.color = Color("343b35")
 		left_face.z_index = depth
 		add_child(left_face)
 
@@ -188,11 +199,11 @@ func _add_exposed_faces(pos: Vector2i, world: Vector2, base_color: Color) -> voi
 		right_face.polygon = PackedVector2Array([
 			Vector2(half_w, 0),
 			Vector2(0, half_h),
-			Vector2(0, half_h + tile_thickness),
-			Vector2(half_w, tile_thickness),
+			Vector2(0, half_h + east_depth),
+			Vector2(half_w, east_depth),
 		])
 		right_face.position = world
-		right_face.color = base_color.darkened(0.22)
+		right_face.color = Color("505448")
 		right_face.z_index = depth + 1
 		add_child(right_face)
 
@@ -210,12 +221,34 @@ func _add_procedural_top(pos: Vector2i, world: Vector2, base_color: Color) -> vo
 	_add_connected_surface_detail(pos, world, base_color, depth)
 
 
+## The board is isometric 2D. Side geometry expresses logical elevation.
+func exposed_face_depth(pos: Vector2i, neighbor: Vector2i) -> float:
+	if not tiles.has(neighbor):
+		return tile_thickness + maxf(0.0, float(_height_at(pos))) * height_step
+	return maxf(0.0, float(_height_at(pos) - _height_at(neighbor))) * height_step
+
+
 func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
 	var depth := _depth_for(pos)
-	var top := Sprite2D.new()
-	top.texture = texture
-	top.centered = true
-	top.position = world
+	var top: Node2D
+	if texture.get_width() == 96 and texture.get_height() == 64:
+		# Authored tile: top diamond occupies the first 48px, skirt the last 16.
+		# Keep its top center at the logical tile center, not the canvas center.
+		var sprite := Sprite2D.new()
+		sprite.texture = texture
+		sprite.scale = Vector2(float(tile_size.x) / 96.0, float(tile_size.y) / 48.0)
+		sprite.position = world + Vector2(0, 8.0 * sprite.scale.y)
+		top = sprite
+	else:
+		# Legacy square surface textures must never spill across adjacent cells.
+		var surface := Polygon2D.new()
+		surface.polygon = _diamond_polygon()
+		surface.texture = texture
+		var w := float(texture.get_width())
+		var h := float(texture.get_height())
+		surface.uv = PackedVector2Array([Vector2(w / 2, 0), Vector2(w, h / 2), Vector2(w / 2, h), Vector2(0, h / 2)])
+		surface.position = world
+		top = surface
 	top.z_index = depth + 2
 	add_child(top)
 	_tile_top_polys[pos] = top
@@ -226,11 +259,37 @@ func _uses_art_tile(terrain: String) -> bool:
 
 
 func _texture_for_terrain(terrain: String) -> Texture2D:
-	return _texture_from_path(TERRAIN_TEXTURE_PATHS.get(terrain, ""), _terrain_texture_cache)
+	var candidates := AssetRegistry.get_environment_candidates(_environment_theme_id, "terrain", terrain)
+	if candidates.is_empty():
+		candidates = AssetRegistry.get_environment_candidates("forgotten-field", "terrain", terrain)
+	var legacy_path := str(TERRAIN_TEXTURE_PATHS.get(terrain, ""))
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _terrain_texture_cache)
 
 
 func _texture_for_prop(prop_name: String) -> Texture2D:
-	return _texture_from_path(PROP_TEXTURE_PATHS.get(prop_name, ""), _prop_texture_cache)
+	var candidates := AssetRegistry.get_environment_candidates(_environment_theme_id, "props", prop_name)
+	var legacy_path := str(PROP_TEXTURE_PATHS.get(prop_name, ""))
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _prop_texture_cache)
+
+
+func _texture_for_overlay(overlay_id: String) -> Texture2D:
+	var candidates := AssetRegistry.get_overlay_candidates(_environment_theme_id, overlay_id)
+	var legacy_path := AssetRegistry.get_highlight(overlay_id)
+	if not legacy_path.is_empty() and legacy_path not in candidates:
+		candidates.append(legacy_path)
+	return _texture_from_candidates(candidates, _overlay_texture_cache)
+
+
+func _texture_from_candidates(paths: Array[String], cache: Dictionary) -> Texture2D:
+	for path in paths:
+		var texture := _texture_from_path(path, cache)
+		if texture:
+			return texture
+	return null
 
 
 func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
@@ -238,20 +297,7 @@ func _texture_from_path(path: String, cache: Dictionary) -> Texture2D:
 		return null
 	if cache.has(path):
 		return cache[path]
-	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		cache[path] = null
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
-		cache[path] = null
-		return null
-	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
-	if err != OK:
-		cache[path] = null
-		return null
-	var texture := ImageTexture.create_from_image(image)
+	var texture := AssetRegistry.load_first_texture([path])
 	cache[path] = texture
 	return texture
 
@@ -524,26 +570,26 @@ func _refresh_highlights() -> void:
 	for child in highlight_layer.get_children():
 		child.queue_free()
 	for pos in move_tiles:
-		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true)
+		_add_highlight(pos, Color(0.0, 0.90, 1.0, 0.62), 0.92, true, "move")
 	for i in path_preview_tiles.size():
 		var pos: Vector2i = path_preview_tiles[i]
 		var alpha: float = 0.48 + min(float(i) * 0.035, 0.32)
-		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.65)
+		_add_highlight(pos, Color(0.15, 1.0, 0.95, alpha), 0.65, false, "move")
 		_add_path_step_badge(pos, i + 1)
 	for pos in attack_tiles:
-		_add_highlight(pos, Color(1.0, 0.40, 0.0, 0.65), 0.92, true)
+		_add_highlight(pos, Color(1.0, 0.40, 0.0, 0.65), 0.92, true, "attack")
 	for pos in ability_tiles:
-		_add_highlight(pos, Color(0.75, 0.25, 1.0, 0.62), 0.92, true)
+		_add_highlight(pos, Color(0.75, 0.25, 1.0, 0.62), 0.92, true, "ability")
 	# AoE burst preview  hot red, drawn over ability range tiles
 	for pos in aoe_preview_tiles:
-		_add_highlight(pos, Color(1.0, 0.22, 0.1, 0.80), 1.0, true)
+		_add_highlight(pos, Color(1.0, 0.22, 0.1, 0.80), 1.0, true, "attack")
 	# Show AoE tile count if preview is active
 	if not aoe_preview_tiles.is_empty():
 		_add_aoe_tile_count_badge(aoe_preview_tiles)
 	if _is_valid_pos(active_unit_tile):
 		var active_pulse: float = 0.72 + 0.22 * (sin(_highlight_animation_time * 1.4) * 0.5 + 0.5)
 		var active_color: Color = Color(0.25, 0.72, 1.0, active_pulse) if active_unit_team == "player" else Color(1.0, 0.22, 0.18, active_pulse)
-		_add_highlight(active_unit_tile, active_color, 1.06, true)
+		_add_highlight(active_unit_tile, active_color, 1.06, true, "selected")
 		# Add outer glow ring for active unit
 		var glow_ring := Line2D.new()
 		var poly := _diamond_polygon(1.16)
@@ -560,7 +606,8 @@ func _refresh_highlights() -> void:
 		_add_target_lock(target_tile)
 
 
-func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86, animate: bool = false) -> void:
+func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86,
+		animate: bool = false, overlay_id: String = "") -> void:
 	# Calculate animated alpha if this highlight should pulse
 	var final_color := color
 	if animate:
@@ -568,12 +615,28 @@ func _add_highlight(pos: Vector2i, color: Color, highlight_scale: float = 0.86, 
 		var pulse_alpha := 0.6 + 0.4 * (sin(_highlight_animation_time) * 0.5 + 0.5)
 		final_color = Color(color.r, color.g, color.b, color.a * pulse_alpha)
 
-	var diamond := Polygon2D.new()
-	diamond.color = final_color
-	diamond.polygon = _diamond_polygon(highlight_scale)
-	diamond.position = _grid_to_local(pos)
-	diamond.z_index = _depth_for(pos) + 50
-	highlight_layer.add_child(diamond)
+	var overlay_texture := _texture_for_overlay(overlay_id) if not overlay_id.is_empty() else null
+	if overlay_texture:
+		var overlay := Sprite2D.new()
+		overlay.texture = overlay_texture
+		overlay.centered = true
+		overlay.position = _grid_to_local(pos)
+		var texture_size := overlay_texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			overlay.scale = Vector2(
+				float(tile_size.x) / texture_size.x * highlight_scale,
+				float(tile_size.y) / texture_size.y * highlight_scale
+			)
+		overlay.modulate = Color(1.0, 1.0, 1.0, final_color.a)
+		overlay.z_index = _depth_for(pos) + 50
+		highlight_layer.add_child(overlay)
+	else:
+		var diamond := Polygon2D.new()
+		diamond.color = final_color
+		diamond.polygon = _diamond_polygon(highlight_scale)
+		diamond.position = _grid_to_local(pos)
+		diamond.z_index = _depth_for(pos) + 50
+		highlight_layer.add_child(diamond)
 
 	var rim := Line2D.new()
 	var poly := _diamond_polygon(highlight_scale)
@@ -599,7 +662,7 @@ func _add_selected_tile_guidance() -> void:
 		label = "CAST"
 		color = Color(0.75, 0.30, 1.0, 0.90)
 	# Larger scale and stronger highlight for selected tile
-	_add_highlight(selected_tile, color, 1.14)
+	_add_highlight(selected_tile, color, 1.14, false, "selected")
 	if label != "":
 		_add_tile_badge(selected_tile, label, color)
 	# Add pulsing effect by drawing an outer ring
@@ -615,7 +678,7 @@ func _add_selected_tile_guidance() -> void:
 
 func _add_target_lock(pos: Vector2i) -> void:
 	var color := Color(1.0, 0.88, 0.18, 0.90)
-	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.35), 1.20)
+	_add_highlight(pos, Color(1.0, 0.86, 0.10, 0.35), 1.20, false, "attack")
 
 	# Arrow shadow for depth
 	var arrow_shadow := Polygon2D.new()
@@ -748,6 +811,7 @@ func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
+			child.set_walk_presentation(true)
 			var start_pos: Vector2 = child.position
 			var end_pos: Vector2 = _unit_foot_pos(to)
 			var tween := create_tween()
@@ -761,6 +825,8 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 			).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			child.z_index = _unit_depth_for(to)
 			await tween.finished
+			if is_instance_valid(child):
+				child.set_walk_presentation(false)
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
@@ -907,3 +973,21 @@ func _is_valid_pos(pos: Vector2i) -> bool:
 
 func get_tile(pos: Vector2i) -> Dictionary:
 	return tiles.get(pos, {})
+
+
+func set_legacy_terrain_visible(value: bool) -> void:
+	for child in get_children():
+		if child is CanvasItem and child not in [highlight_layer, unit_layer, terrain_view]:
+			child.visible = value
+
+
+func set_terrain_3d(enabled: bool) -> void:
+	if is_instance_valid(terrain_view):
+		remove_child(terrain_view)
+		terrain_view.free()
+	terrain_view = null
+	set_legacy_terrain_visible(true)
+	if enabled:
+		terrain_view = preload("res://scripts/presentation/PracticeTerrain3D.gd").new()
+		add_child(terrain_view)
+		terrain_view.configure(self)

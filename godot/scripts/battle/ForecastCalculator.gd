@@ -47,8 +47,8 @@ static func attack(attacker: Unit, target: Unit,
 		"element_icon":  ELEMENT_ICONS["physical"],
 		"element_color": ELEMENT_COLORS["physical"],
 		"damage":        dmg,
-		"damage_min":    int(dmg * 0.85),
-		"damage_max":    int(dmg * float(formula.get("crit_mult", 1.5))) if int(formula.get("crit_pct", 0)) > 0 else int(dmg * 1.10),
+		"damage_min":    dmg,
+		"damage_max":    int(formula.get("crit_damage", dmg)) if int(formula.get("crit_pct", 0)) > 0 else dmg,
 		"height_mult":   float(formula.get("height_mult", 1.0)),
 		"height_delta":  int(formula.get("height_delta", 0)),
 		"flank_mult":    flank_m,
@@ -98,7 +98,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	elif is_buff:
 		dmg = 0
 	elif spell_type == "physical":
-		formula = CombatFormula.calculate_physical_attack(caster, target, tile_caster, tile_target)
+		formula = CombatFormula.calculate_physical_attack(caster, target, tile_caster, tile_target, {"base_power": base_power})
 		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 	else:
 		formula = CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
@@ -122,8 +122,9 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		"element_icon":   ELEMENT_ICONS.get(spell_type, "*"),
 		"element_color":  ELEMENT_COLORS.get(spell_type, Color.WHITE),
 		"damage":         dmg,
-		"damage_min":     int(dmg * 0.9),
-		"damage_max":     int(dmg * 1.1),
+		"damage_min":     dmg,
+		"damage_max":     int(formula.get("crit_damage", dmg)) if int(formula.get("crit_pct", 0)) > 0 else dmg,
+		"crit_damage":    int(formula.get("crit_damage", dmg)),
 		"hp_before":      target.hp,
 		"hp_after":       max(target.hp - dmg, 0) if not is_heal else min(target.hp + heal, _max_hp(target)),
 		"max_hp":         _max_hp(target),

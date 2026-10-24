@@ -18,6 +18,10 @@ const SAVE_VERSION := 1
 ## Which map to load when transitioning into Battle.tscn  (0 = Ashvale, 1 = Crypt)
 var selected_map_index: int = 0
 
+## In-memory practice sandbox. Disk always retains the original canonical save.
+var practice_session: Dictionary = {}
+var _practice_runtime: Dictionary = {}
+
 ## Gold accumulated across all battles
 var gold: int = 0
 
@@ -222,7 +226,7 @@ func learn_ability(unit_id: String, ability_id: String) -> bool:
 	if not unit_registry.has(unit_id):
 		return false
 	var reg: Dictionary = unit_registry[unit_id]
-	if knows_ability(unit_id, ability_id):
+	if knows_ability(unit_id, ability_id) or ability_id not in reg.get("learnable_abilities", []):
 		return false
 	var ab: Dictionary = AbilityDBScript.get_ability(ability_id)
 	var cost: int = ab.get("jp_cost", 9999)
@@ -243,6 +247,8 @@ func set_current_job(unit_id: String, job_id: String) -> void:
 	if not unit_registry.has(unit_id):
 		return
 	var reg: Dictionary = unit_registry[unit_id]
+	if JobTreeData.get_job(job_id).is_empty() or not JobTreeData.meets_prerequisites(job_id, reg.get("job_jp", {})):
+		return
 	reg["current_job_id"] = job_id
 	if not reg.has("job_jp"):
 		reg["job_jp"] = {}
@@ -280,6 +286,7 @@ func apply_victory(map_id: String, rewards: Dictionary,
 	for uid in player_unit_ids:
 		if unit_registry.has(uid):
 			unit_registry[uid]["jp"] = unit_registry[uid].get("jp", 0) + jp_gain
+			JobSystem.new().apply_jp(unit_registry[uid], unit_registry[uid].get("current_job_id", "squire"), jp_gain)
 	if map_id not in completed_stages:
 		completed_stages.append(map_id)
 	pending_rewards = {
@@ -288,7 +295,7 @@ func apply_victory(map_id: String, rewards: Dictionary,
 		"map_id":  map_id,
 		"units":   player_unit_ids.duplicate(),
 	}
-	save()   # auto-save on every victory
+	# BattleScene commits rewards and route advancement together before showing spoils.
 
 
 #  Persistence
@@ -298,7 +305,7 @@ func has_save() -> bool:
 
 
 ## Writes current state to disk.  Silent on failure.
-func save() -> void:
+func serialize_state() -> Dictionary:
 	var unit_jp:        Dictionary = {}
 	var unit_learned:   Dictionary = {}
 	var unit_jobs:      Dictionary = {}
@@ -314,7 +321,16 @@ func save() -> void:
 		unit_equipped[uid]  = reg.get("equipped_abilities", []).duplicate()
 		unit_equipment[uid] = reg.get("equipment", {}).duplicate()
 
+	if active_run:
+		active_run.inventory = run_inventory.duplicate(true)
+		var rm := get_node_or_null("/root/RunManager")
+		if rm:
+			active_run.run_aether = rm.run_aether
 	var data: Dictionary = {
+		"active_run": active_run.to_dict() if active_run else {},
+		"run_floor_reached": run_floor_reached,
+		"run_jp_earned": run_jp_earned,
+		"unit_resources": unit_registry.duplicate(true),
 		"version":          SAVE_VERSION,
 		"gold":             gold,
 		"completed_stages": completed_stages.duplicate(),
@@ -333,6 +349,12 @@ func save() -> void:
 		"vow_progress":     vow_progress.duplicate(),
 		"sigil_progress":   sigil_progress.duplicate(),
 	}
+
+	return data
+
+
+func save() -> void:
+	var data: Dictionary = practice_session.get("baseline", {}).duplicate(true) if not practice_session.is_empty() else serialize_state()
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if not file:
@@ -358,7 +380,12 @@ func load_save() -> bool:
 		push_warning("GameState.load_save: JSON parse failed or not a dict.")
 		return false
 
-	var data: Dictionary = parsed as Dictionary
+	practice_session.clear()
+	_practice_runtime.clear()
+	return restore_state(parsed)
+
+
+func restore_state(data: Dictionary) -> bool:
 	if data.get("version", 0) != SAVE_VERSION:
 		push_warning("GameState.load_save: version mismatch  starting fresh.")
 		return false
@@ -367,6 +394,11 @@ func load_save() -> bool:
 	_init_defaults()
 
 	gold = int(data.get("gold", 0))
+	var run_data: Dictionary = data.get("active_run", {})
+	active_run = RunState.from_dict(run_data) if not run_data.is_empty() else null
+	run_inventory = active_run.inventory.duplicate(true) if active_run else []
+	run_floor_reached = int(data.get("run_floor_reached", 0))
+	run_jp_earned = int(data.get("run_jp_earned", 0))
 
 	completed_stages.clear()
 	for s: Variant in data.get("completed_stages", []):
@@ -399,6 +431,10 @@ func load_save() -> bool:
 	_init_loadout_progress_defaults()
 
 	for uid: String in unit_registry:
+		var saved_resources: Dictionary = data.get("unit_resources", {}).get(uid, {})
+		for key in ["base_hp", "current_hp", "current_mp", "current_temper", "current_ether"]:
+			if active_run and saved_resources.has(key):
+				unit_registry[uid][key] = int(saved_resources[key])
 		if saved_jp.has(uid):
 			unit_registry[uid]["jp"] = int(saved_jp[uid])
 		if saved_learned.has(uid):
@@ -409,6 +445,9 @@ func load_save() -> bool:
 			unit_registry[uid]["learned_abilities"] = typed
 		if saved_jobs.has(uid):
 			unit_registry[uid]["current_job_id"] = str(saved_jobs[uid])
+			var job := JobTreeData.get_job(str(saved_jobs[uid]))
+			if not job.is_empty():
+				unit_registry[uid]["learnable_abilities"] = job.get("abilities", [])
 		if saved_job_jp.has(uid) and saved_job_jp[uid] is Dictionary:
 			unit_registry[uid]["job_jp"] = (saved_job_jp[uid] as Dictionary).duplicate()
 		if saved_equipped.has(uid) and saved_equipped[uid] is Array:
@@ -429,6 +468,10 @@ func delete_save() -> void:
 		if dir:
 			dir.remove("save.json")
 	gold = 0
+	active_run = null
+	run_inventory.clear()
+	run_floor_reached = 0
+	run_jp_earned = 0
 	completed_stages.clear()
 	story_flags.clear()
 	last_run_death.clear()
@@ -441,3 +484,104 @@ func delete_save() -> void:
 	sigil_progress.clear()
 	unit_registry.clear()
 	_init_defaults()
+
+
+func begin_practice(map_index: int = 0, encounter_seed: int = 314159) -> bool:
+	if not practice_session.is_empty():
+		return false
+	var baseline := serialize_state()
+	save()
+	_practice_runtime = {"selected_map_index": selected_map_index,
+		"pending_rewards": pending_rewards.duplicate(true), "pending_loot": pending_loot.duplicate(true),
+		"pending_boon_offers": pending_boon_offers.duplicate(true)}
+	var rm := get_node_or_null("/root/RunManager")
+	if rm:
+		var state := {}
+		for key in ["is_run_active", "current_stage", "run_seed", "heat_level", "run_aether", "active_boons"]:
+			state[key] = rm.get(key)
+		state["rng_state"] = rm.rng.state
+		_practice_runtime["run_manager"] = state
+		rm.is_run_active = false
+	var checkpoint := baseline.duplicate(true)
+	checkpoint["active_run"] = {}
+	checkpoint["run_floor_reached"] = 0
+	checkpoint["run_jp_earned"] = 0
+	checkpoint["last_run_death"] = {}
+	practice_session = {"baseline": baseline, "checkpoint": checkpoint,
+		"map_index": clampi(map_index, 0, 1), "seed": encounter_seed, "state": "loading"}
+	_restore_practice_checkpoint()
+	return true
+
+func _restore_practice_checkpoint() -> bool:
+	var checkpoint: Dictionary = practice_session.get("checkpoint", {})
+	if checkpoint.get("version", 0) != SAVE_VERSION or not checkpoint.has("unit_resources"):
+		return false
+	if not restore_state(checkpoint):
+		return false
+	selected_map_index = int(practice_session.get("map_index", 0))
+	pending_rewards.clear()
+	pending_loot.clear()
+	pending_boon_offers.clear()
+	return true
+
+func can_retry_practice() -> bool:
+	var checkpoint: Dictionary = practice_session.get("checkpoint", {})
+	return practice_session.get("state") == "lost" and checkpoint.get("version", 0) == SAVE_VERSION and checkpoint.has("unit_resources")
+
+func retry_practice() -> bool:
+	if not can_retry_practice():
+		return false
+	practice_session["state"] = "loading" # Claim before any scene transition.
+	return _restore_practice_checkpoint()
+
+func start_practice_encounter() -> void:
+	if practice_session.get("state") == "loading":
+		seed(int(practice_session.seed))
+		practice_session["state"] = "playing"
+
+func finish_practice(won: bool, rewards: Dictionary = {}) -> bool:
+	if practice_session.get("state") != "playing":
+		return false
+	practice_session["state"] = "won" if won else "lost"
+	if won:
+		var ids: Array[String] = ["kael", "mira", "zane", "lyra"]
+		apply_victory("practice", rewards, ids)
+	return true
+
+func leave_practice() -> bool:
+	if practice_session.is_empty():
+		return false
+	var baseline: Dictionary = practice_session.get("baseline", {})
+	if baseline.is_empty() or not restore_state(baseline):
+		return false
+	selected_map_index = int(_practice_runtime.get("selected_map_index", 0))
+	pending_rewards = _practice_runtime.get("pending_rewards", {}).duplicate(true)
+	pending_loot = _practice_runtime.get("pending_loot", []).duplicate(true)
+	pending_boon_offers = _practice_runtime.get("pending_boon_offers", []).duplicate(true)
+	var rm := get_node_or_null("/root/RunManager")
+	var rm_state: Dictionary = _practice_runtime.get("run_manager", {})
+	if rm and not rm_state.is_empty():
+		for key in rm_state:
+			if key != "rng_state":
+				rm.set(key, rm_state[key])
+		rm.rng.state = rm_state.rng_state
+	practice_session.clear()
+	_practice_runtime.clear()
+	save()
+	return true
+
+## One temporary training-path choice after practice victory. Reuses job rules.
+func choose_practice_job(job_id: String) -> bool:
+	if practice_session.get("state") != "won" or practice_session.get("advancement_used", false):
+		return false
+	var reg: Dictionary = unit_registry.get("kael", {})
+	if job_id == reg.get("current_job_id") or job_id not in JobTreeData.get_available_jobs(reg.get("job_jp", {})):
+		return false
+	var resources: Dictionary = practice_session.checkpoint.get("unit_resources", {}).duplicate(true)
+	set_current_job("kael", job_id)
+	if unit_registry.kael.current_job_id != job_id: return false
+	practice_session["advancement_used"] = true
+	practice_session["checkpoint"] = serialize_state()
+	practice_session.checkpoint["unit_resources"] = resources
+	practice_session["state"] = "loading"
+	return _restore_practice_checkpoint()

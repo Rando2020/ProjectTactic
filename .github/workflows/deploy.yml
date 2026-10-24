@@ -27,6 +27,17 @@ jobs:
       - run: npm install
       - run: npm run build
 
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: "4.6.2"
+          use-dotnet: false
+          include-templates: true
+      - run: |
+          godot --headless --path godot --import
+          mkdir -p dist/tactics
+          godot --headless --path godot --export-release Web ../dist/tactics/index.html
+          python tools/prepare_playable_web.py dist/tactics
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

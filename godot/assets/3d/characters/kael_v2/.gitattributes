@@ -1,0 +1,2 @@
+# Original local prototype; scope raw bytes to this reviewed asset only.
+kael_v2.glb -filter -diff -merge -text
