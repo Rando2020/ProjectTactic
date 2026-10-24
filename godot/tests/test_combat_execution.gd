@@ -30,7 +30,9 @@ func run() -> void:
 	# Real scene, real units and resolver; isolate damage from counter/death outcomes.
 	caster.grid_pos = Vector2i(2, 2)
 	target.grid_pos = Vector2i(2, 3)
-	target.facing = "N"
+	# Rear + even height yields 100% hit through real combat rules, not RNG seeding.
+	target.facing = "S"
+	manager.tactical_grid.tiles[target.grid_pos]["height"] = manager.tactical_grid.get_tile(caster.grid_pos).get("height", 0)
 	target.unit_data = target.unit_data.duplicate(true)
 	target.unit_data.base_stats.hp = 2000
 	target.unit_data.base_stats.physical_resistance = 0
@@ -47,16 +49,17 @@ func run() -> void:
 		var tile_c := manager.tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := manager.tactical_grid.get_tile(target.grid_pos)
 		var expected := CombatFormula.calculate_physical_attack(caster, target, tile_c, tile_t, {"base_power": ability.base_power})
+		check(expected.hit_pct == 100, ability_id + " physical-power fixture guarantees a hit independent of presentation RNG")
 		var forecast := ForecastCalculator.spell(caster, target, ability, tile_c, tile_t)
 		check(forecast.damage == expected.hp_damage, ability_id + " forecast honors declared physical power")
 		check(forecast.damage_min == expected.hp_damage, ability_id + " displayed minimum is exact normal damage")
 		check(forecast.damage_max == expected.crit_damage, ability_id + " displayed maximum is exact critical damage")
 		check(forecast.get("crit_damage", -1) == expected.crit_damage, ability_id + " exposes exact critical damage")
 		check(manager._predict_spell_damage(caster, target, ability) == expected.hp_damage, ability_id + " AI honors declared physical power")
-		seed(12345)
 		check(await manager._execute_ability(caster, target, ability), ability_id + " admitted")
-		check(not last_result.get("missed", false), ability_id + " deterministic fixture hits")
+		check(not last_result.get("missed", false), ability_id + " guaranteed-hit fixture hits")
 		var expected_damage: int = expected.crit_damage if last_result.get("critical", false) else expected.hp_damage
+		print("Physical-power fixture: %s hit=%d critical=%s expected_hp=%d actual_hp=%d" % [ability_id, expected.hit_pct, str(last_result.get("critical", false)), expected_damage, last_result.get("hp_damage", -1)])
 		check(last_result.get("hp_damage", -1) == expected_damage, ability_id + " resolver honors declared physical power")
 		check(2000 - target.hp == expected_damage, ability_id + " HP loss matches forecast outcome")
 		check(caster.mp == 100 - int(ability.mp_cost), ability_id + " MP charged once")
