@@ -32,6 +32,10 @@ var _roster_grid: GridContainer
 var _detail_panel: VBoxContainer
 var _tab_row: HBoxContainer
 var _hint_label: Label
+var _scroll: ScrollContainer
+var _content_width: float
+var _stacked: bool
+var _focus_ticket: int = 0
 
 
 func _ready() -> void:
@@ -39,6 +43,12 @@ func _ready() -> void:
 	if _gs and not _gs.unit_registry.has(_selected_uid) and not _gs.unit_registry.is_empty():
 		_selected_uid = str(_gs.unit_registry.keys()[0])
 	_build_ui()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+
+func _on_viewport_resized() -> void:
+	_build_ui()
+	_focus_active_tab()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -77,13 +87,23 @@ func _build_ui() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 
+	_scroll = ScrollContainer.new()
+	_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	_scroll.follow_focus = true
+	add_child(_scroll)
+	# Keep authored text sizes; reflow the panels instead of shrinking the canvas.
+	_content_width = get_viewport().get_visible_rect().size.x - 152 - _scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	_stacked = _content_width < 1840 + 34 + 1320
 	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_theme_constant_override("margin_left", 76)
 	margin.add_theme_constant_override("margin_right", 76)
 	margin.add_theme_constant_override("margin_top", 42)
 	margin.add_theme_constant_override("margin_bottom", 46)
-	add_child(margin)
+	_scroll.add_child(margin)
 
 	_root = VBoxContainer.new()
 	_root.add_theme_constant_override("separation", 24)
@@ -91,19 +111,20 @@ func _build_ui() -> void:
 
 	_build_top_bar()
 
-	var content := HBoxContainer.new()
+	var content := BoxContainer.new()
+	content.vertical = _stacked
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 34)
 	_root.add_child(content)
 
 	var left := VBoxContainer.new()
-	left.custom_minimum_size = Vector2(1840, 0)
+	left.custom_minimum_size.x = 0 if _stacked else 1840
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_theme_constant_override("separation", 18)
 	content.add_child(left)
 
 	var right_panel := _panel(Color(0.05, 0.055, 0.07, 0.92), Color(0.72, 0.62, 0.42, 0.45), 18)
-	right_panel.custom_minimum_size = Vector2(1320, 0)
+	right_panel.custom_minimum_size.x = 0 if _stacked else 1320
 	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(right_panel)
 	_detail_panel = VBoxContainer.new()
@@ -133,7 +154,8 @@ func _build_top_bar() -> void:
 
 func _build_roster(parent: VBoxContainer) -> void:
 	var selected := _get_reg(_selected_uid)
-	var hero := HBoxContainer.new()
+	var hero := BoxContainer.new()
+	hero.vertical = _content_width < 1400
 	hero.custom_minimum_size.y = 390
 	hero.add_theme_constant_override("separation", 30)
 	parent.add_child(hero)
@@ -184,7 +206,8 @@ func _build_roster(parent: VBoxContainer) -> void:
 	roster_panel.add_child(_padded(roster_box, 18, 16))
 	roster_box.add_child(_section("ROSTER"))
 	_roster_grid = GridContainer.new()
-	_roster_grid.columns = 4
+	var roster_width := _content_width if _stacked else _content_width - 1320 - 34
+	_roster_grid.columns = clampi(int((roster_width - 38 + 26) / (410 + 26)), 1, 4)
 	_roster_grid.add_theme_constant_override("h_separation", 26)
 	_roster_grid.add_theme_constant_override("v_separation", 28)
 	_roster_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -199,6 +222,7 @@ func _build_footer() -> void:
 	foot.add_theme_constant_override("separation", 24)
 	_root.add_child(foot)
 	_hint_label = _label("Q/E change unit    1-4 switch panel    Enter confirms buttons    Esc returns", 28, Color(0.76, 0.73, 0.66), false)
+	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	foot.add_child(_hint_label)
 	var back := _button("Back to Hub", Color(0.78, 0.74, 0.68))
@@ -255,9 +279,12 @@ func _build_status_tab(reg: Dictionary) -> void:
 		var value := int(reg.get("jp", 0)) if key == "jp" else int(stats.get(key, 0))
 		grid.add_child(_stat_tile(label, value))
 	_detail_panel.add_child(_section("EQUIPPED COMBAT SET"))
-	var eq: Array = reg.get("equipped_abilities", [])
+	var eq: Array = _gs.get_equipped_abilities(_selected_uid) if _gs else []
 	if eq.is_empty():
-		_detail_panel.add_child(_wrapped("No abilities equipped. The battle will use all known abilities until a set is chosen.", 26, Color(0.74, 0.73, 0.70)))
+		var notice := "No usable abilities equipped. Unavailable ownership is retained."
+		if _gs and not _gs.get_all_abilities(_selected_uid).is_empty():
+			notice = "No abilities equipped. The battle will use all known abilities until a set is chosen."
+		_detail_panel.add_child(_wrapped(notice, 26, Color(0.74, 0.73, 0.70)))
 	else:
 		for ab_id: String in eq:
 			var ab := AbilityDB.get_ability(ab_id)
@@ -272,7 +299,8 @@ func _build_jobs_tab(reg: Dictionary) -> void:
 	for tier in [1, 2, 3]:
 		_detail_panel.add_child(_section(["BASIC", "ADVANCED", "ASCENDED"][tier - 1]))
 		var row := GridContainer.new()
-		row.columns = 3
+		var detail_width := _content_width if _stacked else 1320.0
+		row.columns = clampi(int((detail_width - 58 + 14) / (390 + 14)), 1, 3)
 		row.add_theme_constant_override("h_separation", 14)
 		row.add_theme_constant_override("v_separation", 14)
 		_detail_panel.add_child(row)
@@ -284,7 +312,7 @@ func _build_abilities_tab(reg: Dictionary) -> void:
 	_detail_panel.add_child(_section("ABILITIES"))
 	_detail_panel.add_child(_wrapped("Learn with JP, then equip up to four abilities for battle.", 28, Color(0.78, 0.76, 0.70)))
 	_detail_panel.add_child(_section("EQUIPPED"))
-	var equipped: Array = reg.get("equipped_abilities", [])
+	var equipped: Array = _gs.get_equipped_abilities(_selected_uid) if _gs else []
 	var equipped_row := HBoxContainer.new()
 	equipped_row.add_theme_constant_override("separation", 10)
 	_detail_panel.add_child(equipped_row)
@@ -301,7 +329,7 @@ func _build_abilities_tab(reg: Dictionary) -> void:
 		_detail_panel.add_child(_ability_summary(ab_id, ab, true))
 	_detail_panel.add_child(_section("LEARNABLE"))
 	var any_learnable := false
-	for ab_id: String in reg.get("learnable_abilities", []):
+	for ab_id: String in (_gs.get_learnable_abilities(_selected_uid) if _gs else []):
 		if _gs and _gs.knows_ability(_selected_uid, ab_id):
 			continue
 		any_learnable = true
@@ -380,10 +408,13 @@ func _ability_summary(ab_id: String, ab: Dictionary, with_equip_button: bool) ->
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
 	info.add_child(_label(ab.get("display_name", ab_id), 27, Color(0.92, 0.90, 0.82), true))
+	if ab.is_empty():
+		info.add_child(_label("Unavailable — progress retained" if with_equip_button else "Ability not available yet", 20, Color(0.58, 0.64, 0.72), false))
+		return row
 	info.add_child(_label("MP %d   Range %d   %s" % [int(ab.get("mp_cost", 0)), int(ab.get("range", 0)), str(ab.get("spell_type", "physical")).capitalize()], 20, Color(0.58, 0.64, 0.72), false))
 	if with_equip_button:
-		var equipped: Array = _get_reg(_selected_uid).get("equipped_abilities", [])
-		var btn_text := "Remove" if ab_id in equipped else "Equip"
+		var equipped: Array = _gs.get_equipped_abilities(_selected_uid) if _gs else []
+		var btn_text := "Remove" if AbilityDB.canonical_id(ab_id) in equipped else "Equip"
 		var btn := _button(btn_text, Color(0.58, 0.84, 1.0))
 		btn.custom_minimum_size = Vector2(150, 48)
 		btn.pressed.connect(_toggle_equipped.bind(ab_id))
@@ -393,11 +424,15 @@ func _ability_summary(ab_id: String, ab: Dictionary, with_equip_button: bool) ->
 
 func _learn_row(ab_id: String, ab: Dictionary) -> Control:
 	var row := _ability_summary(ab_id, ab, false)
-	var cost := int(ab.get("jp_cost", 999))
-	var jp := int(_get_reg(_selected_uid).get("jp", 0))
-	var btn := _button("Learn %d JP" % cost, Color(0.88, 0.80, 0.48) if jp >= cost else Color(0.40, 0.38, 0.34))
+	var quote: Dictionary = _gs.get_ability_purchase_quote(_selected_uid, ab_id) if _gs else {"eligible": false, "jp_cost": null, "reason": "Character not available"}
+	var cost: Variant = quote.jp_cost
+	var label := str(quote.reason)
+	if quote.eligible or quote.reason == "Not enough JP":
+		label = "Learn Free" if cost == 0 else "Learn %d JP" % int(cost)
+	var btn := _button(label, Color(0.88, 0.80, 0.48) if quote.eligible else Color(0.40, 0.38, 0.34))
 	btn.custom_minimum_size = Vector2(190, 48)
-	btn.disabled = jp < cost
+	btn.disabled = not quote.eligible
+	btn.tooltip_text = str(quote.reason)
 	btn.pressed.connect(_on_learn.bind(ab_id))
 	row.add_child(btn)
 	return row
@@ -415,36 +450,34 @@ func _on_change_job(job_id: String) -> void:
 
 func _on_learn(ab_id: String) -> void:
 	if _gs and _gs.learn_ability(_selected_uid, ab_id):
-		var reg: Dictionary = _gs.unit_registry[_selected_uid]
-		var equipped: Array = reg.get("equipped_abilities", [])
+		var equipped: Array = _gs.get_equipped_abilities(_selected_uid)
 		if equipped.size() < 4:
-			equipped.append(ab_id)
-			reg["equipped_abilities"] = equipped
-		_gs.save()
+			equipped.append(AbilityDB.canonical_id(ab_id))
+			_gs.set_equipped_abilities(_selected_uid, equipped)
+		else:
+			_gs.save()
 		_refresh_all()
 
 
 func _toggle_equipped(ab_id: String) -> void:
-	if not _gs:
+	if not _gs or AbilityDB.get_ability(ab_id).is_empty():
 		return
-	var reg: Dictionary = _gs.unit_registry[_selected_uid]
-	var equipped: Array = reg.get("equipped_abilities", []).duplicate()
-	if ab_id in equipped:
-		equipped.erase(ab_id)
+	var id := AbilityDB.canonical_id(ab_id)
+	var equipped: Array = _gs.get_equipped_abilities(_selected_uid)
+	if id in equipped:
+		equipped.erase(id)
 	elif equipped.size() < 4:
-		equipped.append(ab_id)
+		equipped.append(id)
 	else:
-		equipped[3] = ab_id
-	if _gs.has_method("set_equipped_abilities"):
-		_gs.set_equipped_abilities(_selected_uid, equipped)
-	else:
-		reg["equipped_abilities"] = equipped
+		equipped[3] = id
+	_gs.set_equipped_abilities(_selected_uid, equipped)
 	_refresh_all()
 
 
 func _select_unit(uid: String) -> void:
 	_selected_uid = uid
 	_refresh_all()
+	_focus_active_tab()
 
 
 func _select_adjacent_unit(delta: int) -> void:
@@ -458,6 +491,22 @@ func _select_adjacent_unit(delta: int) -> void:
 func _set_tab(tab: String) -> void:
 	_active_tab = tab
 	_refresh_all()
+	_focus_active_tab()
+
+
+func _focus_active_tab() -> void:
+	_focus_ticket += 1
+	var ticket := _focus_ticket
+	# Follow focus only after the new containers have their actual geometry.
+	await get_tree().process_frame
+	if ticket != _focus_ticket:
+		return
+	if is_inside_tree() and is_instance_valid(_tab_row):
+		# Reveal the selected identity/content too, not just a tab at the bottom edge.
+		# Capture before grab_focus: follow_focus changes scroll before transforms settle.
+		var top := _scroll.scroll_vertical + roundi(_tab_row.global_position.y - _scroll.global_position.y - 24)
+		_tab_row.get_child(TABS.find(_active_tab)).grab_focus()
+		_scroll.scroll_vertical = top
 
 
 func _refresh_all() -> void:
@@ -465,14 +514,9 @@ func _refresh_all() -> void:
 
 
 func _known_abilities(reg: Dictionary) -> Array[String]:
-	var result: Array[String] = []
-	for ab: Variant in reg.get("base_abilities", []):
-		if str(ab) not in result:
-			result.append(str(ab))
-	for ab: Variant in reg.get("learned_abilities", []):
-		if str(ab) not in result:
-			result.append(str(ab))
-	return result
+	var known: Array = reg.get("base_abilities", []).duplicate()
+	known.append_array(reg.get("learned_abilities", []))
+	return AbilityDB.canonical_ids(known)
 
 
 func _stats_for(uid: String) -> Dictionary:

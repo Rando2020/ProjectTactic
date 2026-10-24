@@ -504,13 +504,38 @@ const ABILITIES: Dictionary = {
 }
 
 
+## Compatibility identity only: Fire keeps its existing mechanics and price.
+const ALIASES := {"fireball": "fire"}
+
+static func canonical_id(id: String) -> String:
+	return str(ALIASES.get(id, id))
+
+
+## A projection, never a rewrite of saved ownership records. Unknown IDs survive.
+static func canonical_ids(ids: Array) -> Array[String]:
+	var result: Array[String] = []
+	for raw_id: Variant in ids:
+		var id := canonical_id(str(raw_id))
+		if id not in result:
+			result.append(id)
+	return result
+
+
+## Missing, non-integer or negative prices are not purchasable. Zero is a price.
+static func purchase_price(ability: Dictionary) -> Variant:
+	var price: Variant = ability.get("jp_cost")
+	return price if price is int and price >= 0 else null
+
+
 static func get_ability(id: String) -> Dictionary:
-	var ability: Dictionary = ABILITIES.get(id, {}).duplicate(true)
+	var canonical := canonical_id(id)
+	var ability: Dictionary = ABILITIES.get(canonical, {}).duplicate(true)
 	if ability.is_empty():
 		return ability
 	var bounds := get_range(ability)
 	ability["min_range"] = bounds.x
 	ability["range"] = bounds.y
+	ability["id"] = canonical
 	var kind := str(ability.get("type", ""))
 	if not ability.has("target_type"):
 		ability["target_type"] = "self" if int(ability.get("range", 1)) == 0 else ("ally" if kind in ["buff", "heal"] else "enemy")

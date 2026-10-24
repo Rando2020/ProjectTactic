@@ -70,7 +70,7 @@ var run_jp_earned:        int   = 0
 ##   jp                : int,
 ##   base_abilities    : Array[String],   (always available, cannot be spent)
 ##   learned_abilities : Array[String],   (JP-purchased)
-##   learnable_abilities: Array[String],  (purchaseable pool)
+##   learnable_abilities: Array[String],  (legacy metadata; query current job instead)
 ## }
 var unit_registry: Dictionary = {}
 
@@ -191,49 +191,83 @@ func _reg(uid: String, dname: String,
 
 #  Ability queries
 
-## Full ability list for a unit: base + every JP-purchased ability.
-func get_all_abilities(unit_id: String) -> Array[String]:
-	if not unit_registry.has(unit_id):
-		return []
-	var reg: Dictionary = unit_registry[unit_id]
-	var equipped: Array = reg.get("equipped_abilities", [])
-	if not equipped.is_empty():
-		var chosen: Array[String] = []
-		for ab: Variant in equipped:
-			if knows_ability(unit_id, str(ab)) and str(ab) not in chosen:
-				chosen.append(str(ab))
-		if not chosen.is_empty():
-			return chosen
+## Canonical ownership projection, including unavailable IDs. Raw records stay intact.
+func get_known_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	var known: Array = reg.get("base_abilities", []).duplicate()
+	known.append_array(reg.get("learned_abilities", []))
+	return AbilityDBScript.canonical_ids(known)
+
+
+## Explicit usable equipment only; no fallback or cap is applied by this read.
+func get_equipped_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
 	var result: Array[String] = []
-	result.append_array(reg.get("base_abilities", []))
-	for ab: String in reg.get("learned_abilities", []):
-		if ab not in result:
-			result.append(ab)
+	for id in AbilityDBScript.canonical_ids(reg.get("equipped_abilities", [])):
+		if knows_ability(unit_id, id) and not AbilityDBScript.get_ability(id).is_empty():
+			result.append(id)
 	return result
 
 
-## Returns true if unit already knows the ability (base or learned).
+## Effective battle list. Preserve legacy empty/wholly unowned equipment = all-known,
+## including its uncapped fallback. Owned unresolved selections remain unavailable.
+func get_all_abilities(unit_id: String) -> Array[String]:
+	var chosen := get_equipped_abilities(unit_id)
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	for id in AbilityDBScript.canonical_ids(reg.get("equipped_abilities", [])):
+		if knows_ability(unit_id, id):
+			return chosen
+	var result: Array[String] = []
+	for id in get_known_abilities(unit_id):
+		if not AbilityDBScript.get_ability(id).is_empty():
+			result.append(id)
+	return result
+
+
+## Ownership is separate from availability, including unresolved saved entitlements.
 func knows_ability(unit_id: String, ability_id: String) -> bool:
+	return AbilityDBScript.canonical_id(ability_id) in get_known_abilities(unit_id)
+
+
+## Current-job catalog is derived identically for fresh, restored and switched jobs.
+## Unknown/staged IDs remain in this projection so the shop can explain them.
+func get_learnable_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	var job := JobTreeData.get_job(str(reg.get("current_job_id", "")))
+	return AbilityDBScript.canonical_ids(job.get("abilities", []))
+
+
+## One authoritative quote for display and commit. No ownership or JP mutation.
+func get_ability_purchase_quote(unit_id: String, ability_id: String) -> Dictionary:
+	var id := AbilityDBScript.canonical_id(ability_id)
+	var ability := AbilityDBScript.get_ability(id)
+	var price: Variant = AbilityDBScript.purchase_price(ability)
+	var reason := ""
 	if not unit_registry.has(unit_id):
-		return false
-	var reg: Dictionary = unit_registry[unit_id]
-	return ability_id in reg.get("base_abilities", []) \
-		or ability_id in reg.get("learned_abilities", [])
+		reason = "Character not available"
+	elif knows_ability(unit_id, id):
+		reason = "Already known"
+	elif ability.is_empty():
+		reason = "Ability not available yet"
+	elif ability.get("secret", false):
+		reason = "Learned from a teacher, not JP"
+	elif id not in get_learnable_abilities(unit_id):
+		reason = "Not in the current job pool"
+	elif price == null:
+		reason = "Not available for JP yet"
+	elif get_jp(unit_id) < price:
+		reason = "Not enough JP"
+	return {"canonical_id": id, "eligible": reason.is_empty(), "jp_cost": price, "reason": reason}
 
 
-## Spends JP to learn an ability.  Returns true on success.
+## JP purchase only (not a teacher/grant API). Revalidate every click at commit.
 func learn_ability(unit_id: String, ability_id: String) -> bool:
-	if not unit_registry.has(unit_id):
+	var quote := get_ability_purchase_quote(unit_id, ability_id)
+	if not quote.eligible:
 		return false
 	var reg: Dictionary = unit_registry[unit_id]
-	if knows_ability(unit_id, ability_id) or ability_id not in reg.get("learnable_abilities", []):
-		return false
-	var ab: Dictionary = AbilityDBScript.get_ability(ability_id)
-	var cost: int = ab.get("jp_cost", 9999)
-	if reg.get("jp", 0) < cost:
-		return false
-	reg["jp"] = reg.get("jp", 0) - cost
-	reg["learned_abilities"].append(ability_id)
+	reg["jp"] = get_jp(unit_id) - int(quote.jp_cost)
+	reg["learned_abilities"].append(str(quote.canonical_id))
 	return true
 
 
@@ -254,19 +288,17 @@ func set_current_job(unit_id: String, job_id: String) -> void:
 		reg["job_jp"] = {}
 	if not reg["job_jp"].has(job_id):
 		reg["job_jp"][job_id] = 0
-	var job := JobTreeData.get_job(job_id)
-	if not job.is_empty():
-		reg["learnable_abilities"] = job.get("abilities", [])
 	save()
 
 
+## User-initiated explicit loadout: count unique usable canonical IDs before the cap.
 func set_equipped_abilities(unit_id: String, ability_ids: Array) -> void:
 	if not unit_registry.has(unit_id):
 		return
 	var equipped: Array[String] = []
 	for ab: Variant in ability_ids:
-		var ab_id := str(ab)
-		if knows_ability(unit_id, ab_id) and ab_id not in equipped:
+		var ab_id := AbilityDBScript.canonical_id(str(ab))
+		if knows_ability(unit_id, ab_id) and not AbilityDBScript.get_ability(ab_id).is_empty() and ab_id not in equipped:
 			equipped.append(ab_id)
 		if equipped.size() >= 4:
 			break
@@ -432,6 +464,10 @@ func restore_state(data: Dictionary) -> bool:
 
 	for uid: String in unit_registry:
 		var saved_resources: Dictionary = data.get("unit_resources", {}).get(uid, {})
+		# Preserve raw saved entitlement/catalog metadata; projections do not migrate it.
+		for key in ["base_abilities", "learnable_abilities"]:
+			if saved_resources.get(key) is Array:
+				unit_registry[uid][key] = saved_resources[key].duplicate()
 		for key in ["base_hp", "current_hp", "current_mp", "current_temper", "current_ether"]:
 			if active_run and saved_resources.has(key):
 				unit_registry[uid][key] = int(saved_resources[key])
@@ -445,9 +481,6 @@ func restore_state(data: Dictionary) -> bool:
 			unit_registry[uid]["learned_abilities"] = typed
 		if saved_jobs.has(uid):
 			unit_registry[uid]["current_job_id"] = str(saved_jobs[uid])
-			var job := JobTreeData.get_job(str(saved_jobs[uid]))
-			if not job.is_empty():
-				unit_registry[uid]["learnable_abilities"] = job.get("abilities", [])
 		if saved_job_jp.has(uid) and saved_job_jp[uid] is Dictionary:
 			unit_registry[uid]["job_jp"] = (saved_job_jp[uid] as Dictionary).duplicate()
 		if saved_equipped.has(uid) and saved_equipped[uid] is Array:

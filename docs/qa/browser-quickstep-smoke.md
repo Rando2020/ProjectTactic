@@ -1,6 +1,21 @@
 # Scout Quickstep browser-smoke extension
 
-## Frozen scope
+## Released evidence (2026-10-24)
+
+The original local checkpoint below was subsequently integrated and released in
+PR #75, main `f900b54a2417d6192e5111f9239e8a4a10dfd371`, tree
+`ed32741c360c27f3d5eb2c1cb4f47367b1bc6bec`.
+[Godot Validate 40095725695](https://github.com/Rando2020/ProjectTactic/actions/runs/40095725695)
+on final PR head `1f00ccae4ba72605a1991949440ee41a951027be` passed 11 real
+clicks plus stationary hover and 14 checkpoints, including rendered MP 65 and
+original Lyra identity after the second move. The production menu-layout and
+resource-refresh repairs are included; the harness checks two newer frames after
+mouseMoved and presses the original coordinate, rather than following reflow.
+No captured browser errors were reported. This is bounded CI input evidence,
+not a full manual encounter or acceptance of the next starter-identity candidate.
+See [delivery provenance](../production/delivery-ledger.md).
+
+## Original frozen scope (historical)
 
 Base: `115e2abecb80fc82375df69ef4400e0093fc9b23` (reviewed Scout integration).
 Isolated checkout `projecttactic-scout-browser-qa`, branch
@@ -68,7 +83,7 @@ Additional configured screenshot checkpoints:
 Evidence logs: `build/qa-local/` in the isolated checkout. Only SHA-256-verified
 local baseline bytes hydrated the 218 LFS assets; no new download/dependency.
 
-## Acceptance boundary
+## Original acceptance boundary (historical; later CI evidence above)
 
 The prior Cancel/first-Move browser trial passed according to the parent handoff.
 **This Quickstep extension has not executed in a browser or produced new gameplay

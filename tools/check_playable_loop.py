@@ -14,6 +14,8 @@ CONTRACTS = [
     ('test_spell_outcome_feedback.tscn', '0 failures'),
     ('test_healing_contract.tscn', '0 failures'),
     ('test_hit_secondary_status.tscn', '0 failures'),
+    ('test_starter_identity.tscn', '0 failures'),
+    ('test_character_screen_layout.tscn', '0 failures'),
     ('test_turn_order.tscn', '0 failures'),
     ('test_progression_speed.tscn', '0 failures'),
     ('test_cancel_move_input.tscn', '0 failures'),
