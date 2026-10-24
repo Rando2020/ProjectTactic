@@ -14,11 +14,19 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  GODOT_VERSION: "4.6.3"
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Hydrate current Godot runtime assets only
+        run: |
+          git lfs fetch --include='godot/**' --exclude='' origin HEAD
+          git lfs checkout 'godot/**'
 
       - uses: actions/setup-node@v4
         with:
@@ -29,14 +37,11 @@ jobs:
 
       - uses: chickensoft-games/setup-godot@v2
         with:
-          version: "4.6.2"
+          version: ${{ env.GODOT_VERSION }}
           use-dotnet: false
           include-templates: true
-      - run: |
-          godot --headless --path godot --import
-          mkdir -p dist/tactics
-          godot --headless --path godot --export-release Web ../dist/tactics/index.html
-          python tools/prepare_playable_web.py dist/tactics
+      - name: Validate, export, and check playable Web package
+        run: python tools/export_pages_web.py dist/tactics
 
       - uses: actions/upload-pages-artifact@v3
         with:
