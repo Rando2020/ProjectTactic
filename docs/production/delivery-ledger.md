@@ -6,7 +6,74 @@ and compare it with the intended reviewed commit. Earlier entries remain histori
 checkpoints, including their then-current restrictions, blockers and next steps;
 they do not override the newer verified delivery below.
 
-## 2026-10-24: shared-party playable release (latest verified delivery)
+## 2026-10-24: tactical-choice release (latest verified delivery)
+
+[PR #75](https://github.com/Rando2020/ProjectTactic/pull/75) is merged as
+`f900b54a2417d6192e5111f9239e8a4a10dfd371`, tree
+`ed32741c360c27f3d5eb2c1cb4f47367b1bc6bec`. This includes released PR #74, not
+an alternative to its shared-party, Silence and applied-spell-outcome work.
+The public [build metadata](https://rando2020.github.io/ProjectTactic/tactics/build-info.json)
+was verified after merge against this exact source and Godot
+`4.6.3.stable.official.7d41c59c4`.
+
+- Final PR head `1f00ccae4ba72605a1991949440ee41a951027be` passed
+  [Build 40095725701](https://github.com/Rando2020/ProjectTactic/actions/runs/40095725701)
+  and [Godot Validate 40095725695](https://github.com/Rando2020/ProjectTactic/actions/runs/40095725695).
+  Actual Chrome input passed **11 clicks plus stationary-hover observation,
+  14 checkpoints**, including both Cancel paths, legal movement, Quickstep's
+  exact 5 MP/action tradeoff, visible **MP: 65**, second movement and original
+  Lyra identity after handoff. No captured browser errors were reported.
+  The observer is excluded from production; this is not a full manual encounter.
+- Post-merge [Build 40096070822](https://github.com/Rando2020/ProjectTactic/actions/runs/40096070822)
+  and [Pages 40096070841](https://github.com/Rando2020/ProjectTactic/actions/runs/40096070841)
+  succeeded. Served PCK parts reconstructed to **16,880,536 bytes**, SHA-256
+  `5c4e856439f209e61fcbaa090e16d1e25800365a825357837d727a95a42a7a8b`,
+  matching served integrity metadata. The served loader also matched source.
+- The [owner-only Site](https://appointed-tactics.zzziah.chatgpt.site/) was updated
+  at **12:59:06 UTC** from hosted source
+  `597081dd11b1585339d300dd96fc4ed0d3170c60`, using production export source
+  `bd6c15c48ea5d20d9a3cd46d467889e5255ae04b` with the same `ed32741c` source
+  tree. Owner-only access is unchanged. Its pack is **16,880,536 bytes**, SHA-256
+  `cd4cf443bb5416a3fd5620a7ddda019924a66606b4b4711e0335415b778c4af3`.
+  Separate cold exports can serialize scenes differently; same source tree is
+  not a claim of bit-reproducible PCKs across exports.
+
+### Released scope and limits
+
+Quickstep spends 5 MP and the action to reopen one ordinary movement; it does
+not grant another action. Long Shot uses range 3–5. Targeted healing forecasts
+match the existing flat, capped heal and decorated-heal note. Damaging secondary
+statuses use each recipient's actual hit, preserving the two explicit readiness
+exceptions and status-only behavior. Resource labels refresh after actions;
+ability-menu hover no longer pushes controls away, and longer forecasts scroll.
+Native component acceptance sampled stationary hover, original-coordinate
+Quickstep, MP 65, Cancel and forecast scroll at actual 1328×861 / 150% UI scale.
+This does not establish exhaustive 4K, mobile, hardware-GPU or full-run acceptance.
+
+Web packaging now revalidates fresh JSON, versions PCK requests and verifies the
+complete digest with one whole-pack retry per fetch. Cached pre-guard HTML/loaders
+still require revalidation or hard reload; open games are not hot-updated. See
+[cache contract and limits](../qa/web-export-freshness-2026-10-24.md).
+
+Empty-area heal preview and zero-power Smoke Screen MISS+Blind remain excluded.
+Unsupported abilities/support effects, weapon/mastery completeness, long-run
+balance, two unavailable historical elite overlays, 19 static warnings and
+intermittent shutdown resource diagnostics are not claimed solved.
+
+### Pending separately: starter identity
+
+The [starter-identity slice](starter-identity-first-slice.md) is a new local
+candidate based on this released main: only `fireball` → existing `fire`, canonical
+projections/deduplication, truthful JP purchase quotes and explicit saved base
+ownership restoration. It is **not deployed or browser/native accepted** by the
+PR #75 evidence above. No Holy Strike, new mechanics, save-version migration,
+automatic grants or refunds are included. Exact integration review and subsequent
+publication/rollout are separate gates; this ledger does not authorize them.
+
+## 2026-10-24: shared-party playable release (PR #74 historical checkpoint)
+
+The following records PR #74 at its release time. PR #75 above supersedes its
+then-pending Quickstep/healing/hit-status boundary; other limitations still apply.
 
 ### Delivered identity and access
 

@@ -80,7 +80,19 @@ The `forgotten-field-browser-captures` CI artifact is retained even on smoke fai
 - `browser-events.json`: complete collected console/exception/browser-log events.
 - `chrome.log` and `server.log`; a failure screenshot when capture remains possible.
 
-## Later CI evidence (2026-10-24)
+## Released PR #75 CI evidence (2026-10-24)
+
+[Godot Validate 40095725695](https://github.com/Rando2020/ProjectTactic/actions/runs/40095725695)
+on final head `1f00ccae4ba72605a1991949440ee41a951027be` passed **11 real clicks
+plus hover / 14 checkpoints**, including Quickstep, the actual **MP: 65** HUD
+label, second movement and original Lyra identity after handoff. It reported no
+captured browser errors. The source tree `ed32741c360c27f3d5eb2c1cb4f47367b1bc6bec`
+was merged as `f900b54a`. The post-mouseMoved gate requires two newer frames and
+unchanged row/canvas geometry before pressing the original coordinate; it never
+chases a reflowed button. This exported-CI check is not full-encounter acceptance
+or acceptance of the separate pending starter-identity candidate.
+
+## Earlier PR #74 CI evidence (2026-10-24; historical)
 
 [Godot Validate run 40086250617](https://github.com/Rando2020/ProjectTactic/actions/runs/40086250617)
 on final PR #74 head `ed417b755f7186589b97962f8f6bba7624c5c644` succeeded,
@@ -92,8 +104,8 @@ The run retains `report.json`, captures and browser diagnostics in the
 errors were reported; known native shutdown and browser-environment warnings are
 not recast as a warning-free result.
 
-The seven-click evidence does **not** cover the new Quickstep extension; its
-eleven-click browser trial remains pending.
+At that PR #74 checkpoint, the seven-click evidence did **not** cover Quickstep.
+The later PR #75 trial above closes that bounded eleven-click input gate.
 
 This closes the earlier pending CI-input check below, **not** full-encounter,
 deployed spell/encounter, mobile or final-art acceptance. For public/private
@@ -123,4 +135,4 @@ CI run is required to establish exported-input acceptance. Unit/headless/export
 results do not prove that acceptance, art quality, full combat, or mobile support.
 
 See [the Scout extension evidence](browser-quickstep-smoke.md) for the later
-Quickstep-only change, current isolation proof, and explicit unexecuted-CI boundary.
+Quickstep-only change, historical isolation proof, and later released CI evidence.

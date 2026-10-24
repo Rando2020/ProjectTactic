@@ -44,11 +44,27 @@ Continue until the acceptance checklist passes or an actual environment, authori
 
 ## Current evidence and immediate queue
 
-Read `delivery-ledger.md` for current source/build/deployment identifiers and verification results. Earlier startup/publication blockers were superseded by successful owner-private deployments. Practice retry and Kael melee poses are implemented; browser gameplay acceptance remains pending because the previous managed browser lacked WebGL2 and Secure Context. Automated tests and static asset inspection do not satisfy the manual acceptance checklist above.
+Read [the delivery ledger](delivery-ledger.md) for dated source, CI and deployment
+identity. PR #74 and PR #75 are released: public Pages and the separate owner-only
+Site are verified. PR #75's bounded CI browser trial passed 11 real clicks plus
+hover, both Cancel paths, two legal moves and Quickstep's action/5 MP tradeoff;
+focused native checks also cover stationary controls and the refreshed MP label.
+Earlier managed-browser WebGL2/Secure Context limitations do not negate that
+separate CI evidence. None of these observations completes the full manual
+10–15 minute playthrough checklist above.
 
-Recovered mesh terrain is now integrated in opt-in practice. Next: assess gameplay rendering and repair one observed defect; when observation is unavailable, isolate the persistent shutdown resource warning as described in the ledger. Supported-browser/player comparison remains pending alongside independent implementation; do not expand the roster. Preserve the owner-private audience and respect the prior public GitHub publication rejection. No merge is authorized.
+The next candidate is only the [starter-identity first slice](starter-identity-first-slice.md).
+It needs exact integration review and separate publication/acceptance; it is not
+part of the released PR #75 tree. Preserve the Recurrence story, legacy ownership
+and loadout semantics, owner-only audience and all remaining acceptance limits.
+Do not infer new merge/deployment authority from this document.
 
+### Historical queue notes (superseded by the ledger)
 
-User direction on 2026-10-23: continue bounded independent implementation without screenshots. In-game practice comparison controls now support later feedback. Preserve the distinction between implementation/test evidence and pending visual acceptance; do not require screenshots for every next build milestone. Current priority and provenance live in delivery-ledger.md.
-
-Current encounter art/flow pass adds one temporary training-path choice after practice victory and Windows/Linux packages. See the delivery ledger for exact provenance and pending graphical acceptance. Do not interpret export or headless checks as satisfying the manual-playthrough checklist.
+Earlier instructions prioritized unsupported-browser/native observation and
+isolating shutdown warnings, and temporarily prohibited source publication or
+merges. Those dated checkpoints do not override later reviewed releases or the
+current task's specific authorization. Practice retry, opt-in mesh/three-character
+presentation and a temporary post-victory training-path choice remain bounded
+features, not proof of full-campaign or final-art completion. Native/unit/export
+results are not a substitute for the unchecked manual-playthrough items above.
