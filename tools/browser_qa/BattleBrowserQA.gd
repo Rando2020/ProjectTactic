@@ -11,6 +11,10 @@ func _process(_delta: float) -> void:
 func _point(value: Vector2) -> Array:
 	return [value.x, value.y]
 
+func _label(label: Label) -> Dictionary:
+	return {"instance_id": str(label.get_instance_id()),
+		"text": label.text, "visible": label.is_visible_in_tree()}
+
 func _button(button: Button) -> Dictionary:
 	var labels: Array[String] = [button.text]
 	for label: Label in button.find_children("*", "Label", true, false):
@@ -53,6 +57,7 @@ func snapshot() -> Dictionary:
 		"viewport": _point(get_viewport().get_visible_rect().size),
 		"phase": BattleManager.Phase.keys()[manager.current_phase],
 		"unit": unit_state, "roster": roster, "player_turn_serial": manager._player_turn_serial,
+		"active_hud": {"name": _label(ui._unit_name), "mp": _label(ui._mp_label)},
 		"command": manager.active_command,
 		"ability_id": manager.selected_ability_id, "resolving": manager.is_resolving_action,
 		"menu_visible": ui._ability_panel.is_visible_in_tree(),

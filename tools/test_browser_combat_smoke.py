@@ -89,11 +89,14 @@ class QuickstepTests(unittest.TestCase):
         state = idle()
         state['unit'].update(instance_id='engine-41', moved=True)
         state['player_turn_serial'] = 7
+        state['active_hud'] = {'name': {'text': 'Lyra\nScout', 'instance_id': 'label-50', 'visible': True},
+                               'mp': {'text': 'MP: 20', 'instance_id': 'label-51', 'visible': True}}
         return state
 
     def ready(self):
         state = self.moved()
         state['unit'].update(mp=15, moved=False, acted=True)
+        state['active_hud']['mp']['text'] = 'MP: 15'
         state['buttons'] = {
             'move': {'visible': True, 'disabled': False},
             'attack': {'visible': True, 'disabled': True},
@@ -134,7 +137,18 @@ class QuickstepTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 assert_quickstep_ready(before, wrong)
 
-    def test_quickstep_extension_dispatches_four_cdp_mouse_click_sequences(self):
+    def test_quickstep_rejects_stale_hidden_or_wrong_active_resource_control(self):
+        before = self.moved(); after = self.ready()
+        for label, field, value in [('mp', 'text', 'MP: 20'), ('mp', 'text', 'MP: 10'),
+                                     ('mp', 'visible', False), ('mp', 'instance_id', 'other-control'),
+                                     ('name', 'text', 'Mira\nCleric'), ('name', 'visible', False),
+                                     ('name', 'instance_id', 'other-name')]:
+            wrong = copy.deepcopy(after); wrong['active_hud'][label][field] = value
+            with self.subTest(label=label, field=field, value=value):
+                with self.assertRaises(AssertionError):
+                    assert_quickstep_ready(before, wrong)
+
+    def run_quickstep_scenario(self, change_hover=None, hover_anchor_frame=8):
         before = self.moved()
         before['buttons'] = {'ability': {'visible': True, 'disabled': False, 'rect': [10, 10, 40, 20]}}
         menu = copy.deepcopy(before)
@@ -142,15 +156,24 @@ class QuickstepTests(unittest.TestCase):
             {'labels': ['Long Shot'], 'visible': True, 'disabled': False, 'rect': [400, 100, 80, 40]},
             {'labels': ['Quickstep', '5MP'], 'visible': True, 'disabled': False, 'rect': [100, 100, 80, 40]},
         ])
-        ready = self.ready(); ready['frame'] = 9
+        anchor = copy.deepcopy(menu); anchor['frame'] = hover_anchor_frame
+        hovered = copy.deepcopy(menu); hovered['frame'] = hover_anchor_frame + 2
+        hover_envelope = {'state': hovered, 'canvas': InputGeometryTests.canvas.copy()}
+        if change_hover:
+            change_hover(hover_envelope)
+        stale_hover = copy.deepcopy(hover_envelope)
+        stale_hover['state']['frame'] = hover_anchor_frame + 1
+        ready = self.ready(); ready['frame'] = hover_anchor_frame + 4
         ready['buttons']['move']['rect'] = [200, 100, 80, 40]
-        moving = copy.deepcopy(ready); moving.update(frame=11, command='move')
+        moving = copy.deepcopy(ready); moving.update(frame=hover_anchor_frame + 6, command='move')
         moving['legal_moves'] = [{'position': [3, 5], 'point': [400, 300]}]
         moving['highlights']['move'] = 1
-        ended = self.handed_off(); ended['frame'] = 13
-        settled = copy.deepcopy(ended); settled['frame'] = 15
-        envelopes = iter({'state': state, 'canvas': InputGeometryTests.canvas}
-                         for state in (menu, ready, moving, ended, settled))
+        ended = self.handed_off(); ended['frame'] = hover_anchor_frame + 8
+        settled = copy.deepcopy(ended); settled['frame'] = hover_anchor_frame + 10
+        envelopes = iter([{'state': menu, 'canvas': InputGeometryTests.canvas},
+                          {'state': anchor, 'canvas': InputGeometryTests.canvas}, stale_hover, hover_envelope,
+                          *[{'state': state, 'canvas': InputGeometryTests.canvas}
+                            for state in (ready, moving, ended, settled)]])
         class ScenarioConnection:
             def __init__(self):
                 self.sent = []
@@ -164,17 +187,60 @@ class QuickstepTests(unittest.TestCase):
             def recv(self):
                 return json.dumps(self.reply)
         connection = ScenarioConnection(); client = CDP(connection)
+        self.last_connection = connection
         with tempfile.TemporaryDirectory() as output:
             smoke = Smoke(client, Path(output), 1)
             with patch.object(smoke, 'screenshot'), patch('browser_combat_smoke.time.sleep'):
                 smoke.run_quickstep({'state': before, 'canvas': InputGeometryTests.canvas})
-            self.assertEqual([item['name'] for item in smoke.checkpoints], [
-                'quickstep-menu-open', 'quickstep-action-spent-move-reopened',
-                'quickstep-second-movement-range', 'quickstep-second-movement-ended-turn'])
+        return connection, smoke
+
+    def test_quickstep_extension_dispatches_four_cdp_mouse_click_sequences(self):
+        connection, smoke = self.run_quickstep_scenario()
+        self.assertEqual([item['name'] for item in smoke.checkpoints], [
+            'quickstep-menu-open', 'quickstep-hover-stable', 'quickstep-action-spent-move-reopened',
+            'quickstep-second-movement-range', 'quickstep-second-movement-ended-turn'])
         inputs = [message for message in connection.sent if message['method'] == 'Input.dispatchMouseEvent']
         self.assertEqual([item['params']['type'] for item in inputs], ['mouseMoved', 'mousePressed', 'mouseReleased'] * 4)
         self.assertEqual([(item['params']['x'], item['params']['y']) for item in inputs[::3]],
                          [(35, 20), (90, 70), (140, 70), (220, 160)])
+        hover_index = next(i for i, item in enumerate(connection.sent)
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mouseMoved'
+                           and item['params']['x'] == 90)
+        press_index = next(i for i, item in enumerate(connection.sent)
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed'
+                           and item['params']['x'] == 90)
+        self.assertEqual(sum(item['method'] == 'Runtime.evaluate'
+                             for item in connection.sent[hover_index + 1:press_index]), 3,
+                         'Anchor after mouseMoved at frame 8, skip frame 9, observe frame 10 before pressing')
+
+    def test_hover_anchor_rejects_reflow_after_screenshot_advances_engine_frames(self):
+        # The menu screenshot may take many engine frames. Frame 41 is still
+        # pre-hover; the shifted row at frames 42/43 must be read before press.
+        with self.assertRaises(AssertionError):
+            self.run_quickstep_scenario(
+                lambda e: e['state']['abilities'][1].update(rect=[100, 400, 80, 40]),
+                hover_anchor_frame=41)
+        presses = [item for item in self.last_connection.sent
+                   if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed']
+        self.assertEqual(len(presses), 1, 'Do not press Quickstep using an old menu-frame baseline')
+
+    def test_hover_reflow_or_hidden_row_fails_before_quickstep_mouse_press(self):
+        mutations = [
+            lambda e: e['state']['abilities'][1].update(rect=[100, 400, 80, 40]),
+            lambda e: e['state']['abilities'][1].update(rect=[100, 100, 88, 40]),
+            lambda e: e['state']['abilities'][1].update(visible=False),
+            lambda e: e['state']['abilities'][1].update(disabled=True),
+            lambda e: e['state']['abilities'][1].update(labels=['A different ability']),
+            lambda e: e['canvas'].update(height=600),
+            lambda e: e['state']['unit'].update(mp=15),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                with self.assertRaises(AssertionError):
+                    self.run_quickstep_scenario(mutate)
+                presses = [item for item in self.last_connection.sent
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed']
+                self.assertEqual(len(presses), 1, 'Only opening Ability may be pressed before unstable hover rejects')
 
     def test_second_move_checks_original_instance_after_handoff_without_hp_attribution(self):
         before = self.ready(); after = self.handed_off()

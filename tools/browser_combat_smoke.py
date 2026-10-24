@@ -46,9 +46,10 @@ class CDP:
             raise RuntimeError(f'JavaScript evaluation failed: {result["exceptionDetails"]}')
         return result.get('result', {}).get('value')
 
-    def click(self, x: float, y: float) -> None:
+    def click(self, x: float, y: float, *, move_first: bool = True) -> None:
         self.inputs.append({'type': 'mouse', 'x': x, 'y': y})
-        self.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': x, 'y': y})
+        if move_first:
+            self.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': x, 'y': y})
         self.command('Input.dispatchMouseEvent', {'type': 'mousePressed', 'button': 'left', 'buttons': 1,
                                                  'clickCount': 1, 'x': x, 'y': y})
         self.command('Input.dispatchMouseEvent', {'type': 'mouseReleased', 'button': 'left', 'buttons': 0,
@@ -110,12 +111,23 @@ def ability_button(state: dict, label: str) -> dict:
     return matches[0]
 
 
+def assert_active_mp_display(before: dict, after: dict) -> None:
+    for name in ('name', 'mp'):
+        prior = before['active_hud'][name]
+        label = after['active_hud'][name]
+        assert label['visible'], f'Active HUD {name} Control is hidden'
+        assert label['instance_id'] and label['instance_id'] == prior['instance_id'], f'Active HUD {name} Control identity changed'
+    assert after['active_hud']['name']['text'] == before['active_hud']['name']['text'], 'Active HUD changed actor identity before handoff'
+    assert after['active_hud']['mp']['text'] == f"MP: {after['unit']['mp']}", 'Rendered active-unit MP is stale or disagrees with backend MP'
+
+
 def assert_quickstep_ready(before: dict, after: dict) -> None:
     assert before['unit']['moved'] and not before['unit']['acted'], 'Quickstep requires the first move and unused action'
     assert after['player_turn_serial'] == before['player_turn_serial'], 'Quickstep unexpectedly ended the turn'
     for field in ('instance_id', 'id', 'position', 'hp'):
         assert after['unit'][field] == before['unit'][field], f'Quickstep changed {field} before handoff'
     assert after['unit']['mp'] == before['unit']['mp'] - 5, 'Quickstep must charge exactly 5 MP once'
+    assert_active_mp_display(before, after)
     assert after['unit']['acted'] and not after['unit']['moved'], 'Quickstep must spend action and reopen movement'
     assert_idle_selection(after)
     assert after['buttons']['move']['visible'] and not after['buttons']['move']['disabled'], 'Quickstep did not enable Move'
@@ -265,16 +277,34 @@ class Smoke:
         before = moved['state']
         actor_key = before['unit']['instance_id']
         self.click_button(moved, 'ability')
-        menu = self.wait('Quickstep ability menu', lambda s: s['menu_visible'] and bool(s['abilities']),
+        menu = self.wait('Quickstep ability menu', lambda s: s['menu_visible'] and any(
+                         'Quickstep' in b['labels'] and b['visible'] and not b['disabled']
+                         and b['rect'][2] > 0 and b['rect'][3] > 0
+                         and 0 <= b['rect'][1] and b['rect'][1] + b['rect'][3] <= s['viewport'][1]
+                         for b in s['abilities']),
                          after=before['frame'])
         assert menu['state']['unit'] == before['unit'], 'Opening Quickstep menu changed actor resources/actions'
         button = ability_button(menu['state'], 'Quickstep')
         self.checkpoint('quickstep-menu-open', menu)
-        self.cdp.click(*button_point(button, menu['state']['viewport'], menu['canvas']))
+        point = button_point(button, menu['state']['viewport'], menu['canvas'])
+        self.cdp.inputs.append({'type': 'hover', 'x': point[0], 'y': point[1]})
+        self.cdp.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': point[0], 'y': point[1]})
+        # Screenshot capture may have advanced many frames since the menu read.
+        # Anchor AFTER dispatch, then allow two genuinely newer layout frames.
+        hover_anchor = self.wait('Quickstep post-move frame anchor', lambda s: True)
+        hovered = self.wait('Quickstep hover layout', lambda s: True, after=hover_anchor['state']['frame'])
+        hovered_button = ability_button(hovered['state'], 'Quickstep')
+        assert hovered['canvas'] == menu['canvas'] and hovered['state']['viewport'] == menu['state']['viewport'], 'Hover changed canvas geometry'
+        assert hovered_button['visible'] and not hovered_button['disabled'], 'Hovered Quickstep row is hidden or disabled'
+        assert hovered_button['rect'] == button['rect'] and hovered_button['labels'] == button['labels'], 'Hover moved or replaced the Quickstep row'
+        assert hovered['state']['unit'] == menu['state']['unit'], 'Hover changed actor resources/actions'
+        self.checkpoint('quickstep-hover-stable', hovered)
+        # Do not reacquire/chase a moved row: press/release the original point.
+        self.cdp.click(*point, move_first=False)
         ready = self.wait('Quickstep recovery and reopened movement', lambda s:
                           s['unit'].get('instance_id') == actor_key and s['unit'].get('acted')
                           and not s['unit'].get('moved') and not s['resolving'] and not s['command'],
-                          after=menu['state']['frame'])
+                          after=hovered['state']['frame'])
         assert_quickstep_ready(before, ready['state'])
         self.checkpoint('quickstep-action-spent-move-reopened', ready)
 
@@ -282,6 +312,7 @@ class Smoke:
         moving = self.wait('Quickstep second legal movement range', lambda s:
                            s['command'] == 'move' and bool(s['legal_moves']), after=ready['state']['frame'])
         assert moving['state']['unit'] == ready['state']['unit'], 'Second Move selection changed resources/actions'
+        assert_active_mp_display(ready['state'], moving['state'])
         assert moving['state']['player_turn_serial'] == before['player_turn_serial'], 'Turn changed before second move'
         assert not moving['state']['ability_id'] and moving['state']['highlights']['ability'] == 0, 'Stale CAST selection after Quickstep'
         destination = choose_destination(moving['state'], moving['canvas'])

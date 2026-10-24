@@ -35,6 +35,20 @@ func _ready() -> void:
 	check(roster.get(actor_key, {}).get("mp", -1) == first.get("unit", {}).get("mp", -2), "roster MP matches current actor")
 	check(first.get("player_turn_serial", -1) == fixture.battle_manager._player_turn_serial, "observer reads existing turn serial")
 	check("Attack" in buttons.get("attack", {}).get("labels", []), "observer reads actual button text")
+	var hud: Dictionary = first.get("active_hud", {})
+	var ui: BattleUI = fixture.battle_ui
+	check(hud.get("mp", {}).get("text", "") == ui._mp_label.text, "observer reads the rendered MP Label text")
+	check(hud.get("mp", {}).get("instance_id", "") == str(ui._mp_label.get_instance_id()), "observer identifies the actual MP Control instance")
+	check(hud.get("mp", {}).get("visible", false), "observed MP Control is visible")
+	check(hud.get("name", {}).get("text", "") == ui._unit_name.text, "observer reads active-unit name separately from backend ID")
+	# The backend remains unchanged: a stale rendered label must remain visible
+	# to the observer, rather than being replaced with copied Unit.mp data.
+	var original_mp_text := ui._mp_label.text
+	ui._mp_label.text = "MP: stale-control-sentinel"
+	var stale: Dictionary = observer.snapshot()
+	check(stale.get("active_hud", {}).get("mp", {}).get("text", "") == "MP: stale-control-sentinel", "observer never synthesizes displayed MP from backend resources")
+	check(stale.get("unit", {}) == first.get("unit", {}), "rendered-label observation does not mutate unit resources")
+	ui._mp_label.text = original_mp_text
 	var sample := Button.new()
 	var label := Label.new()
 	label.text = "Quickstep"

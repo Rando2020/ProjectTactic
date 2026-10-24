@@ -21,6 +21,8 @@ CONTRACTS = [
     ('test_scout_tradeoff.tscn', '0 failures'),
     ('test_scout_outcome_integration.tscn', '0 failures'),
     ('test_tactical_contract_integration.tscn', '0 failures'),
+    ('test_resource_hud.tscn', '0 failures'),
+    ('test_ability_menu_layout.tscn', '0 failures'),
     ('test_kael_presentation.tscn', '0 failures'),
     ('test_mira_presentation.tscn', '0 failures'),
     ('test_zane_presentation.tscn', '0 failures'),

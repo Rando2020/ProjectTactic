@@ -32,6 +32,11 @@ jobs:
         with:
           node-version: 24
 
+      - name: Test Web package freshness and integrity
+        run: |
+          node --test tools/test_web_package.mjs
+          python -m unittest discover -s tools -p test_prepare_playable_web.py
+
       - run: npm install
       - run: npm run build
 
