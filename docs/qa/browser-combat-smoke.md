@@ -11,6 +11,11 @@ combat commands, mutate game state, or substitute a JavaScript game simulation.
    highlights, press Cancel, and verify all targeting state/highlights clear.
 3. Select Move, choose an unoccupied legal tile supplied by the real grid, click
    its projected center, wait for movement resolution, and verify the destination.
+4. Reopen Ability and click the actual Quickstep label: 5 MP once, action spent,
+   Move reopened, Attack/Ability disabled, same HP/position before turn handoff.
+5. Click Move and another legal tile; wait for a subsequent player turn, then
+   verify original Lyra by instance identity, final position and retained MP.
+   Later enemy/terrain HP changes are not attributed to Quickstep.
 
 Both cancellations preserve active-unit identity, HP, MP, position, and move/action
 flags. Movement spends only the move flag; HP/MP/action and active unit stay the
@@ -30,7 +35,9 @@ selects their scene, and restores the exact project bytes/removes staging in
 inherits unchanged Battle.tscn and adds only an observer child: the original
 BattleScene root, script, node paths, input handlers, and gameplay are preserved.
 
-The observer publishes data-only `window.__projectTacticQA` snapshots. It has no
+The observer publishes data-only schema-v2 `window.__projectTacticQA` snapshots.
+Rendered labels identify Quickstep; a roster keyed by stringified Godot instance
+IDs and the existing player-turn serial preserve actor identity across handoff. It has no
 JavaScript callbacks or action API. Browser unit tests do not need websocket-client;
 actual browser execution uses the same dependency already installed by this CI.
 Game saves for headless observer validation use a disposable XDG directory; CI
@@ -66,12 +73,34 @@ The `forgotten-field-browser-captures` CI artifact is retained even on smoke fai
 - Existing loaded, settled, and compact 1366×768 captures.
 - Ability-menu open/cancelled, Long Shot targeting/cancelled, legal movement range,
   and completed movement captures.
+- Quickstep menu, action-spent/movement-reopened, second-movement range, and
+  second-movement/turn-handoff captures.
 - `report.json`: pass/fail, failure detail, checkpoints/snapshots, actual input
   coordinates, browser version, latest observation, and errors.
 - `browser-events.json`: complete collected console/exception/browser-log events.
 - `chrome.log` and `server.log`; a failure screenshot when capture remains possible.
 
-## Local evidence (2026-10-24)
+## Later CI evidence (2026-10-24)
+
+[Godot Validate run 40086250617](https://github.com/Rando2020/ProjectTactic/actions/runs/40086250617)
+on final PR #74 head `ed417b755f7186589b97962f8f6bba7624c5c644` succeeded,
+including actual Chrome mouse input: **seven clicks and nine checkpoints** for
+menu Cancel, target Cancel and legal movement. The reviewed source tree is
+`a5667343e47548eaca8f51e36acb9f70ecc96e28`, also the tree merged as `c80a0259`.
+The run retains `report.json`, captures and browser diagnostics in the
+`forgotten-field-browser-captures` artifact. No captured JavaScript/browser-console
+errors were reported; known native shutdown and browser-environment warnings are
+not recast as a warning-free result.
+
+The seven-click evidence does **not** cover the new Quickstep extension; its
+eleven-click browser trial remains pending.
+
+This closes the earlier pending CI-input check below, **not** full-encounter,
+deployed spell/encounter, mobile or final-art acceptance. For public/private
+release provenance and current limitations, use the [delivery ledger](../production/delivery-ledger.md)
+and [live public build-info.json](https://rando2020.github.io/ProjectTactic/tactics/build-info.json).
+
+## Earlier local evidence (2026-10-24; preserved checkpoint)
 
 Baseline: `90cd78195eb000d8a0fa71a631d276c1753f7e15`. Isolated branch only.
 All 28 Python tests passed (22 new harness/staging tests); the real-scene
@@ -92,3 +121,6 @@ browser was launched, shared GUI used, unreachable localhost retried, source
 published, workflow dispatched, Site changed, or branch merged. A later authorized
 CI run is required to establish exported-input acceptance. Unit/headless/export
 results do not prove that acceptance, art quality, full combat, or mobile support.
+
+See [the Scout extension evidence](browser-quickstep-smoke.md) for the later
+Quickstep-only change, current isolation proof, and explicit unexecuted-CI boundary.

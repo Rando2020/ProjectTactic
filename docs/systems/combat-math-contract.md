@@ -148,3 +148,29 @@ HP lost and armor lost. Immunity to damage does not claim status immunity.
 An executed miss or immune hit still costs the same action and MP; rejected
 casts have no resolved outcome. `_execute_ability` retains its boolean admission
 contract while `_execute_ability_with_result` also returns that direct outcome.
+
+## Healing amount and target projection
+
+Healing abilities keep their existing flat HP power: Cure 80, Cura 130, and
+Mass Cure 60 per affected ally. Caster Magic and elemental damage multipliers
+do not scale healing. `CombatFormula.calculate_heal(target, base_power,
+flat_bonus)` is a read-only contract shared by targeted forecasts, enemy-heal
+details, and `CombatResolver.resolve_heal`:
+
+```text
+incoming_heal = base_power + existing run heal_bonus
+hp_after = min(current_hp + incoming_heal, maximum_hp)
+heal = hp_after - current_hp
+```
+
+The forecast headline reports capped HP restored, including zero at full HP.
+The resolver still calls `Unit.heal`, emits its existing signals, plays the same
+heal VFX/audio, and returns the unchanged `healed` field from the actual HP
+delta. No preview calls the resolver, consumes a boon, or applies an effect.
+
+This changes no costs, eligibility, range, area footprint, status behavior, or
+resurrection rules. The existing run heal bonus is additive (Luminarch's Light
+adds 15); damage-only holy bonuses are not advertised as heal multipliers.
+Unwired curse descriptions are not activated as new healing mechanics.
+Targetless area previews remain a separate presentation path, not a per-target
+HP projection.

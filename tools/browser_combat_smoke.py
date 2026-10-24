@@ -46,9 +46,10 @@ class CDP:
             raise RuntimeError(f'JavaScript evaluation failed: {result["exceptionDetails"]}')
         return result.get('result', {}).get('value')
 
-    def click(self, x: float, y: float) -> None:
+    def click(self, x: float, y: float, *, move_first: bool = True) -> None:
         self.inputs.append({'type': 'mouse', 'x': x, 'y': y})
-        self.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': x, 'y': y})
+        if move_first:
+            self.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': x, 'y': y})
         self.command('Input.dispatchMouseEvent', {'type': 'mousePressed', 'button': 'left', 'buttons': 1,
                                                  'clickCount': 1, 'x': x, 'y': y})
         self.command('Input.dispatchMouseEvent', {'type': 'mouseReleased', 'button': 'left', 'buttons': 0,
@@ -104,6 +105,48 @@ def assert_moved(before: dict, after: dict, destination: list) -> None:
     assert_idle_selection(after)
 
 
+def ability_button(state: dict, label: str) -> dict:
+    matches = [button for button in state['abilities'] if label in button['labels']]
+    assert len(matches) == 1, f'Expected exactly one visible {label} menu entry'
+    return matches[0]
+
+
+def assert_active_mp_display(before: dict, after: dict) -> None:
+    for name in ('name', 'mp'):
+        prior = before['active_hud'][name]
+        label = after['active_hud'][name]
+        assert label['visible'], f'Active HUD {name} Control is hidden'
+        assert label['instance_id'] and label['instance_id'] == prior['instance_id'], f'Active HUD {name} Control identity changed'
+    assert after['active_hud']['name']['text'] == before['active_hud']['name']['text'], 'Active HUD changed actor identity before handoff'
+    assert after['active_hud']['mp']['text'] == f"MP: {after['unit']['mp']}", 'Rendered active-unit MP is stale or disagrees with backend MP'
+
+
+def assert_quickstep_ready(before: dict, after: dict) -> None:
+    assert before['unit']['moved'] and not before['unit']['acted'], 'Quickstep requires the first move and unused action'
+    assert after['player_turn_serial'] == before['player_turn_serial'], 'Quickstep unexpectedly ended the turn'
+    for field in ('instance_id', 'id', 'position', 'hp'):
+        assert after['unit'][field] == before['unit'][field], f'Quickstep changed {field} before handoff'
+    assert after['unit']['mp'] == before['unit']['mp'] - 5, 'Quickstep must charge exactly 5 MP once'
+    assert_active_mp_display(before, after)
+    assert after['unit']['acted'] and not after['unit']['moved'], 'Quickstep must spend action and reopen movement'
+    assert_idle_selection(after)
+    assert after['buttons']['move']['visible'] and not after['buttons']['move']['disabled'], 'Quickstep did not enable Move'
+    for name in ('attack', 'ability'):
+        assert after['buttons'][name]['visible'] and after['buttons'][name]['disabled'], f'Quickstep incorrectly enabled {name}'
+
+
+def assert_quickstep_turn_ended(before: dict, after: dict, destination: list) -> None:
+    assert after['phase'] == 'PLAYER_TURN', 'No subsequent player turn observed'
+    assert after['player_turn_serial'] > before['player_turn_serial'], 'Second move did not end the original turn'
+    identity = before['unit']['instance_id']
+    actor = after['roster'].get(identity)
+    assert actor and actor['instance_id'] == identity and actor['id'] == before['unit']['id'], 'Original actor instance lost at handoff'
+    assert destination != before['unit']['position'] and actor['position'] == destination, 'Original actor did not reach second destination'
+    assert actor['mp'] == before['unit']['mp'], 'Second move/handoff changed original actor MP after Quickstep'
+    # Do not compare HP or current manager action flags after handoff: enemy/terrain
+    # activity and the next active unit are legitimate and are not Quickstep costs.
+
+
 OBSERVATION_JS = """
 (() => {
   const canvas = document.querySelector('canvas');
@@ -136,7 +179,7 @@ class Smoke:
             if envelope:
                 self.latest = envelope
                 state = envelope['state']
-                if state.get('schema') != 1:
+                if state.get('schema') != 2:
                     raise AssertionError(f'Unsupported QA snapshot schema: {state.get("schema")}')
                 # Require a new rendered/layout opportunity, not a stale pre-click snapshot.
                 geometry_matches = expected_canvas is None or all(
@@ -226,8 +269,66 @@ class Smoke:
         # Observe a later frame too: catch late script errors or post-animation state changes.
         final = self.wait('post-movement idle', lambda s: not s['resolving'], after=moved['state']['frame'])
         assert_moved(initial, final['state'], destination['position'])
+        self.run_quickstep(final)
         self.cdp.evaluate('true')  # Drain preceding console/exception events before reporting success.
         assert not self.cdp.errors, 'Browser errors after final checkpoint'
+
+    def run_quickstep(self, moved: dict) -> None:
+        before = moved['state']
+        actor_key = before['unit']['instance_id']
+        self.click_button(moved, 'ability')
+        menu = self.wait('Quickstep ability menu', lambda s: s['menu_visible'] and any(
+                         'Quickstep' in b['labels'] and b['visible'] and not b['disabled']
+                         and b['rect'][2] > 0 and b['rect'][3] > 0
+                         and 0 <= b['rect'][1] and b['rect'][1] + b['rect'][3] <= s['viewport'][1]
+                         for b in s['abilities']),
+                         after=before['frame'])
+        assert menu['state']['unit'] == before['unit'], 'Opening Quickstep menu changed actor resources/actions'
+        button = ability_button(menu['state'], 'Quickstep')
+        self.checkpoint('quickstep-menu-open', menu)
+        point = button_point(button, menu['state']['viewport'], menu['canvas'])
+        self.cdp.inputs.append({'type': 'hover', 'x': point[0], 'y': point[1]})
+        self.cdp.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': point[0], 'y': point[1]})
+        # Screenshot capture may have advanced many frames since the menu read.
+        # Anchor AFTER dispatch, then allow two genuinely newer layout frames.
+        hover_anchor = self.wait('Quickstep post-move frame anchor', lambda s: True)
+        hovered = self.wait('Quickstep hover layout', lambda s: True, after=hover_anchor['state']['frame'])
+        hovered_button = ability_button(hovered['state'], 'Quickstep')
+        assert hovered['canvas'] == menu['canvas'] and hovered['state']['viewport'] == menu['state']['viewport'], 'Hover changed canvas geometry'
+        assert hovered_button['visible'] and not hovered_button['disabled'], 'Hovered Quickstep row is hidden or disabled'
+        assert hovered_button['rect'] == button['rect'] and hovered_button['labels'] == button['labels'], 'Hover moved or replaced the Quickstep row'
+        assert hovered['state']['unit'] == menu['state']['unit'], 'Hover changed actor resources/actions'
+        self.checkpoint('quickstep-hover-stable', hovered)
+        # Do not reacquire/chase a moved row: press/release the original point.
+        self.cdp.click(*point, move_first=False)
+        ready = self.wait('Quickstep recovery and reopened movement', lambda s:
+                          s['unit'].get('instance_id') == actor_key and s['unit'].get('acted')
+                          and not s['unit'].get('moved') and not s['resolving'] and not s['command'],
+                          after=hovered['state']['frame'])
+        assert_quickstep_ready(before, ready['state'])
+        self.checkpoint('quickstep-action-spent-move-reopened', ready)
+
+        self.click_button(ready, 'move')
+        moving = self.wait('Quickstep second legal movement range', lambda s:
+                           s['command'] == 'move' and bool(s['legal_moves']), after=ready['state']['frame'])
+        assert moving['state']['unit'] == ready['state']['unit'], 'Second Move selection changed resources/actions'
+        assert_active_mp_display(ready['state'], moving['state'])
+        assert moving['state']['player_turn_serial'] == before['player_turn_serial'], 'Turn changed before second move'
+        assert not moving['state']['ability_id'] and moving['state']['highlights']['ability'] == 0, 'Stale CAST selection after Quickstep'
+        destination = choose_destination(moving['state'], moving['canvas'])
+        self.checkpoint('quickstep-second-movement-range', moving)
+        self.cdp.click(*canvas_point(destination['point'], moving['state']['viewport'], moving['canvas']))
+        ended = self.wait('second move ends turn and reaches subsequent player turn', lambda s:
+                          s['phase'] == 'PLAYER_TURN' and s['player_turn_serial'] > before['player_turn_serial']
+                          and s['roster'].get(actor_key, {}).get('position') == destination['position'],
+                          after=moving['state']['frame'])
+        assert_quickstep_turn_ended(ready['state'], ended['state'], destination['position'])
+        self.checkpoint('quickstep-second-movement-ended-turn', ended)
+        settled = self.wait('original actor persists after turn handoff', lambda s: s['phase'] == 'PLAYER_TURN',
+                            after=ended['state']['frame'])
+        assert_quickstep_turn_ended(ready['state'], settled['state'], destination['position'])
+        self.cdp.evaluate('true')
+        assert not self.cdp.errors, 'Browser errors after Quickstep turn handoff'
 
 
 def main() -> int:
@@ -239,7 +340,8 @@ def main() -> int:
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     connection = cdp = smoke = None
-    report = {'status': 'failed', 'url': args.url, 'coverage': ['ability-menu Cancel', 'target Cancel', 'legal movement']}
+    report = {'status': 'failed', 'url': args.url, 'coverage': ['ability-menu Cancel', 'target Cancel', 'legal movement',
+              'Quickstep action/5 MP tradeoff', 'second legal movement ends turn']}
     try:
         import websocket
         from capture_browser_screenshots import devtools_target

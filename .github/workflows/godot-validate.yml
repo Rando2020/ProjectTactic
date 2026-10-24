@@ -20,6 +20,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Test Web package freshness and integrity
+        run: |
+          node --test tools/test_web_package.mjs
+          python -m unittest discover -s tools -p test_prepare_playable_web.py
+
       - name: Hydrate current Godot runtime assets only
         run: |
           git lfs fetch --include='godot/**' --exclude='' origin HEAD
@@ -91,6 +100,8 @@ jobs:
         run: |
           python tools/prepare_playable_web.py build/web
           node tools/check_web_package.mjs build/web
+          python tools/prepare_playable_web.py build/web-qa
+          node tools/check_web_package.mjs build/web-qa
 
       - name: Upload playable Web build
         uses: actions/upload-artifact@v4

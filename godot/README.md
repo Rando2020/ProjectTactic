@@ -1,5 +1,11 @@
 # The Appointed · Godot Design Export
 
+> **Historical design-export guide.** The setup and HTML-source guidance below
+> concern the original UI resource package, not the current game architecture.
+> This directory now contains the production Godot project (`project.godot`);
+> follow the [runtime setup](../docs/systems/playable-tactics-loop.md) and
+> [delivery ledger](../docs/production/delivery-ledger.md) for current build/use.
+
 This folder packages the design system from the **HTML/CSS playground** into Godot-ready resources. Drop it whole into your project at `res://design/`.
 
 > **Source of truth.** The HTML/CSS design system (`colors_and_type.css`, `ui_kits/the-appointed/`, the `preview/` cards) remains the canonical reference. When you want to change a color or revise a screen layout, do it there first — then re-export to this folder. The HTML version iterates ~10× faster than touching Godot scenes directly.

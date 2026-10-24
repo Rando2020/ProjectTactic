@@ -6,11 +6,11 @@ from pathlib import Path
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from browser_combat_smoke import CDP, canvas_point, button_point, assert_cancelled, assert_moved, choose_destination, Smoke, main
+from browser_combat_smoke import CDP, canvas_point, button_point, assert_cancelled, assert_moved, choose_destination, Smoke, main, ability_button, assert_quickstep_ready, assert_quickstep_turn_ended
 
 
 def idle():
-    return {'schema': 1, 'frame': 5, 'phase': 'PLAYER_TURN', 'viewport': [1920, 1080],
+    return {'schema': 2, 'frame': 5, 'phase': 'PLAYER_TURN', 'viewport': [1920, 1080],
             'unit': {'id': 'lyra', 'position': [2, 5], 'hp': 90, 'mp': 20, 'moved': False, 'acted': False},
             'command': '', 'ability_id': '', 'menu_visible': False, 'resolving': False,
             'highlights': {'ability': 0, 'move': 0, 'attack': 0, 'aoe': 0, 'path': 0}}
@@ -82,6 +82,185 @@ class InvariantTests(unittest.TestCase):
         after['highlights']['ability'] = 1
         with self.assertRaises(AssertionError):
             assert_moved(before, after, [3, 5])
+
+
+class QuickstepTests(unittest.TestCase):
+    def moved(self):
+        state = idle()
+        state['unit'].update(instance_id='engine-41', moved=True)
+        state['player_turn_serial'] = 7
+        state['active_hud'] = {'name': {'text': 'Lyra\nScout', 'instance_id': 'label-50', 'visible': True},
+                               'mp': {'text': 'MP: 20', 'instance_id': 'label-51', 'visible': True}}
+        return state
+
+    def ready(self):
+        state = self.moved()
+        state['unit'].update(mp=15, moved=False, acted=True)
+        state['active_hud']['mp']['text'] = 'MP: 15'
+        state['buttons'] = {
+            'move': {'visible': True, 'disabled': False},
+            'attack': {'visible': True, 'disabled': True},
+            'ability': {'visible': True, 'disabled': True},
+        }
+        return state
+
+    def handed_off(self):
+        state = self.ready()
+        actor = {key: state['unit'][key] for key in ('instance_id', 'id', 'position', 'hp', 'mp')}
+        actor.update(position=[3, 5], hp=70)  # A later enemy hit is not a Quickstep HP cost.
+        state['roster'] = {'engine-41': actor}
+        state['unit'] = {**state['unit'], 'id': 'mira', 'instance_id': 'engine-52', 'acted': False, 'moved': False}
+        state['player_turn_serial'] = 9
+        return state
+
+    def test_quickstep_uses_unique_rendered_label_not_menu_index(self):
+        first = {'labels': ['Long Shot', 'free']}
+        quickstep = {'labels': ['physical', 'Quickstep', '5MP', '1 move; spends action']}
+        self.assertIs(ability_button({'abilities': [first, quickstep]}, 'Quickstep'), quickstep)
+        for buttons in ([first], [quickstep, quickstep]):
+            with self.assertRaisesRegex(AssertionError, 'one'):
+                ability_button({'abilities': buttons}, 'Quickstep')
+
+    def test_quickstep_spends_exactly_five_mp_and_only_action_before_handoff(self):
+        before = self.moved(); after = self.ready()
+        assert_quickstep_ready(before, after)
+        for key, value in [('mp', 10), ('mp', 20), ('hp', 85), ('position', [3, 5]),
+                           ('instance_id', 'another-lyra'), ('acted', False), ('moved', True)]:
+            wrong = copy.deepcopy(after); wrong['unit'][key] = value
+            with self.assertRaises(AssertionError):
+                assert_quickstep_ready(before, wrong)
+        wrong = copy.deepcopy(after); wrong['player_turn_serial'] += 1
+        with self.assertRaises(AssertionError):
+            assert_quickstep_ready(before, wrong)
+        for key in ('attack', 'ability', 'move'):
+            wrong = copy.deepcopy(after); wrong['buttons'][key]['disabled'] = not wrong['buttons'][key]['disabled']
+            with self.assertRaises(AssertionError):
+                assert_quickstep_ready(before, wrong)
+
+    def test_quickstep_rejects_stale_hidden_or_wrong_active_resource_control(self):
+        before = self.moved(); after = self.ready()
+        for label, field, value in [('mp', 'text', 'MP: 20'), ('mp', 'text', 'MP: 10'),
+                                     ('mp', 'visible', False), ('mp', 'instance_id', 'other-control'),
+                                     ('name', 'text', 'Mira\nCleric'), ('name', 'visible', False),
+                                     ('name', 'instance_id', 'other-name')]:
+            wrong = copy.deepcopy(after); wrong['active_hud'][label][field] = value
+            with self.subTest(label=label, field=field, value=value):
+                with self.assertRaises(AssertionError):
+                    assert_quickstep_ready(before, wrong)
+
+    def run_quickstep_scenario(self, change_hover=None, hover_anchor_frame=8):
+        before = self.moved()
+        before['buttons'] = {'ability': {'visible': True, 'disabled': False, 'rect': [10, 10, 40, 20]}}
+        menu = copy.deepcopy(before)
+        menu.update(frame=7, menu_visible=True, command='ability', abilities=[
+            {'labels': ['Long Shot'], 'visible': True, 'disabled': False, 'rect': [400, 100, 80, 40]},
+            {'labels': ['Quickstep', '5MP'], 'visible': True, 'disabled': False, 'rect': [100, 100, 80, 40]},
+        ])
+        anchor = copy.deepcopy(menu); anchor['frame'] = hover_anchor_frame
+        hovered = copy.deepcopy(menu); hovered['frame'] = hover_anchor_frame + 2
+        hover_envelope = {'state': hovered, 'canvas': InputGeometryTests.canvas.copy()}
+        if change_hover:
+            change_hover(hover_envelope)
+        stale_hover = copy.deepcopy(hover_envelope)
+        stale_hover['state']['frame'] = hover_anchor_frame + 1
+        ready = self.ready(); ready['frame'] = hover_anchor_frame + 4
+        ready['buttons']['move']['rect'] = [200, 100, 80, 40]
+        moving = copy.deepcopy(ready); moving.update(frame=hover_anchor_frame + 6, command='move')
+        moving['legal_moves'] = [{'position': [3, 5], 'point': [400, 300]}]
+        moving['highlights']['move'] = 1
+        ended = self.handed_off(); ended['frame'] = hover_anchor_frame + 8
+        settled = copy.deepcopy(ended); settled['frame'] = hover_anchor_frame + 10
+        envelopes = iter([{'state': menu, 'canvas': InputGeometryTests.canvas},
+                          {'state': anchor, 'canvas': InputGeometryTests.canvas}, stale_hover, hover_envelope,
+                          *[{'state': state, 'canvas': InputGeometryTests.canvas}
+                            for state in (ready, moving, ended, settled)]])
+        class ScenarioConnection:
+            def __init__(self):
+                self.sent = []
+            def send(self, value):
+                message = json.loads(value); self.sent.append(message)
+                result = {}
+                if message['method'] == 'Runtime.evaluate':
+                    value = True if message['params']['expression'] == 'true' else next(envelopes)
+                    result = {'result': {'value': value}}
+                self.reply = {'id': message['id'], 'result': result}
+            def recv(self):
+                return json.dumps(self.reply)
+        connection = ScenarioConnection(); client = CDP(connection)
+        self.last_connection = connection
+        with tempfile.TemporaryDirectory() as output:
+            smoke = Smoke(client, Path(output), 1)
+            with patch.object(smoke, 'screenshot'), patch('browser_combat_smoke.time.sleep'):
+                smoke.run_quickstep({'state': before, 'canvas': InputGeometryTests.canvas})
+        return connection, smoke
+
+    def test_quickstep_extension_dispatches_four_cdp_mouse_click_sequences(self):
+        connection, smoke = self.run_quickstep_scenario()
+        self.assertEqual([item['name'] for item in smoke.checkpoints], [
+            'quickstep-menu-open', 'quickstep-hover-stable', 'quickstep-action-spent-move-reopened',
+            'quickstep-second-movement-range', 'quickstep-second-movement-ended-turn'])
+        inputs = [message for message in connection.sent if message['method'] == 'Input.dispatchMouseEvent']
+        self.assertEqual([item['params']['type'] for item in inputs], ['mouseMoved', 'mousePressed', 'mouseReleased'] * 4)
+        self.assertEqual([(item['params']['x'], item['params']['y']) for item in inputs[::3]],
+                         [(35, 20), (90, 70), (140, 70), (220, 160)])
+        hover_index = next(i for i, item in enumerate(connection.sent)
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mouseMoved'
+                           and item['params']['x'] == 90)
+        press_index = next(i for i, item in enumerate(connection.sent)
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed'
+                           and item['params']['x'] == 90)
+        self.assertEqual(sum(item['method'] == 'Runtime.evaluate'
+                             for item in connection.sent[hover_index + 1:press_index]), 3,
+                         'Anchor after mouseMoved at frame 8, skip frame 9, observe frame 10 before pressing')
+
+    def test_hover_anchor_rejects_reflow_after_screenshot_advances_engine_frames(self):
+        # The menu screenshot may take many engine frames. Frame 41 is still
+        # pre-hover; the shifted row at frames 42/43 must be read before press.
+        with self.assertRaises(AssertionError):
+            self.run_quickstep_scenario(
+                lambda e: e['state']['abilities'][1].update(rect=[100, 400, 80, 40]),
+                hover_anchor_frame=41)
+        presses = [item for item in self.last_connection.sent
+                   if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed']
+        self.assertEqual(len(presses), 1, 'Do not press Quickstep using an old menu-frame baseline')
+
+    def test_hover_reflow_or_hidden_row_fails_before_quickstep_mouse_press(self):
+        mutations = [
+            lambda e: e['state']['abilities'][1].update(rect=[100, 400, 80, 40]),
+            lambda e: e['state']['abilities'][1].update(rect=[100, 100, 88, 40]),
+            lambda e: e['state']['abilities'][1].update(visible=False),
+            lambda e: e['state']['abilities'][1].update(disabled=True),
+            lambda e: e['state']['abilities'][1].update(labels=['A different ability']),
+            lambda e: e['canvas'].update(height=600),
+            lambda e: e['state']['unit'].update(mp=15),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                with self.assertRaises(AssertionError):
+                    self.run_quickstep_scenario(mutate)
+                presses = [item for item in self.last_connection.sent
+                           if item['method'] == 'Input.dispatchMouseEvent' and item['params']['type'] == 'mousePressed']
+                self.assertEqual(len(presses), 1, 'Only opening Ability may be pressed before unstable hover rejects')
+
+    def test_second_move_checks_original_instance_after_handoff_without_hp_attribution(self):
+        before = self.ready(); after = self.handed_off()
+        assert_quickstep_turn_ended(before, after, [3, 5])
+        after['unit']['id'] = 'lyra'  # A different active instance may share the archetype ID.
+        assert_quickstep_turn_ended(before, after, [3, 5])
+        for field, value in [('position', [2, 5]), ('mp', 10), ('instance_id', 'replacement')]:
+            wrong = copy.deepcopy(after); wrong['roster']['engine-41'][field] = value
+            with self.assertRaises(AssertionError):
+                assert_quickstep_turn_ended(before, wrong, [3, 5])
+        wrong = copy.deepcopy(after)
+        wrong['roster']['another-instance'] = wrong['roster'].pop('engine-41')
+        with self.assertRaises(AssertionError):
+            assert_quickstep_turn_ended(before, wrong, [3, 5])
+        wrong = copy.deepcopy(after); wrong['player_turn_serial'] = before['player_turn_serial']
+        with self.assertRaises(AssertionError):
+            assert_quickstep_turn_ended(before, wrong, [3, 5])
+        wrong = copy.deepcopy(after); wrong['phase'] = 'ENEMY_TURN'
+        with self.assertRaises(AssertionError):
+            assert_quickstep_turn_ended(before, wrong, [3, 5])
 
 
 class FakeConnection:

@@ -406,8 +406,7 @@ const ABILITIES: Dictionary = {
 		"id": "quickstep", "display_name": "Quickstep",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 5, "range": 0,
-		"status_effect": {"id": "quickstep", "duration": 1, "magnitude": 2.0, "damage_type": "physical"},
-		"description": "Move again immediately. Can't act after.",
+		"description": "After moving, spend your action and 5 MP to move once more. Cannot attack or use another ability this turn.",
 	},
 	"smoke_screen": {
 		"id": "smoke_screen", "display_name": "Smoke Screen",
@@ -509,9 +508,33 @@ static func get_ability(id: String) -> Dictionary:
 	var ability: Dictionary = ABILITIES.get(id, {}).duplicate(true)
 	if ability.is_empty():
 		return ability
+	var bounds := get_range(ability)
+	ability["min_range"] = bounds.x
+	ability["range"] = bounds.y
 	var kind := str(ability.get("type", ""))
 	if not ability.has("target_type"):
 		ability["target_type"] = "self" if int(ability.get("range", 1)) == 0 else ("ally" if kind in ["buff", "heal"] else "enemy")
 	if not ability.has("aoe_type") and int(ability.get("aoe_radius", 0)) > 0:
 		ability["aoe_type"] = "radius"
 	return ability
+
+
+## Canonical fields win over legacy attack-range aliases. Self casts keep range zero.
+static func get_range(ability: Dictionary) -> Vector2i:
+	var maximum := int(ability.get("range", ability.get("attack_range_max", 1)))
+	var minimum := int(ability.get("min_range", ability.get("attack_range_min", 0 if maximum == 0 else 1)))
+	return Vector2i(minimum, maximum)
+
+
+## Damaging secondary statuses share the resolver's hit; support/status-only
+## actions keep their existing application. These two authored passive-readiness
+## effects are intentionally outside that correction (not a generic suffix rule).
+static func secondary_status_requires_hit(ability: Dictionary) -> bool:
+	var kind: String = str(ability.get("type", ""))
+	var spell_type: String = str(ability.get("spell_type", "fire"))
+	if kind in ["buff", "heal"] or spell_type in ["buff", "cure", "heal"]:
+		return false
+	var status: Dictionary = ability.get("status_effect", {})
+	if status.get("id", "") in ["blaze_counter_ready", "arc_counter_ready"]:
+		return false
+	return not status.is_empty() and int(ability.get("base_power", 100)) > 0

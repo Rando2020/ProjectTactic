@@ -73,6 +73,8 @@ var _is_player_turn: bool = false
 var _can_move_now: bool = false
 var _can_act_now: bool = false
 var _has_pending_action: bool = false
+var _ability_menu_layout_ticket: int = 0
+var _ability_menu_scroll_origin: int = 0
 
 const LOG_SIZE := 5
 const TIMELINE_SLOTS := 5
@@ -124,6 +126,8 @@ func _build_ui() -> void:
 	_right_panel_scroll = ScrollContainer.new()
 	_right_panel_scroll.follow_focus = true
 	_right_panel_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Reserve the scrollbar gutter even when a short forecast does not overflow.
+	_right_panel_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
 	add_child(_right_panel_scroll)
 	_right_panel_scroll.add_child(_right_panel_root)
 	_right_panel_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -333,6 +337,33 @@ func _build_ui() -> void:
 	_build_loadout_strip()
 	_build_action_preview_panel()
 	_build_settings_overlay()
+	_ability_panel.visibility_changed.connect(_on_ability_panel_visibility_changed)
+
+
+func _on_ability_panel_visibility_changed() -> void:
+	_ability_menu_layout_ticket += 1
+	var ticket := _ability_menu_layout_ticket
+	var opening := _ability_panel.visible
+	if opening:
+		_ability_menu_scroll_origin = _right_panel_scroll.scroll_vertical
+	# Let dynamically added, scaled ability rows finish container layout. This
+	# runs only on open/close, never on hover or forecast text/visibility changes.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if ticket != _ability_menu_layout_ticket or not is_inside_tree():
+		return
+	if opening:
+		var target: Control = _ability_panel
+		if target.size.y > _right_panel_scroll.size.y and _ability_list.get_child_count() > 0:
+			target = _ability_list.get_child(0) as Control
+		_right_panel_scroll.ensure_control_visible(target)
+	else:
+		_right_panel_scroll.scroll_vertical = _ability_menu_scroll_origin
+		# Scroll offsets update child transforms on the next layout pass.
+		await get_tree().process_frame
+		if ticket != _ability_menu_layout_ticket or not is_inside_tree():
+			return
+		_right_panel_scroll.ensure_control_visible(_ability_btn)
 
 
 func _layout_persistent_hud() -> void:
@@ -594,7 +625,9 @@ func _build_action_preview_panel() -> void:
 		st.set_corner_radius(c, 6)
 	_preview_panel.add_theme_stylebox_override("panel", st)
 	_right_panel_root.add_child(_preview_panel)
-	_right_panel_root.move_child(_preview_panel, _command_hint_label.get_index() + 1)
+	# Forecasts expand below interactive controls so hover never moves its own
+	# ability target or the command buttons. Long explanations remain scrollable.
+	_right_panel_root.move_child(_preview_panel, _ability_panel.get_index() + 1)
 
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 5)
@@ -1369,6 +1402,7 @@ func _compact_forecast_breakdown(items: Array, max_items: int = 9) -> String:
 	return " | ".join(parts)
 
 func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
+	_refresh_active_resources()
 	_can_move_now = can_move
 	_can_act_now = can_act
 	_has_pending_action = has_pending
@@ -1462,13 +1496,7 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	if not reg.is_empty():
 		_unit_name.text += "\n" + str(JobTreeData.get_job(reg.get("current_job_id", "")).get("name", ""))
 	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(unit_id))
-	var max_hp := unit.unit_data.base_stats.hp
-	_hp_bar.max_value = max_hp
-	_hp_bar.value = unit.hp
-	_hp_label.text    = "HP: %d/%d" % [unit.hp, max_hp]
-	_mp_label.text    = "MP: %d" % unit.mp
-	_temper_label.text = "TMP: %d" % unit.temper
-	_ether_label.text  = "ETH: %d" % unit.ether
+	_refresh_active_resources()
 	# Status icons
 	if unit.statuses.is_empty():
 		_status_label.text = ""
@@ -1477,6 +1505,24 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 		for s: StatusEffect in unit.statuses:
 			parts.append("%s(%d)" % [s.status_id.to_upper(), s.duration])
 		_status_label.text = "  ".join(parts)
+
+
+func _refresh_active_resources() -> void:
+	if not battle_manager:
+		return
+	var candidate: Variant = battle_manager.units.get(battle_manager.active_unit_id)
+	if not is_instance_valid(candidate):
+		return
+	var unit := candidate as Unit
+	# Costs and healing commit during the action, before its existing state
+	# notification. Refresh resources without changing active identity or layout.
+	var max_hp := unit.unit_data.base_stats.hp
+	_hp_bar.max_value = max_hp
+	_hp_bar.value = unit.hp
+	_hp_label.text    = "HP: %d/%d" % [unit.hp, max_hp]
+	_mp_label.text    = "MP: %d" % unit.mp
+	_temper_label.text = "TMP: %d" % unit.temper
+	_ether_label.text  = "ETH: %d" % unit.ether
 
 
 func _on_timeline_updated(ordered_units: Array) -> void:
@@ -1577,6 +1623,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(0, 44)
 		btn.flat = true
+		if ab_id == "quickstep":
+			btn.tooltip_text = str(ab.get("description", ""))
+			var show_quickstep_preview := func() -> void:
+				if battle_manager and battle_manager.active_command == "ability":
+					var actor: Unit = battle_manager._living_unit(battle_manager.active_unit_id)
+					if actor:
+						battle_manager.action_preview_changed.emit(ForecastCalculator.spell(actor, actor, ab))
+			btn.mouse_entered.connect(show_quickstep_preview)
+			btn.focus_entered.connect(show_quickstep_preview)
 		var st_btn := StyleBoxFlat.new()
 		st_btn.bg_color = el_col.darkened(0.82)
 		st_btn.border_color = el_col.darkened(0.35)
@@ -1648,11 +1703,18 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 
 		if rng > 0:
 			var rng_lbl := Label.new()
-			rng_lbl.text = "%d" % rng
+			var min_range := int(ab.get("min_range", 1))
+			rng_lbl.text = "%d-%d" % [min_range, rng] if min_range > 1 else "%d" % rng
 			rng_lbl.add_theme_font_size_override("font_size", 10)
 			rng_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 			rng_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			stat_row.add_child(rng_lbl)
+		if ab_id == "quickstep":
+			var tradeoff := Label.new()
+			tradeoff.text = "1 move; spends action"
+			tradeoff.add_theme_font_size_override("font_size", 10)
+			tradeoff.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			stat_row.add_child(tradeoff)
 
 		# Shape badge  right-aligned.
 		if not shape_label.is_empty():

@@ -1,6 +1,8 @@
 ## Playable tactical RPG
 
-The browser deployment runs the Godot tactical descent. See [playable loop, controls and build instructions](docs/systems/playable-tactics-loop.md). The prior React prototypes remain accessible with `?legacy` or `?dev`.
+[Play the live Godot build](https://rando2020.github.io/ProjectTactic/tactics/). Its [live build-info.json](https://rando2020.github.io/ProjectTactic/tactics/build-info.json) is the authority for what is deployed now; this README and the [delivery ledger](docs/production/delivery-ledger.md) are timestamped evidence. The verified 2026-10-24 release is `c80a0259`, using Godot `4.6.3.stable.official.7d41c59c4`, not the older `5d489e` / `2cac025` / `717d256` checkpoints.
+
+Three-character 3D is an **opt-in prototype**: Practice → View & quality settings → Sprites active → Show 3D. See [playable loop, controls and clean-checkout build instructions](docs/systems/playable-tactics-loop.md) and the ledger for verification limits and the separate owner-only Site. The prior React prototypes remain accessible with `?legacy` or `?dev`.
 
 # ProjectTactic
 
