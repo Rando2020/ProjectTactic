@@ -21,11 +21,17 @@ const GUARDIAN_COLORS := {
 	"vaelthorn": Color(0.66,0.33,0.97),
 }
 
+var _transitioning := false
+var _practice_notice: Label
 var _gs: Node
 
 func _ready() -> void:
+	theme = preload("res://scripts/ui/AppointedTheme.gd").build()
 	_gs = get_node_or_null("/root/GameState")
-	_build_ui()
+	if not _gs.practice_session.is_empty():
+		_build_practice_ui()
+	else:
+		_build_ui()
 
 
 func _build_ui() -> void:
@@ -394,12 +400,96 @@ func _chip(text: String, color: Color) -> PanelContainer:
 	lbl.add_theme_color_override("font_color",color)
 	pc.add_child(lbl); return pc
 
-func _btn(text: String, color: Color) -> Button:
-	var b := Button.new(); b.text = text
-	var st := StyleBoxFlat.new()
-	st.bg_color = color.darkened(0.55); st.border_color = color.lerp(Color.TRANSPARENT,0.3)
-	for side in [SIDE_LEFT,SIDE_RIGHT,SIDE_TOP,SIDE_BOTTOM]: st.set_border_width(side,1)
-	for c in [CORNER_TOP_LEFT,CORNER_TOP_RIGHT,CORNER_BOTTOM_LEFT,CORNER_BOTTOM_RIGHT]: st.set_corner_radius(c,10)
-	b.add_theme_stylebox_override("normal",st); b.add_theme_stylebox_override("hover",st)
-	b.add_theme_color_override("font_color",color)
-	b.add_theme_font_size_override("font_size",15); return b
+func _btn(text: String, _color: Color) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size.y = 46
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	return button
+
+
+func _build_practice_ui() -> void:
+	var bg := ColorRect.new()
+	bg.color = BG
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	column.custom_minimum_size = Vector2(600, 0)
+	center.add_child(column)
+	var title := Label.new()
+	title.text = "PRACTICE VICTORY" if _gs.practice_session.get("state") == "won" else "PRACTICE DEFEAT"
+	title.add_theme_font_size_override("font_size", 38)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(title)
+	_practice_notice = Label.new()
+	_practice_notice.text = "Practice gains are temporary. Your saved descent is unchanged."
+	_practice_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(_practice_notice)
+	if _gs.practice_session.get("state") == "won":
+		var rewards := Label.new()
+		rewards.text = "Practice rewards: %d gold / %d JP (not kept)" % [_gs.pending_rewards.get("gold", 0), _gs.pending_rewards.get("jp", 0)]
+		rewards.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		column.add_child(rewards)
+		if not _gs.practice_session.get("advancement_used", false):
+			var heading := Label.new()
+			heading.text = "CHOOSE KAEL'S TRAINING PATH"
+			heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			column.add_child(heading)
+			var details := Label.new()
+			details.text = "Change his job, then replay at full health.
+Future JP follows this path. No abilities are granted for free."
+			details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			column.add_child(details)
+			var reg: Dictionary = _gs.unit_registry.kael
+			var shown := 0
+			for job_id in JobTreeData.get_available_jobs(reg.get("job_jp", {})):
+				if job_id == reg.get("current_job_id"): continue
+				var job: Dictionary = JobTreeData.get_job(job_id)
+				var choice := _btn(str(job.name) + "  •  Train & replay", GOLD)
+				choice.tooltip_text = str(job.get("description", ""))
+				choice.pressed.connect(_choose_practice_job.bind(job_id))
+				column.add_child(choice)
+				shown += 1
+				if shown >= 3: break
+	else:
+		var retry := _btn("Retry Encounter", GOLD)
+		retry.disabled = not _gs.can_retry_practice()
+		retry.pressed.connect(_retry_practice)
+		column.add_child(retry)
+		if retry.disabled:
+			_practice_notice.text = "No valid retry checkpoint. Return to the Hearth to leave practice."
+	var leave := _btn("Return to Hearth", GREEN)
+	leave.pressed.connect(_leave_practice)
+	column.add_child(leave)
+
+func _retry_practice() -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	if not _gs.retry_practice():
+		_transitioning = false
+		_practice_notice.text = "Retry unavailable. Return to the Hearth to leave practice."
+		return
+	get_tree().change_scene_to_file.call_deferred("res://scenes/Battle.tscn")
+
+func _leave_practice() -> void:
+	if _transitioning:
+		return
+	_transitioning = true
+	if not _gs.leave_practice():
+		_transitioning = false
+		_practice_notice.text = "Unable to restore progress. Reload to return to your saved descent."
+		return
+	get_tree().change_scene_to_file.call_deferred("res://scenes/HubScene.tscn")
+
+func _choose_practice_job(job_id: String) -> void:
+	if _transitioning: return
+	if not _gs.choose_practice_job(job_id):
+		_practice_notice.text = "Training choice unavailable. Your saved descent is unchanged."
+		return
+	_transitioning = true
+	get_tree().change_scene_to_file.call_deferred("res://scenes/Battle.tscn")

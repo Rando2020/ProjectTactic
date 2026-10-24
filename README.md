@@ -1,3 +1,7 @@
+## Playable tactical RPG
+
+The browser deployment runs the Godot tactical descent. See [playable loop, controls and build instructions](docs/systems/playable-tactics-loop.md). The prior React prototypes remain accessible with `?legacy` or `?dev`.
+
 # ProjectTactic
 
 **The Appointed** is a Godot-first tactical roguelite RPG built around grid combat, job progression, repeated descents, and a story about what humanity preserves when it tries to remove uncertainty and suffering.

@@ -9,6 +9,11 @@ const isDev = new URLSearchParams(window.location.search).has('dev')
 export default function App() {
   const [view, setView] = useState('gameShell')
 
+  if (!isDev && !new URLSearchParams(window.location.search).has('legacy')) {
+    return <iframe title="The Appointed tactical RPG" src={`${import.meta.env.BASE_URL}tactics/index.html`}
+      allow="autoplay; fullscreen" style={{position:'fixed', inset:0, width:'100%', height:'100%', border:0, background:'#080910'}} />
+  }
+
   return (
     <div className="app-shell">
       {isDev && (

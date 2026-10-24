@@ -35,6 +35,7 @@ var current_job_id: String
 
 var _hp_bar: ColorRect
 var _body_rect: ColorRect
+var _rig3d: Node2D
 var _sprite: Sprite2D
 var _facing_arrow: Polygon2D
 var _facing_arrow_shadow: Polygon2D
@@ -43,9 +44,62 @@ var _selection_glow: Polygon2D
 var _status_icons_container: Node2D
 var _hud_bar_y: float = -66.0
 
+# Authored anchors normalize the generated 1280px canvases to a common foot origin.
+# Body height is calibrated independently of weapon extents (no bounding-box zoom).
+const MELEE_POSES := {
+	"anticipation": {"path": "res://assets/characters/character-vanguard-anticipation-v01.png", "anchor": Vector2(656, 1155), "body_height": 930.0},
+	"contact": {"path": "res://assets/characters/character-vanguard-contact-v01.png", "anchor": Vector2(625, 1145), "body_height": 980.0},
+}
+var melee_pose := "idle"
+var _idle_visual: Dictionary = {}
+var _pose_textures: Dictionary = {}
+
+func set_melee_pose(pose: String) -> bool:
+	if is_instance_valid(_rig3d):
+		_rig3d.play(pose)
+		melee_pose = pose
+		return true
+	if not is_instance_valid(_sprite) or unit_id != "kael":
+		return false
+	if pose == "idle":
+		reset_melee_pose()
+		return true
+	if not MELEE_POSES.has(pose):
+		return false
+	var spec: Dictionary = MELEE_POSES[pose]
+	if not _pose_textures.has(pose):
+		if not ResourceLoader.exists(spec.path):
+			return false
+		_pose_textures[pose] = load(spec.path) as Texture2D
+	var texture := _pose_textures[pose] as Texture2D
+	if texture == null:
+		return false
+	if _idle_visual.is_empty():
+		_idle_visual = {"texture": _sprite.texture, "position": _sprite.position,
+			"scale": _sprite.scale, "offset": _sprite.offset}
+	_sprite.texture = texture
+	_sprite.scale = Vector2.ONE * (76.0 / float(spec.body_height))
+	_sprite.offset = texture.get_size() * 0.5 - Vector2(spec.anchor)
+	_sprite.position = Vector2.ZERO
+	melee_pose = pose
+	return true
+
+func reset_melee_pose() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("idle")
+	if is_instance_valid(_sprite) and not _idle_visual.is_empty():
+		_sprite.texture = _idle_visual.texture
+		_sprite.position = _idle_visual.position
+		_sprite.scale = _idle_visual.scale
+		_sprite.offset = _idle_visual.offset
+	_idle_visual.clear()
+	melee_pose = "idle"
+
 ## Returns the main visual element for effects (sprite if available, else body_rect)
 var visual: Node:
 	get:
+		if is_instance_valid(_rig3d):
+			return _rig3d
 		if _sprite and is_instance_valid(_sprite):
 			return _sprite
 		if _body_rect and is_instance_valid(_body_rect):
@@ -56,6 +110,9 @@ var visual: Node:
 func _ready() -> void:
 	if unit_data and unit_id.is_empty():
 		_initialize_from_data(unit_data)
+	var gs := get_node_or_null("/root/GameState")
+	if gs and gs.practice_session.get("rig3d", false) and supports_3d_presentation():
+		enable_3d_prototype()
 
 
 func _initialize_from_data(data: UnitData) -> void:
@@ -268,6 +325,8 @@ func _update_hp_bar() -> void:
 
 ## Flash red on hit, restore normal colour.
 func animate_hit() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("hit")
 	var start_pos := position
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -285,6 +344,8 @@ func animate_hit() -> void:
 
 ## Flash white and drift upward slightly on death.
 func animate_death() -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("defeat")
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.65).set_delay(0.18)
@@ -365,7 +426,7 @@ func tick_statuses() -> void:
 	var to_remove: Array[String] = []
 	for s in statuses:
 		# Damage-over-time (poison, burn)
-		if s.magnitude > 0.0 and hp > 0:
+		if s.status_id in ["burn", "poison", "bleed"] and s.magnitude > 0.0 and hp > 0:
 			var dmg: int = max(1, int(unit_data.base_stats.hp * s.magnitude))
 			hp = max(hp - dmg, 0)
 			hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
@@ -400,6 +461,8 @@ func move_to(new_pos: Vector2i) -> void:
 func set_facing(new_facing: String) -> void:
 	if new_facing not in ["N", "E", "S", "W"]:
 		return
+	if is_instance_valid(_rig3d):
+		_rig3d.face({"N": Vector2i(0,-1), "E": Vector2i(1,0), "S": Vector2i(0,1), "W": Vector2i(-1,0)}[new_facing])
 	facing = new_facing
 	_update_facing_arrow()
 
@@ -562,3 +625,51 @@ func _update_status_icons() -> void:
 		icon.z_index = 20
 		_status_icons_container.add_child(icon)
 		icon_idx += 1
+
+func enable_3d_prototype() -> void:
+	if is_instance_valid(_rig3d):
+		return
+	_rig3d = preload("res://scripts/presentation/Humanoid3D.gd").new()
+	_rig3d.skin_id = str(get_meta("archetype_id", unit_id))
+	_rig3d.z_index = 10
+	add_child(_rig3d)
+	set_facing(facing)
+	if is_instance_valid(_sprite):
+		_sprite.hide()
+
+func set_walk_presentation(walking: bool) -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.play("walk" if walking else "idle")
+
+func face_action(destination: Vector2i) -> void:
+	if is_instance_valid(_rig3d):
+		_rig3d.face(destination - grid_pos)
+
+func recover_melee_pose() -> void:
+	if is_instance_valid(_rig3d) and _rig3d.state == "contact":
+		_rig3d.play("recovery")
+	elif is_instance_valid(_rig3d) and _rig3d.state == "cast_release":
+		_rig3d.play("cast_recovery")
+
+func disable_3d_prototype() -> void:
+	if not is_instance_valid(_rig3d):
+		return
+	reset_melee_pose()
+	var old_rig := _rig3d
+	_rig3d = null
+	remove_child(old_rig)
+	old_rig.queue_free()
+	if is_instance_valid(_sprite):
+		_sprite.show()
+
+func set_cast_pose(pose: String) -> bool:
+	if not is_instance_valid(_rig3d):
+		return false
+	_rig3d.play("cast_" + pose)
+	return true
+
+func cast_origin_world() -> Vector2:
+	return _rig3d.hand_world_position() if is_instance_valid(_rig3d) else global_position + Vector2(0, -30)
+
+func supports_3d_presentation() -> bool:
+	return str(get_meta("archetype_id", unit_id)) in ["kael", "zane", "void_cultist"]

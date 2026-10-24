@@ -18,6 +18,7 @@ var deaths:        int    = 0
 var completed:     bool   = false
 var started_at:    int    = 0
 var heat_level:    int    = 0
+var run_aether: int = 0
 var inventory:     Array  = []   ## LootSystem item Dictionaries collected this run
 var run_deployment: Array = []   ## Persistent player formation for this run
 var story_move_penalty: int = 0   ## Authored one-run burden from narrative choices
@@ -179,6 +180,7 @@ func to_dict() -> Dictionary:
 		"equipped_vow_id": equipped_vow_id, "equipped_vow_level": equipped_vow_level, "equipped_vow_xp": equipped_vow_xp,
 		"equipped_sigil_id": equipped_sigil_id, "equipped_sigil_level": equipped_sigil_level, "equipped_sigil_xp": equipped_sigil_xp,
 		"run_deployment": run_deployment,
+		"run_aether": run_aether, "inventory": inventory,
 		"story_move_penalty": story_move_penalty,
 		"orren_story_beat_consumed": orren_story_beat_consumed,
 	}
@@ -205,6 +207,11 @@ static func from_dict(d: Dictionary) -> RunState:
 	rs.equipped_sigil_level = int(d.get("equipped_sigil_level", 1))
 	rs.equipped_sigil_xp = int(d.get("equipped_sigil_xp", 0))
 	rs.run_deployment = d.get("run_deployment", [])
+	rs.run_aether = int(d.get("run_aether", 0))
+	rs.inventory = d.get("inventory", [])
+	for item: Dictionary in rs.inventory:
+		# JSON cannot preserve Color values; restore presentation from rarity data.
+		item["color"] = LootSystem.RARITIES.get(str(item.get("rarity", "common")), LootSystem.RARITIES.common).color
 	rs.story_move_penalty = int(d.get("story_move_penalty", 0))
 	rs.orren_story_beat_consumed = bool(d.get("orren_story_beat_consumed", false))
 	return rs

@@ -7,6 +7,7 @@ var failures := 0
 
 
 func _initialize() -> void:
+	_check_layout(Vector2(3840, 2160), 360.0)
 	_check_layout(Vector2(1920, 1080), 360.0)
 	_check_layout(Vector2(1600, 900), 360.0)
 	_check_layout(Vector2(1366, 768), 320.0)

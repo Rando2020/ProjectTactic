@@ -12,6 +12,16 @@ var run_aether: int = 0
 var active_boons: Array[Dictionary] = []
 var rng := RandomNumberGenerator.new()
 
+func _ready() -> void:
+	var gs: Node = get_node_or_null("/root/GameState")
+	if gs and gs.active_run:
+		is_run_active = true
+		run_seed = gs.active_run.seed
+		heat_level = gs.active_run.heat_level
+		current_stage = gs.active_run.current_floor
+		run_aether = gs.active_run.run_aether
+		rng.seed = run_seed
+
 func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: String = "", sigil_id: String = "") -> void:
 	is_run_active = true
 	current_stage = 0
@@ -38,7 +48,10 @@ func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: S
 			gs.seed_run_loadout(gs.active_run)
 		gs.active_run.heat_level = heat_level
 		# Initialize run state tracking
-		gs.unit_registry.clear()
+		# Run resources reset; learned jobs and abilities persist.
+		for reg: Dictionary in gs.unit_registry.values():
+			for key in ["base_hp", "current_hp", "current_mp", "current_temper", "current_ether"]:
+				reg.erase(key)
 		gs.run_floor_reached = 1
 		gs.run_jp_earned = 0
 		gs.pending_rewards.clear()
@@ -50,6 +63,7 @@ func start_new_run(p_heat_level: int = 0, run_seed_override: int = -1, vow_id: S
 		if gs.get("last_run_victory") != null:
 			gs.last_run_victory = false
 
+		gs.save()
 	run_started.emit(run_seed, heat_level)
 
 func end_run(victory: bool) -> void:
@@ -67,7 +81,9 @@ func end_run(victory: bool) -> void:
 			meta.add_currency(Currency.BOSS_TOKENS, 1)
 		meta.save()
 	# Clear run state
-	if gs: gs.active_run = null
+	if gs:
+		gs.active_run = null
+		gs.save()
 	run_ended.emit(victory)
 
 func award_stage_reward(stage_index: int, is_elite: bool = false, is_boss: bool = false) -> Dictionary:

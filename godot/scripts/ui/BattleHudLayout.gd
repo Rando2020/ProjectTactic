@@ -22,3 +22,13 @@ static func command_button_width(panel_width: float) -> float:
 	var content_width := panel_width - RIGHT_PANEL_HORIZONTAL_PADDING
 	var gaps_width := COMMAND_GAP * float(COMMAND_BUTTON_COUNT - 1)
 	return (content_width - gaps_width) / float(COMMAND_BUTTON_COUNT)
+
+static func battlefield_rect(viewport_size: Vector2) -> Rect2:
+	var sidebar := right_sidebar_rect(viewport_size)
+	return Rect2(Vector2(32, 86), Vector2(maxf(320, sidebar.position.x - 64), maxf(240, viewport_size.y - 240)))
+
+static func camera_fit(bounds: Rect2, viewport_size: Vector2) -> Dictionary:
+	var area := battlefield_rect(viewport_size)
+	var zoom := minf(area.size.x / maxf(bounds.size.x, 1), area.size.y / maxf(bounds.size.y, 1))
+	zoom = clampf(zoom, 0.2, 1.5)
+	return {"zoom": zoom, "position": bounds.get_center() + (viewport_size * 0.5 - area.get_center()) / zoom}

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://u8qm4q6683p8"
+path="res://.godot/imported/stone-stairs.obj-3a845677034947ded1f2c2e9ecfe977f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/stone-stairs.obj-3a845677034947ded1f2c2e9ecfe977f.mesh"]
+
+source_file="res://assets/3d/ashvale/stone-stairs.obj"
+dest_files=["res://.godot/imported/stone-stairs.obj-3a845677034947ded1f2c2e9ecfe977f.mesh", "res://.godot/imported/stone-stairs.obj-3a845677034947ded1f2c2e9ecfe977f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

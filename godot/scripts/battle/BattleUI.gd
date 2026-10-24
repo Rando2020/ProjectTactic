@@ -60,7 +60,9 @@ var _fx_slider: HSlider
 var _game_value_label: Label
 var _music_value_label: Label
 var _fx_value_label: Label
-var _right_panel_bg: ColorRect
+var _right_panel_bg: NinePatchRect
+var _active_portrait: TextureRect
+var _right_panel_scroll: ScrollContainer
 var _right_panel_root: VBoxContainer
 var _is_player_turn: bool = false
 var _can_move_now: bool = false
@@ -102,19 +104,37 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Persistent controls live in a responsive right rail so the battlefield
 	# center remains visible at normal browser zoom.
-	_right_panel_bg = ColorRect.new()
-	_right_panel_bg.color = Color(0.035, 0.045, 0.065, 0.90)
+	_right_panel_bg = NinePatchRect.new()
+	_right_panel_bg.texture = preload("res://assets/ui/appointed/rail.svg")
+	_right_panel_bg.patch_margin_left = 12
+	_right_panel_bg.patch_margin_right = 12
+	_right_panel_bg.patch_margin_top = 12
+	_right_panel_bg.patch_margin_bottom = 18
+	_right_panel_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_right_panel_bg)
 
 	_right_panel_root = VBoxContainer.new()
 	_right_panel_root.add_theme_constant_override("separation", 6)
-	add_child(_right_panel_root)
+	_right_panel_scroll = ScrollContainer.new()
+	_right_panel_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(_right_panel_scroll)
+	_right_panel_scroll.add_child(_right_panel_root)
+	_right_panel_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var root := _right_panel_root
+	root.theme = _battle_theme()
+	var crest := TextureRect.new()
+	crest.texture = preload("res://assets/ui/appointed/crest.svg")
+	crest.custom_minimum_size = Vector2(0, 42)
+	crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(crest)
 
 	# Mission header
 	_mission_label = Label.new()
 	_mission_label.text = "ASHVALE ROAD"
-	_mission_label.add_theme_font_size_override("font_size", 15)
+	_mission_label.add_theme_font_size_override("font_size", 18)
+	_mission_label.add_theme_font_override("font", DISPLAY_FONT)
 	_mission_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
 	_mission_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_mission_label)
@@ -180,12 +200,21 @@ func _build_ui() -> void:
 
 	# Active unit panel
 	root.add_child(_section_label("ACTIVE UNIT"))
+	var identity := HBoxContainer.new()
+	identity.add_theme_constant_override("separation", 12)
+	root.add_child(identity)
+	_active_portrait = TextureRect.new()
+	_active_portrait.custom_minimum_size = Vector2(64, 72)
+	_active_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_active_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	identity.add_child(_active_portrait)
 
 	_unit_name = Label.new()
 	_unit_name.text = ""
 	_unit_name.add_theme_font_size_override("font_size", 18)
 	_unit_name.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	root.add_child(_unit_name)
+	identity.add_child(_unit_name)
+	_unit_name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	_hp_bar = ProgressBar.new()
 	_hp_bar.custom_minimum_size.y = 14
@@ -203,7 +232,7 @@ func _build_ui() -> void:
 	root.add_child(_separator())
 
 	# Command buttons
-	root.add_child(_section_label("COMMANDS"))
+	root.add_child(_section_label("YOUR NEXT ACTION"))
 	var btn_row := HBoxContainer.new()
 	btn_row.add_theme_constant_override("separation", int(BattleHudLayout.COMMAND_GAP))
 	root.add_child(btn_row)
@@ -211,11 +240,20 @@ func _build_ui() -> void:
 	_attack_btn = _cmd_btn(btn_row, "Attack", _on_attack)
 	_wait_btn   = _cmd_btn(btn_row, "Wait",   _on_wait)
 	_ability_btn = _cmd_btn(btn_row, "Ability", _on_ability)
+	for command in [[_move_btn, "move"], [_attack_btn, "attack"], [_wait_btn, "wait"], [_ability_btn, "ability"]]:
+		var button: Button = command[0]
+		button.icon = load("res://assets/ui/appointed/%s.svg" % command[1])
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", 24)
+		button.custom_minimum_size.y = 64
 
 	var confirm_row := HBoxContainer.new()
 	confirm_row.add_theme_constant_override("separation", 6)
 	root.add_child(confirm_row)
 	_confirm_btn = _cmd_btn(confirm_row, "Confirm", _on_confirm)
+	_confirm_btn.hide() # Commands execute on tile click; no pending confirmation exists.
 	_cancel_btn = _cmd_btn(confirm_row, "Cancel", _on_cancel)
 
 	_action_state_label = Label.new()
@@ -267,7 +305,7 @@ func _build_ui() -> void:
 	root.add_child(_separator())
 
 	# Battle log
-	root.add_child(_section_label("BATTLE LOG"))
+	root.add_child(_section_label("RECENT ACTIONS"))
 	for i in range(LOG_SIZE):
 		var lbl := Label.new()
 		lbl.text = ""
@@ -279,7 +317,6 @@ func _build_ui() -> void:
 		_log_labels.append(lbl)
 
 	_build_intro_banner()
-	_build_side_timeline()
 	_build_loadout_strip()
 	_build_action_preview_panel()
 	_build_settings_overlay()
@@ -291,8 +328,10 @@ func _layout_persistent_hud() -> void:
 	var rect := BattleHudLayout.right_sidebar_rect(get_viewport().get_visible_rect().size)
 	_right_panel_bg.position = rect.position
 	_right_panel_bg.size = rect.size
-	_right_panel_root.position = rect.position + Vector2(8.0, 6.0)
-	_right_panel_root.size = rect.size - Vector2(16.0, 14.0)
+	_right_panel_scroll.position = rect.position + Vector2(8.0, 6.0)
+	_right_panel_scroll.size = rect.size - Vector2(16.0, 14.0)
+	if _loadout_panel:
+		_loadout_panel.position = Vector2(12, maxf(12, get_viewport().get_visible_rect().size.y - 124))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -469,6 +508,7 @@ func _refresh_loadout_strip() -> void:
 func _add_loadout_item(label: String, color: Color, detail: String) -> void:
 	var btn := Button.new()
 	btn.text = label
+	btn.tooltip_text = {"Move":"Choose a highlighted tile. You can move before or after acting.", "Attack":"Choose a target in reach. Review the forecast before targeting.", "Ability":"Choose an ability, then a legal target.", "Wait":"End this unit’s turn.", "Cancel":"Return to commands without spending an action."}.get(label, label)
 	btn.custom_minimum_size = Vector2(30.0, 30.0)
 	btn.tooltip_text = detail
 	btn.add_theme_font_size_override("font_size", 11)
@@ -1363,6 +1403,10 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	if not unit:
 		return
 	_unit_name.text = unit.display_name
+	var reg: Dictionary = GameState.unit_registry.get(unit_id, {})
+	if not reg.is_empty():
+		_unit_name.text += "\n" + str(JobTreeData.get_job(reg.get("current_job_id", "")).get("name", ""))
+	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(unit_id))
 	var max_hp := unit.unit_data.base_stats.hp
 	_hp_bar.max_value = max_hp
 	_hp_bar.value = unit.hp
@@ -1579,3 +1623,6 @@ func _play_sfx(sfx_id: String) -> void:
 	var audio := _audio_settings()
 	if audio and audio.has_method("play_sfx"):
 		audio.play_sfx(sfx_id)
+
+func _battle_theme() -> Theme:
+	return preload("res://scripts/ui/AppointedTheme.gd").build()

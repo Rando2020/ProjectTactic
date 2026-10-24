@@ -544,6 +544,7 @@ func _on_deployment_confirmed(deployment: Array) -> void:
 	if _gs and _gs.active_run:
 		_gs.active_run.run_deployment = deployment.duplicate(true)
 		_gs.active_run.set_meta("pending_deployment", deployment.duplicate(true))
+		_gs.save()
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 
@@ -625,6 +626,7 @@ func _complete_current_node_with_loadout_xp(node_type_override: String = "") -> 
 		_gs.active_run.grant_loadout_xp(amount)
 		progress = {"amount": amount, "reason": node_type}
 	_gs.active_run.complete_current_node()
+	_gs.save()
 	return progress
 
 

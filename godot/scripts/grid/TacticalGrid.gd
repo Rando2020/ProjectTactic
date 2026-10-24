@@ -1,6 +1,10 @@
 class_name TacticalGrid
 extends Node2D
 
+signal terrain_redrawn
+
+var terrain_view: Node2D
+
 signal tile_clicked(grid_pos: Vector2i)
 signal unit_clicked(unit_id: String)
 signal tile_hovered(grid_pos: Vector2i)
@@ -65,6 +69,7 @@ var _show_grid_overlay: bool = true
 func _ready() -> void:
 	_configure_layers()
 	if map_data:
+		_environment_theme_id = map_data.environment_theme_id
 		_build_tiles()
 		_draw_base_tiles()
 
@@ -123,7 +128,7 @@ func _build_tiles() -> void:
 
 func _draw_base_tiles() -> void:
 	for child in get_children():
-		if child != highlight_layer and child != unit_layer:
+		if child != highlight_layer and child != unit_layer and child != terrain_view:
 			child.queue_free()
 
 	var draw_positions: Array = tiles.keys()
@@ -148,6 +153,7 @@ func _draw_base_tiles() -> void:
 	_draw_props()
 	if _show_grid_overlay:
 		_draw_grid_overlay()
+	terrain_redrawn.emit()
 
 
 func _add_iso_tile(pos: Vector2i, world: Vector2, base_color: Color) -> void:
@@ -171,18 +177,20 @@ func _add_exposed_faces(pos: Vector2i, world: Vector2, base_color: Color) -> voi
 	var south := Vector2i(pos.x, pos.y + 1)
 	var east := Vector2i(pos.x + 1, pos.y)
 	var south_height := _height_at(south)
+	var south_depth := exposed_face_depth(pos, south)
 	var east_height := _height_at(east)
+	var east_depth := exposed_face_depth(pos, east)
 
 	if not tiles.has(south) or south_height < height:
 		var left_face := Polygon2D.new()
 		left_face.polygon = PackedVector2Array([
 			Vector2(-half_w, 0),
 			Vector2(0, half_h),
-			Vector2(0, half_h + tile_thickness),
-			Vector2(-half_w, tile_thickness),
+			Vector2(0, half_h + south_depth),
+			Vector2(-half_w, south_depth),
 		])
 		left_face.position = world
-		left_face.color = base_color.darkened(0.35)
+		left_face.color = Color("343b35")
 		left_face.z_index = depth
 		add_child(left_face)
 
@@ -191,11 +199,11 @@ func _add_exposed_faces(pos: Vector2i, world: Vector2, base_color: Color) -> voi
 		right_face.polygon = PackedVector2Array([
 			Vector2(half_w, 0),
 			Vector2(0, half_h),
-			Vector2(0, half_h + tile_thickness),
-			Vector2(half_w, tile_thickness),
+			Vector2(0, half_h + east_depth),
+			Vector2(half_w, east_depth),
 		])
 		right_face.position = world
-		right_face.color = base_color.darkened(0.22)
+		right_face.color = Color("505448")
 		right_face.z_index = depth + 1
 		add_child(right_face)
 
@@ -213,12 +221,34 @@ func _add_procedural_top(pos: Vector2i, world: Vector2, base_color: Color) -> vo
 	_add_connected_surface_detail(pos, world, base_color, depth)
 
 
+## The board is isometric 2D. Side geometry expresses logical elevation.
+func exposed_face_depth(pos: Vector2i, neighbor: Vector2i) -> float:
+	if not tiles.has(neighbor):
+		return tile_thickness + maxf(0.0, float(_height_at(pos))) * height_step
+	return maxf(0.0, float(_height_at(pos) - _height_at(neighbor))) * height_step
+
+
 func _add_art_tile_top(pos: Vector2i, world: Vector2, texture: Texture2D) -> void:
 	var depth := _depth_for(pos)
-	var top := Sprite2D.new()
-	top.texture = texture
-	top.centered = true
-	top.position = world
+	var top: Node2D
+	if texture.get_width() == 96 and texture.get_height() == 64:
+		# Authored tile: top diamond occupies the first 48px, skirt the last 16.
+		# Keep its top center at the logical tile center, not the canvas center.
+		var sprite := Sprite2D.new()
+		sprite.texture = texture
+		sprite.scale = Vector2(float(tile_size.x) / 96.0, float(tile_size.y) / 48.0)
+		sprite.position = world + Vector2(0, 8.0 * sprite.scale.y)
+		top = sprite
+	else:
+		# Legacy square surface textures must never spill across adjacent cells.
+		var surface := Polygon2D.new()
+		surface.polygon = _diamond_polygon()
+		surface.texture = texture
+		var w := float(texture.get_width())
+		var h := float(texture.get_height())
+		surface.uv = PackedVector2Array([Vector2(w / 2, 0), Vector2(w, h / 2), Vector2(w / 2, h), Vector2(0, h / 2)])
+		surface.position = world
+		top = surface
 	top.z_index = depth + 2
 	add_child(top)
 	_tile_top_polys[pos] = top
@@ -230,6 +260,8 @@ func _uses_art_tile(terrain: String) -> bool:
 
 func _texture_for_terrain(terrain: String) -> Texture2D:
 	var candidates := AssetRegistry.get_environment_candidates(_environment_theme_id, "terrain", terrain)
+	if candidates.is_empty():
+		candidates = AssetRegistry.get_environment_candidates("forgotten-field", "terrain", terrain)
 	var legacy_path := str(TERRAIN_TEXTURE_PATHS.get(terrain, ""))
 	if not legacy_path.is_empty() and legacy_path not in candidates:
 		candidates.append(legacy_path)
@@ -779,6 +811,7 @@ func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
+			child.set_walk_presentation(true)
 			var start_pos: Vector2 = child.position
 			var end_pos: Vector2 = _unit_foot_pos(to)
 			var tween := create_tween()
@@ -792,6 +825,8 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 			).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			child.z_index = _unit_depth_for(to)
 			await tween.finished
+			if is_instance_valid(child):
+				child.set_walk_presentation(false)
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id
@@ -938,3 +973,21 @@ func _is_valid_pos(pos: Vector2i) -> bool:
 
 func get_tile(pos: Vector2i) -> Dictionary:
 	return tiles.get(pos, {})
+
+
+func set_legacy_terrain_visible(value: bool) -> void:
+	for child in get_children():
+		if child is CanvasItem and child not in [highlight_layer, unit_layer, terrain_view]:
+			child.visible = value
+
+
+func set_terrain_3d(enabled: bool) -> void:
+	if is_instance_valid(terrain_view):
+		remove_child(terrain_view)
+		terrain_view.free()
+	terrain_view = null
+	set_legacy_terrain_visible(true)
+	if enabled:
+		terrain_view = preload("res://scripts/presentation/PracticeTerrain3D.gd").new()
+		add_child(terrain_view)
+		terrain_view.configure(self)

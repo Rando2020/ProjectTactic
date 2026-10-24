@@ -20,6 +20,9 @@ func _ready() -> void:
 #  Coordinate helper
 
 func gp(grid_pos: Vector2i) -> Vector2:
+	var grid := get_node_or_null("/root/BattleScene/BattleManager/TacticalGrid")
+	if grid and grid.has_method("_unit_foot_pos"):
+		return to_local(grid.to_global(grid._unit_foot_pos(grid_pos)))
 	var height := _height_for(grid_pos)
 	return MAP_ORIGIN + Vector2(
 		(grid_pos.x - grid_pos.y) * TILE_SIZE.x * 0.5,
@@ -38,13 +41,10 @@ func _height_for(grid_pos: Vector2i) -> int:
 
 func play_attack(from_grid: Vector2i, to_grid: Vector2i, damage: int,
 		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
-	var fw := gp(from_grid)
 	var tw := gp(to_grid)
 	play_target_ping(to_grid, Color(1.0, 0.76, 0.20, 0.9))
-	_play_slash(fw, tw)
-	# Slight delay so slash arrives before impact
-	await get_tree().create_timer(0.12).timeout
-	_play_impact_sparks(tw)
+	_play_slash(tw + Vector2(-22, -32), tw + Vector2(22, -32))
+	_play_impact_sparks(tw + Vector2(0, -30))
 	play_damage_number(to_grid, damage, dmg_color)
 
 
@@ -73,12 +73,9 @@ func _play_slash(from_w: Vector2, to_w: Vector2) -> void:
 
 func play_arrow(from_grid: Vector2i, to_grid: Vector2i, damage: int,
 		dmg_color: Color = Color(1.0, 0.95, 0.4)) -> void:
-	var fw := gp(from_grid)
 	var tw := gp(to_grid)
 	play_target_ping(to_grid, Color(1.0, 0.76, 0.20, 0.9))
-	_play_arrow_shaft(fw, tw)
-	await get_tree().create_timer(0.18).timeout
-	_play_impact_sparks(tw)
+	_play_impact_sparks(tw + Vector2(0, -30))
 	play_damage_number(to_grid, damage, dmg_color)
 
 
@@ -335,7 +332,7 @@ func play_cure(grid_pos: Vector2i) -> void:
 	# Rising green crosses
 	for i in range(10):
 		var cross := Label.new()
-		cross.text = ""
+		cross.text = "+"
 		cross.add_theme_font_size_override("font_size", 16)
 		cross.add_theme_color_override("font_color",
 			Color(0.3 + randf_range(0.0, 0.2), 1.0, 0.45 + randf_range(0.0, 0.3)))
@@ -588,3 +585,73 @@ func _screen_flash(world_pos: Vector2, color: Color, duration: float) -> void:
 	var tw := create_tween()
 	tw.tween_property(flash, "modulate:a", 0.0, duration)
 	tw.tween_callback(flash.queue_free)
+
+
+## A short, bounded lead-in. Only the sprite moves; feet, bars and shadow stay anchored.
+func present_action(actor: Unit, destination: Vector2i, kind: String, permitted: Callable = Callable()) -> void:
+	actor.face_action(destination)
+	if kind not in ["slash", "arrow"] and actor.set_cast_pose("anticipation"):
+		await get_tree().create_timer(0.20).timeout
+		if not is_instance_valid(actor) or not actor.is_inside_tree() or (permitted.is_valid() and not permitted.call()):
+			return
+		actor.set_cast_pose("release")
+		var orb := Polygon2D.new()
+		var points := PackedVector2Array()
+		for i in range(16): points.append(Vector2.from_angle(TAU * i / 16.0) * 6.0)
+		orb.polygon = points
+		orb.color = Color(0.65, 0.85, 1.0, 0.8)
+		orb.position = to_local(actor.cast_origin_world())
+		_spawn(orb)
+		var travel := create_tween()
+		travel.tween_property(orb, "position", gp(destination) + Vector2(0, -30), 0.22)
+		var elapsed := 0.0
+		while elapsed < 0.22:
+			await get_tree().process_frame
+			elapsed += get_process_delta_time()
+			if not is_instance_valid(actor) or not actor.is_inside_tree() or (permitted.is_valid() and not permitted.call()):
+				travel.kill()
+				break
+		if is_instance_valid(orb): orb.queue_free()
+		return
+	# Pose-driven melee keeps the visual foot anchor fixed; no whole-body lunge.
+	# Contact pose is applied only after ActionLifecycle grants contact.
+	if kind == "slash" and actor.set_melee_pose("anticipation"):
+		await get_tree().create_timer(0.20).timeout
+		return
+	var body := actor.visual as Node2D
+	var source := gp(actor.grid_pos) + Vector2(0, -30)
+	var target := gp(destination) + Vector2(0, -30)
+	var direction := (target - source).normalized()
+	var start := Vector2.ZERO
+	if body:
+		start = body.position
+		var prepare := actor.create_tween()
+		prepare.tween_property(body, "position", start - direction * 4.0, 0.10)
+		prepare.tween_property(body, "position", start + direction * (10.0 if kind == "slash" else 2.0), 0.10)
+		# Timer survives actor removal; a killed actor-owned tween never emits finished.
+		await get_tree().create_timer(0.20).timeout
+	else:
+		await get_tree().create_timer(0.20).timeout
+	if not is_instance_valid(actor):
+		return
+	if kind == "arrow":
+		_play_arrow_shaft(source, target)
+		await get_tree().create_timer(0.18).timeout
+	elif kind != "slash":
+		play_target_ping(actor.grid_pos, Color(0.5, 0.75, 1.0, 0.65))
+		var orb := Polygon2D.new()
+		var points := PackedVector2Array()
+		for i in range(16):
+			points.append(Vector2.from_angle(TAU * i / 16.0) * 6.0)
+		orb.polygon = points
+		orb.color = Color(0.65, 0.85, 1.0, 0.8)
+		orb.position = source
+		_spawn(orb)
+		var travel := create_tween()
+		travel.tween_property(orb, "position", target, 0.22).set_trans(Tween.TRANS_QUAD)
+		await get_tree().create_timer(0.22).timeout
+		if is_instance_valid(orb):
+			orb.queue_free()
+	if is_instance_valid(body):
+		var recover := actor.create_tween()
+		recover.tween_property(body, "position", start, 0.16).set_trans(Tween.TRANS_SINE)

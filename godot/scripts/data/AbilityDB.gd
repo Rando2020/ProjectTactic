@@ -506,4 +506,12 @@ const ABILITIES: Dictionary = {
 
 
 static func get_ability(id: String) -> Dictionary:
-	return ABILITIES.get(id, {})
+	var ability: Dictionary = ABILITIES.get(id, {}).duplicate(true)
+	if ability.is_empty():
+		return ability
+	var kind := str(ability.get("type", ""))
+	if not ability.has("target_type"):
+		ability["target_type"] = "self" if int(ability.get("range", 1)) == 0 else ("ally" if kind in ["buff", "heal"] else "enemy")
+	if not ability.has("aoe_type") and int(ability.get("aoe_radius", 0)) > 0:
+		ability["aoe_type"] = "radius"
+	return ability

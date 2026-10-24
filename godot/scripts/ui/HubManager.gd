@@ -407,7 +407,7 @@ func _buy_flag(flag_id: String, cost: Dictionary) -> void:
 	_build_ui()
 
 func _start_descent() -> void:
-	if _run_mgr:
+	if _run_mgr and not _run_mgr.is_run_active:
 		_run_mgr.start_new_run(_meta.selected_heat_level if _meta else 0)
 	get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 

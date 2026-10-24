@@ -56,70 +56,32 @@ func _setup_music() -> void:
 
 
 func _build_ui() -> void:
-	var root := MarginContainer.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("margin_left", 70)
-	root.add_theme_constant_override("margin_top", 54)
-	root.add_theme_constant_override("margin_right", 70)
-	root.add_theme_constant_override("margin_bottom", 54)
-	add_child(root)
-
-	var layout := HBoxContainer.new()
-	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(layout)
-
-	var title_column := VBoxContainer.new()
-	title_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_column.alignment = BoxContainer.ALIGNMENT_BEGIN
-	title_column.add_theme_constant_override("separation", 8)
-	layout.add_child(title_column)
-
-	var top_spacer := Control.new()
-	top_spacer.custom_minimum_size = Vector2(1, 78)
-	title_column.add_child(top_spacer)
-
-	var title_small := _make_label("THE", 58, GOLD_BRIGHT, HORIZONTAL_ALIGNMENT_CENTER)
-	title_small.custom_minimum_size = Vector2(1220, 66)
-	title_column.add_child(title_small)
-
-	var title := _make_label("APPOINTED", 126, GOLD_BRIGHT, HORIZONTAL_ALIGNMENT_CENTER)
-	title.custom_minimum_size = Vector2(1220, 136)
-	title_column.add_child(title)
-
-	var subtitle := _make_label("AS ABOVE", 46, TEXT, HORIZONTAL_ALIGNMENT_CENTER)
-	subtitle.custom_minimum_size = Vector2(1220, 62)
-	title_column.add_child(subtitle)
-
-	var menu_spacer := Control.new()
-	menu_spacer.custom_minimum_size = Vector2(90, 1)
-	layout.add_child(menu_spacer)
-
-	var menu_panel := PanelContainer.new()
-	menu_panel.custom_minimum_size = Vector2(430, 438)
-	menu_panel.add_theme_stylebox_override("panel", _panel_style(PANEL, PANEL_EDGE, 3, 14))
-	layout.add_child(menu_panel)
-
-	var menu_margin := MarginContainer.new()
-	menu_margin.add_theme_constant_override("margin_left", 28)
-	menu_margin.add_theme_constant_override("margin_top", 28)
-	menu_margin.add_theme_constant_override("margin_right", 28)
-	menu_margin.add_theme_constant_override("margin_bottom", 24)
-	menu_panel.add_child(menu_margin)
-
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	center.add_child(column)
+	column.add_child(_make_label("THE APPOINTED", 64, GOLD_BRIGHT, HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_make_label("TACTICAL DESCENT", 24, TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _panel_style(PANEL, PANEL_EDGE, 2, 14))
+	column.add_child(panel)
 	_button_box = VBoxContainer.new()
 	_button_box.add_theme_constant_override("separation", 10)
-	menu_margin.add_child(_button_box)
-
-	_add_menu_button("New Game", _on_new_game_pressed)
-	_add_menu_button("Continue", _on_continue_pressed)
-	_add_menu_button("Load Game", _on_load_pressed)
-	_add_menu_button("Options", _on_options_pressed)
+	panel.add_child(_button_box)
+	_add_menu_button("Play / Visit the Hearth", _on_new_game_pressed)
+	_add_menu_button("Continue Descent", _on_continue_pressed)
+	_buttons[-1].disabled = GameState.active_run == null
+	_add_menu_button("Practice Battle / Retry Enabled", _on_practice_pressed)
+	_add_menu_button("Play 3D Encounter / Practice", _on_rig_practice_pressed)
+	_add_menu_button("How to Play", _on_load_pressed)
+	_add_menu_button("Music On / Off", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
-	_add_menu_button("Exit", _on_exit_pressed)
-
-	_status_label = _make_label("Press Enter, Space, or A to select.", 17, DIM, HORIZONTAL_ALIGNMENT_CENTER)
-	_status_label.custom_minimum_size = Vector2(380, 36)
-	_button_box.add_child(_status_label)
+	_status_label = _make_label("Descent autosaves between encounters. Practice rewards are temporary; refreshing exits practice.", 18, TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	_status_label.custom_minimum_size = Vector2(640, 120)
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(_status_label)
 
 
 func _add_menu_button(label_text: String, callback: Callable) -> void:
@@ -157,17 +119,24 @@ func _on_new_game_pressed() -> void:
 
 func _on_continue_pressed() -> void:
 	_play_confirm()
-	_set_status("Continue will resume the latest run once saves are wired.")
+	if GameState.active_run:
+		music_player.stop()
+		get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
+	else:
+		_set_status("No saved descent yet. Visit the Hearth to begin.")
 
 
 func _on_load_pressed() -> void:
 	_play_confirm()
-	_set_status("Load Game is ready for the save-slot screen.")
+	_set_status("Deploy your party, then select a route. On your turn: M = Move, A = Attack, S = Ability, W = Wait. Hover for a forecast; click a highlighted tile to act. Move and act once each. Defeat all enemies to earn JP and unlock jobs.")
 
 
 func _on_options_pressed() -> void:
 	_play_confirm()
-	_set_status("Options will open audio and display settings next.")
+	var bus := AudioServer.get_bus_index("Music")
+	if bus >= 0:
+		AudioServer.set_bus_mute(bus, not AudioServer.is_bus_mute(bus))
+		_set_status("Music muted." if AudioServer.is_bus_mute(bus) else "Music enabled.")
 
 
 func _on_credits_pressed() -> void:
@@ -290,3 +259,15 @@ func _draw_border(rect: Rect2) -> void:
 	]
 	for corner in corners:
 		draw_circle(corner, 10.0, Color(GOLD.r, GOLD.g, GOLD.b, 0.76))
+
+
+func _on_practice_pressed() -> void:
+	if GameState.begin_practice():
+		music_player.stop()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+func _on_rig_practice_pressed() -> void:
+	if GameState.begin_practice():
+		GameState.practice_session["rig3d"] = true
+		music_player.stop()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")

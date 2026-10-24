@@ -43,11 +43,14 @@ const SPRITE_PATHS := {
 const DEFAULT_BATTLE_MUSIC_PATH := "res://assets/music/steel-march-echo-battle.wav"
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 
+var comparison_panel: CanvasLayer
 var _battle_music_player: AudioStreamPlayer
 
 
 func _ready() -> void:
+	GameState.start_practice_encounter()
 	_setup_camera()
+	get_viewport().size_changed.connect(_frame_battlefield_camera)
 	_start_battle_music()
 
 	var gs: Node = get_node_or_null("/root/GameState")
@@ -97,6 +100,10 @@ func _ready() -> void:
 		_apply_boon_battle_start_effects(gs, all_units)
 		gs.run_floor_reached = max(gs.run_floor_reached, gs.active_run.current_floor)
 	battle_manager.start_battle(_map_data, all_units)
+	if gs and not gs.practice_session.is_empty():
+		comparison_panel = preload("res://scripts/presentation/PracticeComparison.gd").new()
+		comparison_panel.manager = battle_manager
+		add_child(comparison_panel)
 
 	battle_manager.battle_won.connect(_on_battle_won)
 	battle_manager.battle_lost.connect(_on_battle_lost)
@@ -153,28 +160,24 @@ func _frame_battlefield_camera() -> void:
 		return
 	var bounds := tactical_grid.get_board_bounds().grow(48.0)
 	_camera_bounds = bounds.grow(260.0)
-	var play_area := Vector2(1020.0, 590.0)
-	var zoom_x: float = play_area.x / max(bounds.size.x, 1.0)
-	var zoom_y: float = play_area.y / max(bounds.size.y, 1.0)
-	_camera_zoom_value = clamp(min(zoom_x, zoom_y), 1.02, 1.60)
-	_camera_base_position = bounds.get_center()
-	_camera_base_position.y -= 12.0
+	var fit := preload("res://scripts/ui/BattleHudLayout.gd").camera_fit(bounds, get_viewport_rect().size)
+	_camera_zoom_value = fit.zoom
+	_camera_base_position = fit.position
 	_battle_camera.position = _camera_base_position
-	_battle_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
-	_clamp_camera_to_board()
+	_battle_camera.zoom = Vector2.ONE * _camera_zoom_value
 
 
 func _process(delta: float) -> void:
 	if not _battle_camera:
 		return
 	var direction := Vector2.ZERO
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+	if Input.is_key_pressed(KEY_LEFT):
 		direction.x -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+	if Input.is_key_pressed(KEY_RIGHT):
 		direction.x += 1.0
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+	if Input.is_key_pressed(KEY_UP):
 		direction.y -= 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+	if Input.is_key_pressed(KEY_DOWN):
 		direction.y += 1.0
 	if direction != Vector2.ZERO:
 		_battle_camera.position += direction.normalized() * CAMERA_PAN_SPEED * delta / max(_camera_zoom_value, 0.1)
@@ -215,11 +218,7 @@ func _set_camera_zoom(value: float) -> void:
 
 
 func _reset_camera() -> void:
-	if not _battle_camera:
-		return
-	var tween := create_tween()
-	tween.tween_property(_battle_camera, "position", _camera_base_position, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_set_camera_zoom(clamp(_camera_zoom_value, CAMERA_MIN_ZOOM, CAMERA_MAX_ZOOM))
+	_frame_battlefield_camera()
 
 
 func _clamp_camera_to_board() -> void:
@@ -229,35 +228,14 @@ func _clamp_camera_to_board() -> void:
 	_battle_camera.position.y = clamp(_battle_camera.position.y, _camera_bounds.position.y, _camera_bounds.end.y)
 
 
-func _on_turn_started(unit_id: String, _team: String) -> void:
-	var unit: Unit = battle_manager.units.get(unit_id)
-	if not unit or not _battle_camera:
-		return
-	var focus := tactical_grid.get_unit_focus_position(unit.grid_pos)
-	var target := _camera_base_position
-	var margin := Vector2(155.0 / _camera_zoom_value, 120.0 / _camera_zoom_value)
-	var delta := focus - _camera_base_position
-	if abs(delta.x) > margin.x:
-		target.x += sign(delta.x) * min(abs(delta.x) - margin.x, 110.0)
-	if abs(delta.y) > margin.y:
-		target.y += sign(delta.y) * min(abs(delta.y) - margin.y, 80.0)
-	var tween := create_tween()
-	tween.tween_property(_battle_camera, "position", target, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+func _on_turn_started(_unit_id: String, _team: String) -> void:
+	pass # Keep the full tactical board framed across turns.
 
+func _on_unit_moved(_unit_id: String, _from: Vector2i, _to: Vector2i) -> void:
+	pass
 
-func _on_unit_moved(_unit_id: String, _from: Vector2i, to: Vector2i) -> void:
-	if not _battle_camera:
-		return
-	var target := tactical_grid.get_unit_focus_position(to)
-	var tween := create_tween()
-	tween.tween_property(_battle_camera, "position", target, 0.24).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-
-
-func _on_unit_visual_position_changed(_unit_id: String, world_pos: Vector2) -> void:
-	if not _battle_camera:
-		return
-	_battle_camera.global_position = world_pos
-	_clamp_camera_to_board()
+func _on_unit_visual_position_changed(_unit_id: String, _world_pos: Vector2) -> void:
+	pass # Movement no longer overrides manual camera placement every frame.
 
 
 func _on_combat_resolved(result: Dictionary) -> void:
@@ -330,6 +308,10 @@ func _on_unit_defeated(unit_id: String) -> void:
 
 
 func _on_battle_won(rewards: Dictionary) -> void:
+	if not GameState.practice_session.is_empty():
+		if GameState.finish_practice(true, rewards):
+			get_tree().change_scene_to_file.call_deferred("res://scenes/ResultsScreen.tscn")
+		return
 	var player_ids: Array[String] = []
 	if battle_manager and is_instance_valid(battle_manager):
 		for uid in battle_manager.units.keys():
@@ -345,15 +327,13 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			for uid in player_ids:
 				var unit_ref = battle_manager.units.get(uid)
 				if unit_ref is Unit:
-					gs.unit_registry[uid] = {
+					gs.unit_registry[uid].merge({
 						"base_hp": unit_ref.unit_data.base_stats.hp if unit_ref.unit_data else 0,
 						"current_hp": unit_ref.hp,
 						"current_mp": unit_ref.mp,
 						"current_temper": unit_ref.temper,
 						"current_ether": unit_ref.ether,
-					}
-		# Track JP earned this run
-		gs.run_jp_earned += rewards.get("jp", 0)
+					}, true)
 		gs.apply_victory(_map_data.id, rewards, player_ids)
 
 		if gs.active_run:
@@ -372,9 +352,6 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			if rm and rm.is_run_active:
 				rm.award_stage_reward(floor_num, has_elite, is_boss)
 
-			battle_ui.show_spoils(rewards, loot)
-			await battle_ui.spoils_continue_requested
-
 			var completed_node: Dictionary = gs.active_run.get_current_node()
 			var node_type := str(completed_node.get("type", "battle"))
 			var loadout_xp: int = VowSigilSystem.xp_for_floor_clear(gs.active_run.current_floor, node_type)
@@ -386,10 +363,16 @@ func _on_battle_won(rewards: Dictionary) -> void:
 			if is_boss:
 				if rm and rm.is_run_active:
 					rm.end_run(true)
+				gs.save()
+				battle_ui.show_spoils(rewards, loot)
+				await battle_ui.spoils_continue_requested
 				get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
 				return
 
 			gs.active_run.complete_current_node()
+			gs.save()
+			battle_ui.show_spoils(rewards, loot)
+			await battle_ui.spoils_continue_requested
 			var next_nd: Dictionary = gs.active_run.get_current_node()
 			if next_nd.get("type","") == "boon_pick":
 				var bs := BoonSystem.new()
@@ -397,10 +380,16 @@ func _on_battle_won(rewards: Dictionary) -> void:
 				gs.pending_boon_offers = bs.generate_offers(gs.active_run.seed * 17 + gs.active_run.current_floor * 3, gs.active_run.current_floor, owned, gs.active_run.get_loadout_bonus())
 			get_tree().change_scene_to_file("res://scenes/StageSelect.tscn")
 			return
+	if gs:
+		gs.save()
 	battle_ui.show_spoils(rewards, [])
 	await battle_ui.spoils_continue_requested
 	get_tree().change_scene_to_file("res://scenes/ResultsScreen.tscn")
 func _on_battle_lost() -> void:
+	if not GameState.practice_session.is_empty():
+		if GameState.finish_practice(false):
+			get_tree().change_scene_to_file.call_deferred("res://scenes/ResultsScreen.tscn")
+		return
 	_fade_battle_music()
 	await get_tree().create_timer(0.85).timeout
 	var gs: Node = get_node_or_null("/root/GameState")
@@ -749,6 +738,16 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	stats.hp = hp;  stats.mp = mp;  stats.move = move;  stats.jump = jump
 	stats.speed = speed;  stats.physical = physical;  stats.magic = magic
 	stats.max_temper = max_temper;  stats.max_ether = max_ether
+	if faction == "player":
+		var gs := get_node_or_null("/root/GameState")
+		if gs:
+			var bonuses := JobTreeData.compute_stat_bonuses(gs.unit_registry.get(id, {}).get("job_jp", {}))
+			stats.hp += int(bonuses.max_hp)
+			stats.physical += int(bonuses.physical)
+			stats.magic += int(bonuses.magic)
+			stats.speed += int(bonuses.speed)
+			stats.max_temper += int(bonuses.max_temper)
+			stats.max_ether += int(bonuses.max_ether)
 	stats.attack_range_min = atk_range_min
 	stats.attack_range_max = atk_range_max
 
