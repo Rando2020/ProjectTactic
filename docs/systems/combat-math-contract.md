@@ -129,3 +129,22 @@ is separate), not invented random variance. Noncritical magical hits show one
 exact value. Haste/Slow application, removal and expiration refresh the visible
 timeline immediately without advancing CT. Defending expires at the unit's next
 begin_turn, allowing a fresh Defend choice on consecutive turns.
+
+## Resolved feedback vs projected potency
+
+`Unit.receive_damage` and both direct-damage resolver paths expose
+`applied_hp_damage`: HP actually removed by this hit, capped at the target's HP
+at the damage-application boundary, before signals, defeat callbacks or other
+on-hit effects. Misses return zero. `temper_damage` / `ether_damage` already
+report the corresponding armor loss.
+
+The existing `hp_damage` / `damage` fields keep their projected, potentially
+overkill values. Existing boon, lifesteal, hit-intensity and floating-number
+consumers are not rebalanced by this reporting change.
+
+Single-target spell logs and individual chain-hop logs consume the resolver
+outcome, not `base_power`. Feedback distinguishes MISS, damage immunity, actual
+HP lost and armor lost. Immunity to damage does not claim status immunity.
+An executed miss or immune hit still costs the same action and MP; rejected
+casts have no resolved outcome. `_execute_ability` retains its boolean admission
+contract while `_execute_ability_with_result` also returns that direct outcome.

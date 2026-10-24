@@ -11,6 +11,7 @@ from pathlib import Path
 CONTRACTS = [
     ('test_combat_formula.tscn', '0 fail'),
     ('test_combat_execution.tscn', '0 failures'),
+    ('test_spell_outcome_feedback.tscn', '0 failures'),
     ('test_turn_order.tscn', '0 failures'),
     ('test_progression_speed.tscn', '0 failures'),
     ('test_cancel_move_input.tscn', '0 failures'),

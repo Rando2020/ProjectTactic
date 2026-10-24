@@ -357,7 +357,7 @@ func animate_death() -> void:
 #  Combat
 
 func receive_damage(amount: int, damage_type: String) -> Dictionary:
-	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
+	var result := {"hp_damage": 0, "applied_hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
 	var projection: Dictionary
 	match damage_type:
 		"physical":
@@ -369,6 +369,9 @@ func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	result["hp_damage"] = int(projection.get("hp_damage", 0))
 	result["temper_damage"] = int(projection.get("temper_damage", 0))
 	result["ether_damage"] = int(projection.get("ether_damage", 0))
+	# Keep projected damage for existing potency/boon consumers. Feedback uses
+	# direct HP loss, capped here before defeat callbacks or secondary effects.
+	result["applied_hp_damage"] = mini(maxi(hp, 0), int(result["hp_damage"]))
 	hp = maxi(hp - int(result["hp_damage"]), 0)
 	temper = maxi(temper - int(result["temper_damage"]), 0)
 	ether = maxi(ether - int(result["ether_damage"]), 0)

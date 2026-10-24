@@ -1020,22 +1020,30 @@ func select_ability(ability_id: String) -> void:
 
 #  Ability execution
 
-## Execute ability against a single target.
-## skip_setup=true skips MP deduction, UI cleanup, and per-target log spam (used by AoE wrapper).
+## Preserve the admission contract for existing action/cost callers.
 func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		skip_setup: bool = false) -> bool:
+	var execution := await _execute_ability_with_result(caster, target, ability, skip_setup)
+	return bool(execution["executed"])
+
+
+## An executed miss/immune hit still spends the action. Outcome is the resolver's
+## direct result, not a later net HP delta (which could include other effects).
+## skip_setup=true leaves MP, presentation and target logging to the AoE wrapper.
+func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionary,
+		skip_setup: bool = false) -> Dictionary:
 	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
-		return false
+		return {"executed": false, "outcome": {}}
 	if not _silence_allows_ability(caster, ability):
-		return false
+		return {"executed": false, "outcome": {}}
 	if target and target.grid_pos != caster.grid_pos:
 		_face_toward(caster, target.grid_pos)
 	if not skip_setup:
 		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target):
-			return false
+			return {"executed": false, "outcome": {}}
 		# Revalidate after presentation: Silence may arrive after planning/admission.
 		if not _silence_allows_ability(caster, ability):
-			return false
+			return {"executed": false, "outcome": {}}
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
 		active_command = ""
@@ -1061,14 +1069,14 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 			_try_apply_status(target, se_data)
 		if not skip_setup:
 			log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
-		return true
+		return {"executed": true, "outcome": {}}
 
 	#  Heal
 	if spell_type == "cure" or ability.get("type", "") == "heal":
-		combat_resolver.resolve_heal(caster, target, base_power)
+		var heal_result := combat_resolver.resolve_heal(caster, target, base_power)
 		if not skip_setup:
 			log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
-		return true
+		return {"executed": true, "outcome": heal_result}
 
 	#  Physical
 	if spell_type == "physical":
@@ -1094,10 +1102,10 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		if target.hp <= 0:
 			_check_volatile_explosion(target)
 			_check_boon_on_kill(caster, target)
-		return true
+		return {"executed": true, "outcome": result}
 
 	#  Spell (elemental / dark / etc.)
-	combat_resolver.resolve_spell(caster, target, spell_type, base_power)
+	var spell_result := combat_resolver.resolve_spell(caster, target, spell_type, base_power)
 	# Terrain ignite regardless of skip_setup
 	if spell_type == "fire":
 		var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
@@ -1115,20 +1123,33 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 			if not skip_setup: _award_jp(caster, "boss_clear" if target.has_meta("is_boss") else "battle_clear")
 
 	if not skip_setup:
-		var affinity: float = 1.0
-		if target.unit_data:
-			affinity = target.unit_data.elemental_affinities.get(spell_type, 1.0)
-		var affinity_tag := ""
-		if affinity == 0.0:   affinity_tag = " [IMMUNE]"
-		elif affinity >= 1.5: affinity_tag = " [WEAK!]"
-		elif affinity > 1.0:  affinity_tag = " [weak]"
-		elif affinity < 1.0:  affinity_tag = " [resist]"
-		log_message.emit("%s casts %s on %s!%s" % [caster.display_name, ab_name, target.display_name, affinity_tag])
+		log_message.emit("%s casts %s on %s! %s" % [caster.display_name, ab_name, target.display_name, _combat_outcome_text(spell_result)])
 	# Status
 	var se_data2: Dictionary = ability.get("status_effect", {})
 	if not se_data2.is_empty():
 		_try_apply_status(target, se_data2)
-	return true
+	return {"executed": true, "outcome": spell_result}
+
+
+## Pure presentation of authoritative direct outcomes; never infer damage from power.
+static func _combat_outcome_text(outcome: Dictionary) -> String:
+	if outcome.get("missed", false):
+		return "MISS (0 HP)"
+	if not outcome.has("applied_hp_damage"):
+		return ""
+	var affinity: float = float(outcome.get("affinity", 1.0))
+	if affinity == 0.0:
+		return "IMMUNE to damage (0 HP)"
+	var hp_loss: int = int(outcome["applied_hp_damage"])
+	var text := "-%d HP" % hp_loss if hp_loss > 0 else "0 HP"
+	for armor in [["temper_damage", "Temper"], ["ether_damage", "Ether"]]:
+		var loss: int = int(outcome.get(armor[0], 0))
+		if loss > 0:
+			text += ", -%d %s" % [loss, armor[1]]
+	if affinity >= 1.5: text += " [WEAK!]"
+	elif affinity > 1.0: text += " [weak]"
+	elif affinity < 1.0: text += " [resist]"
+	return text
 
 
 ## Execute an AoE ability centred on a grid tile.
@@ -1162,11 +1183,12 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 			var tgt: Unit = chain_targets[i]
 			var chain_ab  := ability.duplicate()
 			chain_ab["base_power"] = int(float(ability.get("base_power", 100)) * power_mult)
-			await _execute_ability(caster, tgt, chain_ab, true)  # skip_setup on hops
-			if i == 0:
-				log_message.emit("%s - %d dmg" % [tgt.display_name, chain_ab["base_power"]])
-			else:
-				log_message.emit("arcs to %s - %d dmg" % [tgt.display_name, chain_ab["base_power"]])
+			var execution := await _execute_ability_with_result(caster, tgt, chain_ab, true)
+			if execution["executed"]:
+				var outcome_text := _combat_outcome_text(execution["outcome"])
+				if not outcome_text.is_empty():
+					var prefix := "" if i == 0 else "arcs to "
+					log_message.emit("%s%s: %s" % [prefix, tgt.display_name, outcome_text])
 			power_mult *= (1.0 - falloff)
 		return true
 
