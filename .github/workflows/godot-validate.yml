@@ -9,7 +9,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  GODOT_VERSION: "4.6.2"
+  GODOT_VERSION: "4.6.3"
 
 jobs:
   godot-validate:
@@ -19,6 +19,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Hydrate current Godot runtime assets only
+        run: |
+          git lfs fetch --include='godot/**' --exclude='' origin HEAD
+          git lfs checkout 'godot/**'
 
       - name: Validate narrative data contract
         run: python tools/check_recurrence_story.py
@@ -53,8 +58,9 @@ jobs:
       - name: Validate responsive battle HUD layout
         run: godot --headless --path godot --script res://tests/test_battle_hud_layout.gd
 
-      - name: Validate playable battle and checkpoint loop
+      - name: Validate gameplay, presentation, input, and readable UI contracts
         run: |
+          python -m unittest discover -s tools -p test_check_playable_loop.py
           python tools/check_playable_loop.py
 
       - name: Export Godot Web build

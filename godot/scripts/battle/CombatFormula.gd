@@ -91,7 +91,7 @@ static func calculate_physical_attack(attacker: Unit, target: Unit,
 		"hit_pct": accuracy.get("hit_pct", BASE_ATTACK_HIT),
 		"crit_pct": crit.get("crit_pct", BASE_CRIT_CHANCE),
 		"crit_mult": crit.get("crit_mult", CRIT_DAMAGE_MULT),
-		"crit_damage": int(round(float(armor.get("hp_damage", 0)) * float(crit.get("crit_mult", CRIT_DAMAGE_MULT)))),
+		"crit_damage": int(project_physical_armor_result(target, int(round(float(damage_before_armor) * float(crit.get("crit_mult", CRIT_DAMAGE_MULT))))).get("hp_damage", 0)),
 		"affinity": 1.0,
 		"affinity_label": "",
 		"explain": _damage_explain("Physical", raw, attack_mult, resistance, context, 1.0, armor, accuracy, crit),
@@ -112,7 +112,8 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 	var armor := project_magical_armor_result(target, damage_before_armor)
 	var context := _context(caster, target, {}, {})
 	var accuracy := calculate_accuracy(DAMAGE_KIND_MAGICAL, caster, target, context, mods)
-	var crit := calculate_crit(caster, target, context, {"base_crit": mods.get("base_crit", 0), "crit_bonus": mods.get("crit_bonus", 0)})
+	# Spell resolution does not roll critical hits. Do not advertise positional crits.
+	var crit := {"crit_pct": 0, "crit_mult": 1.0}
 
 	return {
 		"kind": DAMAGE_KIND_MAGICAL,
@@ -132,7 +133,7 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 		"hit_pct": accuracy.get("hit_pct", BASE_SPELL_HIT),
 		"crit_pct": crit.get("crit_pct", 0),
 		"crit_mult": crit.get("crit_mult", CRIT_DAMAGE_MULT),
-		"crit_damage": int(round(float(armor.get("hp_damage", 0)) * float(crit.get("crit_mult", CRIT_DAMAGE_MULT)))),
+		"crit_damage": int(armor.get("hp_damage", 0)),
 		"height_mult": 1.0,
 		"height_delta": 0,
 		"flank_mult": 1.0,
@@ -171,8 +172,8 @@ static func project_physical_armor_result(target: Unit, incoming_damage: int) ->
 
 static func project_magical_armor_result(target: Unit, incoming_damage: int) -> Dictionary:
 	var effective := maxi(0, incoming_damage)
-	if target and target.has_status("protect"):
-		effective = int(round(float(effective) * PROTECT_DAMAGE_MULT))
+	if target and target.has_status("defending"):
+		effective = int(round(float(effective) * 0.5))
 	var ether := int(target.ether if target else 0)
 	var absorbed := mini(ether, int(round(float(effective) * MAGICAL_ETHER_ABSORB_RATIO)))
 	var hp_damage := 0

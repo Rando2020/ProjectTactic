@@ -345,7 +345,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 		var formula := {}
 		if spell_type == "physical":
-			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
+			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
 		else:
 			var base_power: int = int(ability.get("base_power", 100))
 			var bonuses: Dictionary = RunBonusesUtil.for_current_run()
@@ -919,7 +919,10 @@ func select_command(command: String) -> void:
 		command_hint_changed.emit("Choose Move or Wait.")
 		return
 	active_command = command
-	tactical_grid.clear_target_lock()
+	selected_ability_id = ""
+	tactical_grid.clear_highlights()
+	action_preview_changed.emit({})
+	_emit_action_state()
 	match command:
 		"move":
 			command_hint_changed.emit("Move: click a blue GO tile.")
@@ -983,6 +986,9 @@ func select_ability(ability_id: String) -> void:
 		return
 	selected_ability_id = ability_id
 	active_command = "ability_target"
+	tactical_grid.clear_highlights()
+	action_preview_changed.emit({})
+	_emit_action_state()
 	command_hint_changed.emit("%s: click a purple CAST tile or target." % ability.get("display_name", ability_id))
 	var range_val: int = ability.get("range", 1)
 	var target_type: String = ability.get("target_type", "enemy")
@@ -1052,7 +1058,7 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
 		var ab_vfx: String = ability.get("vfx_mode", "slash")
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx)
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power})
 		if not skip_setup:
 			if result.get("missed", false):
 				log_message.emit("%s swings but misses! (blind)" % caster.display_name)
@@ -1862,7 +1868,8 @@ func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Diction
 func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> int:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	if spell_type == "physical":
-		return _predict_attack_damage(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
+		var physical := CombatFormula.calculate_physical_attack(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
+		return int(physical.get("hp_damage", 0))
 	var base_power: int = int(ability.get("base_power", 100))
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
@@ -2289,6 +2296,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	if ticket == 0:
 		return false
 	is_resolving_action = true
+	_emit_action_state()
 	var effects := get_node_or_null("/root/VFX") as VFXManager
 	if effects:
 		await effects.present_action(actor, destination, kind, func() -> bool: return action_lifecycle.presentation_valid(ticket))

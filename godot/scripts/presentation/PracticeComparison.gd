@@ -1,6 +1,8 @@
 ## Local-only practice comparison controls. Never writes canonical save state.
 extends CanvasLayer
 
+const UISettings := preload("res://scripts/ui/UISettings.gd")
+
 const SAMPLE_LIMIT := 180
 var manager: BattleManager
 var toggle: Button
@@ -30,6 +32,7 @@ func _ready() -> void:
 	box.add_child(options)
 	reveal.pressed.connect(func() -> void: options.visible = not options.visible)
 	box = options
+	UISettings.shared().add_selector(box)
 	toggle = Button.new()
 	toggle.custom_minimum_size.y = 36
 	toggle.pressed.connect(switch_mode)
@@ -53,6 +56,9 @@ func _ready() -> void:
 	box.add_child(reset)
 	reset_samples()
 	_update_controls()
+	UISettings.shared().changed.connect(_apply_ui_size)
+	get_viewport().size_changed.connect(_apply_ui_size)
+	_apply_ui_size()
 
 func can_switch() -> bool:
 	return is_instance_valid(manager) and not manager.is_resolving_action and manager.current_phase == BattleManager.Phase.PLAYER_TURN and not GameState.practice_session.is_empty()
@@ -156,3 +162,7 @@ func _update_controls() -> void:
 		if is_instance_valid(view) and not view.visible:
 			terrain_toggle.text = "Terrain fallback (missing mesh) → Disable 3D"
 		terrain_toggle.disabled = not can_switch()
+
+
+func _apply_ui_size() -> void:
+	UISettings.shared().apply_tree(self, get_viewport().get_visible_rect().size)

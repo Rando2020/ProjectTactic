@@ -358,25 +358,20 @@ func animate_death() -> void:
 
 func receive_damage(amount: int, damage_type: String) -> Dictionary:
 	var result := {"hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
+	var projection: Dictionary
 	match damage_type:
 		"physical":
-			var effective: int = int(amount * 0.7) if has_status("protect") else amount
-			var absorbed: int = min(temper, int(effective * 0.35))
-			temper = max(temper - absorbed, 0)
-			var hp_dmg: int = max(1, effective - int(absorbed * 0.25))
-			hp = max(hp - hp_dmg, 0)
-			result["hp_damage"] = hp_dmg
-			result["temper_damage"] = absorbed
+			projection = CombatFormula.project_physical_armor_result(self, amount)
 		"magical":
-			var absorbed: int = min(ether, int(amount * 0.35))
-			ether = max(ether - absorbed, 0)
-			var hp_dmg: int = max(1, amount - int(absorbed * 0.25))
-			hp = max(hp - hp_dmg, 0)
-			result["hp_damage"] = hp_dmg
-			result["ether_damage"] = absorbed
+			projection = CombatFormula.project_magical_armor_result(self, amount)
 		_:
-			hp = max(hp - amount, 0)
-			result["hp_damage"] = amount
+			projection = {"hp_damage": maxi(0, amount)}
+	result["hp_damage"] = int(projection.get("hp_damage", 0))
+	result["temper_damage"] = int(projection.get("temper_damage", 0))
+	result["ether_damage"] = int(projection.get("ether_damage", 0))
+	hp = maxi(hp - int(result["hp_damage"]), 0)
+	temper = maxi(temper - int(result["temper_damage"]), 0)
+	ether = maxi(ether - int(result["ether_damage"]), 0)
 	hp_changed.emit(unit_id, hp, unit_data.base_stats.hp)
 	temper_changed.emit(unit_id, temper, unit_data.base_stats.max_temper)
 	_update_hp_bar()
@@ -563,6 +558,10 @@ func set_active(is_active: bool) -> void:
 #  Turn lifecycle
 
 func begin_turn() -> void:
+	# Defend promises protection only until this unit's next turn.
+	# Clear it here so a consecutive Defend can establish a fresh waiting interval.
+	if has_status("defending"):
+		remove_status("defending")
 	has_acted = false
 	has_moved = false
 	if _body_rect:
@@ -580,7 +579,10 @@ func end_turn() -> void:
 func get_effective_speed() -> int:
 	var base_speed: int = unit_data.base_stats.speed if unit_data else 6
 	if has_status("haste"): return int(base_speed * 1.5)
-	if has_status("slow"): return int(base_speed * 0.5)
+	if has_status("slow"):
+		var slowed := int(base_speed * 0.5)
+		# Positive-speed units must reach an end_turn for Slow to expire.
+		return maxi(1, slowed) if base_speed > 0 else slowed
 	return base_speed
 
 
@@ -629,10 +631,18 @@ func _update_status_icons() -> void:
 func enable_3d_prototype() -> void:
 	if is_instance_valid(_rig3d):
 		return
-	_rig3d = preload("res://scripts/presentation/Humanoid3D.gd").new()
-	_rig3d.skin_id = str(get_meta("archetype_id", unit_id))
+	var archetype := str(get_meta("archetype_id", unit_id))
+	var imported_kael := archetype == "kael"
+	_rig3d = preload("res://scripts/presentation/KaelRigPresentation.gd").new() if imported_kael else preload("res://scripts/presentation/Humanoid3D.gd").new()
+	_rig3d.skin_id = archetype
 	_rig3d.z_index = 10
 	add_child(_rig3d)
+	if imported_kael and not _rig3d.is_available():
+		# Failed imports must leave the original sprite visible, not an empty unit.
+		remove_child(_rig3d)
+		_rig3d.queue_free()
+		_rig3d = null
+		return
 	set_facing(facing)
 	if is_instance_valid(_sprite):
 		_sprite.hide()

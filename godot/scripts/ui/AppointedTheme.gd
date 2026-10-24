@@ -20,7 +20,7 @@ static func panel() -> StyleBoxFlat:
 
 static func build() -> Theme:
 	var theme := Theme.new()
-	theme.default_font_size = 16
+	theme.default_font_size = 18
 	theme.set_color("font_color", "Label", PAPER)
 	theme.set_stylebox("panel", "PanelContainer", panel())
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:

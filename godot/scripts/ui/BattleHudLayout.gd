@@ -12,8 +12,9 @@ const COMMAND_BUTTON_COUNT := 4
 
 
 static func right_sidebar_rect(viewport_size: Vector2) -> Rect2:
-	var panel_width: float = RIGHT_PANEL_COMPACT_WIDTH if viewport_size.x < RIGHT_PANEL_BREAKPOINT else RIGHT_PANEL_WIDE_WIDTH
-	var panel_height: float = minf(RIGHT_PANEL_MAX_HEIGHT, maxf(0.0, viewport_size.y - RIGHT_PANEL_TOP * 2.0))
+	var factor: float = preload("res://scripts/ui/UISettings.gd").shared().effective_scale(viewport_size)
+	var panel_width: float = minf(440.0 * factor, maxf(280.0, viewport_size.x - 24.0))
+	var panel_height: float = maxf(0.0, viewport_size.y - RIGHT_PANEL_TOP * 2.0)
 	var panel_x: float = maxf(RIGHT_PANEL_MARGIN, viewport_size.x - panel_width - RIGHT_PANEL_MARGIN)
 	return Rect2(panel_x, RIGHT_PANEL_TOP, panel_width, panel_height)
 

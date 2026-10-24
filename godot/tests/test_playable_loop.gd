@@ -269,7 +269,7 @@ func _run_practice_checks(gs: Node, rm: Node) -> void:
 		for cycle in range(2):
 			check(panel.switch_mode() and kael._rig3d == null and kael._sprite.visible, "Switch restores sprite and detaches viewport")
 			check(panel.switch_mode() and is_instance_valid(kael._rig3d) and not kael._sprite.visible, "Switch rebuilds one active rig")
-		check(is_equal_approx(kael._rig3d.target_yaw, -PI / 2), "Mode switch retains unit facing")
+		check((kael._rig3d.model.global_basis * Vector3.BACK).dot(Vector3.RIGHT) > 0.999, "Mode switch retains imported Kael east facing")
 		check(kael.hp == prior_hp and kael.grid_pos == prior_grid, "Comparison preserves combat resources and tile")
 		panel.reset_samples()
 		for sample in range(200): panel.record_interval(10.0)
@@ -394,15 +394,22 @@ func _check_melee_poses(manager: BattleManager) -> void:
 
 func _check_shared_rigs(manager: BattleManager) -> void:
 	var actors: Array[Unit] = []
-	for id in ["kael", "zane"]:
+	# All facades obey the same gameplay phases; only the two legacy appearances
+	# still share procedural joint motion. Kael owns a distinct imported skeleton.
+	for id in ["kael", "zane", "void_cultist"]:
 		var actor := Unit.new()
-		actor.unit_data = manager.units[id].unit_data
+		actor.unit_data = manager.units["kael" if id == "kael" else "zane"].unit_data
+		actor.set_meta("archetype_id", id)
 		add_child(actor)
 		actor.enable_3d_prototype()
 		actors.append(actor)
-		check(actor._rig3d.rig.get_bone_count() == 11, "Shared rig has expected humanoid joints")
+		if id == "kael":
+			check(actor._rig3d.skeleton.get_bone_count() == 16, "Imported Kael retains tested skeleton")
+			check(actor._rig3d.viewport.size == Vector2i(160,160), "Kael uses controlled pixel source")
+		else:
+			check(actor._rig3d.rig.get_bone_count() == 11, "Legacy rig retains humanoid joints")
+			check(actor._rig3d.viewport.size == Vector2i(192,192), "Legacy viewport retains bounded render size")
 		check(not actor._sprite.visible, "Prototype preserves but hides original sprite")
-		check(actor._rig3d.viewport.size == Vector2i(192,192), "Viewport uses bounded render size")
 		var base_pos: Vector2 = actor._rig3d.position
 		var committed: bool = await manager._present_action(actor, actor.grid_pos + Vector2i(1,0), "slash")
 		check(committed and actor._rig3d.state == "contact", "Rig slash reaches authoritative contact")
@@ -421,16 +428,16 @@ func _check_shared_rigs(manager: BattleManager) -> void:
 		check(actor._rig3d.state == "idle", "Hit reaction recovers")
 	for actor in actors:
 		actor._rig3d.play("anticipation")
-		actor._rig3d._sample(0.16)
-	check(actors[0]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(actors[1]._rig3d.rig.get_bone_pose_rotation(3)), "Both appearances reuse identical sampled sword motion")
-	check(not actors[0]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(Quaternion.IDENTITY), "Anticipation actually rotates the shared shoulder bone")
-	check(actors[0]._rig3d.get_script() == actors[1]._rig3d.get_script(), "Two skins share exactly one animation implementation")
-	check(actors[0]._rig3d.skin_id != actors[1]._rig3d.skin_id, "Shared rig uses distinct appearance definitions")
+		actor._rig3d._process(0.16)
+	check(actors[1]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(actors[2]._rig3d.rig.get_bone_pose_rotation(3)), "Legacy appearances retain shared sword motion")
+	check(not actors[1]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(Quaternion.IDENTITY), "Legacy anticipation rotates shoulder bone")
+	check(actors[0]._rig3d.player.current_animation == "slash" and actors[0]._rig3d.player.current_animation_position > 0.0, "Imported Kael samples authored windup")
+	check(actors[1]._rig3d.skin_id != actors[2]._rig3d.skin_id, "Legacy rig retains distinct appearance definitions")
 	for actor in actors:
 		actor.animate_death()
 		check(actor._rig3d.state == "defeat", "Death drives shared defeat animation")
 	await get_tree().create_timer(0.9).timeout
-	check(not is_instance_valid(actors[0]) and not is_instance_valid(actors[1]), "Defeat cleans viewports and rigs")
+	check(not is_instance_valid(actors[0]) and not is_instance_valid(actors[1]) and not is_instance_valid(actors[2]), "Defeat cleans imported and legacy viewports")
 
 func _check_casting_and_frame(manager: BattleManager) -> void:
 	var layout = preload("res://scripts/ui/BattleHudLayout.gd")
@@ -510,7 +517,7 @@ func _check_terrain_3d(panel: Node, manager: BattleManager) -> void:
 	for cycle in range(2):
 		check(panel.switch_quality(), "Quality switches during idle turn")
 		check(view._viewport.size == Vector2i(3072, 2048), "High terrain doubles sampling")
-		check(rig.viewport.size == Vector2i(384, 384), "High character doubles sampling")
+		check(rig.viewport.size == Vector2i(160, 160), "High quality preserves Kael pixel source grid")
 		check(view.projected_tile_center(Vector2i(7, 0)).distance_to(original) < 0.25, "Quality preserves terrain projection")
 		check(rig.hand_world_position().distance_to(hand) < 0.25, "Quality preserves hand attachment")
 		check(panel.switch_quality() and view._viewport.size == view.render_size, "Standard restores bounded sampling")

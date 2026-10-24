@@ -9,8 +9,8 @@ signal combat_resolved(result: Dictionary)
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
-		vfx_mode: String = "slash", is_counter: bool = false) -> Dictionary:
-	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target)
+		vfx_mode: String = "slash", is_counter: bool = false, mods: Dictionary = {}) -> Dictionary:
+	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target, mods)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {

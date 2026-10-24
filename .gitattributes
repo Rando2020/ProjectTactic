@@ -26,3 +26,10 @@ godot/assets/environments/forgotten-field/props/*-v01.png -filter -diff -merge -
 godot/assets/ui/tactical-overlays/*-v01.png -filter -diff -merge -text
 godot/assets/ui/unit-indicators/*-v01.png -filter -diff -merge -text
 godot/assets/characters/*-v01.png -filter -diff -merge -text
+
+# Exact recovered runtime originals; avoid depending on unavailable legacy LFS.
+godot/assets/backgrounds/hub-background-last-hearth.png -filter -diff -merge -text
+godot/assets/generated/icons/run-node-battle-icon.png -filter -diff -merge -text
+godot/assets/generated/icons/run-node-boss-icon.png -filter -diff -merge -text
+godot/assets/generated/icons/run-node-elite-icon.png -filter -diff -merge -text
+godot/assets/generated/icons/run-node-wanderer-icon.png -filter -diff -merge -text

@@ -1,6 +1,9 @@
-extends SceneTree
+extends Node
 
-func _initialize() -> void:
+# Run as a scene so GameState is registered before terrain scripts compile:
+# godot --headless --path godot res://tests/test_terrain_cleanup.tscn
+
+func _ready() -> void:
 	call_deferred("run")
 
 func run() -> void:
@@ -11,7 +14,7 @@ func run() -> void:
 	var units := Node2D.new()
 	units.name = "UnitLayer"
 	grid.add_child(units)
-	root.add_child(grid)
+	get_tree().root.add_child(grid)
 	var map := MapData.new()
 	map.map_width = 2
 	map.map_height = 2
@@ -20,14 +23,23 @@ func run() -> void:
 	for cycle in range(10):
 		grid.set_terrain_3d(true)
 		var view = grid.terrain_view
-		assert(view.visible)
+		if not _expect(is_instance_valid(view) and view.visible, "Enabled terrain view must be visible"):
+			return
 		grid.redraw_base_tiles()
-		await process_frame
+		await get_tree().process_frame
 		grid.set_terrain_3d(false)
-		assert(not is_instance_valid(view))
-		await process_frame
+		if not _expect(not is_instance_valid(view), "Disabled terrain view must be freed"):
+			return
+		await get_tree().process_frame
 	grid.free()
 	map = null
-	await process_frame
+	await get_tree().process_frame
 	print("Terrain cleanup: 10 enable/redraw/disable cycles passed")
-	quit()
+	get_tree().quit(0)
+
+
+func _expect(condition: bool, message: String) -> bool:
+	if not condition:
+		push_error(message)
+		get_tree().quit(1)
+	return condition

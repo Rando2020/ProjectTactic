@@ -746,6 +746,10 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 			stats.physical += int(bonuses.physical)
 			stats.magic += int(bonuses.magic)
 			stats.speed += int(bonuses.speed)
+			# Progression may slow a mobile actor, never remove all future turns.
+			# Preserve explicit nonpositive configured-speed behavior.
+			if speed > 0:
+				stats.speed = maxi(1, stats.speed)
 			stats.max_temper += int(bonuses.max_temper)
 			stats.max_ether += int(bonuses.max_ether)
 	stats.attack_range_min = atk_range_min

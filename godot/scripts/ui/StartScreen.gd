@@ -1,6 +1,8 @@
 class_name StartScreen
 extends Control
 
+const UISettings := preload("res://scripts/ui/UISettings.gd")
+
 const HUB_SCENE := "res://scenes/HubScene.tscn"
 const FONT_TITLE := preload("res://assets/fonts/TrajanPro-Bold.otf")
 const FONT_BODY := preload("res://assets/fonts/Cinzel-Regular.ttf")
@@ -24,6 +26,9 @@ var _pulse: float = 0.0
 func _ready() -> void:
 	_setup_music()
 	_build_ui()
+	UISettings.shared().changed.connect(_apply_ui_size)
+	get_viewport().size_changed.connect(_apply_ui_size)
+	_apply_ui_size()
 	call_deferred("_focus_first_button")
 
 
@@ -58,7 +63,13 @@ func _setup_music() -> void:
 func _build_ui() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.follow_focus = true
+	add_child(scroll)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
 	center.add_child(column)
@@ -78,6 +89,7 @@ func _build_ui() -> void:
 	_add_menu_button("How to Play", _on_load_pressed)
 	_add_menu_button("Music On / Off", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
+	UISettings.shared().add_selector(_button_box)
 	_status_label = _make_label("Descent autosaves between encounters. Practice rewards are temporary; refreshing exits practice.", 18, TEXT, HORIZONTAL_ALIGNMENT_CENTER)
 	_status_label.custom_minimum_size = Vector2(640, 120)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -271,3 +283,7 @@ func _on_rig_practice_pressed() -> void:
 		GameState.practice_session["rig3d"] = true
 		music_player.stop()
 		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+
+func _apply_ui_size() -> void:
+	UISettings.shared().apply_tree(self, get_viewport().get_visible_rect().size)

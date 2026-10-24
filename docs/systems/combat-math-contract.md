@@ -22,7 +22,7 @@ temper_damage = min(current_temper, round(incoming * 0.35))
 hp_damage = max(1, incoming - round(temper_damage * 0.25))
 ```
 
-Protection states reduce incoming before armor projection.
+Protect reduces physical incoming to 70%; Defend reduces physical and magical incoming to 50%. Both round before armor projection and stack for physical damage. True damage and DoT bypass these defenses. Zero incoming stays zero HP/armor loss. Unit.receive_damage consumes these same projections, including rounding.
 
 ## Magical Damage
 
@@ -86,7 +86,7 @@ high ground: +3%
 crit damage: x1.50 incoming damage before armor projection
 ```
 
-Spells default to no crit unless an ability or boon explicitly opts in.
+Spells do not roll crits in the current resolver; forecasts therefore show 0% crit, including from the side/back. Physical critical forecasts multiply incoming before projecting armor, just like resolution.
 
 ## Elemental Affinity
 
@@ -109,3 +109,23 @@ Elemental affinity is a multiplier on resisted magical damage.
 - `CombatResolver.gd` applies formula output for real attacks and spells.
 - `BattleManager.gd` enemy prediction now uses the same formula path.
 - `test_combat_formula.gd` covers first-pass physical, armor, height/facing, and elemental cases.
+## Physical ability power and initiative
+
+Physical abilities use `Physical * (BasePower / 100)` in the existing formula,
+including resistance, height, facing and armor. Basic attacks/counters retain
+`Physical * 1.20`. ForecastCalculator, enemy prediction and real ability
+resolution all pass the same declared `base_power`; this is not a new balance
+multiplier layered over the basic attack.
+
+TurnOrder live activation and prediction share integer CT ticks. Already-ready
+units act before time advances. Ready units are ordered by effective speed,
+then stable roster order. Each activation subtracts 100 CT, preserving overflow.
+Prediction copies CT and effective speed and does not mutate units; it assumes
+no future actions, deaths, status expiration or speed changes. A status change
+requires a fresh projection, not a promise about unknown future decisions.
+
+Displayed damage ranges contain exact normal and critical outcomes (hit chance
+is separate), not invented random variance. Noncritical magical hits show one
+exact value. Haste/Slow application, removal and expiration refresh the visible
+timeline immediately without advancing CT. Defending expires at the unit's next
+begin_turn, allowing a fresh Defend choice on consecutive turns.

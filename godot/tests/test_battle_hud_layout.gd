@@ -7,11 +7,11 @@ var failures := 0
 
 
 func _initialize() -> void:
-	_check_layout(Vector2(3840, 2160), 360.0)
-	_check_layout(Vector2(1920, 1080), 360.0)
-	_check_layout(Vector2(1600, 900), 360.0)
-	_check_layout(Vector2(1366, 768), 320.0)
-	_check_layout(Vector2(1280, 720), 320.0)
+	_check_layout(Vector2(3840, 2160), 660.0)
+	_check_layout(Vector2(1920, 1080), 550.0)
+	_check_layout(Vector2(1600, 900), 550.0)
+	_check_layout(Vector2(1366, 768), 440.0)
+	_check_layout(Vector2(1280, 720), 440.0)
 	if assertions == 0:
 		push_error("Battle HUD layout contract executed no assertions")
 		quit(1)
@@ -28,7 +28,7 @@ func _check_layout(viewport_size: Vector2, expected_width: float) -> void:
 	var rect: Rect2 = BattleHudLayout.right_sidebar_rect(viewport_size)
 	var command_button_width: float = BattleHudLayout.command_button_width(rect.size.x)
 	_expect_eq(rect.size.x, expected_width, "%dx%d selects expected rail width" % [viewport_size.x, viewport_size.y])
-	_expect_true(rect.position.x >= viewport_size.x * 0.70, "%dx%d keeps rail in rightmost 30 percent" % [viewport_size.x, viewport_size.y])
+	_expect_true(rect.position.x >= viewport_size.x * 0.64, "%dx%d keeps rail in rightmost 36 percent" % [viewport_size.x, viewport_size.y])
 	_expect_true(rect.end.x <= viewport_size.x, "%dx%d keeps rail inside viewport width" % [viewport_size.x, viewport_size.y])
 	_expect_true(rect.end.y <= viewport_size.y, "%dx%d keeps rail inside viewport height" % [viewport_size.x, viewport_size.y])
 	_expect_true(rect.size.y > 0.0, "%dx%d keeps a usable rail height" % [viewport_size.x, viewport_size.y])
