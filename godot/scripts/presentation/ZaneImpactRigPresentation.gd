@@ -27,6 +27,9 @@ var _settle_sample := 0.0
 var _step_handles: Array[AudioStreamPlayer] = []
 
 func _init() -> void:
+	# VFX lives in an earlier autoload subtree. Sample this presentation-only
+	# pose/bones before its default-priority charge follower, not one frame later.
+	process_priority = -1
 	skin_id = "zane"
 	asset_path = MODEL
 	cast_socket_name = "Kael_v2_cast_socket"

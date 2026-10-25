@@ -82,6 +82,12 @@ func dispose(battle: Variant) -> void:
 		check(not is_instance_valid(reference.get_ref()), "all action owners and voices retire within 0.70s plus a frame")
 
 func run() -> void:
+	if "--socket-frame-probe" in OS.get_cmdline_user_args():
+		VFX.child_entered_tree.connect(observe)
+		await fire_socket_frame_contract()
+		print("Fire socket frame regression: %d checks, %d failures" % [checks,failures.size()])
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	if "--travel-observer-probe" in OS.get_cmdline_user_args():
 		VFX.child_entered_tree.connect(observe)
 		await travel_observer_frame_delta_contract()
@@ -147,6 +153,7 @@ func run() -> void:
 		VFX.child_entered_tree.connect(observe)
 		await outcome_label_cluster_contract()
 		await outcome_label_mixed_contract()
+		await fire_socket_frame_contract()
 		await fire_fixtures()
 		await sword_fixtures()
 		await primary_counter_input()
@@ -884,3 +891,53 @@ func travel_observer_frame_delta_contract() -> void:
 	check(not await manager._execute_ability(caster,target,AbilityDB.get_ability("fire")),"observed-flight interruption remains a rejected precontact action")
 	check(outcomes.is_empty() and caster.mp == 100,"observed-flight interruption leaves no result or resource spend")
 	await dispose(battle)
+
+
+func fire_socket_frame_contract() -> void:
+	# A former same-priority VFX-before-rig order lagged one full pose. Catch it
+	# with the actual action owner and imported hand, not a manual _process call
+	# or a prior-frame socket comparison. Stable controls must still agree.
+	for stable in [true, false]:
+		var battle := make_battle()
+		var manager: BattleManager = battle.battle_manager
+		var caster: Unit = manager.units.zane
+		var rig = caster._rig3d
+		var geometry := [caster.position, caster.scale, rig.output.position, rig.output.scale,
+			rig.camera.transform, rig.camera.size, rig.viewport.size]
+		var original_time_scale := Engine.time_scale
+		if stable: rig.set_process(false) # Deliberate stationary-pose control only.
+		var probe := preload("res://tests/fixtures/FireSocketFrameObserver.gd").new()
+		probe.actor = caster
+		probe.slow_frame_ms = 75 if not stable else 0
+		add_child(probe)
+		VFX.child_entered_tree.connect(probe.observe)
+		var accepted := await manager._execute_ability(caster, recipients(manager)[0], AbilityDB.get_ability("fire"))
+		VFX.child_entered_tree.disconnect(probe.observe)
+		var charge_count := 0
+		var projectile_count := 0
+		var max_error := 0.0
+		var max_motion := 0.0
+		var max_delta := 0.0
+		for row: Dictionary in probe.samples:
+			if row.stage != "process_end": continue
+			if row.role == "charge":
+				charge_count += 1
+				max_error = maxf(max_error, row.error)
+				max_motion = maxf(max_motion, row.motion)
+				max_delta = maxf(max_delta, row.delta)
+			elif row.role == "projectile":
+				if projectile_count == 0: check(row.error <= 16, "first actual launch stays within existing 16 px of same-frame hand")
+				projectile_count += 1
+		var label := "stable" if stable else "moving slow-frame"
+		print("Fire socket %s: %s" % [label, JSON.stringify({"samples":probe.samples,"render_phases":probe.render_phases})])
+		check(charge_count >= 2 and projectile_count > 0, label + ": observes multiple actual charge frames and real launch")
+		check(max_error <= 8, label + ": every end-of-process charge is within existing 8 px of CURRENT hand (max %.5f)" % max_error)
+		check(max_motion < 0.001 if stable else max_motion > 8, label + ": stationary control or meaningful imported hand movement (%.5f px)" % max_motion)
+		if not stable: check(max_delta >= 0.05, "moving probe includes actual slow engine frame, not a fabricated pose/delta")
+		check(geometry == [caster.position, caster.scale, rig.output.position, rig.output.scale,
+			rig.camera.transform, rig.camera.size, rig.viewport.size], label + ": no foot, camera or display-footprint changes")
+		check(Engine.time_scale == original_time_scale, label + ": no global time-scale changes")
+		check(accepted and caster.mp == 88 and outcomes.size() == 1, label + ": same accepted real action, one cost and one outcome")
+		probe.free()
+		if stable: rig.set_process(true)
+		await dispose(battle)
