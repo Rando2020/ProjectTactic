@@ -26,6 +26,7 @@ Thumbs.db
 
 # Generated exports and temp files
 exports/builds/
+.ai-reports/
 *.tmp
 *.bak
 

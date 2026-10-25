@@ -1,0 +1,52 @@
+name: AI Producer Validation
+
+on:
+  pull_request:
+    paths:
+      - "ai/**"
+      - "tools/ai/**"
+      - "docs/architecture/ai-producer-loop.md"
+      - ".github/workflows/ai-producer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate configuration and smoke evidence
+        run: >-
+          python tools/ai/producer.py validate
+          --evidence ai/examples/smoke-evidence.json
+
+      - name: Generate smoke producer report
+        run: >-
+          python tools/ai/producer.py analyze
+          --evidence ai/examples/smoke-evidence.json
+          --output-dir .ai-reports/smoke
+
+      - name: Verify producer outputs
+        shell: bash
+        run: |
+          test -s .ai-reports/smoke/producer-report.md
+          test -s .ai-reports/smoke/proposals.json
+          test -s .ai-reports/smoke/candidate-lessons.json
+          test -s .ai-reports/smoke/agent-context.json
+          python -m json.tool .ai-reports/smoke/proposals.json >/dev/null
+          python -m json.tool .ai-reports/smoke/agent-context.json >/dev/null
+
+      - name: Upload producer smoke report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-producer-smoke-report
+          path: .ai-reports/smoke/

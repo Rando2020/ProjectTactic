@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "evidence_id": "smoke-001",
+  "build_sha": "0000000-smoke",
+  "source": "ci",
+  "scenario_id": "producer-harness-smoke",
+  "seed": null,
+  "timestamp_utc": null,
+  "metrics": {
+    "example_only": true
+  },
+  "checks": [
+    {
+      "name": "producer-harness-loads",
+      "status": "pass",
+      "dimension": "correctness",
+      "details": "Fixture used only to validate the deterministic producer harness."
+    },
+    {
+      "name": "browser-playtest-evidence-present",
+      "status": "unknown",
+      "dimension": "browser_performance",
+      "details": "The smoke fixture intentionally leaves one evidence gap so proposal generation is exercised."
+    }
+  ],
+  "observations": [
+    {
+      "id": "smoke-obs-001",
+      "kind": "coverage",
+      "severity": "low",
+      "dimension": "discovery_coverage",
+      "summary": "Smoke evidence does not represent a real played battle.",
+      "evidence": "This is a synthetic CI fixture.",
+      "hypothesis": "Real playtest and self-play evidence will be needed to evaluate tactical depth and run health."
+    }
+  ],
+  "context": {
+    "fixture": true
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "project": "ProjectTactic",
+  "purpose": "Stable evaluation dimensions for AI-assisted development proposals.",
+  "dimensions": [
+    {
+      "id": "correctness",
+      "label": "Correctness and stability",
+      "weight": 30,
+      "signals": [
+        "test_failures",
+        "runtime_errors",
+        "save_restore_failures",
+        "invalid_state_transitions",
+        "determinism_regressions"
+      ],
+      "goal": "The playable loop behaves deterministically where intended and does not lose, duplicate, or corrupt player state."
+    },
+    {
+      "id": "tactical_depth",
+      "label": "Tactical depth",
+      "weight": 20,
+      "signals": [
+        "decision_diversity",
+        "ability_usage_distribution",
+        "positional_value",
+        "strategy_dominance",
+        "meaningful_turn_ratio"
+      ],
+      "goal": "Multiple viable approaches create meaningful positional and ability decisions instead of a single dominant line."
+    },
+    {
+      "id": "run_health",
+      "label": "Run health and replayability",
+      "weight": 15,
+      "signals": [
+        "boon_pick_distribution",
+        "job_pick_distribution",
+        "run_completion_distribution",
+        "difficulty_curve",
+        "resource_pressure",
+        "build_diversity"
+      ],
+      "goal": "Runs produce varied builds, understandable risk, recoverable setbacks, and reasons to make different choices."
+    },
+    {
+      "id": "readability_ux",
+      "label": "Readability and UX",
+      "weight": 15,
+      "signals": [
+        "input_failures",
+        "cancel_rate",
+        "selection_alignment",
+        "unit_contrast",
+        "intent_comprehension",
+        "forecast_accuracy"
+      ],
+      "goal": "Players can understand state, intent, targeting, consequences, and navigation without fighting the interface."
+    },
+    {
+      "id": "browser_performance",
+      "label": "Browser delivery and performance",
+      "weight": 10,
+      "signals": [
+        "web_start_success",
+        "refresh_continue_success",
+        "frame_time",
+        "load_time",
+        "asset_failures",
+        "memory_growth"
+      ],
+      "goal": "The intended browser build starts reliably, remains responsive, and preserves the run lifecycle across supported browser sessions."
+    },
+    {
+      "id": "discovery_coverage",
+      "label": "Discovery and coverage",
+      "weight": 10,
+      "signals": [
+        "recent_change_without_eval",
+        "untested_branch",
+        "unexplored_seed_cluster",
+        "architecture_hotspot",
+        "unknown_metric",
+        "human_only_acceptance_gate"
+      ],
+      "goal": "The development process continuously reduces important unknowns and turns escaped failures into durable checks."
+    }
+  ],
+  "proposal_rules": {
+    "critical_failure_blocks_improvement_experiments": true,
+    "require_observation_id": true,
+    "require_success_metric": true,
+    "require_guardrail_metric": true,
+    "require_rollback": true,
+    "max_unrelated_systems_per_proposal": 1
+  }
+}

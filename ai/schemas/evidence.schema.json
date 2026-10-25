@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projecttactic.local/schemas/ai-evidence.schema.json",
+  "title": "ProjectTactic AI Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "build_sha",
+    "source",
+    "scenario_id",
+    "checks",
+    "observations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evidence_id": {"type": "string", "minLength": 1},
+    "build_sha": {"type": "string", "minLength": 7},
+    "source": {
+      "type": "string",
+      "enum": ["ci", "godot_test", "self_play", "browser", "performance", "human_playtest", "static_analysis"]
+    },
+    "scenario_id": {"type": "string", "minLength": 1},
+    "seed": {"type": ["integer", "string", "null"]},
+    "timestamp_utc": {"type": ["string", "null"]},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {"type": ["number", "integer", "string", "boolean", "null"]}
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "enum": ["pass", "fail", "unknown"]},
+          "dimension": {"type": ["string", "null"]},
+          "details": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "severity", "summary"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {
+            "type": "string",
+            "enum": ["bug", "balance", "ux", "performance", "coverage", "architecture", "content", "unknown"]
+          },
+          "severity": {"type": "string", "enum": ["info", "low", "medium", "high", "critical"]},
+          "dimension": {"type": ["string", "null"]},
+          "summary": {"type": "string", "minLength": 1},
+          "evidence": {"type": ["string", "null"]},
+          "hypothesis": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
