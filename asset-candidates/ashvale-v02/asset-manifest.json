@@ -1,0 +1,246 @@
+{
+  "status": "candidate-v02",
+  "units": "meters",
+  "tile_size": 2,
+  "elevation_step": 1,
+  "blender_version": "4.5.9 LTS",
+  "assets": [
+    {
+      "id": "floor-plain",
+      "file": "models/floor-plain.glb",
+      "triangles_blender": 220,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        0.3050000071525574
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_CutSlate",
+        "M_PaintedSlate"
+      ]
+    },
+    {
+      "id": "floor-inlaid",
+      "file": "models/floor-inlaid.glb",
+      "triangles_blender": 352,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        0.3140000104904175
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_CutSlate",
+        "M_PaintedSlate",
+        "M_AgedBrass"
+      ]
+    },
+    {
+      "id": "wall-full",
+      "file": "models/wall-full.glb",
+      "triangles_blender": 792,
+      "dimensions_blender": [
+        2.0,
+        0.5400000214576721,
+        2.419999837875366
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate",
+        "M_CutSlate"
+      ]
+    },
+    {
+      "id": "wall-broken",
+      "file": "models/wall-broken.glb",
+      "triangles_blender": 528,
+      "dimensions_blender": [
+        1.975000023841858,
+        0.4350000023841858,
+        1.7400000095367432
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate"
+      ]
+    },
+    {
+      "id": "pillar",
+      "file": "models/pillar.glb",
+      "triangles_blender": 352,
+      "dimensions_blender": [
+        0.8399999737739563,
+        0.8399999737739563,
+        2.6499998569488525
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_CutSlate",
+        "M_PaintedSlate",
+        "M_AgedBrass"
+      ]
+    },
+    {
+      "id": "stairs-rise-1m",
+      "file": "models/stairs-rise-1m.glb",
+      "triangles_blender": 220,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        1.0
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate"
+      ]
+    },
+    {
+      "id": "platform-rise-1m",
+      "file": "models/platform-rise-1m.glb",
+      "triangles_blender": 220,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        1.0
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_CutSlate",
+        "M_PaintedSlate"
+      ]
+    },
+    {
+      "id": "archway",
+      "file": "models/archway.glb",
+      "triangles_blender": 636,
+      "dimensions_blender": [
+        2.5799999237060547,
+        0.7599999904632568,
+        3.213186740875244
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate",
+        "M_CutSlate"
+      ]
+    },
+    {
+      "id": "banner",
+      "file": "models/banner.glb",
+      "triangles_blender": 436,
+      "dimensions_blender": [
+        1.1200000047683716,
+        0.6000000238418579,
+        2.9000000953674316
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate",
+        "M_AgedBrass",
+        "M_Oxblood"
+      ]
+    },
+    {
+      "id": "brazier",
+      "file": "models/brazier.glb",
+      "triangles_blender": 312,
+      "dimensions_blender": [
+        0.8600000143051147,
+        0.8600000143051147,
+        1.2538232803344727
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_CutSlate",
+        "M_BlueSteel",
+        "M_AgedBrass",
+        "M_Ember"
+      ]
+    },
+    {
+      "id": "rubble",
+      "file": "models/rubble.glb",
+      "triangles_blender": 308,
+      "dimensions_blender": [
+        1.0757620334625244,
+        1.4547808170318604,
+        0.28630781173706055
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_PaintedSlate"
+      ]
+    },
+    {
+      "id": "vanguard-sword",
+      "file": "models/vanguard-sword.glb",
+      "triangles_blender": 92,
+      "dimensions_blender": [
+        0.3799999952316284,
+        0.11499999463558197,
+        1.2400000095367432
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_DarkLeather",
+        "M_AgedBrass",
+        "M_SteelEdges"
+      ]
+    },
+    {
+      "id": "zane-rig-prototype",
+      "file": "models/zane-rig-prototype.glb",
+      "triangles_blender": 2728,
+      "dimensions_blender": [
+        1.3949999809265137,
+        1.4152604341506958,
+        1.9299999475479126
+      ],
+      "origin": "tile center XY / ground Z=0",
+      "collision": "not embedded; grid remains authoritative",
+      "materials": [
+        "M_DarkLeather",
+        "M_BlueSteel",
+        "M_AgedBrass",
+        "M_Visor",
+        "M_SteelEdges",
+        "M_EmberCloth",
+        "M_Oxblood"
+      ]
+    }
+  ],
+  "character_limitations": [
+    "rigid armor skinning, no fingers or facial rig",
+    "walk is a draft cycle; foot locking not validated",
+    "sword is rigidly weighted to right hand; attack timing is provisional",
+    "no claim of resemblance to final Zane face"
+  ],
+  "animations": {
+    "idle": {
+      "duration": 2,
+      "loop": true
+    },
+    "walk": {
+      "duration": 1,
+      "loop": true
+    },
+    "attack": {
+      "duration": 1,
+      "loop": false,
+      "impact_time_proposed": 0.5
+    }
+  }
+}
