@@ -21,6 +21,17 @@ def cleanup():
             'camera_kick_remaining': 0, 'battle_removed': False}
 
 
+
+def presentation(text='-7 HP\n-3 Temper', frame=45):
+    return {'key': KEY, 'owner_instance_id': 'owner-1', 'recipient_id': 'Enemy_1',
+            'recipient_instance_id': 'imp-1', 'opened_frame': 42, 'overflow': False,
+            'binding_error': '', 'closed_frame': 49,
+            'samples': [{'frame': frame, 'key': KEY, 'role': 'outcome', 'instance_id': 'label-1',
+                         'owner_instance_id': 'owner-1', 'recipient_id': 'Enemy_1',
+                         'recipient_instance_id': 'imp-1', 'visible': True,
+                         'point': [313, 78.39], 'text': text}]}
+
+
 def state():
     value = showcase_state()
     value['zane']['profile'].update(profile_id='zane_painterly_v1', asset_path=duel.MODEL,
@@ -64,6 +75,14 @@ def sword_after(result=None, counter=None):
         value['zane']['events'].append({'key': KEY, 'kind': 'outcome', 'result': counter})
     value['roster']['zane-1'] = value['unit'].copy()
     return value
+
+
+def assert_result(before, after, key, cleaned):
+    # Existing synthetic result cases carry their actual sampled text here.
+    shown = presentation(text=after['zane']['samples'][0]['text'], frame=after['frame'])
+    shown['opened_frame'] = min(shown['opened_frame'], after['frame'])
+    shown['closed_frame'] = cleaned['frame']
+    return duel.assert_sword_result(before, after, key, cleaned, shown)
 
 
 class DuelInvariantTests(unittest.TestCase):
@@ -127,19 +146,42 @@ class DuelInvariantTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(AssertionError): duel.duel_sword_target(invalid, CANVAS)
 
     def test_sword_hit_and_miss_are_truthful(self):
-        coverage = duel.assert_sword_result(sword_before(), sword_after(), KEY, cleanup())
+        coverage = assert_result(sword_before(), sword_after(), KEY, cleanup())
         self.assertEqual(coverage['outcome'], 'hit'); self.assertEqual(coverage['mp_spent'], 0)
         result = {'feedback_owner': 'zane_impact_v1', 'missed': True, 'applied_hp_damage': 0}
-        coverage = duel.assert_sword_result(sword_before(), sword_after(result), KEY, cleanup())
+        coverage = assert_result(sword_before(), sword_after(result), KEY, cleanup())
         self.assertFalse(coverage['impact_observed']); self.assertEqual(coverage['outcome'], 'miss')
 
     def test_legitimate_counter_uses_separate_authoritative_resource_deltas(self):
         result = {'feedback_owner': 'zane_impact_v1', 'applied_hp_damage': 7, 'temper_damage': 3, 'counter': True}
         after = sword_after(result, {'applied_hp_damage': 4, 'temper_damage': 2})
-        coverage = duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        coverage = assert_result(sword_before(), after, KEY, cleanup())
         self.assertTrue(coverage['counter_observed'])
         after['unit']['hp'] -= 1
-        with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, cleanup())
+
+    def test_delayed_presentation_rejects_foreign_missing_duplicate_hidden_and_out_of_window_samples(self):
+        after = sword_after(); after['frame'] = 44; after['zane']['samples'] = []
+        mutations = [lambda p: p.update(overflow=True), lambda p: p.update(binding_error='wrong owner'),
+            lambda p: p.update(owner_instance_id='other-owner'),
+            lambda p: p.update(recipient_instance_id='other-target'),
+            lambda p: p.update(key='other:7'), lambda p: p.update(samples=[]),
+            lambda p: p['samples'].append(copy.deepcopy(p['samples'][0])),
+            lambda p: p['samples'][0].update(text='-7 HP'),
+            lambda p: p['samples'][0].update(key='other:7'),
+            lambda p: p['samples'][0].update(owner_instance_id='other-owner'),
+            lambda p: p['samples'][0].update(recipient_instance_id='other-target'),
+            lambda p: p['samples'][0].update(recipient_id='zane'),
+            lambda p: p['samples'][0].update(visible=False),
+            lambda p: p['samples'][0].update(frame=41),
+            lambda p: p['samples'][0].update(frame=50),
+            lambda p: p.update(closed_frame=48)]
+        duel.assert_sword_result(sword_before(), after, KEY, cleanup(), presentation())
+        for mutate in mutations:
+            shown = presentation(); mutate(shown)
+            with self.subTest(mutate=mutate), self.assertRaises(AssertionError):
+                duel.assert_sword_result(sword_before(), after, KEY, cleanup(), shown)
+        self.assertEqual(after['zane']['samples'], [])
 
     def test_wrong_resources_actions_labels_duplicate_cues_and_cleanup_are_rejected(self):
         mutations = [lambda s: s['unit'].update(mp=79), lambda s: s['unit'].update(acted=False),
@@ -151,36 +193,36 @@ class DuelInvariantTests(unittest.TestCase):
             lambda s: s.update(player_turn_serial=7)]
         for change in mutations:
             after = sword_after(); change(after)
-            with self.subTest(change=change), self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+            with self.subTest(change=change), self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, cleanup())
 
     def test_handoff_tail_requires_separate_observed_cleanup_not_fabricated_idle(self):
         after = sword_after(); after['zane']['owners'] = ['tail-still-live-at-handoff']
-        duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        assert_result(sword_before(), after, KEY, cleanup())
         for change in [lambda c: c.update(owner_alive=True), lambda c: c.update(live_effects=1),
                        lambda c: c.update(reaction_marks=1), lambda c: c.update(camera_kick_remaining=0.1),
                        lambda c: c.update(playing_voices=1), lambda c: c.update(key='different:9'),
                        lambda c: c.update(owner_instance_id='newer-owner')]:
             value = cleanup(); change(value)
-            with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, value)
+            with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, value)
         terminal_cleanup = cleanup(); terminal_cleanup.update(frame=60, battle_removed=True, camera_kick_remaining=None)
-        duel.assert_sword_result(sword_before(), after, KEY, terminal_cleanup)
+        assert_result(sword_before(), after, KEY, terminal_cleanup)
         terminal_cleanup['battle_removed'] = False
-        with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, terminal_cleanup)
+        with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, terminal_cleanup)
 
     def test_false_hit_or_extra_text_on_miss_is_rejected(self):
         result = {'feedback_owner': 'zane_impact_v1', 'missed': True, 'applied_hp_damage': 0}
         for extra in ('\n-999 HP', '\nCRIT', ' [WEAK]'):
             after = sword_after(result); after['zane']['samples'][0]['text'] += extra
-            with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+            with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, cleanup())
         after = sword_after(result); after['zane']['events'].append({'key': KEY, 'kind': 'cue', 'value': 'sword_hit'})
-        with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, cleanup())
 
     def test_terminal_target_is_allowed_only_with_exact_authoritative_applied_damage(self):
         result = {'feedback_owner': 'zane_impact_v1', 'applied_hp_damage': 90, 'temper_damage': 0, 'defeated': True}
         after = sword_after(result); after['zane']['samples'][0]['text'] = '-90 HP'
-        duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        assert_result(sword_before(), after, KEY, cleanup())
         after['roster']['imp-1']['hp'] = 1
-        with self.assertRaises(AssertionError): duel.assert_sword_result(sword_before(), after, KEY, cleanup())
+        with self.assertRaises(AssertionError): assert_result(sword_before(), after, KEY, cleanup())
 
 
 class DuelDriverTests(unittest.TestCase):
@@ -194,16 +236,22 @@ class DuelDriverTests(unittest.TestCase):
                 smoke.wait('first sword', lambda s: False)
             self.assertEqual(smoke.latest['state'], terminal)
 
-    def test_real_mouse_transport_move_sword_retains_handoff_without_gameplay_evaluation(self):
+    def test_frame44_handoff_retains_frame45_actual_label_until_frame49_cleanup(self):
         initial = state()
         moving = copy.deepcopy(initial); moving.update(command='move', legal_moves=[{'position': [5, 5], 'point': [600, 400]}])
         moved = copy.deepcopy(initial); moved['unit'].update(position=[5, 5], moved=True); moved['roster']['zane-1'].update(position=[5, 5])
         targeting = copy.deepcopy(moved); targeting.update(command='attack', legal_attack_targets=[{**moved['roster']['imp-1'], 'point': [700, 400]}])
         completed = sword_after(); completed['unit']['position'] = [5, 5]; completed['roster']['zane-1']['position'] = [5, 5]
-        completed['frame'] = 45
-        handed_off = {'schema': 2, 'phase': 'ENEMY_TURN', 'completed_sword': completed, 'sword_cleanup': cleanup()}
-        values = [initial, moving, moved, targeting, handed_off]
+        completed['frame'] = 44
+        completed['zane']['samples'] = []  # Immutable logical handoff precedes actual visual read.
+        handed_off = {'schema': 2, 'frame': 44, 'phase': 'ENEMY_TURN', 'completed_sword': completed,
+                      'sword_cleanup': {}, 'sword_presentation': {**presentation(), 'samples': []}}
+        sampled = {**handed_off, 'frame': 45, 'sword_presentation': presentation()}
+        cleaned = {**sampled, 'frame': 49, 'sword_cleanup': cleanup(),
+                   'unit': {'hp': 277}, 'zane': {'lifecycle': {'ticket': 6}, 'samples': []}}
+        values = [initial, moving, moved, targeting]
         for index, value in enumerate(values): value['frame'] = (index + 1) * 10
+        values += [handed_off, sampled, cleaned]
         envelopes = iter({'state': s, 'canvas': CANVAS} for s in values)
         class Connection:
             def __init__(self): self.sent = []
@@ -223,6 +271,8 @@ class DuelDriverTests(unittest.TestCase):
         self.assertEqual([(m['x'], m['y']) for m in presses], [(240, 820), (600, 400), (340, 820), (700, 400)])
         self.assertTrue(all(m['params']['expression'] in (OBSERVATION_JS, 'true') for m in connection.sent if m['method'] == 'Runtime.evaluate'))
         self.assertEqual(smoke.coverage['outcome'], 'hit')
+        self.assertEqual(completed['zane']['samples'], [])
+        self.assertEqual(completed['zane']['lifecycle']['ticket'], 5)
         self.assertIn('native', smoke.coverage['terminal_fire_replay'])
 
     def test_terminal_with_retained_completed_sword_is_not_mistaken_for_failure(self):

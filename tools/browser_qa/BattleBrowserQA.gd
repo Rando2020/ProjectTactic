@@ -138,8 +138,20 @@ func _button(button: Button) -> Dictionary:
 	var transform := button.get_global_transform_with_canvas()
 	var start: Vector2 = transform * Vector2.ZERO
 	var end: Vector2 = transform * button.size
+	# is_visible_in_tree() stays true for rows outside a ScrollContainer.
+	# Observe clipping without scrolling, focusing, or changing any Control.
+	var clipped := Rect2(start, end - start).intersection(get_viewport().get_visible_rect())
+	var ancestor := button.get_parent()
+	while ancestor != null:
+		if ancestor is Control and ancestor.clip_contents:
+			var clip_transform: Transform2D = ancestor.get_global_transform_with_canvas()
+			var clip_start: Vector2 = clip_transform * Vector2.ZERO
+			var clip_end: Vector2 = clip_transform * ancestor.size
+			clipped = clipped.intersection(Rect2(clip_start, clip_end - clip_start))
+		ancestor = ancestor.get_parent()
 	return {
 		"rect": [start.x, start.y, end.x - start.x, end.y - start.y],
+		"clip_rect": [clipped.position.x, clipped.position.y, clipped.size.x, clipped.size.y],
 		"visible": button.is_visible_in_tree(),
 		"disabled": button.disabled, "labels": labels,
 	}

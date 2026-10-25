@@ -6,6 +6,21 @@ func _ready() -> void:
 	super._ready()
 	battle.get_node("BattleManager").turn_ended.connect(_on_duel_turn_ended)
 
+func _on_presentation_signal(value: String, kind: String, reference: WeakRef) -> void:
+	super._on_presentation_signal(value, kind, reference)
+	if kind != "phase" or value != "charge": return
+	var owner = reference.get_ref()
+	var sentinel := get_node_or_null("/root/ZaneDuelTerminalSentinel")
+	if not is_instance_valid(owner) or sentinel == null: return
+	var context: Dictionary = owner.context
+	if str(context.get("actor_id", "")) != "zane" or str(context.get("ability_id", "")) != "": return
+	# Sword has one actual admitted recipient at its destination. Bind identity
+	# now, before defeat, turn handoff or another action can change the roster.
+	for unit: Unit in battle.battle_manager.units.values():
+		if is_instance_valid(unit) and unit.team == "enemy" and unit.grid_pos == context.destination:
+			sentinel.observe_sword_owner(owner, battle, unit)
+			break
+
 func _on_duel_turn_ended(actor_id: String) -> void:
 	var manager: BattleManager = battle.get_node("BattleManager")
 	if actor_id != "zane" or not manager.active_unit_has_acted or not _completed_sword.is_empty(): return
@@ -13,6 +28,7 @@ func _on_duel_turn_ended(actor_id: String) -> void:
 	# BEFORE action flags clear and normal initiative/AI/Results advances.
 	_completed_sword = snapshot()
 	_completed_sword.erase("completed_sword")
+	_completed_sword.erase("sword_presentation")
 	var sentinel := get_node_or_null("/root/ZaneDuelTerminalSentinel")
 	var effects := get_node_or_null("/root/VFX")
 	if sentinel != null and effects != null:
@@ -48,4 +64,5 @@ func snapshot() -> Dictionary:
 	record["completed_sword"] = _completed_sword.duplicate(true)
 	var sentinel := get_node_or_null("/root/ZaneDuelTerminalSentinel")
 	record["sword_cleanup"] = sentinel.sword_cleanup.duplicate(true) if sentinel != null else {}
+	record["sword_presentation"] = sentinel.sword_presentation.duplicate(true) if sentinel != null else {}
 	return record

@@ -91,6 +91,7 @@ def main() -> None:
             if args.scenario == 'zane-duel':
                 run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn'], env)
                 run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-tail'], env)
+                run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-frame'], env)
             if not args.validate_only:
                 args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
                 run_godot(args.godot, ['--export-release', 'Web', str(args.output.resolve())], env)

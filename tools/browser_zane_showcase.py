@@ -47,6 +47,25 @@ def legal_enemy_targets(state: dict, canvas: dict) -> list:
                      if u['team'] == 'enemy' and u['hp'] > 0], state, canvas)
 
 
+def fire_menu_geometry(envelope: dict):
+    """Read-only geometry signature; tree visibility alone does not prove hitability."""
+    state = envelope['state']
+    if not state['menu_visible'] or state['command'] != 'ability' or not state.get('abilities'):
+        return None
+    fire = ability_button(state, 'Fire')
+    if fire['disabled']:
+        return None
+    # The three-row Zane menu fits this lane. Its reveal scroll is deferred;
+    # requiring the entire menu inside actual clipping ancestors rejects the
+    # old Fire rectangle while lower rows are still off the scroll surface.
+    for button in state['abilities']:
+        rect = button['rect']
+        if (not button['visible'] or button.get('clip_rect') != rect
+                or rect[2] <= 0 or rect[3] <= 0):
+            return None
+    return {'canvas': envelope['canvas'], 'viewport': state['viewport'], 'abilities': state['abilities']}
+
+
 def assert_fire_result(before: dict, after: dict, key: str) -> dict:
     assert_zane_profile(after)
     actor = after['unit']
@@ -159,10 +178,51 @@ class ZaneShowcaseSmoke(Smoke):
 
     def fire_targeting(self, envelope):
         self.click_button(envelope, 'ability')
-        menu = self.wait('Zane Fire menu', lambda s: s['menu_visible'] and any('Fire' in b['labels'] for b in s['abilities']), after=envelope['state']['frame'])
+        previous_geometry, stable_since = None, -1
+
+        def stable_menu(state):
+            nonlocal previous_geometry, stable_since
+            geometry = fire_menu_geometry(self.latest)
+            if geometry is None or geometry != previous_geometry:
+                previous_geometry, stable_since = geometry, state['frame']
+                return False
+            # Count engine frames, not repeated reads of the same publication.
+            return state['frame'] >= stable_since + 2
+
+        menu = self.wait('Zane Fire menu fully revealed and stable', stable_menu,
+                         after=envelope['state']['frame'])
         assert menu['state']['unit'] == envelope['state']['unit'], 'Ability menu spent resources'
-        self.cdp.click(*button_point(ability_button(menu['state'], 'Fire'), menu['state']['viewport'], menu['canvas']))
-        return self.wait('normal Fire targeting', lambda s: s['command'] == 'ability_target' and s['ability_id'] == 'fire', after=menu['state']['frame'])
+        geometry = fire_menu_geometry(menu)
+        point = button_point(ability_button(menu['state'], 'Fire'), menu['state']['viewport'], menu['canvas'])
+        self.checkpoint('zane-fire-menu-stable', menu)
+        self.cdp.inputs.append({'type': 'hover', 'x': point[0], 'y': point[1]})
+        self.cdp.command('Input.dispatchMouseEvent', {'type': 'mouseMoved', 'x': point[0], 'y': point[1]})
+        # A screenshot/transport round trip may advance frames. Anchor after
+        # motion, then observe new layout frames before pressing the same point.
+        anchor = self.wait('Fire post-hover frame anchor', lambda s: True)
+        hovered = self.wait('Fire post-hover layout', lambda s: True, after=anchor['state']['frame'])
+        assert fire_menu_geometry(hovered) == geometry, 'Fire menu moved or changed geometry after hover; refusing stale press'
+        assert hovered['state']['unit'] == menu['state']['unit'], 'Hover changed actor resources/actions'
+        self.checkpoint('zane-fire-hover-stable', hovered)
+        # Capturing the hover screenshot is asynchronous too. Revalidate after
+        # its own fresh-frame boundary; no screenshot or mouse move follows.
+        capture_anchor = self.wait('Fire post-capture frame anchor', lambda s: True)
+        press_ready = self.wait('Fire final press geometry', lambda s: True, after=capture_anchor['state']['frame'])
+        assert fire_menu_geometry(press_ready) == geometry, 'Fire menu moved or changed geometry during capture; refusing stale press'
+        assert press_ready['state']['unit'] == menu['state']['unit'], 'Capture changed actor resources/actions'
+        self.cdp.click(*point, move_first=False)
+
+        def selected_fire(state):
+            if state['command'] != 'ability_target':
+                return False
+            assert state['ability_id'] == 'fire', (
+                f"Fire menu selection expected fire, observed {state['ability_id']!r}; "
+                f"click={point}, menu_frame={menu['state']['frame']}, "
+                f"hover_frame={hovered['state']['frame']}, press_frame={press_ready['state']['frame']}, "
+                f"selected_frame={state['frame']}")
+            return True
+
+        return self.wait('normal Fire targeting', selected_fire, after=press_ready['state']['frame'])
 
     def run(self, url):
         self.deadline = time.monotonic() + self.budget

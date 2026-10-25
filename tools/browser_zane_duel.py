@@ -95,7 +95,7 @@ def _outcome_label(result: dict) -> str:
     return label
 
 
-def assert_sword_result(before: dict, after: dict, key: str, cleanup: dict) -> dict:
+def assert_sword_result(before: dict, after: dict, key: str, cleanup: dict, presentation: dict) -> dict:
     assert_duel_roster(after)
     assert_zane_profile(after)
     actor, prior = after['unit'], before['unit']
@@ -143,8 +143,19 @@ def assert_sword_result(before: dict, after: dict, key: str, cleanup: dict) -> d
         assert phases.count('impact') == 1, 'Sword impact phase missing or duplicated'
     else:
         assert not any(phase in ('impact', 'critical', 'armor', 'kick', 'pause') or phase.startswith('hurt:') for phase in phases), 'Miss/immune falsely presented a hit'
-    labels = [sample['text'] for sample in evidence['samples'] if sample['key'] == key and sample['role'] == 'outcome']
-    assert labels == [_outcome_label(result)], 'Rendered primary outcome Label disagrees with authoritative complete result'
+    # Logical costs/outcome/ticket stay frozen at handoff. Presentation can be
+    # observed later, but only from the exact original owner and recipient.
+    assert presentation and not presentation['overflow'] and not presentation['binding_error'], 'Sword presentation evidence missing, unbound or overflowed'
+    identity = {'key': key, 'owner_instance_id': owner['instance_id'],
+                'recipient_id': before['roster'][target_key]['id'], 'recipient_instance_id': target_key}
+    assert all(presentation[field] == value for field, value in identity.items()), 'Presentation is not bound to the original sword owner/recipient'
+    assert presentation['opened_frame'] <= after['frame'] <= presentation['closed_frame'] == cleanup['frame'], 'Invalid sword presentation observation window'
+    samples = presentation['samples']
+    for sample in samples:
+        assert all(sample[field] == value for field, value in identity.items()), 'Outcome Label belongs to a different owner/action/recipient'
+        assert sample['role'] == 'outcome' and sample['instance_id'] and sample['visible'], 'Outcome sample is not an actual visible Label'
+        assert presentation['opened_frame'] <= sample['frame'] <= cleanup['frame'], 'Outcome Label sample lies outside original owner lifetime'
+    assert [sample['text'] for sample in samples] == [_outcome_label(result)], 'Rendered primary outcome Label disagrees with authoritative complete result'
     return {'outcome': category, 'impact_observed': impact, 'counter_observed': bool(counters),
             'mp_spent': 0, 'action_tickets': 1, 'audio_scope': 'cue-start signals only; no listening claim'}
 
@@ -192,10 +203,11 @@ class ZaneDuelSmoke(ZaneShowcaseSmoke):
         keys = {event['key'] for event in completed['zane']['events'] if event['kind'] == 'cue'
                 and event.get('value') == 'sword_load' and event.get('actor_id') == 'zane'}
         assert len(keys) == 1, 'Expected one admitted Zane sword action key'
-        self.coverage = assert_sword_result(before, completed, keys.pop(), attacked['state']['sword_cleanup'])
+        self.coverage = assert_sword_result(before, completed, keys.pop(), attacked['state']['sword_cleanup'],
+                                            attacked['state'].get('sword_presentation', {}))
         self.coverage.update(title_entry='not exercised; production-helper QA bootstrap',
                              terminal_fire_replay='enemy AI/Fire/terminal/replay are native contract coverage, not this browser lane',
-                             completion='read-only turn_ended costs/outcomes plus later original-owner cleanup; screenshot is subsequent live canvas')
+                             completion='immutable turn_ended costs/outcomes plus separately retained original-owner Label reads and cleanup; screenshot is subsequent live canvas, not label pixels')
         self.checkpoint('zane-duel-sword-outcome-and-cleanup', attacked)
         self.cdp.evaluate('true')
         assert not self.cdp.errors, 'Browser errors after duel sword exercise'

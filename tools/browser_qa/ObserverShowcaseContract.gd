@@ -43,6 +43,29 @@ func _ready() -> void:
 	check(first.unit == second.unit and first.roster == second.roster, "repeated observer reads never alter party/resources/initiative")
 	check(second.zane.events.is_empty(), "observer never initiates presentation or combat")
 	check(second.zane.lifecycle.phase == "idle" and not second.resolving, "observer never creates an action ticket")
+	# Control visibility is not clipping: expose only the real ancestor-intersected
+	# rectangle so a partially hidden menu row cannot qualify as clickable.
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var clip := Control.new()
+	clip.position = Vector2(50, 60)
+	clip.size = Vector2(200, 100)
+	clip.clip_contents = true
+	layer.add_child(clip)
+	var row := Button.new()
+	row.position = Vector2(0, 80)
+	row.size = Vector2(140, 50)
+	clip.add_child(row)
+	var clipped: Dictionary = observer._button(row)
+	check(clipped.get("visible", false), "clipped row remains visible in tree")
+	check(clipped.get("clip_rect", []) == [50.0, 140.0, 140.0, 20.0], "observer intersects actual clipping ancestors: " + JSON.stringify(clipped))
+	row.position = Vector2.ZERO
+	var revealed: Dictionary = observer._button(row)
+	check(revealed.get("clip_rect", []) == revealed.rect, "fully revealed control retains its entire rectangle")
+	row.position = Vector2(0, 120)
+	var hidden: Dictionary = observer._button(row)
+	check(hidden.get("clip_rect", [0, 0, 1, 1])[2] == 0 or hidden.get("clip_rect", [0, 0, 1, 1])[3] == 0, "fully clipped row has no clickable area")
+	layer.queue_free()
 	# Signal-fixture proof only: subscribing at child_entered_tree must catch the
 	# very first synchronous charge/cue, before a polling snapshot can happen.
 	var owner := SignalFixture.new()

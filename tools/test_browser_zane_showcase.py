@@ -131,13 +131,14 @@ class ShowcaseDriverTests(unittest.TestCase):
         moved = copy.deepcopy(zane); moved['unit'].update(position=[4, 5], moved=True)
         following = copy.deepcopy(base); following['player_turn_serial'] = 6
         menu = copy.deepcopy(following); menu.update(command='ability', menu_visible=True, abilities=[
-            {'labels': ['Fire', '12MP'], 'visible': True, 'disabled': False, 'rect': [500, 500, 100, 40]}])
+            {'labels': ['Fire', '12MP'], 'visible': True, 'disabled': False, 'rect': [500, 500, 100, 40], 'clip_rect': [500, 500, 100, 40]}])
         targeting = copy.deepcopy(following); targeting.update(command='ability_target', ability_id='fire',
             legal_ability_targets=[{'id': 'cultist', 'team': 'enemy', 'hp': 90, 'point': [700, 400]}])
         fired = fire_after(); fired['player_turn_serial'] = 6
         settled = copy.deepcopy(fired)
         observations = []
-        for frame, snapshot in enumerate([initial, zane, moving, moved, following, menu, targeting, fired, settled], 1):
+        for frame, original in enumerate([initial, zane, moving, moved, following, menu, menu, menu, menu, menu, menu, targeting, fired, settled], 1):
+            snapshot = copy.deepcopy(original)
             snapshot['frame'] = frame * 10
             snapshot['intro_visible'] = False
             observations.append({'state': snapshot, 'canvas': self.canvas})
@@ -179,6 +180,134 @@ class ShowcaseDriverTests(unittest.TestCase):
             with patch('browser_zane_showcase.time.monotonic', return_value=11):
                 with self.assertRaisesRegex(TimeoutError, 'total.*budget'):
                     driver.wait('Fire', lambda s: True)
+
+
+
+class DeferredMenuConnection:
+    """CDP boundary fixture: Godot reveal scroll applies after old rects publish.
+
+    Row extents match the real native probe (settled y863/931/999); the
+    pre-scroll Fire y990 is from the failed Chrome run, whose old center
+    1022.5 hits settled Void Pulse. This is transport evidence, not Chrome.
+    """
+    def __init__(self, *, hover_shift=False, forced_selection=None, repeated_frames=False):
+        self.sent = []
+        self.frame = 10
+        self.reads = 0
+        self.opened = False
+        self.selected = ''
+        self.hover_shift = hover_shift
+        self.shifted = False
+        self.forced_selection = forced_selection
+        self.repeated_frames = repeated_frames
+        self.base = state()
+        self.base['viewport'] = [2282, 1080]
+        self.base['buttons'] = {'ability': {'visible': True, 'disabled': False,
+                                           'rect': [2127, 669, 127, 88]}}
+        self.canvas = {'x': 0, 'y': 0, 'width': 1600, 'height': 757}
+        self.press_frames = []
+
+    def envelope(self):
+        current = copy.deepcopy(self.base)
+        current['frame'] = self.frame
+        if self.selected:
+            current.update(command='ability_target', ability_id=self.selected, menu_visible=False)
+        elif self.opened:
+            # First two menu observations have pre-reveal coordinates. A
+            # scroll/layout pass can then run between CDP mouse move and press.
+            top = 990 if self.reads <= 2 else 863
+            if self.shifted: top -= 68
+            current.update(command='ability', menu_visible=True, abilities=[
+                {'labels': ['', icon, label, cost, '3'], 'visible': True, 'disabled': False,
+                 'rect': [1728, y, 526, 65],
+                 'clip_rect': [1728, y, 526, max(0, min(y + 65, 1064) - y)]}
+                for icon, label, cost, y in [('F', 'Fire', '12MP', top),
+                    ('T', 'Thunderstrike', '14MP', top + 68), ('D', 'Void Pulse', '12MP', top + 136)]])
+        return {'state': current, 'canvas': self.canvas}
+
+    def send(self, raw):
+        import json
+        message = json.loads(raw)
+        self.sent.append(message)
+        method, params = message['method'], message['params']
+        result = {}
+        if method == 'Runtime.evaluate':
+            from browser_combat_smoke import OBSERVATION_JS
+            assert params['expression'] == OBSERVATION_JS, 'Only read-only observer evaluation allowed'
+            self.reads += 1
+            # Duplicate polls must not count as fresh rendered/layout frames.
+            self.frame = 16 if self.repeated_frames and 3 <= self.reads <= 8 else self.frame + 2
+            result = {'result': {'value': self.envelope()}}
+        elif method == 'Input.dispatchMouseEvent':
+            x = params['x'] * 2282 / 1600
+            y = params['y'] * 1080 / 757
+            if params['type'] == 'mouseMoved' and self.opened:
+                if self.hover_shift and self.reads > 2: self.shifted = True
+            if params['type'] == 'mousePressed':
+                if not self.opened:
+                    self.opened = True
+                else:
+                    self.press_frames.append(self.frame)
+                    top = 795 if self.shifted else 863
+                    for index, ability in enumerate(('fire', 'thunderstrike', 'void_pulse')):
+                        if 1728 <= x < 2254 and top + index * 68 <= y < top + index * 68 + 65:
+                            self.selected = self.forced_selection or ability
+                            break
+        self.reply = {'id': message['id'], 'result': result}
+
+    def recv(self):
+        import json
+        return json.dumps(self.reply)
+
+
+class FireMenuRaceTests(unittest.TestCase):
+    def exercise(self, connection):
+        with tempfile.TemporaryDirectory() as output:
+            driver = showcase.ZaneShowcaseSmoke(CDP(connection), Path(output), 1)
+            before = {'state': copy.deepcopy(connection.base), 'canvas': connection.canvas}
+            def capture(name):
+                if name == 'zane-fire-hover-stable' and getattr(connection, 'screenshot_shift', False):
+                    connection.shifted = True
+            with patch.object(driver, 'screenshot', side_effect=capture), patch('browser_combat_smoke.time.sleep'):
+                selected = driver.fire_targeting(before)
+            return driver, selected
+
+    def test_deferred_scroll_old_fire_coordinate_hits_void_but_driver_waits_for_reveal(self):
+        connection = DeferredMenuConnection()
+        driver, selected = self.exercise(connection)
+        self.assertEqual(selected['state']['ability_id'], 'fire')
+        presses = [event['params'] for event in connection.sent if event['method'] == 'Input.dispatchMouseEvent'
+                   and event['params']['type'] == 'mousePressed']
+        self.assertEqual(len(presses), 2, 'One Ability click and one Fire click; no retry-selection')
+        self.assertAlmostEqual(presses[-1]['y'], 627.6791666666667)
+        self.assertEqual(selected['state']['unit'], connection.base['unit'])
+        self.assertIn('zane-fire-hover-stable', [item['name'] for item in driver.checkpoints])
+
+    def test_hover_layout_displacement_aborts_before_press_instead_of_chasing(self):
+        connection = DeferredMenuConnection(hover_shift=True)
+        with self.assertRaisesRegex(AssertionError, 'Fire.*(moved|geometry)'):
+            self.exercise(connection)
+        self.assertFalse(connection.press_frames, 'Never press a shifted row, retry, or select another spell')
+
+    def test_screenshot_reflow_is_revalidated_before_press(self):
+        connection = DeferredMenuConnection()
+        connection.screenshot_shift = True
+        with self.assertRaisesRegex(AssertionError, 'Fire.*(moved|geometry)'):
+            self.exercise(connection)
+        self.assertFalse(connection.press_frames, 'Capture latency cannot authorize a stale press')
+
+    def test_wrong_canonical_selection_fails_diagnostically_before_any_target_click(self):
+        connection = DeferredMenuConnection(forced_selection='void_pulse')
+        with self.assertRaisesRegex(AssertionError, 'expected fire.*void_pulse'):
+            self.exercise(connection)
+        self.assertEqual(len(connection.press_frames), 1)
+
+    def test_repeated_same_frame_snapshots_do_not_establish_geometry_stability(self):
+        connection = DeferredMenuConnection(repeated_frames=True)
+        driver, selected = self.exercise(connection)
+        self.assertEqual(selected['state']['ability_id'], 'fire')
+        menu = next(item for item in driver.checkpoints if item['name'] == 'zane-fire-menu-stable')
+        self.assertGreater(menu['state']['frame'], 16)
 
 
 class ShowcaseFailureReportTests(unittest.TestCase):

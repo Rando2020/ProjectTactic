@@ -120,7 +120,7 @@ class ShowcaseStagingTests(unittest.TestCase):
 class DuelStagingTests(unittest.TestCase):
     setUp = StagingTests.setUp
 
-    def test_duel_export_runs_normal_and_slow_tail_observer_contracts(self):
+    def test_duel_export_runs_normal_slow_tail_and_late_sample_observer_contracts(self):
         from export_browser_qa import main
         pack = self.root / 'production.pck'
         pack.write_bytes(b'GDPC' + b'\0' * 100)
@@ -130,6 +130,7 @@ class DuelStagingTests(unittest.TestCase):
         args = [call.args[1] for call in run.call_args_list]
         self.assertIn(['res://tests/browser_qa/ObserverDuelContract.tscn'], args)
         self.assertIn(['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-tail'], args)
+        self.assertIn(['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-frame'], args)
 
     def test_duel_main_is_isolated_and_failure_restores_exact_project(self):
         with self.assertRaisesRegex(RuntimeError, 'duel export failed'):
