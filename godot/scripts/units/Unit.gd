@@ -636,13 +636,16 @@ func enable_3d_prototype() -> void:
 		return
 	var archetype := str(get_meta("archetype_id", unit_id))
 	var imported_character := archetype in ["kael", "mira", "zane"]
+	var painterly_zane := archetype == "zane" and GameState.is_zane_duel_practice()
 	match archetype:
 		"kael":
 			_rig3d = preload("res://scripts/presentation/KaelRigPresentation.gd").new()
 		"mira":
 			_rig3d = preload("res://scripts/presentation/MiraRigPresentation.gd").new()
 		"zane":
-			_rig3d = preload("res://scripts/presentation/ZaneRigPresentation.gd").new()
+			_rig3d = preload("res://scripts/presentation/ZaneImpactRigPresentation.gd").new()
+			if painterly_zane:
+				_rig3d.configure_profile("zane_painterly_v1")
 		_:
 			_rig3d = preload("res://scripts/presentation/Humanoid3D.gd").new()
 	_rig3d.skin_id = archetype
@@ -653,10 +656,46 @@ func enable_3d_prototype() -> void:
 		remove_child(_rig3d)
 		_rig3d.queue_free()
 		_rig3d = null
-		return
+		if painterly_zane:
+			# A fresh impact adapter keeps its own original pixel-style defaults.
+			_rig3d = preload("res://scripts/presentation/ZaneImpactRigPresentation.gd").new()
+			_rig3d.z_index = 10
+			add_child(_rig3d)
+			if not _rig3d.is_available():
+				remove_child(_rig3d)
+				_rig3d.queue_free()
+				_rig3d = null
+		if archetype == "zane" and not is_instance_valid(_rig3d):
+			_rig3d = preload("res://scripts/presentation/ZaneRigPresentation.gd").new()
+			_rig3d.z_index = 10
+			add_child(_rig3d)
+			if not _rig3d.is_available():
+				remove_child(_rig3d)
+				_rig3d.queue_free()
+				_rig3d = null
+		if not is_instance_valid(_rig3d): return
 	set_facing(facing)
 	if is_instance_valid(_sprite):
 		_sprite.hide()
+
+func has_zane_impact_presentation() -> bool:
+	return is_instance_valid(_rig3d) and _rig3d.get_script().resource_path == "res://scripts/presentation/ZaneImpactRigPresentation.gd" and _rig3d.is_available()
+
+func begin_walk_presentation(direction: Vector2i, distance_px: float) -> float:
+	if has_zane_impact_presentation():
+		return _rig3d.begin_walk(direction, distance_px)
+	set_walk_presentation(true)
+	return 0.50
+
+func advance_walk_presentation(distance_delta_px: float, elapsed_delta_s: float) -> void:
+	if has_zane_impact_presentation():
+		_rig3d.advance_walk(distance_delta_px, elapsed_delta_s)
+
+func end_walk_presentation(cancelled: bool = false) -> void:
+	if has_zane_impact_presentation():
+		_rig3d.end_walk(cancelled or hp <= 0 or is_defeated)
+	else:
+		set_walk_presentation(false)
 
 func set_walk_presentation(walking: bool) -> void:
 	if is_instance_valid(_rig3d):

@@ -811,22 +811,28 @@ func place_unit(unit_node: Node2D, grid_pos: Vector2i) -> void:
 func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 	for child in unit_layer.get_children():
 		if child.get("unit_id") == unit_id:
-			child.set_walk_presentation(true)
 			var start_pos: Vector2 = child.position
 			var end_pos: Vector2 = _unit_foot_pos(to)
+			var duration: float = child.begin_walk_presentation(to - from, start_pos.distance_to(end_pos))
+			var previous := {"position": start_pos, "tick": Time.get_ticks_usec()}
 			var tween := create_tween()
 			tween.tween_method(
 				func(pos: Vector2) -> void:
+					if not is_instance_valid(child) or child.is_queued_for_deletion(): return
+					var tick := Time.get_ticks_usec()
+					child.advance_walk_presentation(pos.distance_to(previous.position), float(tick - int(previous.tick)) / 1000000.0)
+					previous.position = pos
+					previous.tick = tick
 					child.position = pos
 					unit_visual_position_changed.emit(unit_id, child.global_position),
 				start_pos,
 				end_pos,
-				0.50
+				duration
 			).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 			child.z_index = _unit_depth_for(to)
 			await tween.finished
 			if is_instance_valid(child):
-				child.set_walk_presentation(false)
+				child.end_walk_presentation(child.hp <= 0 or child.is_queued_for_deletion())
 			break
 	unit_positions.erase(from)
 	unit_positions[to] = unit_id

@@ -26,13 +26,17 @@ EXPECTED = {
     'test_resource_hud.tscn',
     'test_ability_menu_layout.tscn',
     'test_kael_presentation.tscn', 'test_mira_presentation.tscn', 'test_zane_presentation.tscn',
-    'test_shared_rig_presentation.tscn', 'test_terrain_cleanup.tscn',
+    'test_shared_rig_presentation.tscn',
+    'test_zane_impact_rig.tscn', 'test_zane_impact_actions.tscn',
+    'test_zane_impact_showcase.tscn', 'test_zane_outcome_layout.gd',
+    'test_zane_duel_practice.tscn', 'test_hovered_tile_health.tscn', 'test_zane_painterly_rig.tscn',
+    'test_terrain_cleanup.tscn',
     'test_recovered_assets.gd', 'test_ui_readability.gd', 'test_playable_loop.tscn',
 }
 
 
 class ValidationRunnerTests(unittest.TestCase):
-    def run_fixture(self, failure=''):
+    def run_fixture(self, failure='', failure_fixture='test_kael_presentation.tscn'):
         with tempfile.TemporaryDirectory() as data:
             root = Path(data)
             fake = root / 'fake-godot'
@@ -41,11 +45,16 @@ class ValidationRunnerTests(unittest.TestCase):
 import json, os, sys
 with open(os.environ['RUNNER_TEST_LOG'], 'a') as out:
     out.write(json.dumps({'args': sys.argv[1:], 'data': os.environ['XDG_DATA_HOME'], 'config': os.environ.get('XDG_CONFIG_HOME'), 'cache': os.environ.get('XDG_CACHE_HOME')}) + '\\n')
-mode = os.environ.get('RUNNER_TEST_FAILURE', '') if 'test_kael_presentation.tscn' in sys.argv[-1] else ''
+mode = os.environ.get('RUNNER_TEST_FAILURE', '') if sys.argv[-1].endswith('/' + os.environ['RUNNER_TEST_FIXTURE']) else ''
 if mode == 'exit':
     raise SystemExit(1)
-if mode == 'script':
-    print('SCRIPT ERROR: simulated contract failure')
+if mode in ('script', 'shutdown-script'):
+    print('SCRIPT ERROR: simulated contract failure', file=sys.stderr)
+if mode == 'resource':
+    print('ERROR: Failed loading resource: res://assets/bad.glb.', file=sys.stderr)
+if mode.startswith('shutdown'):
+    print('WARNING: ObjectDB instances leaked at exit (run with --verbose for details).', file=sys.stderr)
+    print('ERROR: 2 resources still in use at exit (run with --verbose for details).', file=sys.stderr)
 if mode == 'count':
     print('10 failures')
 if mode not in ('missing', 'count'):
@@ -53,7 +62,7 @@ if mode not in ('missing', 'count'):
 ''')
             fake.chmod(0o755)
             result = subprocess.run([sys.executable, str(RUNNER), str(fake)],
-                env={**os.environ, 'RUNNER_TEST_LOG': str(log), 'RUNNER_TEST_FAILURE': failure},
+                env={**os.environ, 'RUNNER_TEST_LOG': str(log), 'RUNNER_TEST_FAILURE': failure, 'RUNNER_TEST_FIXTURE': failure_fixture},
                 capture_output=True, text=True, timeout=10)
             calls = [json.loads(line) for line in log.read_text().splitlines()]
             return result, calls
@@ -83,12 +92,48 @@ if mode not in ('missing', 'count'):
             self.assertEqual(call['data'], call['cache'])
         terrain = next(c for c in calls if c['args'][-1].endswith('test_terrain_cleanup.tscn'))
         self.assertNotIn('--script', terrain['args'])
+        layout = next(c for c in calls if c['args'][-1].endswith('test_zane_outcome_layout.gd'))
+        self.assertIn('--script', layout['args'])
 
     def test_nonzero_exit_fails_aggregate(self):
         self.assertEqual(self.run_fixture('exit')[0].returncode, 1)
 
     def test_script_error_fails_even_with_success_marker(self):
         self.assertEqual(self.run_fixture('script')[0].returncode, 1)
+
+    def test_zane_script_errors_fail_even_with_success_and_zero_exit(self):
+        for fixture in ('test_zane_impact_rig.tscn', 'test_zane_impact_actions.tscn',
+                        'test_zane_impact_showcase.tscn', 'test_zane_outcome_layout.gd',
+                        'test_zane_duel_practice.tscn', 'test_hovered_tile_health.tscn', 'test_zane_painterly_rig.tscn'):
+            with self.subTest(fixture=fixture):
+                result, calls = self.run_fixture('script', fixture)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn('SCRIPT ERROR: simulated contract failure', result.stdout)
+                self.assertIn(fixture, {Path(c['args'][-1]).name for c in calls})
+
+    def test_documented_shutdown_diagnostics_remain_visible(self):
+        result, _ = self.run_fixture('shutdown')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('ObjectDB instances leaked at exit', result.stdout)
+        self.assertIn('2 resources still in use at exit', result.stdout)
+
+    def test_new_zane_shutdown_resource_errors_are_not_legacy_exceptions(self):
+        for fixture in ('test_zane_impact_rig.tscn', 'test_zane_impact_actions.tscn',
+                        'test_zane_impact_showcase.tscn', 'test_zane_outcome_layout.gd',
+                        'test_zane_duel_practice.tscn', 'test_hovered_tile_health.tscn', 'test_zane_painterly_rig.tscn'):
+            with self.subTest(fixture=fixture):
+                result, _ = self.run_fixture('shutdown', fixture)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn('2 resources still in use at exit', result.stdout)
+
+    def test_resource_errors_fail_even_with_success_and_zero_exit(self):
+        result, _ = self.run_fixture('resource')
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+    def test_shutdown_diagnostics_never_hide_script_error(self):
+        result, _ = self.run_fixture('shutdown-script')
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('SCRIPT ERROR: simulated contract failure', result.stdout)
 
     def test_nonzero_failure_count_cannot_match_zero(self):
         self.assertEqual(self.run_fixture('count')[0].returncode, 1)

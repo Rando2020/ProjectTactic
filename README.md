@@ -6,6 +6,8 @@ The separate [starter-identity candidate](docs/production/starter-identity-first
 
 Three-character 3D is an **opt-in prototype**: Practice → View & quality settings → Sprites active → Show 3D. See [playable loop, controls and clean-checkout build instructions](docs/systems/playable-tactics-loop.md) and the ledger for verification limits and the separate owner-only Site. The prior React prototypes remain accessible with `?legacy` or `?dev`.
 
+**Local Zane impact candidate (not a deployed-release claim):** on this candidate checkout, run `godot/project.godot` with Godot 4.6.3 and choose **Practice: Zane showcase**. It reuses the existing sandbox, party and initiative—wait for Zane normally. Try movement, a basic sword attack and Fire on separate turns; Fire is a three-tile fan. **View & quality settings → Reduced Zane impact motion** changes only the new kick/wobble/flash for this session. Ordinary Practice, Continue, retry and canonical saves are unchanged. See the [candidate instructions](docs/systems/playable-tactics-loop.md#local-zane-impact-showcase-candidate).
+
 # ProjectTactic
 
 **The Appointed** is a Godot-first tactical roguelite RPG built around grid combat, job progression, repeated descents, and a story about what humanity preserves when it tries to remove uncertainty and suffering.

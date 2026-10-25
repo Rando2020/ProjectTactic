@@ -333,6 +333,9 @@ class Smoke:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--scenario', choices=['quickstep', 'zane-showcase', 'zane-duel'], default='quickstep')
+    parser.add_argument('--max-player-turns', type=int, default=20, help='Zane scenario normal Wait budget')
+    parser.add_argument('--budget', type=float, default=180, help='Zane scenario total wall-clock budget')
     parser.add_argument('--port', type=int, default=9222)
     parser.add_argument('--url', default='http://127.0.0.1:8000/index.html')
     parser.add_argument('--timeout', type=float, default=45)
@@ -342,15 +345,30 @@ def main() -> int:
     connection = cdp = smoke = None
     report = {'status': 'failed', 'url': args.url, 'coverage': ['ability-menu Cancel', 'target Cancel', 'legal movement',
               'Quickstep action/5 MP tradeoff', 'second legal movement ends turn']}
+    if args.scenario == 'zane-showcase':
+        from browser_zane_showcase import COVERAGE
+        report.update(scenario=args.scenario, coverage=COVERAGE)
+    elif args.scenario == 'zane-duel':
+        from browser_zane_duel import COVERAGE
+        report.update(scenario=args.scenario, coverage=COVERAGE)
     try:
         import websocket
         from capture_browser_screenshots import devtools_target
         connection = websocket.create_connection(devtools_target(args.port, args.timeout), timeout=10, http_proxy_host=None)
         cdp = CDP(connection)
-        smoke = Smoke(cdp, args.output, args.timeout)
+        if args.scenario == 'zane-showcase':
+            from browser_zane_showcase import ZaneShowcaseSmoke
+            smoke = ZaneShowcaseSmoke(cdp, args.output, args.timeout, max_player_turns=args.max_player_turns, budget=args.budget)
+        elif args.scenario == 'zane-duel':
+            from browser_zane_duel import ZaneDuelSmoke
+            smoke = ZaneDuelSmoke(cdp, args.output, args.timeout, max_player_turns=args.max_player_turns, budget=args.budget)
+        else:
+            smoke = Smoke(cdp, args.output, args.timeout)
         report['browser'] = cdp.command('Browser.getVersion')
         smoke.run(args.url)
         report['status'] = 'passed'
+        if args.scenario in ('zane-showcase', 'zane-duel'):
+            report['observed_coverage'] = smoke.coverage
     except Exception as error:
         report['failure'] = f'{type(error).__name__}: {error}'
         if smoke:

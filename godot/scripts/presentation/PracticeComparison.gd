@@ -8,6 +8,7 @@ var manager: BattleManager
 var toggle: Button
 var quality_toggle: Button
 var terrain_toggle: Button
+var motion_toggle: CheckButton
 var readout: Label
 var samples: Array[float] = []
 var last_tick := 0
@@ -24,6 +25,14 @@ func _ready() -> void:
 	add_child(panel)
 	var box := VBoxContainer.new()
 	panel.add_child(box)
+	if GameState.is_zane_duel_practice() or bool(GameState.practice_session.get("zane_showcase", false)):
+		var banner := Label.new()
+		banner.name = "ZaneDuelBanner" if GameState.is_zane_duel_practice() else "ZaneShowcaseBanner"
+		banner.text = "Zane vs Storm Imp: move one tile closer for a sword attack, or try Fire if equipped. Fire costs 12 MP and targets a three-tile fan." if GameState.is_zane_duel_practice() else "Zane showcase: try movement, a sword attack, or Fire on separate turns. Fire targets a three-tile fan."
+		banner.custom_minimum_size.x = 420
+		banner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		banner.add_theme_font_size_override("font_size",16)
+		box.add_child(banner)
 	var reveal := Button.new()
 	reveal.text = "View & quality settings"
 	box.add_child(reveal)
@@ -46,6 +55,13 @@ func _ready() -> void:
 	quality_toggle.custom_minimum_size.y = 36
 	quality_toggle.pressed.connect(switch_quality)
 	box.add_child(quality_toggle)
+	motion_toggle = CheckButton.new()
+	motion_toggle.name = "ReducedZaneMotion"
+	motion_toggle.text = "Reduced Zane impact motion"
+	motion_toggle.tooltip_text = "Only the new Zane camera kick, target wobble and flash. Timing, targeting, outcomes and sound stay the same."
+	motion_toggle.custom_minimum_size.y = 36
+	motion_toggle.pressed.connect(switch_reduced_motion)
+	box.add_child(motion_toggle)
 	readout = Label.new()
 	readout.add_theme_font_size_override("font_size", 14)
 	readout.tooltip_text = "Rolling wall-clock frame intervals, not GPU time. Compare the same camera and actions. Switching clears samples and waits one second."
@@ -97,6 +113,13 @@ func switch_quality() -> bool:
 	for unit: Unit in manager.units.values():
 		if is_instance_valid(unit) and is_instance_valid(unit._rig3d):
 			unit._rig3d.set_high_quality(enabled)
+	reset_samples()
+	_update_controls()
+	return true
+
+func switch_reduced_motion() -> bool:
+	if not can_switch(): return false
+	GameState.practice_session["reduced_zane_motion"] = not bool(GameState.practice_session.get("reduced_zane_motion",false))
 	reset_samples()
 	_update_controls()
 	return true
@@ -156,6 +179,9 @@ func _update_controls() -> void:
 	if is_instance_valid(quality_toggle):
 		quality_toggle.text = "Quality: High → Standard" if bool(GameState.practice_session.get("high_quality", false)) else "Quality: Standard → High"
 		quality_toggle.disabled = not can_switch()
+	if is_instance_valid(motion_toggle):
+		motion_toggle.set_pressed_no_signal(bool(GameState.practice_session.get("reduced_zane_motion",false)))
+		motion_toggle.disabled = not can_switch()
 	if is_instance_valid(terrain_toggle):
 		var view = manager.tactical_grid.terrain_view
 		terrain_toggle.text = "Terrain: 3D → Show 2D" if is_instance_valid(view) else "Terrain: 2D → Show 3D"

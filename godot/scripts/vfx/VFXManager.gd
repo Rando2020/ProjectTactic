@@ -12,6 +12,8 @@ const TILE_SIZE := Vector2(96.0, 48.0)
 const HEIGHT_STEP := 14.0
 const MAP_ORIGIN := Vector2(320.0, 64.0)
 
+var _action_presenters: Dictionary = {}
+
 func _ready() -> void:
 	z_index = 3000
 	z_as_relative = false
@@ -588,7 +590,19 @@ func _screen_flash(world_pos: Vector2, color: Color, duration: float) -> void:
 
 
 ## A short, bounded lead-in. Only the sprite moves; feet, bars and shadow stay anchored.
-func present_action(actor: Unit, destination: Vector2i, kind: String, permitted: Callable = Callable()) -> void:
+func present_action(actor: Unit, destination: Vector2i, kind: String, permitted: Callable = Callable(), context: Dictionary = {}) -> void:
+	if not context.is_empty():
+		var key := str(context.action_key)
+		cancel_action(key)
+		var controller := preload("res://scripts/presentation/ZaneActionPresentation.gd").new()
+		_action_presenters[key] = controller
+		add_child(controller)
+		var reference: WeakRef = weakref(controller)
+		controller.tree_exited.connect(func() -> void:
+			if _action_presenters.get(key) == reference.get_ref(): _action_presenters.erase(key)
+		)
+		await controller.present(actor,context,permitted)
+		return
 	actor.face_action(destination)
 	if kind not in ["slash", "arrow"] and actor.set_cast_pose("anticipation"):
 		await get_tree().create_timer(0.20).timeout
@@ -655,3 +669,22 @@ func present_action(actor: Unit, destination: Vector2i, kind: String, permitted:
 	if is_instance_valid(body):
 		var recover := actor.create_tween()
 		recover.tween_property(body, "position", start, 0.16).set_trans(Tween.TRANS_SINE)
+
+## Scoped bridges use the admission key; stale cleanup cannot touch a newer owner.
+func present_outcomes(context: Dictionary, records: Array[Dictionary]) -> void:
+	var owner = _action_presenters.get(str(context.get("action_key","")))
+	if is_instance_valid(owner): owner.present_outcomes(records)
+
+func finish_action(action_key: String) -> void:
+	var owner = _action_presenters.get(action_key)
+	if is_instance_valid(owner): owner.finish()
+
+func cancel_action(action_key: String) -> void:
+	var owner = _action_presenters.get(action_key)
+	_action_presenters.erase(action_key)
+	if is_instance_valid(owner): owner.cancel()
+
+## Pure presentation-state query. Only BattleManager may turn completion into contact.
+func action_lead_in_completed(action_key: String) -> bool:
+	var owner = _action_presenters.get(action_key)
+	return is_instance_valid(owner) and not owner.is_queued_for_deletion() and owner._lead_in_complete and not owner._cancelled

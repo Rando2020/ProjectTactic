@@ -1,0 +1,1725 @@
+{
+  "revision": "V4 blade-framing refinement",
+  "model_sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+  "evidence_type": "ACTUAL OFFLINE 3D RENDERS OF THE EXPORTED GLB",
+  "not_in_game_capture": true,
+  "not_generated_illustration": true,
+  "no_paint_over": true,
+  "source_render_samples": 192,
+  "lighting": "Neutral; no painted or dynamic fire glow",
+  "source_render_manifest": {
+    "revision": "V4 blade-framing refinement",
+    "asset": "/workspace/scratch/ccbd55cd809f/painterly-zane-evidence/v4-candidate/zane_painterly_v1.glb",
+    "sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+    "claim": "ACTUAL OFFLINE 3D RENDERS of imported GLB, not game capture",
+    "renderer": "Blender Cycles",
+    "samples": 192,
+    "lighting": "Neutral; no painted or dynamic fire glow",
+    "views": [
+      {
+        "file": "01_three_quarter.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.45,
+        "resolution": 840,
+        "facing": 0
+      },
+      {
+        "file": "02_front.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          0,
+          -6,
+          1.25
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.45,
+        "resolution": 840,
+        "facing": 0
+      },
+      {
+        "file": "03_rear.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          -3,
+          6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.45,
+        "resolution": 840,
+        "facing": 0
+      },
+      {
+        "file": "04_face_detail.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          0.5,
+          -5,
+          1.9
+        ],
+        "target": [
+          0,
+          0,
+          1.67
+        ],
+        "ortho": 0.64,
+        "resolution": 840,
+        "facing": 0
+      },
+      {
+        "file": "05_game_ortho_idle.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 384,
+        "facing": 0
+      },
+      {
+        "file": "06_walk_stride.png",
+        "clip": "walk",
+        "source_frame": 7,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "07_walk_contact.png",
+        "clip": "walk",
+        "source_frame": 13,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "08_slash_load.png",
+        "clip": "slash",
+        "source_frame": 10,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "09_slash_contact.png",
+        "clip": "slash",
+        "source_frame": 16,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "10_slash_follow.png",
+        "clip": "slash",
+        "source_frame": 19,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "11_cast_load.png",
+        "clip": "cast",
+        "source_frame": 12,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "12_cast_release.png",
+        "clip": "cast",
+        "source_frame": 22,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "13_cast_recoil.png",
+        "clip": "cast",
+        "source_frame": 28,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      },
+      {
+        "file": "14_defeat_kneel.png",
+        "clip": "defeat",
+        "source_frame": 36,
+        "camera": [
+          4,
+          -4,
+          4.215986323710904
+        ],
+        "target": [
+          0,
+          0,
+          0.95
+        ],
+        "ortho": 3.2,
+        "resolution": 640,
+        "facing": 0
+      }
+    ]
+  },
+  "turntable_render_manifest": {
+    "revision": "V4 exact exported GLB, neutral turntable",
+    "asset": "/workspace/scratch/ccbd55cd809f/projecttactic-zane-painterly-model/godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1.glb",
+    "sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+    "claim": "ACTUAL OFFLINE 3D RENDERS of imported GLB, not game capture",
+    "renderer": "Blender Cycles",
+    "samples": 64,
+    "lighting": "Neutral; no painted or dynamic fire glow",
+    "views": [
+      {
+        "file": "turntable_000.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.0,
+        "conservative_model_projected_bounds": [
+          [
+            0.07406452298164368,
+            0.12828435003757477
+          ],
+          [
+            0.6827638149261475,
+            0.8699625134468079
+          ]
+        ],
+        "image_sha256": "851f6fe2e5054dc6a842bc72afbc9a94c6d207344e315aac50790fae78d608bf"
+      },
+      {
+        "file": "turntable_001.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.1308996938995747,
+        "conservative_model_projected_bounds": [
+          [
+            0.09018561989068985,
+            0.13134215772151947
+          ],
+          [
+            0.6797334551811218,
+            0.8668006658554077
+          ]
+        ],
+        "image_sha256": "ab2421f714de0e82bc5ccd1f3e52e9ab9c7890bf10de7ee3e05f40e0fe58d113"
+      },
+      {
+        "file": "turntable_002.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.2617993877991494,
+        "conservative_model_projected_bounds": [
+          [
+            0.11331882327795029,
+            0.13497638702392578
+          ],
+          [
+            0.6736277937889099,
+            0.8631141781806946
+          ]
+        ],
+        "image_sha256": "e3ea2da69d5d8f1003eecd5aa532a18b7a502c31f5ec29c81f797b08e03a94c2"
+      },
+      {
+        "file": "turntable_003.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.39269908169872414,
+        "conservative_model_projected_bounds": [
+          [
+            0.14306822419166565,
+            0.13912487030029297
+          ],
+          [
+            0.664551317691803,
+            0.8589662313461304
+          ]
+        ],
+        "image_sha256": "bdcd448376a654d590cd395b0316e4203ec85a5aa67b572b3548451cd0003efb"
+      },
+      {
+        "file": "turntable_004.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.5235987755982988,
+        "conservative_model_projected_bounds": [
+          [
+            0.1789247840642929,
+            0.13951995968818665
+          ],
+          [
+            0.6644817590713501,
+            0.858624279499054
+          ]
+        ],
+        "image_sha256": "980ff1c7fa426d1ee8b8c0db584f23f518ad03d097c1a31d0501fb1b259da161"
+      },
+      {
+        "file": "turntable_005.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.6544984694978736,
+        "conservative_model_projected_bounds": [
+          [
+            0.22027507424354553,
+            0.13538633286952972
+          ],
+          [
+            0.6755856275558472,
+            0.8628628253936768
+          ]
+        ],
+        "image_sha256": "2b8854ef0bc060b8e62841f8aa047a2ad51b192c7b0e1a81b7c90447aea576ea"
+      },
+      {
+        "file": "turntable_006.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.7853981633974483,
+        "conservative_model_projected_bounds": [
+          [
+            0.26641151309013367,
+            0.13175994157791138
+          ],
+          [
+            0.6836851835250854,
+            0.8666441440582275
+          ]
+        ],
+        "image_sha256": "bbba86061d8f8fb91bdb385e30bfd7457d38e3d16a898b99beee7cb8fd0098c5"
+      },
+      {
+        "file": "turntable_007.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 0.916297857297023,
+        "conservative_model_projected_bounds": [
+          [
+            0.31478261947631836,
+            0.1287028193473816
+          ],
+          [
+            0.6886418461799622,
+            0.8699035048484802
+          ]
+        ],
+        "image_sha256": "66c055e2a07af2ffad541cc9c0238ea8aff47986be994cbf94adea41a2604084"
+      },
+      {
+        "file": "turntable_008.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.0471975511965976,
+        "conservative_model_projected_bounds": [
+          [
+            0.3187924027442932,
+            0.12626725435256958
+          ],
+          [
+            0.6903708577156067,
+            0.8725851774215698
+          ]
+        ],
+        "image_sha256": "b764a53832eaf3000cba25b1fb4f9cfe600740336d998c54278db3f0d764dd1a"
+      },
+      {
+        "file": "turntable_009.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.1780972450961724,
+        "conservative_model_projected_bounds": [
+          [
+            0.32160302996635437,
+            0.1244949921965599
+          ],
+          [
+            0.6888424754142761,
+            0.8746432662010193
+          ]
+        ],
+        "image_sha256": "c77f153775ff8c0440df94f36a870e3bee2c0d18f44bbd8a2fe4f1123b1d42bc"
+      },
+      {
+        "file": "turntable_010.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.3089969389957472,
+        "conservative_model_projected_bounds": [
+          [
+            0.3274660110473633,
+            0.1234162300825119
+          ],
+          [
+            0.6840829849243164,
+            0.8760425448417664
+          ]
+        ],
+        "image_sha256": "f9982cbd68e90bdc83e9ec57dad3a615d0c43884d2d0935b5bc2b4c0791a5a01"
+      },
+      {
+        "file": "turntable_011.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.4398966328953218,
+        "conservative_model_projected_bounds": [
+          [
+            0.3362811505794525,
+            0.12304957956075668
+          ],
+          [
+            0.6761738061904907,
+            0.8767590522766113
+          ]
+        ],
+        "image_sha256": "9c7ecc7a768aaac987cca593979d282c1607b506ee8112595b8bfc72db5683ee"
+      },
+      {
+        "file": "turntable_012.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.5707963267948966,
+        "conservative_model_projected_bounds": [
+          [
+            0.3478975296020508,
+            0.1234012022614479
+          ],
+          [
+            0.6652502417564392,
+            0.8767805695533752
+          ]
+        ],
+        "image_sha256": "1a758fb5d60c5b4a7c6d4799a1f1b7d6e728084021a1fd97986318b5905a154f"
+      },
+      {
+        "file": "turntable_013.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.7016960206944713,
+        "conservative_model_projected_bounds": [
+          [
+            0.3621164560317993,
+            0.12446514517068863
+          ],
+          [
+            0.67516028881073,
+            0.8761067390441895
+          ]
+        ],
+        "image_sha256": "cbf8374f323258311f8555fcdeaa215f4d666ac13b558ddf8105f71037e8283c"
+      },
+      {
+        "file": "turntable_014.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.832595714594046,
+        "conservative_model_projected_bounds": [
+          [
+            0.3786945939064026,
+            0.1262231469154358
+          ],
+          [
+            0.7254946231842041,
+            0.8747490048408508
+          ]
+        ],
+        "image_sha256": "c9040938021714648857f5006c131c60e821a01d892081b5b47c72cfe832f535"
+      },
+      {
+        "file": "turntable_015.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 1.9634954084936205,
+        "conservative_model_projected_bounds": [
+          [
+            0.3973482847213745,
+            0.1286451816558838
+          ],
+          [
+            0.7719706892967224,
+            0.8727306723594666
+          ]
+        ],
+        "image_sha256": "7fdd4d67fd7b65d1233a04f6f60c21d9cf1129158c9be8a648049aaea762c3c8"
+      },
+      {
+        "file": "turntable_016.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.0943951023931953,
+        "conservative_model_projected_bounds": [
+          [
+            0.398886114358902,
+            0.12906083464622498
+          ],
+          [
+            0.8137933015823364,
+            0.8727152347564697
+          ]
+        ],
+        "image_sha256": "2a373d26a7597eda6c565ca68d5a5114982bf368761a8adf5074c8e8e8fbeaaf"
+      },
+      {
+        "file": "turntable_017.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.2252947962927703,
+        "conservative_model_projected_bounds": [
+          [
+            0.3798251450061798,
+            0.12698152661323547
+          ],
+          [
+            0.8502467274665833,
+            0.8751843571662903
+          ]
+        ],
+        "image_sha256": "b4285e29fea57d995c2176f652c7ce136cfd8833edd430bdb7fd332bcc45a65f"
+      },
+      {
+        "file": "turntable_018.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.356194490192345,
+        "conservative_model_projected_bounds": [
+          [
+            0.3628203868865967,
+            0.1255532205104828
+          ],
+          [
+            0.8807075023651123,
+            0.876985490322113
+          ]
+        ],
+        "image_sha256": "669a5a34cb966b7dc64d3048e7e15afcebe1028b3ba1f78541c8406d8e078d16"
+      },
+      {
+        "file": "turntable_019.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.4870941840919194,
+        "conservative_model_projected_bounds": [
+          [
+            0.34816282987594604,
+            0.12480037659406662
+          ],
+          [
+            0.9046540856361389,
+            0.8780876994132996
+          ]
+        ],
+        "image_sha256": "a380f1e143489d8a0528e419fbdf9a8d4e86c0685f1b035d2a7e12ec589ad8d3"
+      },
+      {
+        "file": "turntable_020.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.6179938779914944,
+        "conservative_model_projected_bounds": [
+          [
+            0.3361032009124756,
+            0.12473592162132263
+          ],
+          [
+            0.9216770529747009,
+            0.8784721493721008
+          ]
+        ],
+        "image_sha256": "c59bc561e389560d308770647a73ed173fc74d41ee39ad6218467c839e42a975"
+      },
+      {
+        "file": "turntable_021.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.748893571891069,
+        "conservative_model_projected_bounds": [
+          [
+            0.32684794068336487,
+            0.12536092102527618
+          ],
+          [
+            0.9314849972724915,
+            0.8781322836875916
+          ]
+        ],
+        "image_sha256": "f25630c6ffc69e9bdbf350c41454ad2e74d6696929c87beb1199a6e3aea67986"
+      },
+      {
+        "file": "turntable_022.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 2.8797932657906435,
+        "conservative_model_projected_bounds": [
+          [
+            0.32055532932281494,
+            0.1266646385192871
+          ],
+          [
+            0.9361631274223328,
+            0.8770739436149597
+          ]
+        ],
+        "image_sha256": "21e8320f8ba1fb3afca17c86461d477e15b839f87dedc22026c0e16ee904220f"
+      },
+      {
+        "file": "turntable_023.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.010692959690218,
+        "conservative_model_projected_bounds": [
+          [
+            0.3173331022262573,
+            0.12862487137317657
+          ],
+          [
+            0.9347689151763916,
+            0.8753151893615723
+          ]
+        ],
+        "image_sha256": "0106bacb0eccd63d0ac62ca4254eba18a8b58dae80f648efa48d4a7a3d65ebef"
+      },
+      {
+        "file": "turntable_024.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.141592653589793,
+        "conservative_model_projected_bounds": [
+          [
+            0.31723636388778687,
+            0.13120800256729126
+          ],
+          [
+            0.9259356260299683,
+            0.8728861212730408
+          ]
+        ],
+        "image_sha256": "257ab8637870f4dfa30ddf3faefea4f97b82789272c9427b268e5d3458b65ac6"
+      },
+      {
+        "file": "turntable_025.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.272492347489368,
+        "conservative_model_projected_bounds": [
+          [
+            0.3202667236328125,
+            0.13436982035636902
+          ],
+          [
+            0.9098145365715027,
+            0.8698282837867737
+          ]
+        ],
+        "image_sha256": "b1401b1afd256cee3cca7838f4f06d6f3610f9e5c8c510a3bd2add2abe523a38"
+      },
+      {
+        "file": "turntable_026.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.4033920413889427,
+        "conservative_model_projected_bounds": [
+          [
+            0.3263723850250244,
+            0.13805627822875977
+          ],
+          [
+            0.8866813778877258,
+            0.8661940693855286
+          ]
+        ],
+        "image_sha256": "d330e1e9ff3da6fd1689206fe3401f4713cf28df565c8c806df86e526f64c8ad"
+      },
+      {
+        "file": "turntable_027.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.5342917352885173,
+        "conservative_model_projected_bounds": [
+          [
+            0.33544889092445374,
+            0.14220429956912994
+          ],
+          [
+            0.8569319844245911,
+            0.8620455861091614
+          ]
+        ],
+        "image_sha256": "7f77d14bdac657f3cc50b2381538304d527ac2a32ebe3907e8339f777b7dfced"
+      },
+      {
+        "file": "turntable_028.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.665191429188092,
+        "conservative_model_projected_bounds": [
+          [
+            0.3355184495449066,
+            0.14254625141620636
+          ],
+          [
+            0.821075439453125,
+            0.8616505265235901
+          ]
+        ],
+        "image_sha256": "4df962daecaab8455acdb123bd921913d2ad887f07828f051b0a0f3996268b54"
+      },
+      {
+        "file": "turntable_029.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.796091123087667,
+        "conservative_model_projected_bounds": [
+          [
+            0.32441455125808716,
+            0.13830769062042236
+          ],
+          [
+            0.7797251343727112,
+            0.8657841086387634
+          ]
+        ],
+        "image_sha256": "b409fb7219da7922fbe5597f631b186bbd73aa3eedbb50352377f2134c562976"
+      },
+      {
+        "file": "turntable_030.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 3.926990816987241,
+        "conservative_model_projected_bounds": [
+          [
+            0.3163149654865265,
+            0.13452637195587158
+          ],
+          [
+            0.733588695526123,
+            0.869410514831543
+          ]
+        ],
+        "image_sha256": "5c3fd32683e9ce34bcb923853a721f4735213c1bb7c3c3fb0b7ec046fda9f9dd"
+      },
+      {
+        "file": "turntable_031.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.057890510886816,
+        "conservative_model_projected_bounds": [
+          [
+            0.31135833263397217,
+            0.13126696646213531
+          ],
+          [
+            0.685217559337616,
+            0.8724676370620728
+          ]
+        ],
+        "image_sha256": "a7a1ad783496b8621176e21fa301beec8b16851765aba9b2acef930d106e029b"
+      },
+      {
+        "file": "turntable_032.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.1887902047863905,
+        "conservative_model_projected_bounds": [
+          [
+            0.30962935090065,
+            0.12858527898788452
+          ],
+          [
+            0.6812077760696411,
+            0.8749032020568848
+          ]
+        ],
+        "image_sha256": "f5a2f5914b3189d46eb39d28c6165160d9783a64998e81eec690367d4db8726a"
+      },
+      {
+        "file": "turntable_033.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.319689898685966,
+        "conservative_model_projected_bounds": [
+          [
+            0.3111576735973358,
+            0.12652720510959625
+          ],
+          [
+            0.6783971786499023,
+            0.876675546169281
+          ]
+        ],
+        "image_sha256": "aeeb44a4daee72f3edbd44a160a3f877ddad721738545fc86db5e13282cdd508"
+      },
+      {
+        "file": "turntable_034.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.4505895925855405,
+        "conservative_model_projected_bounds": [
+          [
+            0.31591716408729553,
+            0.12512794137001038
+          ],
+          [
+            0.672534167766571,
+            0.8777542114257812
+          ]
+        ],
+        "image_sha256": "2fed351c19af908ba6c27602c9029c015f3f56d737bd1e6408244705728ed3a2"
+      },
+      {
+        "file": "turntable_035.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.581489286485115,
+        "conservative_model_projected_bounds": [
+          [
+            0.3238263428211212,
+            0.12441141158342361
+          ],
+          [
+            0.6637190580368042,
+            0.8781208992004395
+          ]
+        ],
+        "image_sha256": "1b19f868f4b77e42531fcc9dbe4fd4f9df6103e51af6d5d98afa428cade1217a"
+      },
+      {
+        "file": "turntable_036.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.71238898038469,
+        "conservative_model_projected_bounds": [
+          [
+            0.3347499370574951,
+            0.12438991665840149
+          ],
+          [
+            0.6521026492118835,
+            0.8777692914009094
+          ]
+        ],
+        "image_sha256": "f98d9fdb0ccdefb20e730a38e7a0bc75f8d3fc9019675c15ae0ee4ecdf1c517a"
+      },
+      {
+        "file": "turntable_037.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.843288674284264,
+        "conservative_model_projected_bounds": [
+          [
+            0.3248398005962372,
+            0.12506374716758728
+          ],
+          [
+            0.637883722782135,
+            0.8767053484916687
+          ]
+        ],
+        "image_sha256": "692b27b4377475d2d3975624fcd94a865c85eb3888590a3fb76b301b040be3e9"
+      },
+      {
+        "file": "turntable_038.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 4.974188368183839,
+        "conservative_model_projected_bounds": [
+          [
+            0.2745055556297302,
+            0.12642145156860352
+          ],
+          [
+            0.6213055849075317,
+            0.8749473094940186
+          ]
+        ],
+        "image_sha256": "8854e05f83008b251336dd03a0845a1c85d4a3246b9942a8e8957f2721572956"
+      },
+      {
+        "file": "turntable_039.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.105088062083413,
+        "conservative_model_projected_bounds": [
+          [
+            0.22802937030792236,
+            0.128439798951149
+          ],
+          [
+            0.602651834487915,
+            0.8725252747535706
+          ]
+        ],
+        "image_sha256": "701839eff137576751ebea111fa593333c4376802e4c148232a32403b9b53b91"
+      },
+      {
+        "file": "turntable_040.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.235987755982989,
+        "conservative_model_projected_bounds": [
+          [
+            0.18620693683624268,
+            0.128455251455307
+          ],
+          [
+            0.60111403465271,
+            0.8721096515655518
+          ]
+        ],
+        "image_sha256": "b82213cc7925e1ec6df19a22d5eb41141a3b141af66985996761579eb7a0ee1c"
+      },
+      {
+        "file": "turntable_041.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.3668874498825625,
+        "conservative_model_projected_bounds": [
+          [
+            0.1497533768415451,
+            0.12598608434200287
+          ],
+          [
+            0.6201750636100769,
+            0.8741889595985413
+          ]
+        ],
+        "image_sha256": "c6e2dbeb3a1ee10de0c132e76e0a31d82b556131028fb6d8cce004b794340c1d"
+      },
+      {
+        "file": "turntable_042.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.497787143782138,
+        "conservative_model_projected_bounds": [
+          [
+            0.11929278075695038,
+            0.1241850033402443
+          ],
+          [
+            0.6371797919273376,
+            0.875617265701294
+          ]
+        ],
+        "image_sha256": "d6b5808393fa0bf9b15c785c4d4553b84e0b238e29d66578e2a9c2edfc0000bc"
+      },
+      {
+        "file": "turntable_043.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.6286868376817125,
+        "conservative_model_projected_bounds": [
+          [
+            0.09534601867198944,
+            0.12308282405138016
+          ],
+          [
+            0.6518374085426331,
+            0.8763700723648071
+          ]
+        ],
+        "image_sha256": "3fd615e387fe09ecb6e1d6b78760980eef2a5fbf06dc13e78fdd2b67ab2f030d"
+      },
+      {
+        "file": "turntable_044.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.759586531581287,
+        "conservative_model_projected_bounds": [
+          [
+            0.07832314074039459,
+            0.1226983368396759
+          ],
+          [
+            0.6638969779014587,
+            0.8764345645904541
+          ]
+        ],
+        "image_sha256": "0f8425a94d8feb7fdf2de11ba2418603fd7701c388a3bac2f6b3e8876f3d7580"
+      },
+      {
+        "file": "turntable_045.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 5.8904862254808625,
+        "conservative_model_projected_bounds": [
+          [
+            0.06851524114608765,
+            0.12303820997476578
+          ],
+          [
+            0.6731522083282471,
+            0.8758095502853394
+          ]
+        ],
+        "image_sha256": "b7467f4327cffa5a73c4d8cd67c2fcda49caa740e6897ad1b6e0e6bb2a8cc59a"
+      },
+      {
+        "file": "turntable_046.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 6.021385919380436,
+        "conservative_model_projected_bounds": [
+          [
+            0.06383704394102097,
+            0.1240965723991394
+          ],
+          [
+            0.6794448494911194,
+            0.8745058178901672
+          ]
+        ],
+        "image_sha256": "b03b56915ae83f6fbe584c73d496e22e99d6e023cfcac7f7cbb538a32e35eea5"
+      },
+      {
+        "file": "turntable_047.png",
+        "clip": "idle",
+        "source_frame": 1,
+        "camera": [
+          3,
+          -6,
+          2.5
+        ],
+        "target": [
+          0,
+          0,
+          0.97
+        ],
+        "ortho": 2.8,
+        "resolution": 512,
+        "facing": 6.152285613280012,
+        "conservative_model_projected_bounds": [
+          [
+            0.06523124128580093,
+            0.12585529685020447
+          ],
+          [
+            0.682667076587677,
+            0.872545599937439
+          ]
+        ],
+        "image_sha256": "0940bbfb5c998d825eca839a13791b17d28226f3f8f096c3f23e5311dabb4d89"
+      }
+    ]
+  },
+  "turntable_video": {
+    "frames": 48,
+    "fps": 12,
+    "seconds": 4,
+    "encoding": "H264, yuv420p, CRF18"
+  },
+  "game_scale_proxy": {
+    "image_width_px": 138,
+    "intended_runtime_display_size_local_canvas_px": 138.24,
+    "note": "Rounded one-to-one pixel proxy; conversation UI may scale the displayed image."
+  },
+  "files": {
+    "game-camera-motion.png": {
+      "sha256": "aef9a0a108284ab82c4cb022326be62ebfbdb6a91467f37db5d63ef543dae652",
+      "bytes": 1313879
+    },
+    "face-detail.png": {
+      "sha256": "4b02996ab5fafd3b9a5747e8d742cbe628b2683878deab69b07daf3f004cf428",
+      "bytes": 1003446
+    },
+    "turntable.mp4": {
+      "sha256": "19e3c57737eec779b78ae809ddf43613c81e5f07466456f19d087460cbcbdac1",
+      "bytes": 341065
+    },
+    "game-scale-138.png": {
+      "sha256": "8075bdde8bc17a4d3b28164693ffb5c3c5a4dc60caa4977df54ea3e0ad1aeefa",
+      "bytes": 17871
+    },
+    "neutral-turnaround.png": {
+      "sha256": "d30ab205d2584d8c41d2e128150741ce36479611c0f453d7380bd2405c61c195",
+      "bytes": 952115
+    }
+  },
+  "source_image_sha256": {
+    "12_cast_release.png": "c2c756b219fd9d3696ae249f1c88479a535d830c280026dd76c7a64417c36c0d",
+    "10_slash_follow.png": "7bda0635ae00323ebff6a8243043e875bbbb285d4babcb086acc5da45955b2bd",
+    "01_three_quarter.png": "87955fc7a64045f13199e36540b41088af76179caf4554e490322b09fa636f70",
+    "14_defeat_kneel.png": "1af3c3590eb08622283cacd3b658b61bd40bf054f85d989316501720842796de",
+    "09_slash_contact.png": "06ffd9f00c27ba0df787218b439c13a40c953f4b8b01bc735d7697ed2203b193",
+    "08_slash_load.png": "6b2ae73e62bf5bd44109b1868283539eadeeb04da731b073cd01198fc6958917",
+    "06_walk_stride.png": "7d09760c32b43074eb3f1c96fbae78b16d5606c45bc50c5844b64d3f010524ce",
+    "05_game_ortho_idle.png": "698319527179a8f25fcfdaf8307cf8e6891c0be63162ff59733470ce905ead8e",
+    "04_face_detail.png": "4b02996ab5fafd3b9a5747e8d742cbe628b2683878deab69b07daf3f004cf428",
+    "02_front.png": "0ee6e0439cffeef3654d798cf5802aab8b37dd69d3af14f996ee893c73909c6b",
+    "13_cast_recoil.png": "ce2e79493f55558ef46fafb785722a42d7524e1370813e33e934b4ae8b5c9ca6",
+    "11_cast_load.png": "b0f3e0d7ba18adacc339369abd49aee89b746856a4284286bfb1d38999029d26",
+    "07_walk_contact.png": "083b8a88b83f2d2196bf143a5420cad333444657dbca17a05d9ac3a3494a3c58",
+    "03_rear.png": "afe391dbd5c70b050488f510a202aaf980d2afa0baed01c6763bcac50f5566c8"
+  }
+}

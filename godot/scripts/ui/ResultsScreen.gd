@@ -440,11 +440,11 @@ func _build_practice_ui() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 	_practice_notice = Label.new()
-	_practice_notice.text = "Practice gains are temporary. Your saved descent is unchanged."
+	_practice_notice.text = "Replay restores the same fight. No rewards or training are granted. Your saved descent is unchanged." if _gs.is_zane_duel_practice() else "Practice gains are temporary. Your saved descent is unchanged."
 	_practice_notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_practice_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(_practice_notice)
-	if _gs.practice_session.get("state") == "won":
+	if _gs.practice_session.get("state") == "won" and not _gs.is_zane_duel_practice():
 		var rewards := Label.new()
 		rewards.text = "Practice rewards: %d gold / %d JP (not kept)" % [_gs.pending_rewards.get("gold", 0), _gs.pending_rewards.get("jp", 0)]
 		rewards.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -471,7 +471,7 @@ Future JP follows this path. No abilities are granted for free."
 				shown += 1
 				if shown >= 3: break
 	else:
-		var retry := _btn("Retry Encounter", GOLD)
+		var retry := _btn("Replay Fight" if _gs.is_zane_duel_practice() else "Retry Encounter", GOLD)
 		retry.disabled = not _gs.can_retry_practice()
 		retry.pressed.connect(_retry_practice)
 		column.add_child(retry)

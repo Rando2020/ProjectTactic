@@ -43,12 +43,15 @@ var selected_ability_id: String = ""
 var last_ability_used: String = ""
 var is_resolving_action: bool = false
 var action_lifecycle := preload("res://scripts/battle/ActionLifecycle.gd").new()
+var _action_presentation_context: Dictionary = {}
 var active_unit_has_moved: bool = false
 var active_unit_has_acted: bool = false
 var _player_turn_serial: int = 0 # Reject delayed Quickstep contact from an expired turn.
 var auto_battle_enabled: bool = AUTO_BATTLE_TEST_MODE
 var battle_speed_multiplier: float = AUTO_BATTLE_TEST_SPEED
 var _last_enemy_intents: Dictionary = {}
+# Inspection survives clear_highlights(); it is not command/target selection.
+var _inspected_tile := Vector2i(-1, -1)
 
 ##  Tactical boon runtime state
 var _ruinous_hit_counter:    int  = 0   ## counts hits toward Ruinous Field interval
@@ -74,6 +77,7 @@ func _timer(seconds: float) -> SceneTreeTimer:
 
 func _exit_tree() -> void:
 	action_lifecycle.cancel()
+	_cancel_action_presentation()
 	is_resolving_action = false
 	if auto_battle_enabled:
 		Engine.time_scale = 1.0
@@ -88,6 +92,7 @@ func _ready() -> void:
 
 func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	map_data = p_map_data
+	_inspected_tile = Vector2i(-1, -1)
 	_ruinous_hit_counter    = 0
 	_wrath_crescendo_stacks = 0
 	_tiles_moved_this_turn  = 0
@@ -100,6 +105,11 @@ func start_battle(p_map_data: MapData, p_units: Array[Unit]) -> void:
 	for unit in p_units:
 		units[unit.unit_id] = unit
 		unit.unit_defeated.connect(_on_unit_defeated)
+		# Observe final authoritative HP, including existing survival-boon callbacks.
+		unit.unit_defeated.connect(_refresh_inspected_tile_info.unbind(1))
+		unit.hp_changed.connect(_refresh_inspected_tile_info.unbind(3))
+		unit.moved.connect(_refresh_inspected_tile_info.unbind(3))
+		unit.tree_exited.connect(_refresh_inspected_tile_info)
 		unit.status_tick.connect(_on_status_tick)
 		#  Initialize boon tracking metadata
 		unit.set_meta("kill_count", 0)
@@ -576,7 +586,8 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 	var attack_kind := "arrow" if unit.unit_data.base_stats.attack_range_max > 1 else "slash"
 	if not await _present_action(unit, target.grid_pos, attack_kind, target):
 		return
-	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar, attack_kind)
+	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar, attack_kind, false, {}, _presentation_feedback_owner())
+	_present_action_outcomes([_presentation_record(target,result)])
 	active_unit_has_acted = true
 	if result.get("missed", false):
 		log_message.emit("%s attacks but misses!" % unit.display_name)
@@ -1080,7 +1091,7 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 ## direct result, not a later net HP delta (which could include other effects).
 ## skip_setup=true leaves MP, presentation and target logging to the AoE wrapper.
 func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionary,
-		skip_setup: bool = false, source_status_requires_hit: bool = false) -> Dictionary:
+		skip_setup: bool = false, source_status_requires_hit: bool = false, feedback_owner: StringName = &"") -> Dictionary:
 	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
 		return {"executed": false, "outcome": {}}
 	if not _silence_allows_ability(caster, ability):
@@ -1095,13 +1106,16 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 	if target and target.grid_pos != caster.grid_pos:
 		_face_toward(caster, target.grid_pos)
 	if not skip_setup:
-		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target):
+		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target, str(ability.get("id",""))):
 			return {"executed": false, "outcome": {}}
 		# Revalidate after presentation: Silence may arrive after planning/admission.
 		if not _silence_allows_ability(caster, ability):
+			_cancel_action_presentation()
 			return {"executed": false, "outcome": {}}
 		if check_range and not _ability_target_in_range(caster, target, ability):
+			_cancel_action_presentation()
 			return {"executed": false, "outcome": {}}
+		feedback_owner = _presentation_feedback_owner()
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
 		active_command = ""
@@ -1143,7 +1157,7 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
 		var ab_vfx: String = ability.get("vfx_mode", "slash")
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power})
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power}, feedback_owner)
 		if not skip_setup:
 			if result.get("missed", false):
 				log_message.emit("%s swings but misses! (blind)" % caster.display_name)
@@ -1165,7 +1179,7 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		return {"executed": true, "outcome": result}
 
 	#  Spell (elemental / dark / etc.)
-	var spell_result := combat_resolver.resolve_spell(caster, target, spell_type, base_power)
+	var spell_result := combat_resolver.resolve_spell(caster, target, spell_type, base_power, feedback_owner)
 	# Terrain ignite regardless of skip_setup
 	if spell_type == "fire":
 		var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
@@ -1188,6 +1202,7 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 	var se_data2: Dictionary = ability.get("status_effect", {})
 	if not se_data2.is_empty() and (not status_requires_hit or not spell_result.get("missed", false)):
 		_try_apply_status(target, se_data2)
+	if not skip_setup: _present_action_outcomes([_presentation_record(target,spell_result)])
 	return {"executed": true, "outcome": spell_result}
 
 
@@ -1217,9 +1232,10 @@ static func _combat_outcome_text(outcome: Dictionary) -> String:
 func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> bool:
 	if not _silence_allows_ability(caster, ability):
 		return false
-	if not await _present_action(caster, center, "cast"):
+	if not await _present_action(caster, center, "cast", null, str(ability.get("id",""))):
 		return false
 	if not _silence_allows_ability(caster, ability):
+		_cancel_action_presentation()
 		return false
 	if center != caster.grid_pos:
 		_face_toward(caster, center)
@@ -1254,11 +1270,19 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 
 	#  All other shapes
 	var aoe_targets := _get_aoe_targets(center, ability, caster)
+	var records: Array[Dictionary] = []
+	var owner := _presentation_feedback_owner()
 	if aoe_targets.is_empty():
 		log_message.emit("(no targets in burst)")
+		_present_action_outcomes(records)
 		return true
 	for tgt: Unit in aoe_targets:
-		await _execute_ability(caster, tgt, ability, true)
+		var record := _presentation_record(tgt,{})
+		var execution := await _execute_ability_with_result(caster,tgt,ability,true,false,owner)
+		if execution.executed:
+			record.outcome = execution.outcome.duplicate(true)
+			records.append(record)
+	_present_action_outcomes(records)
 	return true
 
 
@@ -1411,7 +1435,8 @@ func _get_aoe_targets(center: Vector2i, ability: Dictionary, caster: Unit) -> Ar
 	var tiles := _aoe_tiles(center, ability, caster)
 	if tiles.is_empty():
 		return result
-	for uid: String in units:
+	# _living_unit may prune freed entries; preserve recipient insertion order.
+	for uid: String in units.keys():
 		var u: Unit = _living_unit(str(uid))
 		if not u or u.hp <= 0:
 			continue
@@ -1515,36 +1540,62 @@ func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> voi
 
 #  Input handlers
 
+## Display-only snapshot of the inspected cell; never refresh tactical previews here.
+func _format_tile_info(grid_pos: Vector2i) -> String:
+	var tile: Dictionary = tactical_grid.get_tile(grid_pos)
+	if tile.is_empty():
+		return ""
+	var occupant: Unit = null
+	var active: Unit = null
+	# Do not use _living_unit/_unit_at_pos: their invalid-entry cleanup mutates units.
+	for candidate in units.values():
+		if not is_instance_valid(candidate):
+			continue
+		var unit := candidate as Unit
+		if not unit or not unit.is_inside_tree() or unit.hp <= 0:
+			continue
+		if occupant == null and unit.grid_pos == grid_pos:
+			occupant = unit
+		if unit.unit_id == active_unit_id:
+			active = unit
+	var occupant_text := ""
+	if occupant:
+		occupant_text = "  %s %d/%d HP" % [
+			occupant.display_name,
+			occupant.hp,
+			occupant.unit_data.base_stats.hp if occupant.unit_data else occupant.hp,
+		]
+	var height_delta_text := ""
+	if active and active.grid_pos != grid_pos:
+		var active_tile := tactical_grid.get_tile(active.grid_pos)
+		var height_delta: int = int(tile.get("height", 0)) - int(active_tile.get("height", 0))
+		if height_delta != 0:
+			height_delta_text = "  %+dH" % height_delta
+	return "%s  %d,%d  H:%d  Move:%d%s%s" % [
+		str(tile.get("terrain", "unknown")).replace("_", " ").capitalize(),
+		grid_pos.x,
+		grid_pos.y,
+		int(tile.get("height", 0)),
+		int(tile.get("move_cost", 1)),
+		height_delta_text,
+		occupant_text,
+	]
+
+
+func _refresh_inspected_tile_info() -> void:
+	if not is_inside_tree() or not is_instance_valid(tactical_grid):
+		return
+	var text := _format_tile_info(_inspected_tile)
+	if not text.is_empty():
+		tile_info_changed.emit(text)
+
+
 ## Called every time the mouse crosses into a new grid tile.
 ## If an AoE ability is selected, paints the burst zone in red so the
 ## player can see exactly which tiles will be hit before committing.
 func _on_tile_hovered(grid_pos: Vector2i) -> void:
-	var tile: Dictionary = tactical_grid.get_tile(grid_pos)
-	if not tile.is_empty():
-		var occupant := _unit_at_pos(grid_pos)
-		var occupant_text := ""
-		if occupant:
-			occupant_text = "  %s %d/%d HP" % [
-				occupant.display_name,
-				occupant.hp,
-				occupant.unit_data.base_stats.hp if occupant.unit_data else occupant.hp,
-			]
-		var height_delta_text := ""
-		var active := _living_unit(active_unit_id)
-		if active and active.grid_pos != grid_pos:
-			var active_tile := tactical_grid.get_tile(active.grid_pos)
-			var height_delta: int = int(tile.get("height", 0)) - int(active_tile.get("height", 0))
-			if height_delta != 0:
-				height_delta_text = "  %+dH" % height_delta
-		tile_info_changed.emit("%s  %d,%d  H:%d  Move:%d%s%s" % [
-			str(tile.get("terrain", "unknown")).replace("_", " ").capitalize(),
-			grid_pos.x,
-			grid_pos.y,
-			int(tile.get("height", 0)),
-			int(tile.get("move_cost", 1)),
-			height_delta_text,
-			occupant_text,
-		])
+	_inspected_tile = grid_pos
+	_refresh_inspected_tile_info()
 	if active_command == "move":
 		action_preview_changed.emit(_move_preview(grid_pos))
 		var mover: Unit = _living_unit(active_unit_id)
@@ -1680,7 +1731,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 		last_ability_used = "a basic attack"
 		if not await _present_action(attacker, target.grid_pos, atk_vfx, target):
 			return
-		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx)
+		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx, false, {}, _presentation_feedback_owner())
+		_present_action_outcomes([_presentation_record(target,result)])
 		tactical_grid.clear_highlights()
 		active_command = ""
 		if result.get("missed", false):
@@ -2402,27 +2454,60 @@ func _on_boon_effect(signal_name: String, data: Dictionary) -> void:
 
 
 ## Shared primary-action lifecycle for both teams and all targeted abilities.
-func _present_action(actor: Unit, destination: Vector2i, kind: String, target: Unit = null) -> bool:
+func _present_action(actor: Unit, destination: Vector2i, kind: String, target: Unit = null, ability_id: String = "") -> bool:
 	var ticket: int = action_lifecycle.begin(actor, target)
-	if ticket == 0:
-		return false
+	if ticket == 0: return false
 	is_resolving_action = true
 	_emit_action_state()
+	var canonical := AbilityDB.canonical_id(ability_id)
+	_action_presentation_context = {}
+	if actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire"):
+		var footprint: Array[Vector2i] = []
+		if canonical == "fire": footprint = _aoe_tiles(destination,AbilityDB.get_ability(canonical),actor)
+		else: footprint.append(destination)
+		_action_presentation_context = {"profile_id":"zane_impact_v1", "action_key":"%s:%s" % [get_instance_id(),ticket], "ticket":ticket,"actor_id":actor.unit_id,"ability_id":canonical,"kind":kind,"destination":destination,"footprint":footprint,"reduced_motion":bool(GameState.practice_session.get("reduced_zane_motion",false))}
+	var context := _action_presentation_context.duplicate(true)
 	var effects := get_node_or_null("/root/VFX") as VFXManager
+	var lifecycle = action_lifecycle
 	if effects:
-		await effects.present_action(actor, destination, kind, func() -> bool: return action_lifecycle.presentation_valid(ticket))
-	if not action_lifecycle.contact(ticket):
-		if action_lifecycle.phase == "idle":
-			is_resolving_action = false
+		await effects.present_action(actor,destination,kind,func() -> bool: return lifecycle.presentation_valid(ticket),context)
+	if not is_instance_valid(self): return false
+	var lead_completed := context.is_empty() or (effects != null and effects.action_lead_in_completed(str(context.action_key)))
+	if not lead_completed and action_lifecycle.ticket == ticket and action_lifecycle.phase == "anticipation":
+		# A cancelled visual wait is not completed preparation. Refusal/abort stays
+		# here, and can never invalidate an already admitted newer ticket.
+		action_lifecycle.cancel()
+	if not lead_completed or not action_lifecycle.contact(ticket):
+		if effects and not context.is_empty(): effects.cancel_action(str(context.action_key))
+		if _action_presentation_context.get("action_key","") == context.get("action_key",""): _action_presentation_context = {}
+		if action_lifecycle.phase == "idle": is_resolving_action = false
 		return false
-	if kind == "slash" and actor.melee_pose == "anticipation":
-		actor.set_melee_pose("contact")
+	if kind == "slash" and actor.melee_pose == "anticipation": actor.set_melee_pose("contact")
 	return true
+
+func _presentation_feedback_owner() -> StringName:
+	return &"zane_impact_v1" if not _action_presentation_context.is_empty() and int(_action_presentation_context.ticket) == action_lifecycle.ticket else &""
+
+func _presentation_record(target: Unit, outcome: Dictionary) -> Dictionary:
+	return {"target_id":target.unit_id,"target_ref":weakref(target),"grid_pos":target.grid_pos,"outcome":outcome.duplicate(true)}
+
+func _present_action_outcomes(records: Array[Dictionary]) -> void:
+	var effects := get_node_or_null("/root/VFX") as VFXManager
+	if effects and not _action_presentation_context.is_empty(): effects.present_outcomes(_action_presentation_context,records)
+
+func _cancel_action_presentation() -> void:
+	var effects := get_node_or_null("/root/VFX") as VFXManager
+	if effects and not _action_presentation_context.is_empty(): effects.cancel_action(str(_action_presentation_context.action_key))
+	_action_presentation_context = {}
 
 func _recover_action() -> void:
 	var ticket: int = action_lifecycle.ticket
+	var context := _action_presentation_context.duplicate(true)
 	if action_lifecycle.recover(ticket):
 		await _timer(0.22).timeout
+		if not is_instance_valid(self): return
 		action_lifecycle.finish(ticket)
-	if action_lifecycle.phase == "idle":
-		is_resolving_action = false
+	var effects := get_node_or_null("/root/VFX") as VFXManager
+	if effects and not context.is_empty(): effects.finish_action(str(context.action_key))
+	if _action_presentation_context.get("action_key","") == context.get("action_key",""): _action_presentation_context = {}
+	if action_lifecycle.phase == "idle": is_resolving_action = false

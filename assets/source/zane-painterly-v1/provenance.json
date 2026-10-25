@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "asset_status": "local stable engineering candidate; not exact concept match or live deployment",
+  "authoring": "Original code-authored sculpted meshes and painted atlas. No external meshes/texture pixels; no image generation used.",
+  "baseline_commit": "63d80906e56332d2ac43f1ed3fb5687ecb11edc7",
+  "baseline_tree": "a5f371c979474008c969f0de6956eb87a04eeaa6",
+  "motion_source_glb_sha256": "669244b98a1ba99dde3996b3b4834fb142081fe5d1661e5f2be5e748529e4a90",
+  "source_blend_input_sha256": "eba9f0cce135345fe9ce4c7b9197b63a97f999947c6346f7a6212e735a7df6d9",
+  "reference_targets": [
+    {
+      "name": "Zane-3D-Look-Target.png",
+      "sha256": "c71ac9abfe9e6f338b466b24cdaab1c0ff34cd9af5a6e8cbe237782b01e6b943",
+      "role": "visually inspected design target, not output evidence"
+    },
+    {
+      "name": "Zane-Painterly-Style-Concept.png",
+      "sha256": "a0462180d4eab98caf1196da06eba692aced3f6b28ef3ccf0ae4975e69225c0d",
+      "role": "visually inspected design target, not output evidence"
+    }
+  ],
+  "tools": {
+    "blender": "4.3.2",
+    "Pillow": "12.3.0",
+    "runtime_target": "Godot4.6.3 Compatibility"
+  },
+  "source_preview_export_parity": {
+    "saved_blend_reexport_sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+    "byte_equal_to_runtime": true,
+    "color_semantics": "Atlas sRGB times PaintPlanes COLOR_0 once"
+  },
+  "fresh_builder_rebuild": {
+    "frozen_sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+    "rebuilt_sha256": "d1a26862699b5cf69d2169c8e4b5f7d7f92bc3291fee41587234ea7b0ef422ea",
+    "byte_equal": false,
+    "all_semantic_data_equal": true,
+    "only_permitted_difference": "Ordering/cyclic starting vertex of oriented triangle index rows"
+  },
+  "files": {
+    "assets/source/zane-painterly-v1/build_zane.py": {
+      "bytes": 30568,
+      "sha256": "46e36e4958b1d9a489c1f076408b5ff603c165f528612b7d4d44123f37513223"
+    },
+    "assets/source/zane-painterly-v1/paint_atlas.py": {
+      "bytes": 2389,
+      "sha256": "36c45a33655d71775f77323be04403b5296d0c2defc27880517eab827e7e84fd"
+    },
+    "assets/source/zane-painterly-v1/validate_export.py": {
+      "bytes": 5744,
+      "sha256": "9469071c8a9dfe46733e6e7b864fb494bb268f6bc0ca861a5df4dbdc2980d0a2"
+    },
+    "assets/source/zane-painterly-v1/compare_rebuild.py": {
+      "bytes": 1555,
+      "sha256": "6f049d873ce2c6ca21b8bc046cfeb42a87ad7f0d07db12b6af266c432c401689"
+    },
+    "assets/source/zane-painterly-v1/zane_painterly_v1.blend": {
+      "bytes": 533301,
+      "sha256": "3f5317a1c020c106de91b9ad66225da88a21e56168e2ae0e6940850a33775cc1"
+    },
+    "assets/source/zane-painterly-v1/textures/zane_painterly_atlas.png": {
+      "bytes": 29692,
+      "sha256": "a6f85dc450dbe76c16b450e81249deb90404d6687d5c6f1c698bd470fb5c1603"
+    },
+    "godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1.glb": {
+      "bytes": 1470460,
+      "sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20"
+    },
+    "godot/assets/3d/characters/zane_painterly_v1/presentation.json": {
+      "bytes": 2862,
+      "sha256": "2d76386f858cbdb7474efbb14bbca30d4003ca0606743d7bb4fabe76370b5eeb"
+    },
+    "godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1.glb.import": {
+      "bytes": 1095,
+      "sha256": "0dc23c5d4a1fb640fcd079e5dd04871a44d9afbf70bea801d6e905bb4ca4b3c2"
+    },
+    "godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1_zane_painterly_atlas.png": {
+      "bytes": 29692,
+      "sha256": "a6f85dc450dbe76c16b450e81249deb90404d6687d5c6f1c698bd470fb5c1603"
+    },
+    "godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1_zane_painterly_atlas.png.import": {
+      "bytes": 1123,
+      "sha256": "8d0f0f7680628680498523fdadf613f12ec8f02f34bad3f322925751fcc89451"
+    },
+    "assets/source/zane-painterly-v1/render_review.py": {
+      "bytes": 5540,
+      "sha256": "33d2c566f963f74d612b40aaf899765cca624544c58a3ce0e741d48f0e140a59"
+    },
+    "assets/source/zane-painterly-v1/check_motion_clearance.py": {
+      "bytes": 5268,
+      "sha256": "03721b45a77cc112699ae6b5c864120b31fba8407dd63c0fa3e6f89c4cafdcb5"
+    },
+    "assets/source/zane-painterly-v1/motion_clearance_report.json": {
+      "bytes": 8705,
+      "sha256": "1637f1bf05bae0ab54984965bdd0a9d042317f12c986d0c313adf00b805aab73"
+    },
+    "assets/source/zane-painterly-v1/test_validate_export.py": {
+      "bytes": 1727,
+      "sha256": "dc25e5fda77d8672c1ceca089f410fa2d139cbee4c08b85d089c1cc6a991f212"
+    },
+    "assets/source/zane-painterly-v1/import_policy.md": {
+      "bytes": 1460,
+      "sha256": "d57b03961514900e4d1e664054924097894050a1dfb802d8d07c9d59fee0a326"
+    },
+    "assets/source/zane-painterly-v1/assemble_review.py": {
+      "bytes": 4126,
+      "sha256": "baeee95184aeb53d580cd373f2932d50ca663bb82e72876742d2085762ecfb31"
+    }
+  },
+  "revision": "V4 blade-only camera-framing refinement",
+  "previous_frozen_v3": {
+    "commit": "2872aa6c586c56a234f04f13728b4501ac511a6a",
+    "model_sha256": "1be0345f9c3cb546a7f8e4dd2e90a15c69b7a9d7b32066cb8b29bb45fcf99e57"
+  },
+  "v4_delta": {
+    "exposed_blade_shortening_world": 0.06,
+    "grip_guard_unchanged": true,
+    "body_mesh_attributes_indices_unchanged": true,
+    "materials_images_uv_colors_unchanged": true,
+    "rig_motion_sockets_camera_logical_reach_unchanged": true
+  },
+  "atlas_import_policy": {
+    "compress/mode": 0,
+    "detect_3d/compress_to": 0,
+    "mipmaps/generate": true,
+    "reason": "Lossless painted atlas; explicitly disable automatic 3D compression rewrite while retaining mipmaps",
+    "scope": "this generated character atlas only",
+    "semantics_source": "https://github.com/godotengine/godot/blob/4.6.3-stable/editor/import/resource_importer_texture.cpp#L117-L136"
+  },
+  "offline_review": {
+    "directory": "assets/source/zane-painterly-v1/review",
+    "manifest": "assets/source/zane-painterly-v1/review/manifest.json",
+    "model_sha256": "14c7497613c45f58edd949c7c258a1b220e3d29d95e118ba2557dea98b411e20",
+    "stills_samples": 192,
+    "turntable_samples": 64,
+    "turntable_frames": 48,
+    "turntable_duration_seconds": 4,
+    "turntable_video_sha256": "19e3c57737eec779b78ae809ddf43613c81e5f07466456f19d087460cbcbdac1",
+    "decoded_video_qa": "Inspected actual encoded video at 0,1,2,3seconds; body and sword are visible; all48conservative projected bounds pass.",
+    "not_in_game_capture": true
+  }
+}

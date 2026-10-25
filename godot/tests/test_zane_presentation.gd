@@ -1,6 +1,8 @@
 extends Node
 
 const ADAPTER := "res://scripts/presentation/ZaneRigPresentation.gd"
+const ACTIVE_ADAPTER := "res://scripts/presentation/ZaneImpactRigPresentation.gd"
+const VARIANT := "res://assets/3d/characters/zane_impact_v1/zane_impact_v1.glb"
 const ASSET := "res://assets/3d/characters/zane_v2/zane_v2.glb"
 # Builder-authoritative frozen original, independently hash-verified before copying.
 const FROZEN_SHA256 := "9f0ce05497200bcd20ca9b37ca502f008862744887b8fbdf56ec82a147eb66c5"
@@ -168,7 +170,7 @@ func check_unit_integration() -> void:
 		unit.free()
 		gs.practice_session = previous
 		return
-	check(unit._rig3d.get_script().resource_path == ADAPTER and not unit._sprite.visible, "validated Zane profile alone hides original sprite")
+	check(unit._rig3d.get_script().resource_path == ACTIVE_ADAPTER and not unit._sprite.visible, "validated Zane profile alone hides original sprite")
 	var position_before := unit.position
 	var grid_before := unit.grid_pos
 	var lifecycle = preload("res://scripts/battle/ActionLifecycle.gd").new()
@@ -208,12 +210,12 @@ func check_unit_integration() -> void:
 		unit.disable_3d_prototype()
 		check(unit._rig3d == null and not old_rig.is_inside_tree() and unit._sprite.visible, "disable synchronously detaches Zane viewport and restores sprite")
 		unit.enable_3d_prototype()
-		check(unit._rig3d.get_script().resource_path == ADAPTER, "re-enable selects Zane profile")
+		check(unit._rig3d.get_script().resource_path == ACTIVE_ADAPTER, "re-enable selects Zane profile")
 		await get_tree().process_frame
 		check(not is_instance_valid(old_rig), "old Zane viewport owner is freed")
 	unit.free()
 	var alias := make_unit("practice-zane-1", "zane")
-	check(alias.supports_3d_presentation() and alias._rig3d.get_script().resource_path == ADAPTER, "archetype alias selects Zane without changing actor identity")
+	check(alias.supports_3d_presentation() and alias._rig3d.get_script().resource_path == ACTIVE_ADAPTER, "archetype alias selects Zane without changing actor identity")
 	check(alias.unit_id == "practice-zane-1", "presentation preserves actor id")
 	alias.free()
 	for entry in [["kael", "KaelRigPresentation.gd"], ["mira", "MiraRigPresentation.gd"], ["void_cultist", "Humanoid3D.gd"]]:
@@ -223,15 +225,25 @@ func check_unit_integration() -> void:
 	var unsupported := make_unit("lyra")
 	check(not unsupported.supports_3d_presentation() and unsupported._rig3d == null and unsupported._sprite.visible, "other unsupported actor remains sprite-backed")
 	unsupported.free()
+	var variant := load(VARIANT) as PackedScene
 	var original := load(ASSET) as PackedScene
 	var broken := PackedScene.new()
 	var empty := Node3D.new()
 	broken.pack(empty)
 	empty.free()
-	broken.take_over_path(ASSET)
+	broken.take_over_path(VARIANT)
+	var second := make_unit("zane")
+	check(second._rig3d != null and second._rig3d.get_script().resource_path == ADAPTER and not second._sprite.visible, "invalid variant falls back to original imported Zane")
+	second.free()
+	var broken_original := PackedScene.new()
+	var empty_original := Node3D.new()
+	broken_original.pack(empty_original)
+	empty_original.free()
+	broken_original.take_over_path(ASSET)
 	var fallback := make_unit("zane")
 	check(fallback._rig3d == null and fallback._sprite.visible, "real invalid imported Zane scene retains visible Unit sprite")
 	fallback.free()
 	original.take_over_path(ASSET)
+	variant.take_over_path(VARIANT)
 	check(gs.serialize_state() == baseline, "Zane practice presentation does not change saved gameplay")
 	gs.practice_session = previous
