@@ -218,7 +218,7 @@ func check_unit_integration() -> void:
 	alias.free()
 	for id in ["zane", "void_cultist"]:
 		var other := make_unit(id)
-		var expected := "ZaneRigPresentation.gd" if id == "zane" else "Humanoid3D.gd"
+		var expected := "ZaneImpactRigPresentation.gd" if id == "zane" else "Humanoid3D.gd"
 		check(other._rig3d.get_script().resource_path.ends_with(expected), "other actor keeps its approved presentation: " + id)
 		other.free()
 	var unsupported := make_unit("lyra")

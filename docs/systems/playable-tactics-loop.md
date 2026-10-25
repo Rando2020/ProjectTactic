@@ -16,6 +16,18 @@ quality settings → Sprites active → Show 3D; it is not the default presentat
 5. Continue from spoils to the route. Choose battles, boons or story encounters. Job changes and learned abilities remain in the character screen.
 6. Continue Descent restores the latest encounter checkpoint. Refresh during combat restarts that encounter; it is not a mid-turn save. Saves are browser-local and origin-specific.
 
+## Local Zane impact showcase candidate
+
+These instructions describe the **local candidate checkout**, not a claim that the public build above contains it. Open `godot/project.godot` with Godot 4.6.3 and run the start screen.
+
+1. Choose **Practice: Zane showcase**. It uses the existing Practice map, four-character party, three enemies, initiative and save sandbox. There is no forced Zane turn; wait for him normally.
+2. Try movement, a basic sword attack, or **Fire on separate turns**. Fire remains 12 MP, range 3 and a three-tile fan—not a single-target Fireball. Each recipient's actual hit, immunity, armor loss or HP loss drives its feedback.
+3. This entry starts with the existing 3D view enabled. **View & quality settings** retains Show sprites/Show 3D and quality controls. The new Zane variant falls back to original Zane, then the visible sprite if unavailable.
+4. **Reduced Zane impact motion** suppresses only the new camera kick, target wobble and flash. Animation timing, targeting, results and sound remain. This preference is session-only, survives Practice retry, and clears on exit; it does not create a global saved setting. Change it during your idle player turn.
+5. The new sound uses existing **FX → Game** buses: either Game or FX at zero is silent, while Music remains separately controlled. Retry and exit keep the existing canonical-save sandbox behavior.
+
+Automated contracts are not native/browser art, audio-mix or frame-time acceptance. Final source export, clean-checkout/remote hydration and gameplay acceptance remain separate release gates; live `build-info.json` remains the deployed identity authority.
+
 ## Implementation
 
 - `BattleManager.gd`: human-controlled default, action/movement ordering, targeting validation and single MP deduction for chain abilities. Automated play is an explicit test opt-in.

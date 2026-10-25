@@ -40,13 +40,22 @@ jobs:
       - name: Test fail-closed Pages export gate
         run: python -m unittest discover -s tools -p test_export_pages_web.py
 
-      - name: Install art validation dependency
-        run: python -m pip install Pillow websocket-client
+      - name: Install art validation dependencies
+        run: python -m pip install Pillow websocket-client numpy==2.3.5
+
+      - name: Test original Zane impact asset and audio contracts
+        run: |
+          python -m unittest discover -s tools -p test_zane_impact_asset.py
+          python -m unittest discover -s tools -p test_zane_impact_audio.py
 
       - name: Validate browser QA harness and cleanup contracts
         run: |
           python -m unittest discover -s tools -p test_export_browser_qa.py
           python -m unittest discover -s tools -p test_browser_combat_smoke.py
+          python -m unittest discover -s tools -p test_browser_zane_showcase.py
+          python -m unittest discover -s tools -p test_zane_release_workflow.py
+          python -m unittest discover -s tools -p test_browser_zane_duel.py
+          python -m unittest discover -s tools -p test_zane_duel_release_workflow.py
 
       - name: Setup Godot
         uses: chickensoft-games/setup-godot@v2
@@ -60,6 +69,28 @@ jobs:
 
       - name: Import project headlessly
         run: godot --headless --path godot --import
+
+      - name: Test painterly release gate contracts
+        run: |
+          python -m unittest discover -s tools -p test_check_zane_painterly_fallbacks.py
+          python -m unittest discover -s tools -p test_check_zane_painterly_release_gates.py
+          python -m unittest discover -s tools -p test_zane_painterly_release_workflow.py
+
+      - name: Validate painterly exported asset in isolation
+        run: |
+          python tools/check_zane_painterly_release_gates.py --output build/painterly-release-gates/assets
+
+      - name: Validate seven painterly fallback probes
+        run: |
+          python tools/check_zane_painterly_fallbacks.py --output build/painterly-release-gates/fallbacks
+
+      - name: Upload painterly release-gate diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: painterly-release-gates
+          path: build/painterly-release-gates/
+          if-no-files-found: warn
 
       - name: Parse production GDScript
         run: godot --headless --path godot --script res://tests/validate_all_scripts.gd
@@ -95,6 +126,70 @@ jobs:
             --output build/web-qa/index.html
           git diff --exit-code -- godot/project.godot
           test ! -e godot/tests/browser_qa
+
+      - name: Export isolated Zane showcase Web QA build
+        id: zane-qa-export
+        run: |
+          set -o pipefail
+          mkdir -p docs/qa/browser-zane-captures
+          python tools/export_browser_qa.py --scenario zane-showcase \
+            --production-pck build/web/index.pck \
+            --output build/web-qa-zane/index.html 2>&1 | tee docs/qa/browser-zane-captures/export.log
+          git diff --exit-code -- godot/project.godot
+          test ! -e godot/tests/browser_qa
+          test -s build/web-qa-zane/index.html
+          test -s build/web-qa-zane/index.pck
+          test -s build/web-qa-zane/index.wasm
+          mkdir -p build/web-production-recheck
+          python - <<'PYCODE' 2>&1 | tee docs/qa/browser-zane-captures/production-reexport.log
+          import os
+          from pathlib import Path
+          from tools.export_browser_qa import assert_no_qa_resources, run_godot
+          output = Path('build/web-production-recheck/index.html').resolve()
+          run_godot('godot', ['--export-release', 'Web', str(output)], dict(os.environ))
+          assert_no_qa_resources(output.with_suffix('.pck'))
+          PYCODE
+
+      - name: Package isolated Zane showcase Web QA build
+        id: zane-qa-package
+        run: |
+          set -o pipefail
+          python tools/prepare_playable_web.py build/web-qa-zane \
+            2>&1 | tee docs/qa/browser-zane-captures/package.log
+          node tools/check_web_package.mjs build/web-qa-zane \
+            2>&1 | tee -a docs/qa/browser-zane-captures/package.log
+
+      - name: Export isolated Zane duel Web QA build
+        id: duel-qa-export
+        run: |
+          set -o pipefail
+          mkdir -p docs/qa/browser-zane-duel-captures
+          python tools/export_browser_qa.py --scenario zane-duel \
+            --production-pck build/web/index.pck \
+            --output build/web-qa-duel/index.html 2>&1 | tee docs/qa/browser-zane-duel-captures/export.log
+          git diff --exit-code -- godot/project.godot
+          test ! -e godot/tests/browser_qa
+          test -s build/web-qa-duel/index.html
+          test -s build/web-qa-duel/index.pck
+          test -s build/web-qa-duel/index.wasm
+          mkdir -p build/web-production-duel-recheck
+          python - <<'PYCODE' 2>&1 | tee docs/qa/browser-zane-duel-captures/production-reexport.log
+          import os
+          from pathlib import Path
+          from tools.export_browser_qa import assert_no_qa_resources, run_godot
+          output = Path('build/web-production-duel-recheck/index.html').resolve()
+          run_godot('godot', ['--export-release', 'Web', str(output)], dict(os.environ))
+          assert_no_qa_resources(output.with_suffix('.pck'))
+          PYCODE
+
+      - name: Package isolated Zane duel Web QA build
+        id: duel-qa-package
+        run: |
+          set -o pipefail
+          python tools/prepare_playable_web.py build/web-qa-duel \
+            2>&1 | tee docs/qa/browser-zane-duel-captures/package.log
+          node tools/check_web_package.mjs build/web-qa-duel \
+            2>&1 | tee -a docs/qa/browser-zane-duel-captures/package.log
 
       - name: Package playable Web artifact
         run: |
@@ -136,3 +231,77 @@ jobs:
           name: forgotten-field-browser-captures
           path: docs/qa/browser-captures/
           if-no-files-found: warn
+
+      - name: Exercise Zane showcase input and capture browser evidence
+        if: ${{ !cancelled() && steps.zane-qa-package.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          mkdir -p docs/qa/browser-zane-captures
+          browser_pid=''
+          server_pid=''
+          trap 'if [ -n "$browser_pid" ]; then kill "$browser_pid" 2>/dev/null || true; wait "$browser_pid" 2>/dev/null || true; fi; if [ -n "$server_pid" ]; then kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; fi' EXIT
+          python -m http.server 8000 --directory build/web-qa-zane >docs/qa/browser-zane-captures/server.log 2>&1 &
+          server_pid=$!
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          browser_profile="$(mktemp -d /tmp/projecttactic-zane-chrome.XXXXXX)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1600,900 \
+            --remote-debugging-port=9222 --remote-allow-origins='*' \
+            --user-data-dir="$browser_profile" \
+            about:blank >docs/qa/browser-zane-captures/chrome.log 2>&1 &
+          browser_pid=$!
+          python tools/browser_combat_smoke.py --scenario zane-showcase \
+            --url http://127.0.0.1:8000/index.html --port 9222 \
+            --timeout 45 --budget 180 --max-player-turns 20 \
+            --output docs/qa/browser-zane-captures \
+            2>&1 | tee docs/qa/browser-zane-captures/smoke.log
+          test -s docs/qa/browser-zane-captures/zane-practice-actual-3d-loaded.png
+          test -s docs/qa/browser-zane-captures/zane-3d-movement-completed.png
+          test -s docs/qa/browser-zane-captures/zane-fire-outcome-and-cleanup.png
+          test -s docs/qa/browser-zane-captures/report.json
+          test -s docs/qa/browser-zane-captures/browser-events.json
+
+      - name: Upload Zane showcase browser captures and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zane-showcase-browser-captures
+          path: docs/qa/browser-zane-captures/
+          if-no-files-found: error
+
+      - name: Exercise Zane duel input and capture browser evidence
+        if: ${{ !cancelled() && steps.duel-qa-package.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          mkdir -p docs/qa/browser-zane-duel-captures
+          browser_pid=''
+          server_pid=''
+          trap 'if [ -n "$browser_pid" ]; then kill "$browser_pid" 2>/dev/null || true; wait "$browser_pid" 2>/dev/null || true; fi; if [ -n "$server_pid" ]; then kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; fi' EXIT
+          python -m http.server 8000 --directory build/web-qa-duel >docs/qa/browser-zane-duel-captures/server.log 2>&1 &
+          server_pid=$!
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          browser_profile="$(mktemp -d /tmp/projecttactic-duel-chrome.XXXXXX)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1600,900 \
+            --remote-debugging-port=9222 --remote-allow-origins='*' \
+            --user-data-dir="$browser_profile" \
+            about:blank >docs/qa/browser-zane-duel-captures/chrome.log 2>&1 &
+          browser_pid=$!
+          python tools/browser_combat_smoke.py --scenario zane-duel \
+            --url http://127.0.0.1:8000/index.html --port 9222 \
+            --timeout 45 --budget 180 \
+            --output docs/qa/browser-zane-duel-captures \
+            2>&1 | tee docs/qa/browser-zane-duel-captures/smoke.log
+          test -s docs/qa/browser-zane-duel-captures/zane-duel-actual-3d-loaded.png
+          test -s docs/qa/browser-zane-duel-captures/zane-duel-3d-movement-completed.png
+          test -s docs/qa/browser-zane-duel-captures/zane-duel-sword-outcome-and-cleanup.png
+          test -s docs/qa/browser-zane-duel-captures/report.json
+          test -s docs/qa/browser-zane-duel-captures/browser-events.json
+
+      - name: Upload Zane duel browser captures and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zane-duel-browser-captures
+          path: docs/qa/browser-zane-duel-captures/
+          if-no-files-found: error

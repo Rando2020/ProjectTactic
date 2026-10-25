@@ -436,10 +436,16 @@ func _check_shared_rigs(manager: BattleManager) -> void:
 	for actor in actors:
 		actor._rig3d.play("anticipation")
 		actor._rig3d._process(0.16)
-	check(actors[1]._rig3d.get("skeleton") is Skeleton3D
-		and actors[1]._rig3d.skeleton.get_bone_pose(actors[1]._rig3d.skeleton.find_bone("upper_arm.R")).is_equal_approx(
+	var original_zane := preload("res://scripts/presentation/ZaneRigPresentation.gd").new()
+	add_child(original_zane)
+	original_zane.set_process(false)
+	original_zane.play("anticipation")
+	original_zane._process(0.16)
+	check(original_zane.get("skeleton") is Skeleton3D
+		and original_zane.skeleton.get_bone_pose(original_zane.skeleton.find_bone("upper_arm.R")).is_equal_approx(
 			actors[0]._rig3d.skeleton.get_bone_pose(actors[0]._rig3d.skeleton.find_bone("upper_arm.R"))),
-		"Imported Kael and Zane retain shared authored windup")
+		"Imported Kael and original Zane retain shared authored windup")
+	original_zane.free()
 	check(not actors[2]._rig3d.rig.get_bone_pose_rotation(3).is_equal_approx(Quaternion.IDENTITY), "Legacy cultist anticipation still rotates shoulder bone")
 	check(actors[0]._rig3d.player.current_animation == "slash" and actors[0]._rig3d.player.current_animation_position > 0.0, "Imported Kael samples authored windup")
 	check(actors[1]._rig3d.skin_id != actors[2]._rig3d.skin_id, "Imported and legacy rigs retain distinct appearance definitions")

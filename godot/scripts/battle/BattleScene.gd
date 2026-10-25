@@ -14,6 +14,9 @@ var _camera_dragging: bool = false
 var _camera_drag_last: Vector2 = Vector2.ZERO
 var _camera_shake_strength: float = 0.0
 var _camera_shake_timer: float = 0.0
+var _zane_kick_remaining := 0.0
+var _zane_kick_duration := 0.0
+var _zane_kick_vector := Vector2.ZERO
 
 const CAMERA_PAN_SPEED := 560.0
 const CAMERA_MIN_ZOOM := 0.60
@@ -239,6 +242,7 @@ func _on_unit_visual_position_changed(_unit_id: String, _world_pos: Vector2) -> 
 
 
 func _on_combat_resolved(result: Dictionary) -> void:
+	if not str(result.get("feedback_owner", "")).is_empty(): return
 	if result.get("missed", false) == true:
 		_camera_shake(2.0, 0.10)
 		return
@@ -253,20 +257,31 @@ func _camera_shake(strength: float, duration: float) -> void:
 	_camera_shake_timer = max(_camera_shake_timer, duration)
 
 
-func _update_camera_shake(delta: float) -> void:
-	if _camera_shake_timer <= 0.0 or not _battle_camera:
-		return
-	_camera_shake_timer = max(_camera_shake_timer - delta, 0.0)
-	var offset := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _camera_shake_strength
-	_battle_camera.offset = offset
-	_camera_shake_strength = lerpf(_camera_shake_strength, 0.0, min(delta * 12.0, 1.0))
-	if _camera_shake_timer <= 0.0:
+func apply_zane_impact_kick(direction: Vector2, strength: float, duration: float) -> void:
+	_zane_kick_vector = direction.normalized() * maxf(0,strength)
+	_zane_kick_duration = maxf(0,duration)
+	_zane_kick_remaining = _zane_kick_duration
+	if _zane_kick_remaining <= 0 and _camera_shake_timer <= 0 and is_instance_valid(_battle_camera):
 		_battle_camera.offset = Vector2.ZERO
+
+func _update_camera_shake(delta: float) -> void:
+	if not _battle_camera: return
+	var offset := Vector2.ZERO
+	if _camera_shake_timer > 0.0:
+		_camera_shake_timer = max(_camera_shake_timer - delta, 0.0)
+		offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _camera_shake_strength
+		_camera_shake_strength = lerpf(_camera_shake_strength, 0.0, min(delta * 12.0, 1.0))
+		if _camera_shake_timer <= 0.0: offset = Vector2.ZERO
+	if _zane_kick_remaining > 0:
+		_zane_kick_remaining = maxf(0,_zane_kick_remaining-delta)
+		var remaining := _zane_kick_remaining / _zane_kick_duration
+		offset += _zane_kick_vector * remaining * remaining * cos((1.0-remaining)*PI)
+	_battle_camera.offset = offset
 
 
 func _on_unit_defeated(unit_id: String) -> void:
 	var u: Unit = battle_manager.units.get(unit_id)
-	if u:
+	if u and battle_manager.combat_resolver.damage_feedback_owner.is_empty():
 		_camera_shake(7.0, 0.20)
 	if u and u.team == "enemy":
 		_defeated_enemies.append({
@@ -579,19 +594,21 @@ func _make_status(status_id: String, display_name: String, turns: int, magnitude
 func _spawn_player_units() -> Array[Unit]:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
-	result.append(_make_unit("zane", "Zane", "player", Vector2i(1, 6),
+	var duel := GameState.is_zane_duel_practice()
+	result.append(_make_unit("zane", "Zane", "player", Vector2i(4, 5) if duel else Vector2i(1, 6),
 		320, 90,  4, 2, 8, 42, 48, 80,  110,
 		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
-	result.append(_make_unit("mira", "Mira Vey", "player", Vector2i(2, 6),
-		280, 120, 4, 2, 7, 28, 54, 65,  130,
-		gs.get_all_abilities("mira") if gs else ["fire", "thunder", "blizzard", "cure", "holy"]))
-	result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
-		380, 55,  4, 2, 6, 55, 32, 110, 70,
-		gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
-	result.append(_make_unit("lyra", "Lyra", "player", Vector2i(0, 7),
-		240, 70, 4, 2, 9, 52, 18, 55, 65,
-		gs.get_all_abilities("lyra") if gs else ["pin_shot"],
-		{}, 2, 4))
+	if not duel:
+		result.append(_make_unit("mira", "Mira Vey", "player", Vector2i(2, 6),
+			280, 120, 4, 2, 7, 28, 54, 65,  130,
+			gs.get_all_abilities("mira") if gs else ["fire", "thunder", "blizzard", "cure", "holy"]))
+		result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
+			380, 55,  4, 2, 6, 55, 32, 110, 70,
+			gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
+		result.append(_make_unit("lyra", "Lyra", "player", Vector2i(0, 7),
+			240, 70, 4, 2, 9, 52, 18, 55, 65,
+			gs.get_all_abilities("lyra") if gs else ["pin_shot"],
+			{}, 2, 4))
 	_apply_pending_deployment(result, gs)
 	# Apply curse move penalty
 	var bonuses := RunBonuses.for_current_run()
@@ -660,7 +677,9 @@ func _spawn_enemy_units() -> Array[Unit]:
 	var result: Array[Unit] = []
 
 	#  Procedural spawns from MapGenerator
-	if _map_data and _map_data.enemy_spawns.size() > 0:
+	if GameState.is_zane_duel_practice():
+		result.append(_make_storm_imp(Vector2i(6, 5)))
+	elif _map_data and _map_data.enemy_spawns.size() > 0:
 		for spawn in _map_data.enemy_spawns:
 			var unit := _make_unit(
 				spawn.get("unit_id", "null_drake"),
@@ -685,9 +704,7 @@ func _spawn_enemy_units() -> Array[Unit]:
 		result.append(_make_unit("null_drake", "Null Drake", "enemy", Vector2i(7, 2),
 			120, 35, 3, 1, 6, 38, 30, 80, 60, ["dark_breath"],
 			{"fire": 0.5, "blizzard": 1.5, "holy": 1.5, "dark": 0.5}))
-		result.append(_make_unit("storm_imp", "Storm Imp", "enemy", Vector2i(8, 3),
-			90,  50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
-			{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5}))
+		result.append(_make_storm_imp(Vector2i(8, 3)))
 		result.append(_make_unit("void_cultist", "Void Cultist", "enemy", Vector2i(6, 1),
 			80,  80, 3, 1, 7, 20, 55, 40, 100, ["void_pulse", "dark_breath", "shadow_mend"],
 			{"holy": 2.0, "dark": 0.0, "fire": 0.75, "blizzard": 1.25}))
@@ -726,6 +743,12 @@ func _spawn_enemy_units() -> Array[Unit]:
 				result[i].set_meta("prefixes",    rolled_spawn.get("prefixes", []))
 				result[i].set_meta("suffixes",    rolled_spawn.get("suffixes", []))
 	return result
+
+
+func _make_storm_imp(pos: Vector2i) -> Unit:
+	return _make_unit("storm_imp", "Storm Imp", "enemy", pos,
+		90, 50, 4, 2, 8, 25, 45, 50, 90, ["thunderstrike", "void_pulse"],
+		{"thunder": 0.0, "blizzard": 1.75, "holy": 1.25, "wind": 0.5})
 
 
 func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,

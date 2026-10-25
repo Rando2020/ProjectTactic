@@ -22,8 +22,10 @@ func _ready() -> void:
 	check(first.get("phase", "") == "PLAYER_TURN", "normal scene reaches player turn")
 	check(first.get("unit", {}).get("id", "") == "lyra", "unmodified fixture starts Lyra")
 	check(first.get("command", "unexpected").is_empty(), "observer does not select commands")
+	check(first.has("zane") and first.has("legal_ability_targets"), "additive showcase evidence is available")
+	check(first.get("zane", {}).get("lifecycle", {}).get("phase", "") == "idle", "observer reads lifecycle without starting it")
 	var buttons: Dictionary = first.get("buttons", {})
-	for key in ["ability", "move", "cancel", "attack"]:
+	for key in ["ability", "move", "cancel", "attack", "wait"]:
 		check(buttons.has(key), "observer exposes real %s control" % key)
 		var rect: Array = buttons.get(key, {}).get("rect", [0, 0, 0, 0])
 		check(rect[2] > 0 and rect[3] > 0, "%s has nonzero layout" % key)

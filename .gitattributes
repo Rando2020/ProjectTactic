@@ -33,3 +33,22 @@ godot/assets/generated/icons/run-node-battle-icon.png -filter -diff -merge -text
 godot/assets/generated/icons/run-node-boss-icon.png -filter -diff -merge -text
 godot/assets/generated/icons/run-node-elite-icon.png -filter -diff -merge -text
 godot/assets/generated/icons/run-node-wanderer-icon.png -filter -diff -merge -text
+
+# Keep this small reviewed Zane slice self-contained for clean CI and source handoffs.
+# Existing LFS rules remain unchanged outside these exact new artifact paths.
+godot/assets/audio/zane_impact_v1/*.wav -filter -diff -merge -text
+godot/assets/3d/characters/zane_impact_v1/zane_impact_v1.glb -filter -diff -merge -text
+assets/source/zane-impact-v1/source/zane_v2.blend -filter -diff -merge -text
+assets/source/zane-impact-v1/zane_impact_v1.blend -filter -diff -merge -text
+
+# Keep the new reviewed painterly character source/runtime handoff self-contained.
+# These exact new paths do not alter any original/fallback asset filter.
+godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1.glb -filter -diff -merge -text
+godot/assets/3d/characters/zane_painterly_v1/zane_painterly_v1_zane_painterly_atlas.png -filter -diff -merge -text
+assets/source/zane-painterly-v1/zane_painterly_v1.blend -filter -diff -merge -text
+assets/source/zane-painterly-v1/textures/zane_painterly_atlas.png -filter -diff -merge -text
+assets/source/zane-painterly-v1/review/neutral-turnaround.png -filter -diff -merge -text
+assets/source/zane-painterly-v1/review/game-camera-motion.png -filter -diff -merge -text
+assets/source/zane-painterly-v1/review/face-detail.png -filter -diff -merge -text
+assets/source/zane-painterly-v1/review/turntable.mp4 -filter -diff -merge -text
+assets/source/zane-painterly-v1/review/game-scale-138.png -filter -diff -merge -text

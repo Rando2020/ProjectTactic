@@ -16,7 +16,12 @@ QA_MAIN = b'run/main_scene="res://tests/browser_qa/BattleBrowserQA.tscn"'
 
 
 @contextmanager
-def staged_qa_project(root: Path):
+def staged_qa_project(root: Path, scenario: str = 'quickstep'):
+    if scenario not in ('quickstep', 'zane-showcase', 'zane-duel'):
+        raise ValueError(f'Unknown browser QA scenario: {scenario}')
+    qa_main = {'quickstep': QA_MAIN,
+               'zane-showcase': b'run/main_scene="res://tests/browser_qa/ZaneShowcaseBootstrap.tscn"',
+               'zane-duel': b'run/main_scene="res://tests/browser_qa/ZaneDuelBootstrap.tscn"'}[scenario]
     project = root / 'godot/project.godot'
     stage = root / 'godot/tests/browser_qa'
     if stage.exists() or stage.is_symlink():
@@ -26,7 +31,7 @@ def staged_qa_project(root: Path):
         raise ValueError('Expected exactly one production main_scene before QA staging')
     try:
         shutil.copytree(root / 'tools/browser_qa', stage)
-        project.write_bytes(original.replace(MAIN, QA_MAIN))
+        project.write_bytes(original.replace(MAIN, qa_main))
         yield stage
     finally:
         project.write_bytes(original)
@@ -64,6 +69,7 @@ def run_godot(executable: str, arguments: list[str], environment: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--godot', default='godot')
+    parser.add_argument('--scenario', choices=['quickstep', 'zane-showcase', 'zane-duel'], default='quickstep')
     parser.add_argument('--production-pck', type=Path, default=ROOT / 'build/web/index.pck')
     parser.add_argument('--output', type=Path, default=ROOT / 'build/web-qa/index.html')
     parser.add_argument('--validate-only', action='store_true', help='Validate observer without exporting')
@@ -77,9 +83,15 @@ def main() -> None:
         if templates.is_dir():
             target.parent.mkdir(parents=True)
             target.symlink_to(templates.resolve(), target_is_directory=True)
-        with staged_qa_project(ROOT):
+        with staged_qa_project(ROOT, args.scenario):
             run_godot(args.godot, ['--import'], env)
             run_godot(args.godot, ['res://tests/browser_qa/ObserverContract.tscn'], env)
+            if args.scenario == 'zane-showcase':
+                run_godot(args.godot, ['res://tests/browser_qa/ObserverShowcaseContract.tscn'], env)
+            if args.scenario == 'zane-duel':
+                run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn'], env)
+                run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-tail'], env)
+                run_godot(args.godot, ['res://tests/browser_qa/ObserverDuelContract.tscn', '--', '--duel-observer-slow-frame'], env)
             if not args.validate_only:
                 args.output.resolve().parent.mkdir(parents=True, exist_ok=True)
                 run_godot(args.godot, ['--export-release', 'Web', str(args.output.resolve())], env)

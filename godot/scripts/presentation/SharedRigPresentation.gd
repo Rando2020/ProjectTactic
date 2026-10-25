@@ -110,7 +110,7 @@ func _process(dt: float) -> void:
 	else:
 		_sample()
 
-func _sample() -> void:
+func _phase_sample() -> Dictionary:
 	var clip := "idle"
 	var sample_time := fmod(age, player.get_animation("idle").length)
 	match state:
@@ -146,6 +146,12 @@ func _sample() -> void:
 				clip = "defeat"
 				sample_time = minf(age / DEFEAT_SECONDS, 1.0) * player.get_animation(clip).length
 			# Clamp the endpoint forever. Only Unit owns fade/removal; never queue idle.
+	return {"clip": clip, "time": sample_time}
+
+func _sample() -> void:
+	var sample := _phase_sample()
+	var clip: String = sample.clip
+	var sample_time: float = sample.time
 	if player.current_animation != clip:
 		player.play(clip)
 	player.seek(sample_time, true)

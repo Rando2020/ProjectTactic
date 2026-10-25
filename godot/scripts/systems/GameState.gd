@@ -519,6 +519,16 @@ func delete_save() -> void:
 	_init_defaults()
 
 
+## One-on-one encounter selection only; progression and combat rules stay shared.
+func begin_zane_duel_practice() -> bool:
+	if not begin_practice():
+		return false
+	practice_session["mode"] = "zane_duel"
+	return true
+
+func is_zane_duel_practice() -> bool:
+	return practice_session.get("mode", "") == "zane_duel"
+
 func begin_practice(map_index: int = 0, encounter_seed: int = 314159) -> bool:
 	if not practice_session.is_empty():
 		return false
@@ -559,7 +569,8 @@ func _restore_practice_checkpoint() -> bool:
 
 func can_retry_practice() -> bool:
 	var checkpoint: Dictionary = practice_session.get("checkpoint", {})
-	return practice_session.get("state") == "lost" and checkpoint.get("version", 0) == SAVE_VERSION and checkpoint.has("unit_resources")
+	var terminal: bool = practice_session.get("state") == "lost" or (is_zane_duel_practice() and practice_session.get("state") == "won")
+	return terminal and checkpoint.get("version", 0) == SAVE_VERSION and checkpoint.has("unit_resources")
 
 func retry_practice() -> bool:
 	if not can_retry_practice():
@@ -576,7 +587,7 @@ func finish_practice(won: bool, rewards: Dictionary = {}) -> bool:
 	if practice_session.get("state") != "playing":
 		return false
 	practice_session["state"] = "won" if won else "lost"
-	if won:
+	if won and not is_zane_duel_practice():
 		var ids: Array[String] = ["kael", "mira", "zane", "lyra"]
 		apply_victory("practice", rewards, ids)
 	return true
@@ -605,7 +616,7 @@ func leave_practice() -> bool:
 
 ## One temporary training-path choice after practice victory. Reuses job rules.
 func choose_practice_job(job_id: String) -> bool:
-	if practice_session.get("state") != "won" or practice_session.get("advancement_used", false):
+	if is_zane_duel_practice() or practice_session.get("state") != "won" or practice_session.get("advancement_used", false):
 		return false
 	var reg: Dictionary = unit_registry.get("kael", {})
 	if job_id == reg.get("current_job_id") or job_id not in JobTreeData.get_available_jobs(reg.get("job_jp", {})):

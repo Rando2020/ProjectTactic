@@ -7,9 +7,11 @@ extends Node
 signal combat_resolved(result: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+# Synchronous feedback policy during receive_damage; never changes damage authority.
+var damage_feedback_owner: StringName = &""
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
-		vfx_mode: String = "slash", is_counter: bool = false, mods: Dictionary = {}) -> Dictionary:
+		vfx_mode: String = "slash", is_counter: bool = false, mods: Dictionary = {}, feedback_owner: StringName = &"") -> Dictionary:
 	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target, mods)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
@@ -17,7 +19,8 @@ func resolve_attack(attacker: Unit, target: Unit,
 			"damage": 0, "hp_damage": 0, "applied_hp_damage": 0, "temper_damage": 0, "ether_damage": 0,
 			"missed": true, "hit_pct": hit_pct, "formula_explain": formula.get("explain", []),
 		}
-		_show_miss(target)
+		if feedback_owner.is_empty(): _show_miss(target)
+		else: miss_result["feedback_owner"] = feedback_owner
 		combat_resolved.emit(miss_result)
 		return miss_result
 
@@ -39,7 +42,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		dmg_color = Color(1.0, 0.78, 0.2)
 
 	var vfx_n := get_node_or_null("/root/VFX")
-	if vfx_n:
+	if vfx_n and feedback_owner.is_empty():
 		var vfx := vfx_n as VFXManager
 		if vfx_mode == "arrow":
 			vfx.play_arrow(attacker.grid_pos, target.grid_pos, preview_hp_damage, dmg_color)
@@ -52,8 +55,8 @@ func resolve_attack(attacker: Unit, target: Unit,
 		elif flank_m > 1.0:
 			vfx.play_tactical_tag(target.grid_pos, "SIDE", Color(1.0, 0.78, 0.20))
 
-	_play_sfx("attack_impact", -3.0)
-	var dmg_result := target.receive_damage(incoming_damage, "physical")
+	if feedback_owner.is_empty(): _play_sfx("attack_impact", -3.0)
+	var dmg_result := _receive_damage_with_feedback(target, incoming_damage, "physical", feedback_owner)
 	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
 
 	# Trigger hit effects based on damage intensity
@@ -66,14 +69,14 @@ func resolve_attack(attacker: Unit, target: Unit,
 		hit_intensity = "normal"
 	else:
 		hit_intensity = "light"
-	BattleJuiceEffects.trigger_hit([target.unit_id], hit_intensity, 80, 300, 150)
+	if feedback_owner.is_empty(): BattleJuiceEffects.trigger_hit([target.unit_id], hit_intensity, 80, 300, 150)
 
 	if target.hp <= 0:
-		if vfx_n:
+		if vfx_n and feedback_owner.is_empty():
 			var death_pos := target.grid_pos
 			get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
 			get_tree().create_timer(0.38).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
-	elif target.has_method("animate_hit"):
+	elif feedback_owner.is_empty() and target.has_method("animate_hit"):
 		target.animate_hit()
 
 	_apply_elite_on_hit(attacker, target, actual_hp_damage)
@@ -99,13 +102,16 @@ func resolve_attack(attacker: Unit, target: Unit,
 		"critical": did_crit,
 		"counter": should_counter,
 	}
+	if not feedback_owner.is_empty():
+		result["feedback_owner"] = feedback_owner
+		result["defeated"] = bool(dmg_result.get("defeated",false))
 	combat_resolved.emit(result)
 	return result
 
 
 func resolve_spell(caster: Unit, target: Unit,
-		spell_type: String, base_power: int) -> Dictionary:
-	_play_sfx("spell_cast", -2.5)
+		spell_type: String, base_power: int, feedback_owner: StringName = &"") -> Dictionary:
+	if feedback_owner.is_empty(): _play_sfx("spell_cast", -2.5)
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var element := CombatFormula.normalize_element(spell_type)
 	var el_mult: float = float(bonuses["elemental_mult"].get(element, 1.0))
@@ -113,7 +119,8 @@ func resolve_spell(caster: Unit, target: Unit,
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {"damage":0, "hp_damage":0, "applied_hp_damage":0, "temper_damage":0, "ether_damage":0, "missed":true, "spell_type":element, "hit_pct":hit_pct}
-		_show_miss(target)
+		if feedback_owner.is_empty(): _show_miss(target)
+		else: miss_result["feedback_owner"] = feedback_owner
 		combat_resolved.emit(miss_result)
 		return miss_result
 
@@ -124,7 +131,7 @@ func resolve_spell(caster: Unit, target: Unit,
 	var affinity := float(formula.get("affinity", 1.0))
 	var num_color := _element_damage_color(affinity, el_mult)
 	var vfx_n := get_node_or_null("/root/VFX")
-	if vfx_n:
+	if vfx_n and feedback_owner.is_empty():
 		var vfx := vfx_n as VFXManager
 		match element:
 			"fire": vfx.play_fire(target.grid_pos)
@@ -135,7 +142,7 @@ func resolve_spell(caster: Unit, target: Unit,
 			"dark": vfx.play_dark(target.grid_pos)
 		vfx.play_damage_number(target.grid_pos, int(formula.get("hp_damage", final_damage)), num_color)
 
-	var dmg_result := target.receive_damage(final_damage, "magical")
+	var dmg_result := _receive_damage_with_feedback(target, final_damage, "magical", feedback_owner)
 	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
 
 	# Trigger hit effects for spell damage
@@ -148,13 +155,13 @@ func resolve_spell(caster: Unit, target: Unit,
 		spell_intensity = "normal"
 	else:
 		spell_intensity = "light"
-	BattleJuiceEffects.trigger_hit([target.unit_id], spell_intensity, 60, 250, 120)
+	if feedback_owner.is_empty(): BattleJuiceEffects.trigger_hit([target.unit_id], spell_intensity, 60, 250, 120)
 
-	if target.hp <= 0 and vfx_n:
+	if target.hp <= 0 and vfx_n and feedback_owner.is_empty():
 		var death_pos := target.grid_pos
 		get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
 		get_tree().create_timer(0.42).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
-	elif target.has_method("animate_hit"):
+	elif feedback_owner.is_empty() and target.has_method("animate_hit"):
 		target.animate_hit()
 
 	_apply_elite_on_hit(caster, target, actual_hp_damage)
@@ -173,6 +180,9 @@ func resolve_spell(caster: Unit, target: Unit,
 		"hit_pct": hit_pct,
 		"is_weakness": affinity > 1.0,
 	}
+	if not feedback_owner.is_empty():
+		result["feedback_owner"] = feedback_owner
+		result["defeated"] = bool(dmg_result.get("defeated",false))
 	combat_resolved.emit(result)
 	return result
 
@@ -278,3 +288,10 @@ func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
 	var audio := get_node_or_null("/root/AudioSettings")
 	if audio and audio.has_method("play_sfx"):
 		audio.play_sfx(sfx_id, volume_db)
+
+func _receive_damage_with_feedback(target: Unit, amount: int, kind: String, owner: StringName) -> Dictionary:
+	var previous := damage_feedback_owner
+	damage_feedback_owner = owner
+	var result := target.receive_damage(amount,kind)
+	damage_feedback_owner = previous
+	return result

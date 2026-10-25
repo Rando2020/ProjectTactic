@@ -7,8 +7,15 @@ import sys
 import tempfile
 from pathlib import Path
 
+ANSI = re.compile(r'\x1b\[[0-9;]*m')
+SHUTDOWN_RESOURCE_LEAK = re.compile(
+    r'ERROR: \d+ resources still in use at exit \(run with --verbose for details\)\.'
+)
+
+# Snapshot of pre-Zane cases: only these retain the documented legacy shutdown
+# allowance (docs/qa/integration-checkpoint-2026-10-24.md). Add new cases below.
 # Scene harnesses initialize autoloads before compiling their dependent scripts.
-CONTRACTS = [
+LEGACY_CONTRACTS = [
     ('test_combat_formula.tscn', '0 fail'),
     ('test_combat_execution.tscn', '0 failures'),
     ('test_spell_outcome_feedback.tscn', '0 failures'),
@@ -33,6 +40,17 @@ CONTRACTS = [
     ('test_recovered_assets.gd', 'Recovered asset contract: OK'),
     ('test_ui_readability.gd', '0 failures'),
     ('test_playable_loop.tscn', '0 failures'),
+]
+
+LEGACY_SHUTDOWN_CONTRACTS = frozenset(fixture for fixture, _ in LEGACY_CONTRACTS)
+CONTRACTS = LEGACY_CONTRACTS + [
+    ('test_zane_impact_rig.tscn', '0 failures'),
+    ('test_zane_impact_actions.tscn', '0 failures'),
+    ('test_zane_impact_showcase.tscn', '0 failures'),
+    ('test_zane_outcome_layout.gd', '0 failures'),
+    ('test_zane_duel_practice.tscn', '0 failures'),
+    ('test_hovered_tile_health.tscn', '0 failures'),
+    ('test_zane_painterly_rig.tscn', '0 failures'),
 ]
 
 
@@ -61,8 +79,14 @@ def main() -> int:
                 continue
             output = result.stdout + result.stderr
             print(output, flush=True)
-            # Shutdown resource warnings remain visible, not silently suppressed.
-            if result.returncode or 'SCRIPT ERROR:' in output or not re.search(r'(?<!\d)' + re.escape(success_marker), output):
+            # Inspect only this subprocess, not unrelated CI logs. New cases must
+            # not inherit legacy resource-exit allowances, even for the same text.
+            diagnostics = ANSI.sub('', output)
+            errors = [line for line in diagnostics.splitlines()
+                      if 'ERROR:' in line and not (fixture in LEGACY_SHUTDOWN_CONTRACTS
+                          and SHUTDOWN_RESOURCE_LEAK.fullmatch(line.strip()))]
+            # All diagnostics, including documented shutdown warnings, stay visible.
+            if result.returncode or errors or not re.search(r'(?<!\d)' + re.escape(success_marker), diagnostics):
                 failed = True
     return 1 if failed else 0
 
