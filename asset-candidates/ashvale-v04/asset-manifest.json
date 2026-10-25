@@ -1,0 +1,104 @@
+{
+  "status": "art-candidate-v04",
+  "tile_m": 2,
+  "elevation_m": 1,
+  "units": "meters",
+  "export_up": "Y",
+  "source_up": "Z",
+  "assets": [
+    {
+      "id": "EN_flagstone_2m",
+      "triangles": 1404,
+      "dimensions": [
+        2.0,
+        2.0,
+        0.3111009895801544
+      ],
+      "file": "models/EN_flagstone_2m.glb"
+    },
+    {
+      "id": "EN_flagstone_bond_2m",
+      "triangles": 864,
+      "dimensions": [
+        2.0,
+        2.0,
+        0.3108549118041992
+      ],
+      "file": "models/EN_flagstone_bond_2m.glb"
+    },
+    {
+      "id": "AR_chapel_gate_4m",
+      "triangles": 3710,
+      "dimensions": [
+        4.246249198913574,
+        1.1658220291137695,
+        4.865998268127441
+      ],
+      "file": "models/AR_chapel_gate_4m.glb"
+    },
+    {
+      "id": "AR_battered_buttress",
+      "triangles": 1320,
+      "dimensions": [
+        1.1502459049224854,
+        1.5223419666290283,
+        3.576953172683716
+      ],
+      "file": "models/AR_battered_buttress.glb"
+    },
+    {
+      "id": "PR_crooked_lantern",
+      "triangles": 476,
+      "dimensions": [
+        1.1800000667572021,
+        0.6000000238418579,
+        2.654559850692749
+      ],
+      "file": "models/PR_crooked_lantern.glb"
+    },
+    {
+      "id": "EN_twisted_ash_tree",
+      "triangles": 8202,
+      "dimensions": [
+        2.5293829441070557,
+        1.3851649761199951,
+        3.7095770835876465
+      ],
+      "file": "models/EN_twisted_ash_tree.glb"
+    },
+    {
+      "id": "PR_splitwood_barricade",
+      "triangles": 1032,
+      "dimensions": [
+        2.0799999237060547,
+        0.9254240989685059,
+        1.336381435394287
+      ],
+      "file": "models/PR_splitwood_barricade.glb"
+    },
+    {
+      "id": "PR_torn_ashvale_banner",
+      "triangles": 12808,
+      "dimensions": [
+        1.3200000524520874,
+        0.5799999833106995,
+        3.299999952316284
+      ],
+      "file": "models/PR_torn_ashvale_banner.glb"
+    },
+    {
+      "id": "EN_fallen_masonry",
+      "triangles": 602,
+      "dimensions": [
+        1.7439486980438232,
+        1.1877857446670532,
+        0.6146851778030396
+      ],
+      "file": "models/EN_fallen_masonry.glb"
+    }
+  ],
+  "scene": "models/SC_chapel_approach.glb",
+  "materials": "Painted slate, limestone and timber albedo with vertex tint; standard metallic/roughness, amber emissive",
+  "collision": "none; use authoritative tactical grid",
+  "inferred": "All designs, dimensions beyond grid contract, backs and wear patterns are authored. No matched orthographic reference supplied."
+}
