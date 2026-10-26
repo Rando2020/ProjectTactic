@@ -102,7 +102,7 @@
         "fallback_path": "res://assets/sprites/units/zane.png"
       },
       "portrait": {
-        "path": "res://assets/characters/portraits/zane-portrait-illustrated.png",
+        "path": "res://assets/characters/portraits/zane-portrait-illustrated.jpg",
         "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
       },
       "directions": {
