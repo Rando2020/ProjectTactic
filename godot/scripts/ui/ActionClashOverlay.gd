@@ -1,9 +1,14 @@
-## A non-interactive, compact actor-versus-defender accent shown on committed
-## actions. It does not calculate, resolve, pause or change combat outcomes.
+## A non-interactive stage-edge portrait banner shown on committed
+## actions. It never dims the battlefield, calculates, resolves, pauses or changes outcomes.
 extends Control
 
 const UISettings := preload("res://scripts/ui/UISettings.gd")
-const BASE_SIZE := Vector2(770.0, 136.0)
+const BattleHudLayout := preload("res://scripts/ui/BattleHudLayout.gd")
+const BASE_SIZE := Vector2(710.0, 118.0)
+const LIGHT_MULTIPLIER := 0.77
+const SIGNATURE_MULTIPLIER := 1.0
+const BOSS_MULTIPLIER := 1.08
+const TOP_GUTTER := 128.0
 
 var _card: PanelContainer
 var _actor_image: TextureRect
@@ -15,6 +20,7 @@ var _target_name: Label
 var _action_name: Label
 var _action_context: Label
 var _fade: Tween
+var _tier := "light"
 
 
 func _ready() -> void:
@@ -100,7 +106,7 @@ func _side(parent: HBoxContainer, reverse: bool, accent: Color) -> Dictionary:
 
 	var frame := PanelContainer.new()
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.custom_minimum_size = Vector2(92, 108)
+	frame.custom_minimum_size = Vector2(84, 98)
 	var st := StyleBoxFlat.new()
 	st.bg_color = Color(0.11, 0.15, 0.20)
 	st.border_color = accent
@@ -110,12 +116,12 @@ func _side(parent: HBoxContainer, reverse: bool, accent: Color) -> Dictionary:
 
 	var holder := CenterContainer.new()
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	holder.custom_minimum_size = Vector2(88, 104)
+	holder.custom_minimum_size = Vector2(80, 94)
 	frame.add_child(holder)
 
 	var portrait := TextureRect.new()
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait.custom_minimum_size = Vector2(84, 100)
+	portrait.custom_minimum_size = Vector2(76, 90)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	holder.add_child(portrait)
@@ -143,17 +149,33 @@ func _side(parent: HBoxContainer, reverse: bool, accent: Color) -> Dictionary:
 	return {"image": portrait, "fallback": fallback, "name": label}
 
 
+## Geometry is computed from the actual HUD rail, not a guessed viewport
+## percentage. Neither the light ribbon nor the signature/banner state blocks
+## the battlefield or its click targets.
+static func banner_rect(viewport_size: Vector2, ui_factor: float, tier: String = "light") -> Rect2:
+	var rail := BattleHudLayout.right_sidebar_rect(viewport_size)
+	var free_width: float = maxf(1.0, rail.position.x - 40.0)
+	var weight := LIGHT_MULTIPLIER
+	if tier == "signature":
+		weight = SIGNATURE_MULTIPLIER
+	elif tier == "boss":
+		weight = BOSS_MULTIPLIER
+	var factor := minf(weight * minf(ui_factor, 1.25), free_width / BASE_SIZE.x)
+	# Even a boss banner uses a slim stage edge instead of a screen-wide cut-in.
+	factor = minf(factor, (viewport_size.y * 0.18) / BASE_SIZE.y)
+	var size := BASE_SIZE * maxf(0.15, factor)
+	var top := minf(160.0, maxf(TOP_GUTTER, viewport_size.y * 0.15))
+	top = minf(top, viewport_size.y - size.y - 12.0)
+	return Rect2(Vector2(24.0, top), size)
+
+
 func _resize() -> void:
 	if not is_instance_valid(_card):
 		return
 	var viewport_size := get_viewport().get_visible_rect().size
-	# Keep the portrait strip entirely left of the persistent right command rail.
-	var available_width := viewport_size.x * 0.68 - 30.0
-	var ui_factor: float = UISettings.shared().effective_scale(viewport_size)
-	var factor: float = minf(ui_factor, available_width / BASE_SIZE.x)
-	factor = minf(factor, (viewport_size.y * 0.26) / BASE_SIZE.y)
-	_card.scale = Vector2.ONE * maxf(0.48, factor)
-	_card.position = Vector2(24, viewport_size.y - BASE_SIZE.y * _card.scale.y - 24)
+	var rect := banner_rect(viewport_size, UISettings.shared().effective_scale(viewport_size), _tier)
+	_card.scale = Vector2.ONE * (rect.size.x / BASE_SIZE.x)
+	_card.position = rect.position
 
 
 func _portrait(texture_node: TextureRect, fallback: Label, supplied: Variant, unit_id: String, display_name: String) -> void:
@@ -178,6 +200,7 @@ func show_action(context: Dictionary) -> void:
 	_actor_name.text = str(context.get("actor", ""))
 	_target_name.text = str(context.get("target", "AREA"))
 	_action_name.text = str(context.get("action", "Attack"))
+	_tier = str(context.get("tier", "light"))
 	_action_context.text = str(context.get("context", ""))
 	_portrait(_actor_image, _actor_fallback, context.get("actor_portrait"), str(context.get("actor_id", "")), _actor_name.text)
 	_portrait(_target_image, _target_fallback, context.get("target_portrait"), str(context.get("target_id", "")), _target_name.text)
@@ -188,7 +211,7 @@ func show_action(context: Dictionary) -> void:
 	_fade = create_tween()
 	if not reduced:
 		_fade.tween_property(self, "modulate:a", 1.0, 0.10)
-	_fade.tween_interval(0.48 if str(context.get("tier", "light")) == "light" else 0.70)
+	_fade.tween_interval(0.44 if _tier == "light" else (0.64 if _tier == "signature" else 0.82))
 	if not reduced:
 		_fade.tween_property(self, "modulate:a", 0.0, 0.14)
 	_fade.tween_callback(hide_clash)
