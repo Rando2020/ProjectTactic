@@ -1451,7 +1451,7 @@ func _texture_from_source(path: String) -> Texture2D:
 	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
 		return null
 	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
+	var err := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
 	if err != OK:
 		return null
 	return ImageTexture.create_from_image(image)
