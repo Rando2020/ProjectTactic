@@ -148,7 +148,7 @@ func _resize() -> void:
 		return
 	var viewport_size := get_viewport().get_visible_rect().size
 	# Keep the portrait strip entirely left of the persistent right command rail.
-	var available_width := viewport_size.x * 0.68
+	var available_width := viewport_size.x * 0.68 - 30.0
 	var ui_factor: float = UISettings.shared().effective_scale(viewport_size)
 	var factor: float = minf(ui_factor, available_width / BASE_SIZE.x)
 	factor = minf(factor, (viewport_size.y * 0.26) / BASE_SIZE.y)
@@ -157,7 +157,9 @@ func _resize() -> void:
 
 
 func _portrait(texture_node: TextureRect, fallback: Label, supplied: Variant, unit_id: String, display_name: String) -> void:
-	var texture: Texture2D = supplied as Texture2D if supplied is Texture2D else null
+	var texture: Texture2D = null
+	if supplied is Texture2D:
+		texture = supplied as Texture2D
 	if texture == null and not unit_id.is_empty():
 		texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(unit_id))
 	texture_node.texture = texture
