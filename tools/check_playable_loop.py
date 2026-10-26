@@ -51,6 +51,7 @@ CONTRACTS = LEGACY_CONTRACTS + [
     ('test_zane_duel_practice.tscn', '0 failures'),
     ('test_hovered_tile_health.tscn', '0 failures'),
     ('test_zane_painterly_rig.tscn', '0 failures'),
+    ('test_action_clash_overlay.gd', '0 failures'),
 ]
 
 

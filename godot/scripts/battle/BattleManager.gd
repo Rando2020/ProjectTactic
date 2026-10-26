@@ -18,6 +18,7 @@ signal command_hint_changed(text: String)
 signal action_preview_changed(preview: Dictionary)
 signal action_state_changed(can_move: bool, can_act: bool, has_pending: bool)
 signal enemy_intent_changed(intent: Dictionary)
+signal action_clash_started(context: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
@@ -1527,6 +1528,26 @@ func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> voi
 	if not is_instance_valid(original_attacker) or original_attacker.hp <= 0:
 		return
 	_face_toward(counter_unit, original_attacker.grid_pos)
+	# Counters are immediate reactions, not a new action-lifecycle ticket.
+	# Display a small, nonblocking reaction ribbon without additional damage.
+	var counter_portrait: Texture2D = null
+	var defender_portrait: Texture2D = null
+	if counter_unit.unit_data:
+		counter_portrait = counter_unit.unit_data.portrait if counter_unit.unit_data.portrait else counter_unit.unit_data.sprite_sheet
+	if original_attacker.unit_data:
+		defender_portrait = original_attacker.unit_data.portrait if original_attacker.unit_data.portrait else original_attacker.unit_data.sprite_sheet
+	action_clash_started.emit({
+		"actor": counter_unit.display_name,
+		"actor_id": counter_unit.unit_id,
+		"actor_portrait": counter_portrait,
+		"target": original_attacker.display_name,
+		"target_id": original_attacker.unit_id,
+		"target_portrait": defender_portrait,
+		"action": "Counter",
+		"context": "REACTION",
+		"tier": "light",
+		"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
+	})
 	var tile_c := tactical_grid.get_tile(counter_unit.grid_pos)
 	var tile_t := tactical_grid.get_tile(original_attacker.grid_pos)
 	var result := combat_resolver.resolve_attack(
@@ -2460,6 +2481,32 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	is_resolving_action = true
 	_emit_action_state()
 	var canonical := AbilityDB.canonical_id(ability_id)
+	# A read-only portrait accent is dispatched only after the existing lifecycle
+	# accepts the action. It never waits for UI and never predicts damage.
+	if kind in ["slash", "arrow", "cast"] and target != actor:
+		var ability: Dictionary = AbilityDB.get_ability(canonical) if not canonical.is_empty() else {}
+		var action_name: String = str(ability.get("display_name", "Cast" if kind == "cast" else "Attack"))
+		var context_label: String = "SPELL" if kind == "cast" else ("RANGED" if kind == "arrow" else "MELEE")
+		if kind != "cast" and is_instance_valid(target):
+			context_label += "  ·  %s" % _flank_label(actor, target)
+		var attacker_portrait: Texture2D = null
+		var defender_portrait: Texture2D = null
+		if actor.unit_data:
+			attacker_portrait = actor.unit_data.portrait if actor.unit_data.portrait else actor.unit_data.sprite_sheet
+		if is_instance_valid(target) and target.unit_data:
+			defender_portrait = target.unit_data.portrait if target.unit_data.portrait else target.unit_data.sprite_sheet
+		action_clash_started.emit({
+			"actor": actor.display_name,
+			"actor_id": actor.unit_id,
+			"actor_portrait": attacker_portrait,
+			"target": target.display_name if is_instance_valid(target) else "AREA",
+			"target_id": target.unit_id if is_instance_valid(target) else "",
+			"target_portrait": defender_portrait,
+			"action": action_name,
+			"context": context_label,
+			"tier": "boss" if is_instance_valid(target) and target.has_meta("is_boss") else ("signature" if not canonical.is_empty() else "light"),
+			"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
+		})
 	_action_presentation_context = {}
 	if actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire"):
 		var footprint: Array[Vector2i] = []

@@ -30,6 +30,7 @@ EXPECTED = {
     'test_zane_impact_rig.tscn', 'test_zane_impact_actions.tscn',
     'test_zane_impact_showcase.tscn', 'test_zane_outcome_layout.gd',
     'test_zane_duel_practice.tscn', 'test_hovered_tile_health.tscn', 'test_zane_painterly_rig.tscn',
+    'test_action_clash_overlay.gd',
     'test_terrain_cleanup.tscn',
     'test_recovered_assets.gd', 'test_ui_readability.gd', 'test_playable_loop.tscn',
 }
