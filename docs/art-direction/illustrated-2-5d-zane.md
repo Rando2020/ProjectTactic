@@ -12,7 +12,7 @@ Use the approved **Zane hybrid 2D / illustration** presentation mock as the art 
 - `characters.zane.directions.front/right/back/left`: independent **transparent, foot-aligned** in-battle sprites. The four Godot facings are S/E/N/W respectively.
 - `AssetRegistry.get_character_portrait_candidates(id)` and `get_character_direction_candidates(id, facing)`: optional art resolution; all paths are checked before use, never a runtime HTTP dependency.
 - `Unit._character_direction_texture` and `_refresh_directional_sprite`: Zane alone uses the directional images in 2D; other units, melee timing, 3D opt-in, shadow, HP bars, input, and grid coordinates remain unchanged.
-- `CharacterScreen._unit_texture`, `BattleUI._on_turn_started`, and `BattleManager._portrait_path`: painterly portraits are resolved independently of sprites. Forecast uses actual on-disk path to support the existing PNG-byte reader.
+- `CharacterScreen._unit_texture`, `BattleUI._on_turn_started`, and `BattleManager._portrait_path`: painterly portraits are resolved independently of sprites. Forecast uses actual on-disk path to support the existing local image-byte reader (PNG/JPEG).
 
 The preferred standalone image paths are placeholders until actual approved isolated source images are committed. **This code pass wires the fallbacks, not the final visual asset quality.** Existing `zane_v2`, `zane_impact_v1`, and `zane_painterly_v1` remain preserved in their current paths.
 
@@ -20,7 +20,7 @@ The preferred standalone image paths are placeholders until actual approved isol
 
 | File | Native content | Acceptance |
 | --- | --- | --- |
-| `godot/assets/characters/portraits/zane-portrait-illustrated.jpg` | Clean illustrated upper-body portrait, no UI/text/background other than authored backdrop | Must match approved face, expressive identity, costume; 4K UI legibility |
+| `godot/assets/characters/portraits/zane-portrait-illustrated.jpg` | Clean illustrated upper-body portrait, no UI/text; authored painterly backdrop allowed | Must match approved face, expressive identity, costume; 4K UI legibility |
 | `godot/assets/sprites/units/zane-front-illustrated.png` | 1 full-body transparent sprite facing camera | Correct feet, silhouette, coat, scarf, neutral idle |
 | `godot/assets/sprites/units/zane-right-illustrated.png` | 1 full-body transparent sprite facing screen right | Correct anatomical sides |
 | `godot/assets/sprites/units/zane-back-illustrated.png` | 1 full-body transparent sprite facing away | Scarf drape and back straps consistent |
