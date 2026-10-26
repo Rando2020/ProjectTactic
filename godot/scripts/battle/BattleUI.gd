@@ -9,6 +9,7 @@ var _previous_focus: Control
 
 const DISPLAY_FONT := preload("res://assets/fonts/TrajanPro-Regular.ttf")
 const BattleHudLayout := preload("res://scripts/ui/BattleHudLayout.gd")
+const ActionClashOverlay := preload("res://scripts/ui/ActionClashOverlay.gd")
 
 var battle_manager: BattleManager
 
@@ -67,6 +68,7 @@ var _music_value_label: Label
 var _fx_value_label: Label
 var _right_panel_bg: NinePatchRect
 var _active_portrait: TextureRect
+var _action_clash: Control
 var _right_panel_scroll: ScrollContainer
 var _right_panel_root: VBoxContainer
 var _is_player_turn: bool = false
@@ -95,6 +97,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
 	battle_manager.action_state_changed.connect(_on_action_state_changed)
 	battle_manager.enemy_intent_changed.connect(_on_enemy_intent_changed)
+	battle_manager.action_clash_started.connect(_on_action_clash_started)
 	if battle_manager.objective_tracker:
 		battle_manager.objective_tracker.objective_updated.connect(_on_objective_updated)
 	_refresh_loadout_strip()
@@ -102,6 +105,8 @@ func setup(manager: BattleManager) -> void:
 
 func _ready() -> void:
 	_build_ui()
+	_action_clash = ActionClashOverlay.new()
+	add_child(_action_clash)
 	UISettings.shared().changed.connect(_layout_persistent_hud)
 	_layout_persistent_hud()
 	var viewport := get_viewport()
@@ -1243,6 +1248,11 @@ func _format_enemy_intent_details(intent: Dictionary, details: Dictionary) -> St
 	elif danger == "high":
 		parts.append("Priority: high")
 	return "    ".join(parts)
+
+func _on_action_clash_started(context: Dictionary) -> void:
+	if _action_clash:
+		_action_clash.show_action(context)
+
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
