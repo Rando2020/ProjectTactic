@@ -57,14 +57,22 @@ func _run() -> void:
 	check((overlay.get("_target_name") as Label).text == "AREA", "AoE never invents a single defender")
 	check((overlay.get("_action_name") as Label).text == "Fire", "new action replaces previous title")
 
-	for size in [Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(3840, 2160)]:
-		root.size = size
-		overlay._resize()
-		var card := overlay.get("_card") as PanelContainer
-		var end_x := card.position.x + card.size.x * card.scale.x
-		var end_y := card.position.y + card.size.y * card.scale.y
-		check(end_x <= float(size.x) * 0.68 + 1.0, "%s keeps clash left of right HUD" % size)
-		check(end_y <= float(size.y), "%s does not overflow below the viewport" % size)
+	# Test the same geometry function used in _resize(), rather than changing
+	# root.size (which does not resize the SceneTree viewport in headless runs).
+	for size in [Vector2(1280, 720), Vector2(1366, 768), Vector2(1600, 900), Vector2(3840, 2160)]:
+		for tier in ["light", "signature", "boss"]:
+			for scale in [1.0, 1.25, 1.5]:
+				var card_rect: Rect2 = Overlay.banner_rect(size, scale, tier)
+				var rail := preload("res://scripts/ui/BattleHudLayout.gd").right_sidebar_rect(size)
+				var tag := "%s/%s/UI%.2f" % [size, tier, scale]
+				check(card_rect.position.x >= 0.0, tag + " starts on screen")
+				check(card_rect.end.x + 12.0 < rail.position.x, tag + " stays left of the command rail")
+				check(card_rect.position.y >= 120.0, tag + " stays below battle headers")
+				check(card_rect.end.y <= size.y, tag + " stays inside viewport")
+				check(card_rect.size.y <= size.y * 0.18 + 0.01, tag + " is a slim banner, not a cutaway")
+		var light := Overlay.banner_rect(size, 1.0, "light")
+		var major := Overlay.banner_rect(size, 1.0, "signature")
+		check(light.size.x <= major.size.x, "%s standard strike smaller than signature" % size)
 
 	overlay.hide_clash()
 	check(not overlay.visible, "action accent can be dismissed without combat side effects")
