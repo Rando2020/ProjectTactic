@@ -1,0 +1,317 @@
+[
+  {
+    "asset": "flower_clump",
+    "bytes": 44436,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "flower_clump: ~95.11% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "flower_clump: duplicate verts=468 loose verts=0"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "flower_clump": {
+          "verts": 936,
+          "faces": 324,
+          "tris": 324,
+          "ngons": 0,
+          "boundary_edges": 936,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 468,
+          "islands": 306,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 95.11,
+          "uv_coverage_pct": 90.6
+        }
+      }
+    }
+  },
+  {
+    "asset": "grass_flowers",
+    "bytes": 143752,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "grass_flowers: ~92.32% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "grass_flowers: duplicate verts=1548 loose verts=0",
+        "asset lowest point z=-0.32 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.32,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "grass_flowers": {
+          "verts": 3096,
+          "faces": 1044,
+          "tris": 1044,
+          "ngons": 0,
+          "boundary_edges": 3096,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 1548,
+          "islands": 1026,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 92.32,
+          "uv_coverage_pct": 88.9
+        }
+      }
+    }
+  },
+  {
+    "asset": "high_ground",
+    "bytes": 10272,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "high_ground: ~46.11% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "high_ground: duplicate verts=96 loose verts=0",
+        "asset lowest point z=-0.16 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.16,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "high_ground": {
+          "verts": 192,
+          "faces": 88,
+          "tris": 88,
+          "ngons": 0,
+          "boundary_edges": 192,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 96,
+          "islands": 52,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 46.11,
+          "uv_coverage_pct": 80.4
+        }
+      }
+    }
+  },
+  {
+    "asset": "ruin_wall",
+    "bytes": 28228,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "ruin_wall: ~86.32% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "ruin_wall: duplicate verts=288 loose verts=0",
+        "hidden back-to-back faces: ruin_wall (2 pairs) - delete to save tris"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [
+        {
+          "where": "ruin_wall",
+          "tri_pairs": 2
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "ruin_wall": {
+          "verts": 576,
+          "faces": 264,
+          "tris": 264,
+          "ngons": 0,
+          "boundary_edges": 576,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 288,
+          "islands": 156,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 86.32,
+          "uv_coverage_pct": 89.8
+        }
+      }
+    }
+  },
+  {
+    "asset": "stairs",
+    "bytes": 19228,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "stairs: ~87.32% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "stairs: duplicate verts=192 loose verts=0",
+        "hidden back-to-back faces: stairs (1 pairs) - delete to save tris"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [
+        {
+          "where": "stairs",
+          "tri_pairs": 1
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "stairs": {
+          "verts": 384,
+          "faces": 176,
+          "tris": 176,
+          "ngons": 0,
+          "boundary_edges": 384,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 192,
+          "islands": 104,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 87.32,
+          "uv_coverage_pct": 90.6
+        }
+      }
+    }
+  },
+  {
+    "asset": "stone",
+    "bytes": 23668,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "stone: ~64.96% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "stone: duplicate verts=240 loose verts=0",
+        "asset lowest point z=-0.32 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.32,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "stone": {
+          "verts": 480,
+          "faces": 220,
+          "tris": 220,
+          "ngons": 0,
+          "boundary_edges": 480,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 240,
+          "islands": 130,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 64.96,
+          "uv_coverage_pct": 77.3
+        }
+      }
+    }
+  }
+]
