@@ -14,13 +14,13 @@ Use the approved **Zane hybrid 2D / illustration** presentation mock as the art 
 - `Unit._character_direction_texture` and `_refresh_directional_sprite`: Zane alone uses the directional images in 2D; other units, melee timing, 3D opt-in, shadow, HP bars, input, and grid coordinates remain unchanged.
 - `CharacterScreen._unit_texture`, `BattleUI._on_turn_started`, and `BattleManager._portrait_path`: painterly portraits are resolved independently of sprites. Forecast uses actual on-disk path to support the existing PNG-byte reader.
 
-The new preferred PNG paths are placeholders until actual approved isolated source images are committed. **This code pass wires the fallbacks, not the final visual asset quality.** Existing `zane_v2`, `zane_impact_v1`, and `zane_painterly_v1` remain preserved in their current paths.
+The preferred standalone image paths are placeholders until actual approved isolated source images are committed. **This code pass wires the fallbacks, not the final visual asset quality.** Existing `zane_v2`, `zane_impact_v1`, and `zane_painterly_v1` remain preserved in their current paths.
 
 ## Required source files / acceptance before promotion
 
 | File | Native content | Acceptance |
 | --- | --- | --- |
-| `godot/assets/characters/portraits/zane-portrait-illustrated.png` | Clean illustrated upper-body portrait, no UI/text/background other than authored backdrop | Must match approved face, expressive identity, costume; 4K UI legibility |
+| `godot/assets/characters/portraits/zane-portrait-illustrated.jpg` | Clean illustrated upper-body portrait, no UI/text/background other than authored backdrop | Must match approved face, expressive identity, costume; 4K UI legibility |
 | `godot/assets/sprites/units/zane-front-illustrated.png` | 1 full-body transparent sprite facing camera | Correct feet, silhouette, coat, scarf, neutral idle |
 | `godot/assets/sprites/units/zane-right-illustrated.png` | 1 full-body transparent sprite facing screen right | Correct anatomical sides |
 | `godot/assets/sprites/units/zane-back-illustrated.png` | 1 full-body transparent sprite facing away | Scarf drape and back straps consistent |
@@ -41,4 +41,4 @@ The new preferred PNG paths are placeholders until actual approved isolated sour
 
 ## Recommended next action
 
-Deliver and QA the **five clean individual production PNGs** on a new art-only PR, then perform browser acceptance of one Zane versus Storm Imp encounter before any 3D archiving or merge.
+Deliver and QA the **four isolated sprites plus a clean portrait** on a new art-only PR, then perform browser acceptance of one Zane versus Storm Imp encounter before any 3D archiving or merge.
