@@ -34,7 +34,7 @@ class IllustratedZaneContractTest(unittest.TestCase):
             fallback = spec["fallback_path"]
             self.assertTrue(fallback.startswith("res://assets/"))
             self.assertTrue((GODOT / fallback.removeprefix("res://")).is_file(), fallback)
-        self.assertIn("zane-portrait-illustrated.png", character["portrait"]["path"])
+        self.assertIn("zane-portrait-illustrated.jpg", character["portrait"]["path"])
 
     def test_resolution_independent_from_battle_logic(self):
         self.assertIn("func get_character_portrait_candidates(", self.asset_registry)
