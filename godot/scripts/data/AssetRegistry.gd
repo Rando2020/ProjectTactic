@@ -536,7 +536,8 @@ static func load_first_texture(paths: Array[String]) -> Texture2D:
 				_texture_cache[path] = false
 				continue
 			var image := Image.new()
-			if image.load_png_from_buffer(bytes) == OK:
+			var decoded := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
+			if decoded == OK:
 				var source_texture := ImageTexture.create_from_image(image)
 				_texture_cache[path] = source_texture
 				return source_texture
