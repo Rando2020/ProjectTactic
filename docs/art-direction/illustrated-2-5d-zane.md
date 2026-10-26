@@ -16,6 +16,23 @@ Use the approved **Zane hybrid 2D / illustration** presentation mock as the art 
 
 The preferred standalone image paths are placeholders until actual approved isolated source images are committed. **This code pass wires the fallbacks, not the final visual asset quality.** Existing `zane_v2`, `zane_impact_v1`, and `zane_painterly_v1` remain preserved in their current paths.
 
+## Automated PNG/JPEG production handoff
+
+Use `tools/prepare_illustrated_zane.py` with one authored high-resolution portrait and four independent transparent full-body directional PNGs. The script rejects opaque collage images, undersized sprites and missing transparency, normalizes every sprite to a 128×192 canvas with a shared 4 px foot baseline, and exports an optimized painted JPEG portrait without affecting game scripts.
+
+```sh
+python tools/prepare_illustrated_zane.py \
+  --portrait /path/zane-master-portrait.png \
+  --front /path/zane-front.png \
+  --right /path/zane-right.png \
+  --back /path/zane-back.png \
+  --left /path/zane-left.png \
+  --out /tmp/zane-art-export
+python -m unittest discover -s tools -p test_prepare_illustrated_zane.py
+```
+
+Review the five output files visually before putting them into the manifest paths; no frame generation or alpha masking of a composite sheet is performed automatically.
+
 ## Required source files / acceptance before promotion
 
 | File | Native content | Acceptance |
