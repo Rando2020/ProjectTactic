@@ -18,6 +18,7 @@ signal command_hint_changed(text: String)
 signal action_preview_changed(preview: Dictionary)
 signal action_state_changed(can_move: bool, can_act: bool, has_pending: bool)
 signal enemy_intent_changed(intent: Dictionary)
+signal action_clash_started(context: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
 const FACING_OPPOSITE: Dictionary = {"N":"S","S":"N","E":"W","W":"E"}
@@ -2460,6 +2461,32 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	is_resolving_action = true
 	_emit_action_state()
 	var canonical := AbilityDB.canonical_id(ability_id)
+	# A read-only portrait accent is dispatched only after the existing lifecycle
+	# accepts the action. It never waits for UI and never predicts damage.
+	if kind in ["slash", "arrow", "cast"] and target != actor:
+		var ability: Dictionary = AbilityDB.get_ability(canonical) if not canonical.is_empty() else {}
+		var action_name: String = str(ability.get("display_name", "Cast" if kind == "cast" else "Attack"))
+		var context_label: String = "SPELL" if kind == "cast" else ("RANGED" if kind == "arrow" else "MELEE")
+		if kind != "cast" and is_instance_valid(target):
+			context_label += "  ·  %s" % _flank_label(actor, target)
+		var attacker_portrait: Texture2D = null
+		var defender_portrait: Texture2D = null
+		if actor.unit_data:
+			attacker_portrait = actor.unit_data.portrait if actor.unit_data.portrait else actor.unit_data.sprite_sheet
+		if is_instance_valid(target) and target.unit_data:
+			defender_portrait = target.unit_data.portrait if target.unit_data.portrait else target.unit_data.sprite_sheet
+		action_clash_started.emit({
+			"actor": actor.display_name,
+			"actor_id": actor.unit_id,
+			"actor_portrait": attacker_portrait,
+			"target": target.display_name if is_instance_valid(target) else "AREA",
+			"target_id": target.unit_id if is_instance_valid(target) else "",
+			"target_portrait": defender_portrait,
+			"action": action_name,
+			"context": context_label,
+			"tier": "signature" if is_instance_valid(target) and target.has_meta("is_boss") else "light",
+			"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
+		})
 	_action_presentation_context = {}
 	if actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire"):
 		var footprint: Array[Vector2i] = []
