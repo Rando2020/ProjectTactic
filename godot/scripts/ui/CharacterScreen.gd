@@ -541,6 +541,9 @@ func _get_reg(uid: String) -> Dictionary:
 
 
 func _unit_texture(uid: String) -> Texture2D:
+	var illustrated := AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(uid))
+	if illustrated != null:
+		return illustrated
 	var paths: Array = PORTRAITS.get(uid, [])
 	for path: Variant in paths:
 		var pth := str(path)

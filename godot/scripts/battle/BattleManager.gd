@@ -2086,6 +2086,11 @@ func _affinity_label(target: Unit, spell_type: String) -> String:
 func _portrait_path(unit: Unit) -> String:
 	if not unit or not unit.unit_data:
 		return ""
+	# Forecast portraits must resolve to a real file path because BattleUI
+	# loads the image bytes, not an in-memory ImageTexture resource_path.
+	for path: String in AssetRegistry.get_character_portrait_candidates(unit.unit_data.id):
+		if AssetRegistry.load_first_texture([path]) != null:
+			return path
 	if unit.unit_data.portrait:
 		return unit.unit_data.portrait.resource_path
 	if unit.unit_data.sprite_sheet:

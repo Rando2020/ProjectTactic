@@ -478,6 +478,28 @@ static func get_overlay_candidates(theme_id: String, overlay_id: String) -> Arra
 	return candidates
 
 
+## Illustrated character art is independent of tactical sprite and rig assets.
+## The manifest lists optional portrait and direction sources with safe fallbacks.
+static func get_character_portrait_candidates(unit_id: String) -> Array[String]:
+	var candidates: Array[String] = []
+	var entry: Dictionary = get_manifest().get("characters", {}).get(unit_id, {})
+	_append_entry_paths(candidates, entry.get("portrait", {}))
+	_append_entry_paths(candidates, entry.get("idle", {}))
+	var legacy: Dictionary = get_unit(unit_id)
+	_append_entry_paths(candidates, legacy.get("portrait", ""))
+	return candidates
+
+
+static func get_character_direction_candidates(unit_id: String, facing: String) -> Array[String]:
+	var candidates: Array[String] = []
+	var entry: Dictionary = get_manifest().get("characters", {}).get(unit_id, {})
+	var directions: Dictionary = entry.get("directions", {})
+	var direction_name: String = {"N": "back", "E": "right", "S": "front", "W": "left"}.get(facing, "front")
+	_append_entry_paths(candidates, directions.get(direction_name, {}))
+	_append_entry_paths(candidates, entry.get("idle", {}))
+	return candidates
+
+
 static func get_unit_indicator_candidates(team_id: String) -> Array[String]:
 	var candidates: Array[String] = []
 	var indicators: Dictionary = get_manifest().get("unit_indicators", {})
@@ -514,7 +536,8 @@ static func load_first_texture(paths: Array[String]) -> Texture2D:
 				_texture_cache[path] = false
 				continue
 			var image := Image.new()
-			if image.load_png_from_buffer(bytes) == OK:
+			var decoded := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
+			if decoded == OK:
 				var source_texture := ImageTexture.create_from_image(image)
 				_texture_cache[path] = source_texture
 				return source_texture

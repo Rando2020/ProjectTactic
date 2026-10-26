@@ -1451,7 +1451,7 @@ func _texture_from_source(path: String) -> Texture2D:
 	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
 		return null
 	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
+	var err := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
 	if err != OK:
 		return null
 	return ImageTexture.create_from_image(image)
@@ -1495,7 +1495,7 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	var reg: Dictionary = GameState.unit_registry.get(unit_id, {})
 	if not reg.is_empty():
 		_unit_name.text += "\n" + str(JobTreeData.get_job(reg.get("current_job_id", "")).get("name", ""))
-	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(unit_id))
+	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(unit.unit_data.id))
 	_refresh_active_resources()
 	# Status icons
 	if unit.statuses.is_empty():
