@@ -1528,6 +1528,26 @@ func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> voi
 	if not is_instance_valid(original_attacker) or original_attacker.hp <= 0:
 		return
 	_face_toward(counter_unit, original_attacker.grid_pos)
+	# Counters are immediate reactions, not a new action-lifecycle ticket.
+	# Display a small, nonblocking reaction ribbon without additional damage.
+	var counter_portrait: Texture2D = null
+	var defender_portrait: Texture2D = null
+	if counter_unit.unit_data:
+		counter_portrait = counter_unit.unit_data.portrait if counter_unit.unit_data.portrait else counter_unit.unit_data.sprite_sheet
+	if original_attacker.unit_data:
+		defender_portrait = original_attacker.unit_data.portrait if original_attacker.unit_data.portrait else original_attacker.unit_data.sprite_sheet
+	action_clash_started.emit({
+		"actor": counter_unit.display_name,
+		"actor_id": counter_unit.unit_id,
+		"actor_portrait": counter_portrait,
+		"target": original_attacker.display_name,
+		"target_id": original_attacker.unit_id,
+		"target_portrait": defender_portrait,
+		"action": "Counter",
+		"context": "REACTION",
+		"tier": "light",
+		"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
+	})
 	var tile_c := tactical_grid.get_tile(counter_unit.grid_pos)
 	var tile_t := tactical_grid.get_tile(original_attacker.grid_pos)
 	var result := combat_resolver.resolve_attack(
@@ -2484,7 +2504,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 			"target_portrait": defender_portrait,
 			"action": action_name,
 			"context": context_label,
-			"tier": "signature" if is_instance_valid(target) and target.has_meta("is_boss") else "light",
+			"tier": "boss" if is_instance_valid(target) and target.has_meta("is_boss") else ("signature" if not canonical.is_empty() else "light"),
 			"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
 		})
 	_action_presentation_context = {}
