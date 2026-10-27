@@ -52,6 +52,8 @@ var _preview_amount_label: Label
 var _preview_hit_label: Label
 var _preview_crit_label: Label
 var _preview_note_label: Label
+var _chapel_command_panel: PanelContainer
+var _chapel_command_buttons: VBoxContainer
 var _loadout_panel: PanelContainer
 var _loadout_items_box: HBoxContainer
 var _loadout_detail_label: Label
@@ -336,8 +338,62 @@ func _build_ui() -> void:
 	_build_intro_banner()
 	_build_loadout_strip()
 	_build_action_preview_panel()
+	if GameState.practice_session.get("illustrated_chapel", false):
+		_build_chapel_command_dock()
 	_build_settings_overlay()
 	_ability_panel.visibility_changed.connect(_on_ability_panel_visibility_changed)
+
+
+
+## Paint-forward command arrangement, used only by the opt-in chapel slice.
+## Reparent the actual combat buttons: no proxy actions or duplicated resolver.
+func _build_chapel_command_dock() -> void:
+	_chapel_command_panel = PanelContainer.new()
+	_chapel_command_panel.name = "IllustratedChapelCommands"
+	_chapel_command_panel.custom_minimum_size = Vector2(174, 0)
+	var surface := StyleBoxFlat.new()
+	surface.bg_color = Color(0.035, 0.043, 0.055, 0.94)
+	surface.border_color = Color(0.72, 0.59, 0.36, 0.90)
+	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+		surface.set_border_width(side, 1)
+	for corner in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]:
+		surface.set_corner_radius(corner, 4)
+	surface.set_content_margin_all(8)
+	_chapel_command_panel.add_theme_stylebox_override("panel", surface)
+	add_child(_chapel_command_panel)
+	_chapel_command_buttons = VBoxContainer.new()
+	_chapel_command_buttons.add_theme_constant_override("separation", 3)
+	_chapel_command_panel.add_child(_chapel_command_buttons)
+	var header := Label.new()
+	header.text = "COMMAND"
+	header.add_theme_font_override("font", DISPLAY_FONT)
+	header.add_theme_font_size_override("font_size", 11)
+	header.add_theme_color_override("font_color", Color(0.85, 0.72, 0.47))
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_chapel_command_buttons.add_child(header)
+	for button: Button in [_move_btn, _attack_btn, _ability_btn, _wait_btn]:
+		button.reparent(_chapel_command_buttons)
+		button.custom_minimum_size = Vector2(156, 42)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.expand_icon = false
+		button.add_theme_font_size_override("font_size", 15)
+		if button == _ability_btn:
+			button.text = "Skills"
+	_chapel_command_panel.resized.connect(_layout_chapel_command_dock)
+
+
+func _layout_chapel_command_dock() -> void:
+	if not is_instance_valid(_chapel_command_panel):
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	# Bottom-left like the approved mock, but above the battle loadout strip.
+	var available_bottom := viewport_size.y - 132.0
+	var proposed_y := viewport_size.y * 0.52
+	var y := maxf(110.0, minf(proposed_y, available_bottom - _chapel_command_panel.size.y))
+	_chapel_command_panel.position = Vector2(14.0, y)
 
 
 func _on_ability_panel_visibility_changed() -> void:
@@ -363,7 +419,10 @@ func _on_ability_panel_visibility_changed() -> void:
 		await get_tree().process_frame
 		if ticket != _ability_menu_layout_ticket or not is_inside_tree():
 			return
-		_right_panel_scroll.ensure_control_visible(_ability_btn)
+		# The illustrated chapel relocates the original functional buttons to
+		# a left-side command dock. They are no longer scroll descendants.
+		if not is_instance_valid(_chapel_command_panel):
+			_right_panel_scroll.ensure_control_visible(_ability_btn)
 
 
 func _layout_persistent_hud() -> void:
@@ -377,6 +436,7 @@ func _layout_persistent_hud() -> void:
 	_right_panel_scroll.position = rect.position + Vector2(8.0, 6.0)
 	_right_panel_scroll.size = rect.size - Vector2(16.0, 14.0)
 	_position_loadout_panel()
+	_layout_chapel_command_dock()
 	if get_parent().has_method("_frame_battlefield_camera"):
 		get_parent().call_deferred("_frame_battlefield_camera")
 
