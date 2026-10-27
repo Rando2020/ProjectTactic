@@ -52,3 +52,12 @@ assets/source/zane-painterly-v1/review/game-camera-motion.png -filter -diff -mer
 assets/source/zane-painterly-v1/review/face-detail.png -filter -diff -merge -text
 assets/source/zane-painterly-v1/review/turntable.mp4 -filter -diff -merge -text
 assets/source/zane-painterly-v1/review/game-scale-138.png -filter -diff -merge -text
+
+# Small, authored painterly Zane portrait/2D sprites are ordinary Git blobs to keep PR checks reproducible.
+godot/assets/characters/portraits/zane-portrait-illustrated.jpg -filter -diff -merge -text
+godot/assets/sprites/units/zane-*-illustrated.png -filter -diff -merge -text
+
+godot/assets/characters/portraits/zane-portrait-illustrated.png -filter -diff -merge
+
+# Painted chapel runtime background, available in clean checkouts.
+godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -diff -merge -text

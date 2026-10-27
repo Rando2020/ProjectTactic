@@ -526,6 +526,15 @@ func begin_zane_duel_practice() -> bool:
 	practice_session["mode"] = "zane_duel"
 	return true
 
+func begin_illustrated_chapel_practice() -> bool:
+	# Independent visual lane: reuse the safe one-on-one Zane practice rules.
+	# The flag affects the map and UI only, not combat, rewards or saves.
+	if not begin_zane_duel_practice():
+		return false
+	practice_session["illustrated_chapel"] = true
+	return true
+
+
 func is_zane_duel_practice() -> bool:
 	return practice_session.get("mode", "") == "zane_duel"
 

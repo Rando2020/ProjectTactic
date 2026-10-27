@@ -11,6 +11,10 @@ extends Resource
 @export var map_height: int = 8
 @export var default_terrain: String = "grass"
 @export var environment_theme_id: String = "default"
+# Optional flat painted plate. Its origin is the pixel center of logical cell (0,0).
+@export var painted_background: String = ""
+@export var painted_grid_origin: Vector2 = Vector2.ZERO
+@export var painted_tile_size: Vector2i = Vector2i(96, 48)
 @export var max_party_size: int = 4
 @export var required_unit_ids: Array[String] = []
 @export var recommended_unit_ids: Array[String] = []

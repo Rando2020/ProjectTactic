@@ -80,6 +80,12 @@ func _ready() -> void:
 		if gs: map_index = gs.selected_map_index
 		_map_data = _create_ashvale_map() if map_index == 0 else _create_crypt_map()
 
+	# Optional illustrated field: distinct from Ashvale and the existing Zane duel.
+	if gs and gs.practice_session.get("illustrated_chapel", false):
+		_map_data = _create_illustrated_chapel_map()
+		if gs.practice_session.get("painted_chapel", false):
+			_map_data = preload("res://scripts/presentation/PaintedChapel.gd").create_map()
+
 	_enemy_instance_seq = 0
 	tactical_grid.initialize_from_map(_map_data)
 
@@ -467,6 +473,60 @@ func _create_ashvale_map() -> MapData:
 	return map
 
 
+
+func _create_illustrated_chapel_map() -> MapData:
+	# Same authoritative 96x48 grid and one-on-one spawn positions as Zane Duel.
+	# No invisible set dressing changes combat movement or line of sight.
+	var map := MapData.new()
+	map.id = "illustrated_chapel_practice"
+	map.display_name = "The Ruined Chapel"
+	map.map_width = 10
+	map.map_height = 8
+	map.default_terrain = "stone"
+	map.environment_theme_id = "ruined-chapel"
+	map.objective_type = "defeat_all"
+	map.objective_label = "Defeat the Storm Imp"
+	map.reward_gold = 150
+	map.reward_jp = 40
+	map.tile_overrides = [
+		{"x": 0, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 1, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 4, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 5, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 8, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 0, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 1, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 1, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 4, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 4, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 7, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 7, "terrain": "wall", "height": 0},
+		{"x": 1, "y": 2, "terrain": "high_ground", "height": 1},
+		{"x": 1, "y": 3, "terrain": "high_ground", "height": 1},
+		{"x": 2, "y": 2, "terrain": "high_ground", "height": 1},
+		{"x": 2, "y": 3, "terrain": "high_ground", "height": 1},
+		{"x": 3, "y": 1, "terrain": "high_ground", "height": 1},
+		{"x": 8, "y": 2, "terrain": "high_ground", "height": 1},
+		{"x": 8, "y": 3, "terrain": "high_ground", "height": 1},
+		{"x": 3, "y": 4, "terrain": "cracked_stone", "height": 0},
+		{"x": 7, "y": 4, "terrain": "cracked_stone", "height": 0},
+		{"x": 5, "y": 5, "terrain": "cracked_stone", "height": 0},
+		{"x": 3, "y": 6, "terrain": "cracked_stone", "height": 0},
+		{"x": 7, "y": 6, "terrain": "cracked_stone", "height": 0},
+	]
+	map.prop_overrides = [
+		{"x": 5, "y": 0, "prop": "chapel_arch", "offset_y": -106},
+		{"x": 1, "y": 0, "prop": "chapel_pillar", "offset_y": -82},
+		{"x": 8, "y": 0, "prop": "chapel_pillar", "offset_y": -82},
+		{"x": 0, "y": 4, "prop": "chapel_wall", "offset_y": -47},
+		{"x": 9, "y": 4, "prop": "chapel_wall", "offset_y": -47},
+		{"x": 6, "y": 0, "prop": "chapel_torch", "offset_y": -58},
+	]
+	return map
+
+
 func _create_crypt_map() -> MapData:
 	var map := MapData.new()
 	map.id           = "crypt_of_echoes_01"
@@ -595,7 +655,10 @@ func _spawn_player_units() -> Array[Unit]:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
 	var duel := GameState.is_zane_duel_practice()
-	result.append(_make_unit("zane", "Zane", "player", Vector2i(4, 5) if duel else Vector2i(1, 6),
+	var zane_spawn := Vector2i(4, 5) if duel else Vector2i(1, 6)
+	if duel and GameState.practice_session.get("painted_chapel", false):
+		zane_spawn = Vector2i(1, 3)
+	result.append(_make_unit("zane", "Zane", "player", zane_spawn,
 		320, 90,  4, 2, 8, 42, 48, 80,  110,
 		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
 	if not duel:
@@ -678,7 +741,8 @@ func _spawn_enemy_units() -> Array[Unit]:
 
 	#  Procedural spawns from MapGenerator
 	if GameState.is_zane_duel_practice():
-		result.append(_make_storm_imp(Vector2i(6, 5)))
+		var imp_spawn := Vector2i(3, 3) if GameState.practice_session.get("painted_chapel", false) else Vector2i(6, 5)
+		result.append(_make_storm_imp(imp_spawn))
 	elif _map_data and _map_data.enemy_spawns.size() > 0:
 		for spawn in _map_data.enemy_spawns:
 			var unit := _make_unit(

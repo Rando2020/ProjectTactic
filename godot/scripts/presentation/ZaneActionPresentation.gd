@@ -326,7 +326,10 @@ func _outcome_hud_rects() -> Array[Rect2]:
 		if not layer is CanvasLayer: continue
 		for control in layer.get_children():
 			if control is Control and control.is_visible_in_tree() and control.modulate.a > 0.01:
-				result.append(control.get_global_transform_with_canvas()*Rect2(Vector2.ZERO,control.size))
+				if control.has_method("occlusion_rect"):
+					result.append(control.occlusion_rect())
+				else:
+					result.append(control.get_global_transform_with_canvas()*Rect2(Vector2.ZERO,control.size))
 	# Keep full labels clear of real unit names, HP bars and status icons too.
 	for unit in manager.units.values():
 		if not is_instance_valid(unit): continue

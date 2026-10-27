@@ -60,6 +60,45 @@
           "fallback_path": "res://assets/props/ruin_block.png"
         }
       }
+    },
+    "ruined-chapel": {
+      "label": "Ruined Chapel",
+      "terrain": {
+        "stone": {
+          "path": "res://assets/environments/ruined-chapel/tiles/chapel-stone-floor.svg",
+          "fallback_path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-stone-tile-v01.png"
+        },
+        "cracked_stone": {
+          "path": "res://assets/environments/ruined-chapel/tiles/chapel-cracked-stone.svg",
+          "fallback_path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-stone-tile-v01.png"
+        },
+        "road": {
+          "path": "res://assets/environments/ruined-chapel/tiles/chapel-stone-floor.svg",
+          "fallback_path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-road-tile-v01.png"
+        },
+        "high_ground": {
+          "path": "res://assets/environments/ruined-chapel/tiles/chapel-raised-stone.svg",
+          "fallback_path": "res://assets/environments/forgotten-field/tiles/environment-forgotten-field-high-ground-tile-v01.png"
+        },
+        "wall": {
+          "path": "res://assets/environments/ruined-chapel/tiles/chapel-blocked-stone.svg",
+          "fallback_path": "res://assets/ui/tiles/wall.png"
+        }
+      },
+      "props": {
+        "chapel_arch": {
+          "path": "res://assets/environments/ruined-chapel/props/chapel-ruined-arch.svg"
+        },
+        "chapel_pillar": {
+          "path": "res://assets/environments/ruined-chapel/props/chapel-broken-pillar.svg"
+        },
+        "chapel_wall": {
+          "path": "res://assets/environments/ruined-chapel/props/chapel-low-wall.svg"
+        },
+        "chapel_torch": {
+          "path": "res://assets/environments/ruined-chapel/props/chapel-torch.svg"
+        }
+      }
     }
   },
   "tactical_overlays": {
@@ -100,6 +139,28 @@
       "idle": {
         "path": "res://assets/characters/character-vanguard-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/zane.png"
+      },
+      "portrait": {
+        "path": "res://assets/characters/portraits/zane-portrait-illustrated.png",
+        "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+      },
+      "directions": {
+        "front": {
+          "path": "res://assets/sprites/units/zane-front-illustrated.png",
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+        },
+        "right": {
+          "path": "res://assets/sprites/units/zane-right-illustrated.png",
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+        },
+        "back": {
+          "path": "res://assets/sprites/units/zane-back-illustrated.png",
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+        },
+        "left": {
+          "path": "res://assets/sprites/units/zane-left-illustrated.png",
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+        }
       }
     },
     "mira": {

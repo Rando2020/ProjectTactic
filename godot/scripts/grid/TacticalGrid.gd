@@ -40,6 +40,10 @@ const TERRAIN_TEXTURE_PATHS := {
 }
 
 const PROP_TEXTURE_PATHS := {
+	"chapel_arch": "",
+	"chapel_pillar": "",
+	"chapel_wall": "",
+	"chapel_torch": "",
 	"mossy_rock": "res://assets/props/mossy_rock.png",
 	"leafy_bush": "res://assets/props/leafy_bush.png",
 	"tree_stump": "res://assets/props/tree_stump.png",
@@ -89,6 +93,8 @@ func initialize_from_map(p_map_data: MapData) -> void:
 	_configure_layers()
 	map_data = p_map_data
 	_environment_theme_id = map_data.environment_theme_id if map_data else "default"
+	if map_data and not map_data.painted_background.is_empty():
+		tile_size = map_data.painted_tile_size
 	_build_tiles()
 	_draw_base_tiles()
 
@@ -130,6 +136,13 @@ func _draw_base_tiles() -> void:
 	for child in get_children():
 		if child != highlight_layer and child != unit_layer and child != terrain_view:
 			child.queue_free()
+
+	if map_data and not map_data.painted_background.is_empty():
+		if preload("res://scripts/presentation/PaintedChapel.gd").draw_background(self):
+			if _show_grid_overlay:
+				_draw_grid_overlay()
+			terrain_redrawn.emit()
+			return
 
 	var draw_positions: Array = tiles.keys()
 	draw_positions.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
@@ -467,6 +480,8 @@ func _draw_grid_overlay() -> void:
 		grid_line.points = PackedVector2Array([poly[0], poly[1], poly[2], poly[3], poly[0]])
 		grid_line.width = 1.0
 		grid_line.default_color = Color(0.7, 0.7, 0.7, 0.15)
+		if not map_data.painted_background.is_empty():
+			grid_line.default_color = Color(0.88, 0.91, 0.94, 0.32)
 		grid_line.position = world
 		grid_line.z_index = depth - 1  # Behind tile but above terrain
 		add_child(grid_line)
@@ -857,6 +872,9 @@ func get_unit_focus_position(grid_pos: Vector2i) -> Vector2:
 
 
 func get_board_bounds() -> Rect2:
+	if map_data and not map_data.painted_background.is_empty():
+		# Frame the compact diorama, including its decorative upper platform.
+		return Rect2(map_origin - map_data.painted_grid_origin, Vector2(1536, 1024))
 	var first := true
 	var min_pt := Vector2.ZERO
 	var max_pt := Vector2.ZERO
