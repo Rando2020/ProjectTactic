@@ -58,3 +58,6 @@ godot/assets/characters/portraits/zane-portrait-illustrated.jpg -filter -diff -m
 godot/assets/sprites/units/zane-*-illustrated.png -filter -diff -merge -text
 
 godot/assets/characters/portraits/zane-portrait-illustrated.png -filter -diff -merge
+
+# Painted chapel runtime background, available in clean checkouts.
+godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -diff -merge -text

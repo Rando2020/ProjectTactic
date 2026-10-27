@@ -83,6 +83,8 @@ func _ready() -> void:
 	# Optional illustrated field: distinct from Ashvale and the existing Zane duel.
 	if gs and gs.practice_session.get("illustrated_chapel", false):
 		_map_data = _create_illustrated_chapel_map()
+		if gs.practice_session.get("painted_chapel", false):
+			_map_data = preload("res://scripts/presentation/PaintedChapel.gd").create_map()
 
 	_enemy_instance_seq = 0
 	tactical_grid.initialize_from_map(_map_data)
@@ -653,7 +655,10 @@ func _spawn_player_units() -> Array[Unit]:
 	var gs: Node = get_node_or_null("/root/GameState")
 	var result: Array[Unit] = []
 	var duel := GameState.is_zane_duel_practice()
-	result.append(_make_unit("zane", "Zane", "player", Vector2i(4, 5) if duel else Vector2i(1, 6),
+	var zane_spawn := Vector2i(4, 5) if duel else Vector2i(1, 6)
+	if duel and GameState.practice_session.get("painted_chapel", false):
+		zane_spawn = Vector2i(1, 3)
+	result.append(_make_unit("zane", "Zane", "player", zane_spawn,
 		320, 90,  4, 2, 8, 42, 48, 80,  110,
 		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
 	if not duel:
@@ -736,7 +741,8 @@ func _spawn_enemy_units() -> Array[Unit]:
 
 	#  Procedural spawns from MapGenerator
 	if GameState.is_zane_duel_practice():
-		result.append(_make_storm_imp(Vector2i(6, 5)))
+		var imp_spawn := Vector2i(3, 3) if GameState.practice_session.get("painted_chapel", false) else Vector2i(6, 5)
+		result.append(_make_storm_imp(imp_spawn))
 	elif _map_data and _map_data.enemy_spawns.size() > 0:
 		for spawn in _map_data.enemy_spawns:
 			var unit := _make_unit(

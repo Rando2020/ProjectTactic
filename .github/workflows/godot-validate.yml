@@ -75,6 +75,10 @@ jobs:
       - name: Import project headlessly
         run: godot --headless --path godot --import
 
+      - name: Validate painted chapel demo
+        run: |
+          XDG_DATA_HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) godot --headless --path godot res://tests/test_painted_chapel.tscn
+
       - name: Test painterly release gate contracts
         run: |
           python -m unittest discover -s tools -p test_check_zane_painterly_fallbacks.py
