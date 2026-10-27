@@ -1,0 +1,1647 @@
+[
+  {
+    "name": "Ochre earth",
+    "eps_m": 0.001,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "asset lowest point z=-0.2396 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.2396,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "Ochre earth": {
+          "verts": 1550,
+          "faces": 3096,
+          "tris": 3096,
+          "ngons": 0,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 0,
+          "islands": 1,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 0.0,
+          "uv_coverage_pct": 55.1
+        }
+      },
+      "material_batch_separation": [],
+      "geometry_errors": []
+    }
+  },
+  {
+    "name": "Olive leaves",
+    "eps_m": 0.0002,
+    "qa": {
+      "ok": true,
+      "pass": false,
+      "errors": [
+        "floating/detached part in Olive leaves (12 verts at [-1.992, 0.708, 0.051])",
+        "floating/detached part in Olive leaves (12 verts at [-1.788, 0.713, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [-2.042, 0.461, 0.105])",
+        "floating/detached part in Olive leaves (12 verts at [-2.105, 0.537, 0.105])",
+        "floating/detached part in Olive leaves (12 verts at [-1.238, 0.78, 0.053])",
+        "floating/detached part in Olive leaves (12 verts at [-1.43, 0.487, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [-1.38, 0.952, 0.051])",
+        "floating/detached part in Olive leaves (12 verts at [-1.132, 0.887, 0.151])",
+        "floating/detached part in Olive leaves (12 verts at [-1.057, 0.978, 0.079])",
+        "floating/detached part in Olive leaves (12 verts at [-0.713, 1.045, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [-0.073, 0.993, 0.046])",
+        "floating/detached part in Olive leaves (12 verts at [0.259, 0.746, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [0.073, 0.99, 0.102])",
+        "floating/detached part in Olive leaves (12 verts at [1.747, 0.103, 0.086])",
+        "floating/detached part in Olive leaves (12 verts at [1.389, 0.411, 0.056])",
+        "floating/detached part in Olive leaves (12 verts at [1.306, 0.138, 0.147])",
+        "floating/detached part in Olive leaves (12 verts at [1.872, 0.276, 0.146])",
+        "floating/detached part in Olive leaves (12 verts at [2.259, 1.231, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [2.183, 0.912, 0.057])",
+        "floating/detached part in Olive leaves (12 verts at [1.905, 0.954, 0.059])",
+        "floating/detached part in Olive leaves (12 verts at [2.303, 1.179, 0.093])",
+        "floating/detached part in Olive leaves (12 verts at [2.402, 1.148, 0.122])",
+        "floating/detached part in Olive leaves (12 verts at [2.286, 0.84, 0.111])",
+        "floating/detached part in Olive leaves (12 verts at [-2.74, -0.612, 0.139])",
+        "floating/detached part in Olive leaves (12 verts at [-2.723, -1.043, 0.122])",
+        "floating/detached part in Olive leaves (12 verts at [-2.263, -0.775, 0.089])",
+        "floating/detached part in Olive leaves (12 verts at [-2.454, -1.056, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [-2.822, -0.648, 0.146])",
+        "floating/detached part in Olive leaves (12 verts at [2.266, -1.581, 0.044])",
+        "floating/detached part in Olive leaves (12 verts at [2.446, -1.522, 0.133])"
+      ],
+      "warnings": [
+        "Olive leaves: ~94.13% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "asset lowest point z=-0.06 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.06,
+      "zfighting": [],
+      "floating": [
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.992,
+            0.708,
+            0.051
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.788,
+            0.713,
+            0.083
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.042,
+            0.461,
+            0.105
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.105,
+            0.537,
+            0.105
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.238,
+            0.78,
+            0.053
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.43,
+            0.487,
+            0.134
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.38,
+            0.952,
+            0.051
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.132,
+            0.887,
+            0.151
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -1.057,
+            0.978,
+            0.079
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -0.713,
+            1.045,
+            0.083
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -0.073,
+            0.993,
+            0.046
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            0.259,
+            0.746,
+            0.083
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            0.073,
+            0.99,
+            0.102
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            1.747,
+            0.103,
+            0.086
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            1.389,
+            0.411,
+            0.056
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            1.306,
+            0.138,
+            0.147
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            1.872,
+            0.276,
+            0.146
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.259,
+            1.231,
+            0.134
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.183,
+            0.912,
+            0.057
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            1.905,
+            0.954,
+            0.059
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.303,
+            1.179,
+            0.093
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.402,
+            1.148,
+            0.122
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.286,
+            0.84,
+            0.111
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.74,
+            -0.612,
+            0.139
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.723,
+            -1.043,
+            0.122
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.263,
+            -0.775,
+            0.089
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.454,
+            -1.056,
+            0.134
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            -2.822,
+            -0.648,
+            0.146
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.266,
+            -1.581,
+            0.044
+          ]
+        },
+        {
+          "object": "Olive leaves",
+          "island_verts": 12,
+          "center": [
+            2.446,
+            -1.522,
+            0.133
+          ]
+        }
+      ],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "Olive leaves": {
+          "verts": 1536,
+          "faces": 2560,
+          "tris": 2560,
+          "ngons": 0,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 0,
+          "islands": 128,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 81.73,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 94.13,
+          "uv_coverage_pct": 16.1
+        }
+      },
+      "material_batch_separation": [
+        "floating/detached part in Olive leaves (12 verts at [-1.992, 0.708, 0.051])",
+        "floating/detached part in Olive leaves (12 verts at [-1.788, 0.713, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [-2.042, 0.461, 0.105])",
+        "floating/detached part in Olive leaves (12 verts at [-2.105, 0.537, 0.105])",
+        "floating/detached part in Olive leaves (12 verts at [-1.238, 0.78, 0.053])",
+        "floating/detached part in Olive leaves (12 verts at [-1.43, 0.487, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [-1.38, 0.952, 0.051])",
+        "floating/detached part in Olive leaves (12 verts at [-1.132, 0.887, 0.151])",
+        "floating/detached part in Olive leaves (12 verts at [-1.057, 0.978, 0.079])",
+        "floating/detached part in Olive leaves (12 verts at [-0.713, 1.045, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [-0.073, 0.993, 0.046])",
+        "floating/detached part in Olive leaves (12 verts at [0.259, 0.746, 0.083])",
+        "floating/detached part in Olive leaves (12 verts at [0.073, 0.99, 0.102])",
+        "floating/detached part in Olive leaves (12 verts at [1.747, 0.103, 0.086])",
+        "floating/detached part in Olive leaves (12 verts at [1.389, 0.411, 0.056])",
+        "floating/detached part in Olive leaves (12 verts at [1.306, 0.138, 0.147])",
+        "floating/detached part in Olive leaves (12 verts at [1.872, 0.276, 0.146])",
+        "floating/detached part in Olive leaves (12 verts at [2.259, 1.231, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [2.183, 0.912, 0.057])",
+        "floating/detached part in Olive leaves (12 verts at [1.905, 0.954, 0.059])",
+        "floating/detached part in Olive leaves (12 verts at [2.303, 1.179, 0.093])",
+        "floating/detached part in Olive leaves (12 verts at [2.402, 1.148, 0.122])",
+        "floating/detached part in Olive leaves (12 verts at [2.286, 0.84, 0.111])",
+        "floating/detached part in Olive leaves (12 verts at [-2.74, -0.612, 0.139])",
+        "floating/detached part in Olive leaves (12 verts at [-2.723, -1.043, 0.122])",
+        "floating/detached part in Olive leaves (12 verts at [-2.263, -0.775, 0.089])",
+        "floating/detached part in Olive leaves (12 verts at [-2.454, -1.056, 0.134])",
+        "floating/detached part in Olive leaves (12 verts at [-2.822, -0.648, 0.146])",
+        "floating/detached part in Olive leaves (12 verts at [2.266, -1.581, 0.044])",
+        "floating/detached part in Olive leaves (12 verts at [2.446, -1.522, 0.133])"
+      ],
+      "geometry_errors": []
+    }
+  },
+  {
+    "name": "Painted limestone",
+    "eps_m": 0.001,
+    "qa": {
+      "ok": true,
+      "pass": false,
+      "errors": [
+        "floating/detached part in Painted limestone (56 verts at [-0.136, -1.983, -0.041])",
+        "floating/detached part in Painted limestone (69 verts at [0.7, -1.976, -0.048])",
+        "floating/detached part in Painted limestone (56 verts at [-0.155, -0.661, -0.053])",
+        "floating/detached part in Painted limestone (56 verts at [0.681, -0.63, -0.042])",
+        "floating/detached part in Painted limestone (48 verts at [2.481, -0.292, -0.013])",
+        "floating/detached part in Painted limestone (56 verts at [2.581, 0.403, -0.015])",
+        "floating/detached part in Painted limestone (48 verts at [2.34, -1.478, -0.003])",
+        "floating/detached part in Painted limestone (56 verts at [1.999, -0.954, -0.004])",
+        "floating/detached part in Painted limestone (56 verts at [1.892, -1.06, -0.017])",
+        "floating/detached part in Painted limestone (40 verts at [-1.586, -0.85, -0.014])",
+        "floating/detached part in Painted limestone (56 verts at [-1.438, -0.451, -0.002])",
+        "floating/detached part in Painted limestone (56 verts at [2.212, -1.028, -0.007])",
+        "floating/detached part in Painted limestone (48 verts at [-2.384, -1.582, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [1.772, 0.158, -0.011])",
+        "floating/detached part in Painted limestone (56 verts at [1.403, 0.445, -0.002])",
+        "floating/detached part in Painted limestone (56 verts at [1.902, -1.148, -0.008])",
+        "floating/detached part in Painted limestone (56 verts at [1.943, -0.144, -0.013])",
+        "floating/detached part in Painted limestone (56 verts at [1.617, 0.082, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [-2.037, -0.507, -0.008])",
+        "floating/detached part in Painted limestone (56 verts at [1.451, 0.63, -0.01])",
+        "floating/detached part in Painted limestone (56 verts at [-1.736, -0.361, -0.015])",
+        "floating/detached part in Painted limestone (56 verts at [-2.409, -1.737, -0.007])",
+        "floating/detached part in Painted limestone (56 verts at [-1.501, -0.675, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [2.335, -0.21, -0.014])",
+        "floating/detached part in Painted limestone (56 verts at [2.48, -1.006, -0.009])"
+      ],
+      "warnings": [
+        "Painted limestone: ~99.5% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "hidden back-to-back faces: Painted limestone (3 pairs) - delete to save tris",
+        "asset lowest point z=-0.1398 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.1398,
+      "zfighting": [],
+      "floating": [
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -0.136,
+            -1.983,
+            -0.041
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 69,
+          "center": [
+            0.7,
+            -1.976,
+            -0.048
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -0.155,
+            -0.661,
+            -0.053
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            0.681,
+            -0.63,
+            -0.042
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 48,
+          "center": [
+            2.481,
+            -0.292,
+            -0.013
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            2.581,
+            0.403,
+            -0.015
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 48,
+          "center": [
+            2.34,
+            -1.478,
+            -0.003
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.999,
+            -0.954,
+            -0.004
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.892,
+            -1.06,
+            -0.017
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 40,
+          "center": [
+            -1.586,
+            -0.85,
+            -0.014
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -1.438,
+            -0.451,
+            -0.002
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            2.212,
+            -1.028,
+            -0.007
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 48,
+          "center": [
+            -2.384,
+            -1.582,
+            -0.018
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.772,
+            0.158,
+            -0.011
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.403,
+            0.445,
+            -0.002
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.902,
+            -1.148,
+            -0.008
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.943,
+            -0.144,
+            -0.013
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.617,
+            0.082,
+            -0.018
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -2.037,
+            -0.507,
+            -0.008
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            1.451,
+            0.63,
+            -0.01
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -1.736,
+            -0.361,
+            -0.015
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -2.409,
+            -1.737,
+            -0.007
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            -1.501,
+            -0.675,
+            -0.018
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            2.335,
+            -0.21,
+            -0.014
+          ]
+        },
+        {
+          "object": "Painted limestone",
+          "island_verts": 56,
+          "center": [
+            2.48,
+            -1.006,
+            -0.009
+          ]
+        }
+      ],
+      "back_to_back": [
+        {
+          "where": "Painted limestone",
+          "tri_pairs": 3
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "Painted limestone": {
+          "verts": 5381,
+          "faces": 10414,
+          "tris": 10414,
+          "ngons": 0,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 0,
+          "islands": 87,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 19.97,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 99.5,
+          "uv_coverage_pct": 98.6
+        }
+      },
+      "material_batch_separation": [
+        "floating/detached part in Painted limestone (56 verts at [-0.136, -1.983, -0.041])",
+        "floating/detached part in Painted limestone (69 verts at [0.7, -1.976, -0.048])",
+        "floating/detached part in Painted limestone (56 verts at [-0.155, -0.661, -0.053])",
+        "floating/detached part in Painted limestone (56 verts at [0.681, -0.63, -0.042])",
+        "floating/detached part in Painted limestone (48 verts at [2.481, -0.292, -0.013])",
+        "floating/detached part in Painted limestone (56 verts at [2.581, 0.403, -0.015])",
+        "floating/detached part in Painted limestone (48 verts at [2.34, -1.478, -0.003])",
+        "floating/detached part in Painted limestone (56 verts at [1.999, -0.954, -0.004])",
+        "floating/detached part in Painted limestone (56 verts at [1.892, -1.06, -0.017])",
+        "floating/detached part in Painted limestone (40 verts at [-1.586, -0.85, -0.014])",
+        "floating/detached part in Painted limestone (56 verts at [-1.438, -0.451, -0.002])",
+        "floating/detached part in Painted limestone (56 verts at [2.212, -1.028, -0.007])",
+        "floating/detached part in Painted limestone (48 verts at [-2.384, -1.582, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [1.772, 0.158, -0.011])",
+        "floating/detached part in Painted limestone (56 verts at [1.403, 0.445, -0.002])",
+        "floating/detached part in Painted limestone (56 verts at [1.902, -1.148, -0.008])",
+        "floating/detached part in Painted limestone (56 verts at [1.943, -0.144, -0.013])",
+        "floating/detached part in Painted limestone (56 verts at [1.617, 0.082, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [-2.037, -0.507, -0.008])",
+        "floating/detached part in Painted limestone (56 verts at [1.451, 0.63, -0.01])",
+        "floating/detached part in Painted limestone (56 verts at [-1.736, -0.361, -0.015])",
+        "floating/detached part in Painted limestone (56 verts at [-2.409, -1.737, -0.007])",
+        "floating/detached part in Painted limestone (56 verts at [-1.501, -0.675, -0.018])",
+        "floating/detached part in Painted limestone (56 verts at [2.335, -0.21, -0.014])",
+        "floating/detached part in Painted limestone (56 verts at [2.48, -1.006, -0.009])"
+      ],
+      "geometry_errors": []
+    }
+  },
+  {
+    "name": "Flower stems",
+    "eps_m": 0.0002,
+    "qa": {
+      "ok": true,
+      "pass": false,
+      "errors": [
+        "floating/detached part in Flower stems (10 verts at [-2.119, 0.42, 0.166])",
+        "floating/detached part in Flower stems (10 verts at [-1.983, 0.42, 0.222])",
+        "floating/detached part in Flower stems (10 verts at [-1.861, 0.42, 0.172])",
+        "floating/detached part in Flower stems (10 verts at [-1.982, 0.55, 0.205])",
+        "floating/detached part in Flower stems (10 verts at [-1.856, 0.55, 0.122])",
+        "floating/detached part in Flower stems (10 verts at [-2.117, 0.68, 0.13])",
+        "floating/detached part in Flower stems (10 verts at [-1.992, 0.68, 0.172])",
+        "floating/detached part in Flower stems (10 verts at [-1.856, 0.68, 0.178])",
+        "floating/detached part in Flower stems (10 verts at [-1.627, 0.69, 0.25])",
+        "floating/detached part in Flower stems (10 verts at [-1.484, 0.69, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-1.369, 0.69, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-1.617, 0.82, 0.118])",
+        "floating/detached part in Flower stems (10 verts at [-1.491, 0.82, 0.22])",
+        "floating/detached part in Flower stems (10 verts at [-1.365, 0.82, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [-1.625, 0.95, 0.218])",
+        "floating/detached part in Flower stems (10 verts at [-1.495, 0.95, 0.175])",
+        "floating/detached part in Flower stems (10 verts at [-1.37, 0.95, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [-0.913, 0.72, 0.174])",
+        "floating/detached part in Flower stems (10 verts at [-0.78, 0.72, 0.178])",
+        "floating/detached part in Flower stems (10 verts at [-0.65, 0.72, 0.217])",
+        "floating/detached part in Flower stems (10 verts at [-0.929, 0.85, 0.132])",
+        "floating/detached part in Flower stems (10 verts at [-0.786, 0.85, 0.208])",
+        "floating/detached part in Flower stems (10 verts at [-0.662, 0.85, 0.215])",
+        "floating/detached part in Flower stems (10 verts at [-0.908, 0.98, 0.206])",
+        "floating/detached part in Flower stems (10 verts at [-0.788, 0.98, 0.184])",
+        "floating/detached part in Flower stems (10 verts at [-0.665, 0.98, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [-0.009, 0.77, 0.145])",
+        "floating/detached part in Flower stems (10 verts at [0.116, 0.77, 0.186])",
+        "floating/detached part in Flower stems (10 verts at [0.246, 0.77, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [-0.015, 0.9, 0.127])",
+        "floating/detached part in Flower stems (10 verts at [0.117, 0.9, 0.15])",
+        "floating/detached part in Flower stems (10 verts at [0.235, 0.9, 0.249])",
+        "floating/detached part in Flower stems (10 verts at [-0.008, 1.03, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [0.113, 1.03, 0.244])",
+        "floating/detached part in Flower stems (10 verts at [0.247, 1.03, 0.205])",
+        "floating/detached part in Flower stems (10 verts at [1.419, 0.22, 0.238])",
+        "floating/detached part in Flower stems (10 verts at [1.552, 0.22, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [1.687, 0.22, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [1.418, 0.35, 0.19])",
+        "floating/detached part in Flower stems (10 verts at [1.566, 0.35, 0.182])",
+        "floating/detached part in Flower stems (10 verts at [1.678, 0.35, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [1.437, 0.48, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [1.551, 0.48, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [1.693, 0.48, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [1.988, 1.02, 0.202])",
+        "floating/detached part in Flower stems (10 verts at [2.103, 1.02, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [2.247, 1.02, 0.149])",
+        "floating/detached part in Flower stems (10 verts at [1.988, 1.15, 0.183])",
+        "floating/detached part in Flower stems (10 verts at [2.119, 1.15, 0.147])",
+        "floating/detached part in Flower stems (10 verts at [2.241, 1.15, 0.243])",
+        "floating/detached part in Flower stems (10 verts at [1.971, 1.28, 0.195])",
+        "floating/detached part in Flower stems (10 verts at [2.119, 1.28, 0.173])",
+        "floating/detached part in Flower stems (10 verts at [2.25, 1.28, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [-2.611, -0.93, 0.137])",
+        "floating/detached part in Flower stems (10 verts at [-2.488, -0.93, 0.254])",
+        "floating/detached part in Flower stems (10 verts at [-2.367, -0.93, 0.244])",
+        "floating/detached part in Flower stems (10 verts at [-2.623, -0.8, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [-2.487, -0.8, 0.214])",
+        "floating/detached part in Flower stems (10 verts at [-2.355, -0.8, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [-2.613, -0.67, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-2.502, -0.67, 0.209])",
+        "floating/detached part in Flower stems (10 verts at [-2.35, -0.67, 0.171])",
+        "floating/detached part in Flower stems (10 verts at [2.187, -1.78, 0.249])",
+        "floating/detached part in Flower stems (10 verts at [2.298, -1.78, 0.214])",
+        "floating/detached part in Flower stems (10 verts at [2.439, -1.78, 0.251])",
+        "floating/detached part in Flower stems (10 verts at [2.184, -1.65, 0.208])",
+        "floating/detached part in Flower stems (10 verts at [2.321, -1.65, 0.234])",
+        "floating/detached part in Flower stems (10 verts at [2.443, -1.65, 0.145])",
+        "floating/detached part in Flower stems (10 verts at [2.185, -1.52, 0.138])",
+        "floating/detached part in Flower stems (10 verts at [2.303, -1.52, 0.206])",
+        "floating/detached part in Flower stems (10 verts at [2.434, -1.52, 0.122])"
+      ],
+      "warnings": [
+        "Flower stems: ~82.46% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "asset lowest point z=-0.0157 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.0157,
+      "zfighting": [],
+      "floating": [
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.119,
+            0.42,
+            0.166
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.983,
+            0.42,
+            0.222
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.861,
+            0.42,
+            0.172
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.982,
+            0.55,
+            0.205
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.856,
+            0.55,
+            0.122
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.117,
+            0.68,
+            0.13
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.992,
+            0.68,
+            0.172
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.856,
+            0.68,
+            0.178
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.627,
+            0.69,
+            0.25
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.484,
+            0.69,
+            0.233
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.369,
+            0.69,
+            0.233
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.617,
+            0.82,
+            0.118
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.491,
+            0.82,
+            0.22
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.365,
+            0.82,
+            0.169
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.625,
+            0.95,
+            0.218
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.495,
+            0.95,
+            0.175
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -1.37,
+            0.95,
+            0.153
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.913,
+            0.72,
+            0.174
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.78,
+            0.72,
+            0.178
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.65,
+            0.72,
+            0.217
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.929,
+            0.85,
+            0.132
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.786,
+            0.85,
+            0.208
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.662,
+            0.85,
+            0.215
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.908,
+            0.98,
+            0.206
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.788,
+            0.98,
+            0.184
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.665,
+            0.98,
+            0.153
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.009,
+            0.77,
+            0.145
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.116,
+            0.77,
+            0.186
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.246,
+            0.77,
+            0.141
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.015,
+            0.9,
+            0.127
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.117,
+            0.9,
+            0.15
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.235,
+            0.9,
+            0.249
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -0.008,
+            1.03,
+            0.193
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.113,
+            1.03,
+            0.244
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            0.247,
+            1.03,
+            0.205
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.419,
+            0.22,
+            0.238
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.552,
+            0.22,
+            0.169
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.687,
+            0.22,
+            0.169
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.418,
+            0.35,
+            0.19
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.566,
+            0.35,
+            0.182
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.678,
+            0.35,
+            0.153
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.437,
+            0.48,
+            0.193
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.551,
+            0.48,
+            0.154
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.693,
+            0.48,
+            0.141
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.988,
+            1.02,
+            0.202
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.103,
+            1.02,
+            0.141
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.247,
+            1.02,
+            0.149
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.988,
+            1.15,
+            0.183
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.119,
+            1.15,
+            0.147
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.241,
+            1.15,
+            0.243
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            1.971,
+            1.28,
+            0.195
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.119,
+            1.28,
+            0.173
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.25,
+            1.28,
+            0.154
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.611,
+            -0.93,
+            0.137
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.488,
+            -0.93,
+            0.254
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.367,
+            -0.93,
+            0.244
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.623,
+            -0.8,
+            0.154
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.487,
+            -0.8,
+            0.214
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.355,
+            -0.8,
+            0.193
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.613,
+            -0.67,
+            0.233
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.502,
+            -0.67,
+            0.209
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            -2.35,
+            -0.67,
+            0.171
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.187,
+            -1.78,
+            0.249
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.298,
+            -1.78,
+            0.214
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.439,
+            -1.78,
+            0.251
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.184,
+            -1.65,
+            0.208
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.321,
+            -1.65,
+            0.234
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.443,
+            -1.65,
+            0.145
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.185,
+            -1.52,
+            0.138
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.303,
+            -1.52,
+            0.206
+          ]
+        },
+        {
+          "object": "Flower stems",
+          "island_verts": 10,
+          "center": [
+            2.434,
+            -1.52,
+            0.122
+          ]
+        }
+      ],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "Flower stems": {
+          "verts": 720,
+          "faces": 1152,
+          "tris": 1152,
+          "ngons": 0,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 0,
+          "islands": 72,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 8.62,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 82.46,
+          "uv_coverage_pct": 17.0
+        }
+      },
+      "material_batch_separation": [
+        "floating/detached part in Flower stems (10 verts at [-2.119, 0.42, 0.166])",
+        "floating/detached part in Flower stems (10 verts at [-1.983, 0.42, 0.222])",
+        "floating/detached part in Flower stems (10 verts at [-1.861, 0.42, 0.172])",
+        "floating/detached part in Flower stems (10 verts at [-1.982, 0.55, 0.205])",
+        "floating/detached part in Flower stems (10 verts at [-1.856, 0.55, 0.122])",
+        "floating/detached part in Flower stems (10 verts at [-2.117, 0.68, 0.13])",
+        "floating/detached part in Flower stems (10 verts at [-1.992, 0.68, 0.172])",
+        "floating/detached part in Flower stems (10 verts at [-1.856, 0.68, 0.178])",
+        "floating/detached part in Flower stems (10 verts at [-1.627, 0.69, 0.25])",
+        "floating/detached part in Flower stems (10 verts at [-1.484, 0.69, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-1.369, 0.69, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-1.617, 0.82, 0.118])",
+        "floating/detached part in Flower stems (10 verts at [-1.491, 0.82, 0.22])",
+        "floating/detached part in Flower stems (10 verts at [-1.365, 0.82, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [-1.625, 0.95, 0.218])",
+        "floating/detached part in Flower stems (10 verts at [-1.495, 0.95, 0.175])",
+        "floating/detached part in Flower stems (10 verts at [-1.37, 0.95, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [-0.913, 0.72, 0.174])",
+        "floating/detached part in Flower stems (10 verts at [-0.78, 0.72, 0.178])",
+        "floating/detached part in Flower stems (10 verts at [-0.65, 0.72, 0.217])",
+        "floating/detached part in Flower stems (10 verts at [-0.929, 0.85, 0.132])",
+        "floating/detached part in Flower stems (10 verts at [-0.786, 0.85, 0.208])",
+        "floating/detached part in Flower stems (10 verts at [-0.662, 0.85, 0.215])",
+        "floating/detached part in Flower stems (10 verts at [-0.908, 0.98, 0.206])",
+        "floating/detached part in Flower stems (10 verts at [-0.788, 0.98, 0.184])",
+        "floating/detached part in Flower stems (10 verts at [-0.665, 0.98, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [-0.009, 0.77, 0.145])",
+        "floating/detached part in Flower stems (10 verts at [0.116, 0.77, 0.186])",
+        "floating/detached part in Flower stems (10 verts at [0.246, 0.77, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [-0.015, 0.9, 0.127])",
+        "floating/detached part in Flower stems (10 verts at [0.117, 0.9, 0.15])",
+        "floating/detached part in Flower stems (10 verts at [0.235, 0.9, 0.249])",
+        "floating/detached part in Flower stems (10 verts at [-0.008, 1.03, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [0.113, 1.03, 0.244])",
+        "floating/detached part in Flower stems (10 verts at [0.247, 1.03, 0.205])",
+        "floating/detached part in Flower stems (10 verts at [1.419, 0.22, 0.238])",
+        "floating/detached part in Flower stems (10 verts at [1.552, 0.22, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [1.687, 0.22, 0.169])",
+        "floating/detached part in Flower stems (10 verts at [1.418, 0.35, 0.19])",
+        "floating/detached part in Flower stems (10 verts at [1.566, 0.35, 0.182])",
+        "floating/detached part in Flower stems (10 verts at [1.678, 0.35, 0.153])",
+        "floating/detached part in Flower stems (10 verts at [1.437, 0.48, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [1.551, 0.48, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [1.693, 0.48, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [1.988, 1.02, 0.202])",
+        "floating/detached part in Flower stems (10 verts at [2.103, 1.02, 0.141])",
+        "floating/detached part in Flower stems (10 verts at [2.247, 1.02, 0.149])",
+        "floating/detached part in Flower stems (10 verts at [1.988, 1.15, 0.183])",
+        "floating/detached part in Flower stems (10 verts at [2.119, 1.15, 0.147])",
+        "floating/detached part in Flower stems (10 verts at [2.241, 1.15, 0.243])",
+        "floating/detached part in Flower stems (10 verts at [1.971, 1.28, 0.195])",
+        "floating/detached part in Flower stems (10 verts at [2.119, 1.28, 0.173])",
+        "floating/detached part in Flower stems (10 verts at [2.25, 1.28, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [-2.611, -0.93, 0.137])",
+        "floating/detached part in Flower stems (10 verts at [-2.488, -0.93, 0.254])",
+        "floating/detached part in Flower stems (10 verts at [-2.367, -0.93, 0.244])",
+        "floating/detached part in Flower stems (10 verts at [-2.623, -0.8, 0.154])",
+        "floating/detached part in Flower stems (10 verts at [-2.487, -0.8, 0.214])",
+        "floating/detached part in Flower stems (10 verts at [-2.355, -0.8, 0.193])",
+        "floating/detached part in Flower stems (10 verts at [-2.613, -0.67, 0.233])",
+        "floating/detached part in Flower stems (10 verts at [-2.502, -0.67, 0.209])",
+        "floating/detached part in Flower stems (10 verts at [-2.35, -0.67, 0.171])",
+        "floating/detached part in Flower stems (10 verts at [2.187, -1.78, 0.249])",
+        "floating/detached part in Flower stems (10 verts at [2.298, -1.78, 0.214])",
+        "floating/detached part in Flower stems (10 verts at [2.439, -1.78, 0.251])",
+        "floating/detached part in Flower stems (10 verts at [2.184, -1.65, 0.208])",
+        "floating/detached part in Flower stems (10 verts at [2.321, -1.65, 0.234])",
+        "floating/detached part in Flower stems (10 verts at [2.443, -1.65, 0.145])",
+        "floating/detached part in Flower stems (10 verts at [2.185, -1.52, 0.138])",
+        "floating/detached part in Flower stems (10 verts at [2.303, -1.52, 0.206])",
+        "floating/detached part in Flower stems (10 verts at [2.434, -1.52, 0.122])"
+      ],
+      "geometry_errors": []
+    }
+  },
+  {
+    "name": "Lilac petals",
+    "eps_m": 0.0002,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "Lilac petals: ~84.22% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "asset lowest point z=0.211 (not resting on ground plane z=0)"
+      ],
+      "ground_z": 0.211,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "Lilac petals": {
+          "verts": 8640,
+          "faces": 14400,
+          "tris": 14400,
+          "ngons": 0,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 0,
+          "islands": 720,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 2.01,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 84.22,
+          "uv_coverage_pct": 51.9
+        }
+      },
+      "material_batch_separation": [],
+      "geometry_errors": []
+    }
+  }
+]
