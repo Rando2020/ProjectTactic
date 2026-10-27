@@ -87,6 +87,7 @@ func _build_ui() -> void:
 	_add_menu_button("Practice Battle / Retry Enabled", _on_practice_pressed)
 	_add_menu_button("Practice: Zane showcase", _on_rig_practice_pressed)
 	_add_menu_button("Practice: Zane vs Storm Imp", _on_duel_practice_pressed)
+	_add_menu_button("Illustrated Chapel / Play 2.5D Battle", _on_illustrated_chapel_pressed)
 	_add_menu_button("How to Play", _on_load_pressed)
 	_add_menu_button("Music On / Off", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
@@ -289,6 +290,13 @@ func _on_rig_practice_pressed() -> void:
 func _on_duel_practice_pressed() -> void:
 	if GameState.begin_zane_duel_practice():
 		GameState.practice_session["rig3d"] = true
+		music_player.stop()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+
+func _on_illustrated_chapel_pressed() -> void:
+	if GameState.begin_illustrated_chapel_practice():
+		# Deliberately stay in the sprite-based lane. No 3D model or new combat resolver.
 		music_player.stop()
 		get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
