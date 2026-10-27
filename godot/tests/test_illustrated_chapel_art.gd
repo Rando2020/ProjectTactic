@@ -32,11 +32,11 @@ func _initialize() -> void:
 	for terrain_id in ["stone", "cracked_stone", "high_ground", "wall"]:
 		var candidates: Array[String] = Registry.get_environment_candidates("ruined-chapel", "terrain", terrain_id)
 		_check(not candidates.is_empty(), terrain_id + " is in asset manifest")
-		_check(Registry.load_first_texture(candidates) != null, terrain_id + " art imports in Godot")
+		_check(ResourceLoader.exists(candidates[0], "Texture2D"), terrain_id + " art imports in Godot")
 	for prop_id in ["chapel_arch", "chapel_pillar", "chapel_wall", "chapel_torch"]:
 		var candidates: Array[String] = Registry.get_environment_candidates("ruined-chapel", "props", prop_id)
 		_check(not candidates.is_empty(), prop_id + " is manifest backed")
-		_check(Registry.load_first_texture(candidates) != null, prop_id + " art imports in Godot")
+		_check(ResourceLoader.exists(candidates[0], "Texture2D"), prop_id + " art imports in Godot")
 
 	stage.free()
 	if not failures.is_empty():
