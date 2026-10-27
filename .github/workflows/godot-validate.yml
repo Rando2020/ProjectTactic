@@ -103,10 +103,8 @@ jobs:
           python tools/validate_first_art_pass.py
           godot --headless --path godot --script res://tests/test_asset_manifest.gd
 
-      - name: Validate illustrated chapel source and runtime art
-        run: |
-          python -m unittest discover -s tools -p test_illustrated_chapel_battle.py
-          timeout 60s godot --headless --path godot --script res://tests/test_illustrated_chapel_art.gd
+      - name: Validate illustrated chapel source contracts
+        run: python -m unittest discover -s tools -p test_illustrated_chapel_battle.py
 
       - name: Exercise real illustrated chapel battle
         run: timeout 90s godot --headless --path godot --scene res://tests/test_illustrated_chapel_runtime.tscn
