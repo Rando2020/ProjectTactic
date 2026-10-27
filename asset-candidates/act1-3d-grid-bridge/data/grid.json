@@ -1,0 +1,252 @@
+{
+  "tile_size": 2,
+  "height_step": 1,
+  "width": 5,
+  "depth": 5,
+  "start": [
+    2,
+    4
+  ],
+  "cells": [
+    {
+      "x": 0,
+      "z": 0,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 1,
+      "z": 0,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 2,
+      "z": 0,
+      "model": "high_ground",
+      "height": 1,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 3,
+      "z": 0,
+      "model": "high_ground",
+      "height": 1,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 4,
+      "z": 0,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 0,
+      "z": 1,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 1,
+      "z": 1,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 2,
+      "z": 1,
+      "model": "stairs",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 3,
+      "z": 1,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 4,
+      "z": 1,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": true,
+      "move_cost": 1,
+      "cover": "full",
+      "prop": "ruin_wall"
+    },
+    {
+      "x": 0,
+      "z": 2,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 1,
+      "z": 2,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 2,
+      "z": 2,
+      "model": "stone",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 3,
+      "z": 2,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 4,
+      "z": 2,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": true,
+      "move_cost": 1,
+      "cover": "full",
+      "prop": "ruin_wall"
+    },
+    {
+      "x": 0,
+      "z": 3,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 1,
+      "z": 3,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 2,
+      "z": 3,
+      "model": "stone",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 3,
+      "z": 3,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 4,
+      "z": 3,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 0,
+      "z": 4,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": true,
+      "move_cost": 1,
+      "cover": "full",
+      "prop": "ruin_wall"
+    },
+    {
+      "x": 1,
+      "z": 4,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 2,
+      "z": 4,
+      "model": "stone",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 3,
+      "z": 4,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    },
+    {
+      "x": 4,
+      "z": 4,
+      "model": "grass_flowers",
+      "height": 0,
+      "blocked": false,
+      "move_cost": 1,
+      "cover": "none"
+    }
+  ],
+  "explicit_links": [
+    [
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        0
+      ]
+    ]
+  ]
+}

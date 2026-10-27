@@ -1,0 +1,13 @@
+config_version=5
+
+[application]
+config/name="Ashvale v03 — Chapel Approach"
+run/main_scene="res://godot-preview/preview.tscn"
+
+[display]
+window/size/viewport_width=1400
+window/size/viewport_height=1000
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

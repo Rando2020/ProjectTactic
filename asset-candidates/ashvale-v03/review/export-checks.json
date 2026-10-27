@@ -1,0 +1,328 @@
+[
+  {
+    "asset": "AR_battered_buttress",
+    "bytes": 3425148,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "AR_battered_buttress: ~94.48% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "AR_battered_buttress: duplicate verts=1218 loose verts=0",
+        "hidden back-to-back faces: AR_battered_buttress (3 pairs) - delete to save tris"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [
+        {
+          "where": "AR_battered_buttress",
+          "tri_pairs": 3
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "AR_battered_buttress": {
+          "verts": 2436,
+          "faces": 1220,
+          "tris": 1220,
+          "ngons": 0,
+          "boundary_edges": 2436,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 1218,
+          "islands": 608,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 2,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 94.48,
+          "uv_coverage_pct": 91.1
+        }
+      }
+    }
+  },
+  {
+    "asset": "AR_chapel_gate_4m",
+    "bytes": 3633604,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "AR_chapel_gate_4m: ~99.65% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "AR_chapel_gate_4m: duplicate verts=3418 loose verts=0",
+        "hidden back-to-back faces: AR_chapel_gate_4m (27 pairs) - delete to save tris"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [
+        {
+          "where": "AR_chapel_gate_4m",
+          "tri_pairs": 27
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "AR_chapel_gate_4m": {
+          "verts": 6836,
+          "faces": 3524,
+          "tris": 3524,
+          "ngons": 0,
+          "boundary_edges": 6836,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 3418,
+          "islands": 1656,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 3,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 99.65,
+          "uv_coverage_pct": 97.3
+        }
+      }
+    }
+  },
+  {
+    "asset": "EN_flagstone_2m",
+    "bytes": 3443580,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "EN_flagstone_2m: ~93.21% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "EN_flagstone_2m: duplicate verts=1404 loose verts=0",
+        "asset lowest point z=-0.3 (not resting on ground plane z=0)"
+      ],
+      "ground_z": -0.3,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "EN_flagstone_2m": {
+          "verts": 2808,
+          "faces": 1404,
+          "tris": 1404,
+          "ngons": 0,
+          "boundary_edges": 2808,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 1404,
+          "islands": 702,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 3,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 93.21,
+          "uv_coverage_pct": 95.7
+        }
+      }
+    }
+  },
+  {
+    "asset": "EN_twisted_ash_tree",
+    "bytes": 982724,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "EN_twisted_ash_tree: duplicate verts=10593 loose verts=0"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "EN_twisted_ash_tree": {
+          "verts": 21186,
+          "faces": 8202,
+          "tris": 8202,
+          "ngons": 0,
+          "boundary_edges": 21186,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 10593,
+          "islands": 6492,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 1,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 0.45,
+          "uv_coverage_pct": 15.0
+        }
+      }
+    }
+  },
+  {
+    "asset": "PR_crooked_lantern",
+    "bytes": 3353648,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "PR_crooked_lantern: ~88.45% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "PR_crooked_lantern: duplicate verts=430 loose verts=0",
+        "hidden back-to-back faces: PR_crooked_lantern (13 pairs) - delete to save tris"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [
+        {
+          "where": "PR_crooked_lantern",
+          "tri_pairs": 13
+        }
+      ],
+      "enclosed": [],
+      "objects": {
+        "PR_crooked_lantern": {
+          "verts": 860,
+          "faces": 476,
+          "tris": 476,
+          "ngons": 0,
+          "boundary_edges": 860,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 430,
+          "islands": 192,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 4,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 88.45,
+          "uv_coverage_pct": 86.0
+        }
+      }
+    }
+  },
+  {
+    "asset": "PR_splitwood_barricade",
+    "bytes": 94484,
+    "meshes": 1,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": {
+      "ok": true,
+      "pass": true,
+      "errors": [],
+      "warnings": [
+        "PR_splitwood_barricade: ~91.96% UV overlap (ok only if mirrored/stacked on purpose; bakes break)",
+        "PR_splitwood_barricade: duplicate verts=954 loose verts=0"
+      ],
+      "ground_z": 0.0,
+      "zfighting": [],
+      "floating": [],
+      "back_to_back": [],
+      "enclosed": [],
+      "objects": {
+        "PR_splitwood_barricade": {
+          "verts": 1908,
+          "faces": 1032,
+          "tris": 1032,
+          "ngons": 0,
+          "boundary_edges": 1908,
+          "nonmanifold_edges": 0,
+          "wire_edges": 0,
+          "loose_verts": 0,
+          "degenerate_faces": 0,
+          "zero_length_edges": 0,
+          "inconsistent_normals_edges": 0,
+          "duplicate_verts": 954,
+          "islands": 438,
+          "inside_out_islands": 0,
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "materials": 4,
+          "uv_maps": 1,
+          "uv_oob_pct": 0.0,
+          "uv_zero_area_faces": 0,
+          "uv_overlap_pct": 91.96,
+          "uv_coverage_pct": 94.8
+        }
+      }
+    }
+  },
+  {
+    "asset": "SC_chapel_approach",
+    "bytes": 5008452,
+    "meshes": 6,
+    "roundtrip": true,
+    "vertex_colors": true,
+    "qa": null
+  }
+]

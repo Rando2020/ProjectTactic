@@ -1,0 +1,35 @@
+{
+  "mesh_count": 6,
+  "mesh_errors": 0,
+  "triangles": [
+    {
+      "id": "grass_flowers",
+      "triangles": 1044
+    },
+    {
+      "id": "stone",
+      "triangles": 220
+    },
+    {
+      "id": "high_ground",
+      "triangles": 88
+    },
+    {
+      "id": "ruin_wall",
+      "triangles": 264
+    },
+    {
+      "id": "flower_clump",
+      "triangles": 324
+    },
+    {
+      "id": "stairs",
+      "triangles": 176
+    }
+  ],
+  "godot": "4.6.2",
+  "grid_test": "ACT1_GRID_BRIDGE_PASS",
+  "visual_review": "Front, reverse and wire Blender renders inspected",
+  "accepted_warnings": "Stacked UVs for vertex-color materials; export seam vertex splits; terrain thickness below pivot; 3 hidden contact triangle pairs in wall/stairs",
+  "limitations": "No production integration, browser performance test or manual input playtest. Certificate-store warning in offline Godot run."
+}
