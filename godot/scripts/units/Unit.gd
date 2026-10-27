@@ -151,8 +151,10 @@ func _draw_unit() -> void:
 	# All sprites and rects are offset upward so their bottom sits at y = 0.
 	if unit_data and unit_data.sprite_sheet:
 		_sprite = Sprite2D.new()
-		_sprite.texture = unit_data.sprite_sheet
-		var tex_size := unit_data.sprite_sheet.get_size()
+		# Zane's painterly directional sprites take priority in normal 2D battles.
+		# A missing/corrupt direction falls back to the original UnitData sprite.
+		_sprite.texture = _character_direction_texture(facing)
+		var tex_size := _sprite.texture.get_size()
 		if tex_size.x > 0 and tex_size.y > 0:
 			var target_size: float = 80.0 if is_player else 95.0
 			var sprite_scale: float = target_size / max(tex_size.x, tex_size.y)
@@ -462,7 +464,37 @@ func set_facing(new_facing: String) -> void:
 	if is_instance_valid(_rig3d):
 		_rig3d.face({"N": Vector2i(0,-1), "E": Vector2i(1,0), "S": Vector2i(0,1), "W": Vector2i(-1,0)}[new_facing])
 	facing = new_facing
+	_refresh_directional_sprite()
 	_update_facing_arrow()
+
+
+func _character_direction_texture(direction: String) -> Texture2D:
+	if unit_data == null:
+		return null
+	if unit_data.id == "zane":
+		var candidate := AssetRegistry.load_first_texture(
+			AssetRegistry.get_character_direction_candidates("zane", direction))
+		if candidate != null:
+			return candidate
+	return unit_data.sprite_sheet
+
+
+func _refresh_directional_sprite() -> void:
+	if not is_instance_valid(_sprite) or not _idle_visual.is_empty():
+		return
+	if unit_data == null or unit_data.id != "zane" or is_instance_valid(_rig3d):
+		return
+	var texture := _character_direction_texture(facing)
+	if texture == null or texture == _sprite.texture:
+		return
+	_sprite.texture = texture
+	var size := texture.get_size()
+	if size.x <= 0.0 or size.y <= 0.0:
+		return
+	var target_size := 80.0 if team == "player" else 95.0
+	_sprite.scale = Vector2.ONE * (target_size / maxf(size.x, size.y))
+	_sprite.position = Vector2(0, -size.y * _sprite.scale.y * 0.5)
+
 
 
 func _draw_facing_arrow() -> void:

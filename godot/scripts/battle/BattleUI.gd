@@ -9,6 +9,7 @@ var _previous_focus: Control
 
 const DISPLAY_FONT := preload("res://assets/fonts/TrajanPro-Regular.ttf")
 const BattleHudLayout := preload("res://scripts/ui/BattleHudLayout.gd")
+const ActionClashOverlay := preload("res://scripts/ui/ActionClashOverlay.gd")
 
 var battle_manager: BattleManager
 
@@ -69,6 +70,7 @@ var _music_value_label: Label
 var _fx_value_label: Label
 var _right_panel_bg: NinePatchRect
 var _active_portrait: TextureRect
+var _action_clash: Control
 var _right_panel_scroll: ScrollContainer
 var _right_panel_root: VBoxContainer
 var _is_player_turn: bool = false
@@ -97,6 +99,7 @@ func setup(manager: BattleManager) -> void:
 	battle_manager.action_preview_changed.connect(_on_action_preview_changed)
 	battle_manager.action_state_changed.connect(_on_action_state_changed)
 	battle_manager.enemy_intent_changed.connect(_on_enemy_intent_changed)
+	battle_manager.action_clash_started.connect(_on_action_clash_started)
 	if battle_manager.objective_tracker:
 		battle_manager.objective_tracker.objective_updated.connect(_on_objective_updated)
 	_refresh_loadout_strip()
@@ -104,6 +107,8 @@ func setup(manager: BattleManager) -> void:
 
 func _ready() -> void:
 	_build_ui()
+	_action_clash = ActionClashOverlay.new()
+	add_child(_action_clash)
 	UISettings.shared().changed.connect(_layout_persistent_hud)
 	_layout_persistent_hud()
 	var viewport := get_viewport()
@@ -1304,6 +1309,11 @@ func _format_enemy_intent_details(intent: Dictionary, details: Dictionary) -> St
 		parts.append("Priority: high")
 	return "    ".join(parts)
 
+func _on_action_clash_started(context: Dictionary) -> void:
+	if _action_clash:
+		_action_clash.show_action(context)
+
+
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	if not _preview_panel:
 		return
@@ -1511,7 +1521,7 @@ func _texture_from_source(path: String) -> Texture2D:
 	if bytes.size() >= 7 and bytes.slice(0, 7).get_string_from_ascii() == "version":
 		return null
 	var image := Image.new()
-	var err := image.load_png_from_buffer(bytes)
+	var err := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
 	if err != OK:
 		return null
 	return ImageTexture.create_from_image(image)
@@ -1555,7 +1565,7 @@ func _on_turn_started(unit_id: String, _team: String) -> void:
 	var reg: Dictionary = GameState.unit_registry.get(unit_id, {})
 	if not reg.is_empty():
 		_unit_name.text += "\n" + str(JobTreeData.get_job(reg.get("current_job_id", "")).get("name", ""))
-	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(unit_id))
+	_active_portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(unit.unit_data.id))
 	_refresh_active_resources()
 	# Status icons
 	if unit.statuses.is_empty():

@@ -56,6 +56,10 @@ func _run() -> void:
 	check(not grid.get_tile(Vector2i(5, 5)).get("blocks_movement", true),
 		"center of tactical field stays walkable")
 
+	var zane: Unit = manager.units[grid.unit_positions[Vector2i(4, 5)]]
+	var portrait_path := manager._portrait_path(zane)
+	check(portrait_path.ends_with("zane-portrait-illustrated.png"), "approved portrait resolves in real chapel")
+
 	root.queue_free()
 	await get_tree().process_frame
 	GameState.practice_session = before
