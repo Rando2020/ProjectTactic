@@ -497,6 +497,8 @@ func _create_illustrated_chapel_map() -> MapData:
 		{"x": 9, "y": 1, "terrain": "wall", "height": 0},
 		{"x": 0, "y": 2, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 2, "terrain": "wall", "height": 0},
+		{"x": 0, "y": 4, "terrain": "wall", "height": 0},
+		{"x": 9, "y": 4, "terrain": "wall", "height": 0},
 		{"x": 0, "y": 7, "terrain": "wall", "height": 0},
 		{"x": 9, "y": 7, "terrain": "wall", "height": 0},
 		{"x": 1, "y": 2, "terrain": "high_ground", "height": 1},
