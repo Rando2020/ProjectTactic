@@ -40,6 +40,10 @@ const TERRAIN_TEXTURE_PATHS := {
 }
 
 const PROP_TEXTURE_PATHS := {
+	"chapel_arch": "",
+	"chapel_pillar": "",
+	"chapel_wall": "",
+	"chapel_torch": "",
 	"mossy_rock": "res://assets/props/mossy_rock.png",
 	"leafy_bush": "res://assets/props/leafy_bush.png",
 	"tree_stump": "res://assets/props/tree_stump.png",
