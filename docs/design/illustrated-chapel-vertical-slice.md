@@ -27,7 +27,7 @@ Each walkable tile is still 96x48 screen pixels with 16 pixels of skirt; movemen
 
 ## Quality gates
 
-1. Run `python -m unittest discover -s tools -p test_illustrated_chapel_battle.py`; then import with Godot 4.6.3 and run `godot --headless --path godot --script res://tests/test_illustrated_chapel_art.gd`.
+1. Run `python -m unittest discover -s tools -p test_illustrated_chapel_battle.py`; then import with Godot 4.6.3 and run `godot --headless --path godot --scene res://tests/test_illustrated_chapel_runtime.tscn` (the CI-gated scene test). `test_illustrated_chapel_art.gd` remains an optional isolated import diagnostic.
 2. In a real browser, start the chapel from the title; verify only Zane and Storm Imp spawn, with 2D Zane, visible raised walls and blocked perimeter.
 3. Check left-side menu Move, Attack, Skills, Wait; keyboard M/A/S/W, Escape/Q cancellation; enemy AI phase.
 4. Inspect Fire forecast: compact dark panel; HP, MP, hit %, range, Burn and knock-out changes still sourced from actual forecast; only local, short-lived fire VFX changes tint.
