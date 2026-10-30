@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Archer insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-archer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#3d6a52"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-archer)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#3d6a52" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#4a8c6f"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M22 16 Q14 36 22 56" stroke-width="2.2"></path>
+      
+      <path d="M22 16 L22 56" stroke-width="0.8" opacity="0.7"></path>
+      
+      <line x1="20" y1="36" x2="48" y2="36" stroke-width="1.6"></line>
+      
+      <path d="M48 36 L42 32 L42 40 Z" fill="currentColor" stroke="none"></path>
+      
+      <line x1="20" y1="36" x2="16" y2="32" stroke-width="1"></line>
+      <line x1="20" y1="36" x2="16" y2="40" stroke-width="1"></line>
+    </g></g>
+</svg>

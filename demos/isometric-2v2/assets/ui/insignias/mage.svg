@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Mage insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-mage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#4a3d66"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-mage)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#4a3d66" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#6b5b8a"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M28 18 Q30 24 28 32 L26 54" stroke-width="2.2"></path>
+      
+      <circle cx="28" cy="18" r="3" fill="currentColor"></circle>
+      
+      <g transform="translate(42 26)" stroke-width="1.4">
+        <path d="M0 -7 L2 -2 L7 -2 L3 1 L4 6 L0 3 L-4 6 L-3 1 L-7 -2 L-2 -2 Z"></path>
+      </g>
+    </g></g>
+</svg>

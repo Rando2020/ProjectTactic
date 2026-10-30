@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Cleric insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-cleric" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#8c6f2a"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-cleric)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#8c6f2a" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#e8d8c8"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M22 20 Q32 14 42 20" stroke-width="1.6" opacity="0.7"></path>
+      
+      <path d="M22 24 L42 24 Q42 38 32 42 Q22 38 22 24 Z" stroke-width="2" stroke-linejoin="round"></path>
+      
+      <line x1="32" y1="42" x2="32" y2="52" stroke-width="2"></line>
+      <line x1="26" y1="52" x2="38" y2="52" stroke-width="2"></line>
+      
+      <circle cx="32" cy="32" r="1.6" fill="currentColor"></circle>
+    </g></g>
+</svg>

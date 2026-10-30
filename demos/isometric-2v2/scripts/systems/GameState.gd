@@ -1,0 +1,640 @@
+## GameState.gd    Autoload singleton.
+## Persists player progress (JP, gold, learned abilities, completed stages)
+## across scene transitions.  Never freed between battles.
+##
+## Save format (user://save.json):
+##   version          : int   (must == SAVE_VERSION)
+##   gold             : int
+##   completed_stages : Array[String]
+##   unit_jp          : { uid -> int }
+##   unit_learned     : { uid -> Array[String] }
+extends Node
+
+const AbilityDBScript := preload("res://scripts/data/AbilityDB.gd")
+const VowSigilDefs := preload("res://scripts/roguelike/VowSigilSystem.gd")
+const SAVE_PATH    := "user://save.json"
+const SAVE_VERSION := 1
+
+## Which map to load when transitioning into Battle.tscn  (0 = Ashvale, 1 = Crypt)
+var selected_map_index: int = 0
+
+## In-memory practice sandbox. Disk always retains the original canonical save.
+var practice_session: Dictionary = {}
+var _practice_runtime: Dictionary = {}
+
+## Gold accumulated across all battles
+var gold: int = 0
+
+## Stages the player has beaten at least once
+var completed_stages: Array[String] = []
+
+## Rewards from the most recent victory  read by ResultsScreen
+var pending_rewards: Dictionary = {}
+
+## Roguelike run state
+var active_run:           RunState = null
+var story_flags:          Array[String] = []
+var pending_loot:         Array = []
+var pending_boon_offers:  Array = []
+
+## Last run context read by ResultsScreen + HubDialogue.
+## Keep this intact until the next run starts so the Hearth can react to what happened.
+var last_run_death: Dictionary = {}
+var last_run_floor: int = 0
+var last_run_victory: bool = false
+## Run history used by hub dialogue and future story gates.
+var runs_completed: int = 0
+var best_floor_reached: int = 0
+
+## Items accumulated during the current run (mirrors active_run.inventory)
+var run_inventory:        Array = []
+var vow_progress:         Dictionary = {}
+var sigil_progress:       Dictionary = {}
+
+## Retrieve and clear the pending deployment array written by DeploymentScreen.
+## Call from BattleScene._ready() to get the player's chosen unit positions.
+func pop_pending_deployment() -> Array:
+	if active_run == null or not active_run.has_meta("pending_deployment"):
+		return []
+	var dep: Array = active_run.get_meta("pending_deployment", [])
+	active_run.remove_meta("pending_deployment")
+	return dep
+## Highest floor reached this run (for ResultsScreen)
+var run_floor_reached:    int   = 0
+## Total JP earned this run (for ResultsScreen)
+var run_jp_earned:        int   = 0
+
+## Per-unit persistent data.
+## unit_id -> {
+##   display_name      : String,
+##   jp                : int,
+##   base_abilities    : Array[String],   (always available, cannot be spent)
+##   learned_abilities : Array[String],   (JP-purchased)
+##   learnable_abilities: Array[String],  (legacy metadata; query current job instead)
+## }
+var unit_registry: Dictionary = {}
+
+
+func _ready() -> void:
+	if not load_save():
+		_init_defaults()
+
+
+func _init_defaults() -> void:
+	# Zane  Arcanist path  Resonant
+	_reg("zane", "Zane",
+		["fireball", "thunderstrike", "void_pulse"],
+		["blizzard", "dark_breath", "elemental_convergence"])
+	unit_registry["zane"]["current_job_id"] = "arcanist"
+	unit_registry["zane"]["job_jp"]         = { "arcanist": 0 }
+
+	# Mira  Arcanist  Luminary path
+	_reg("mira", "Mira Vey",
+		["fireball", "cure", "holy_strike"],
+		["blizzard", "luminous_barrier", "mass_cure"])
+	unit_registry["mira"]["current_job_id"] = "arcanist"
+	unit_registry["mira"]["job_jp"]         = { "arcanist": 0 }
+
+	# Kael  Squire  Warder  Void Knight path
+	_reg("kael", "Kael",
+		["slash", "mighty_strike", "defend"],
+		["cover_ally", "iron_wall", "retribution"])
+	unit_registry["kael"]["current_job_id"] = "squire"
+	unit_registry["kael"]["job_jp"]         = { "squire": 0 }
+
+	# Lyra  Scout  Shadow path
+	_reg("lyra", "Lyra",
+		["long_shot", "quickstep"],
+		["rain_of_arrows", "smoke_screen", "shadow_step"])
+	unit_registry["lyra"]["current_job_id"] = "scout"
+	unit_registry["lyra"]["job_jp"]         = { "scout": 0 }
+	_init_loadout_progress_defaults()
+
+
+func _init_loadout_progress_defaults() -> void:
+	for vow: Dictionary in VowSigilDefs.VOWS:
+		var vow_id := str(vow.get("id", ""))
+		if not vow_id.is_empty() and not vow_progress.has(vow_id):
+			vow_progress[vow_id] = 0
+	for sigil: Dictionary in VowSigilDefs.SIGILS:
+		var sigil_id := str(sigil.get("id", ""))
+		if not sigil_id.is_empty() and not sigil_progress.has(sigil_id):
+			sigil_progress[sigil_id] = 0
+
+
+func get_vow_xp(vow_id: String) -> int:
+	return int(vow_progress.get(vow_id, 0))
+
+
+func get_sigil_xp(sigil_id: String) -> int:
+	return int(sigil_progress.get(sigil_id, 0))
+
+
+func seed_run_loadout(run: RunState) -> void:
+	if not run:
+		return
+	_init_loadout_progress_defaults()
+	run.equipped_vow_xp = get_vow_xp(run.equipped_vow_id)
+	run.equipped_vow_level = VowSigilDefs.level_for_xp(run.equipped_vow_xp)
+	run.equipped_sigil_xp = get_sigil_xp(run.equipped_sigil_id)
+	run.equipped_sigil_level = VowSigilDefs.level_for_xp(run.equipped_sigil_xp)
+
+
+func apply_loadout_xp(amount: int, reason: String = "") -> Dictionary:
+	if amount <= 0 or active_run == null:
+		return {}
+	_init_loadout_progress_defaults()
+	var vow_id := active_run.equipped_vow_id
+	var sigil_id := active_run.equipped_sigil_id
+	var before_vow_level := VowSigilDefs.level_for_xp(get_vow_xp(vow_id))
+	var before_sigil_level := VowSigilDefs.level_for_xp(get_sigil_xp(sigil_id))
+	vow_progress[vow_id] = get_vow_xp(vow_id) + amount
+	sigil_progress[sigil_id] = get_sigil_xp(sigil_id) + amount
+	seed_run_loadout(active_run)
+	var result := {
+		"amount": amount,
+		"reason": reason,
+		"vow_id": vow_id,
+		"vow_level_before": before_vow_level,
+		"vow_level_after": active_run.equipped_vow_level,
+		"vow_leveled": active_run.equipped_vow_level > before_vow_level,
+		"sigil_id": sigil_id,
+		"sigil_level_before": before_sigil_level,
+		"sigil_level_after": active_run.equipped_sigil_level,
+		"sigil_leveled": active_run.equipped_sigil_level > before_sigil_level,
+	}
+	pending_rewards["loadout_xp"] = int(pending_rewards.get("loadout_xp", 0)) + amount
+	pending_rewards["loadout_xp_reason"] = reason
+	pending_rewards["loadout_progress"] = result
+	save()
+	return result
+
+
+func _reg(uid: String, dname: String,
+		base: Array[String], learnable: Array[String]) -> void:
+	unit_registry[uid] = {
+		"display_name":        dname,
+		"jp":                  0,
+		"base_abilities":      base,
+		"learned_abilities":   [],
+		"learnable_abilities": learnable,
+		"equipped_abilities":  base.slice(0, min(base.size(), 4)),
+		"equipment": {
+			"main_hand": "Training Blade",
+			"off_hand": "Buckler",
+			"head": "Cloth Cap",
+			"body": "Traveling Garb",
+			"accessory": "Copper Ring",
+		},
+	}
+
+
+#  Ability queries
+
+## Canonical ownership projection, including unavailable IDs. Raw records stay intact.
+func get_known_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	var known: Array = reg.get("base_abilities", []).duplicate()
+	known.append_array(reg.get("learned_abilities", []))
+	return AbilityDBScript.canonical_ids(known)
+
+
+## Explicit usable equipment only; no fallback or cap is applied by this read.
+func get_equipped_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	var result: Array[String] = []
+	for id in AbilityDBScript.canonical_ids(reg.get("equipped_abilities", [])):
+		if knows_ability(unit_id, id) and not AbilityDBScript.get_ability(id).is_empty():
+			result.append(id)
+	return result
+
+
+## Effective battle list. Preserve legacy empty/wholly unowned equipment = all-known,
+## including its uncapped fallback. Owned unresolved selections remain unavailable.
+func get_all_abilities(unit_id: String) -> Array[String]:
+	var chosen := get_equipped_abilities(unit_id)
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	for id in AbilityDBScript.canonical_ids(reg.get("equipped_abilities", [])):
+		if knows_ability(unit_id, id):
+			return chosen
+	var result: Array[String] = []
+	for id in get_known_abilities(unit_id):
+		if not AbilityDBScript.get_ability(id).is_empty():
+			result.append(id)
+	return result
+
+
+## Ownership is separate from availability, including unresolved saved entitlements.
+func knows_ability(unit_id: String, ability_id: String) -> bool:
+	return AbilityDBScript.canonical_id(ability_id) in get_known_abilities(unit_id)
+
+
+## Current-job catalog is derived identically for fresh, restored and switched jobs.
+## Unknown/staged IDs remain in this projection so the shop can explain them.
+func get_learnable_abilities(unit_id: String) -> Array[String]:
+	var reg: Dictionary = unit_registry.get(unit_id, {})
+	var job := JobTreeData.get_job(str(reg.get("current_job_id", "")))
+	return AbilityDBScript.canonical_ids(job.get("abilities", []))
+
+
+## One authoritative quote for display and commit. No ownership or JP mutation.
+func get_ability_purchase_quote(unit_id: String, ability_id: String) -> Dictionary:
+	var id := AbilityDBScript.canonical_id(ability_id)
+	var ability := AbilityDBScript.get_ability(id)
+	var price: Variant = AbilityDBScript.purchase_price(ability)
+	var reason := ""
+	if not unit_registry.has(unit_id):
+		reason = "Character not available"
+	elif knows_ability(unit_id, id):
+		reason = "Already known"
+	elif ability.is_empty():
+		reason = "Ability not available yet"
+	elif ability.get("secret", false):
+		reason = "Learned from a teacher, not JP"
+	elif id not in get_learnable_abilities(unit_id):
+		reason = "Not in the current job pool"
+	elif price == null:
+		reason = "Not available for JP yet"
+	elif get_jp(unit_id) < price:
+		reason = "Not enough JP"
+	return {"canonical_id": id, "eligible": reason.is_empty(), "jp_cost": price, "reason": reason}
+
+
+## JP purchase only (not a teacher/grant API). Revalidate every click at commit.
+func learn_ability(unit_id: String, ability_id: String) -> bool:
+	var quote := get_ability_purchase_quote(unit_id, ability_id)
+	if not quote.eligible:
+		return false
+	var reg: Dictionary = unit_registry[unit_id]
+	reg["jp"] = get_jp(unit_id) - int(quote.jp_cost)
+	reg["learned_abilities"].append(str(quote.canonical_id))
+	return true
+
+
+func get_jp(unit_id: String) -> int:
+	if not unit_registry.has(unit_id):
+		return 0
+	return unit_registry[unit_id].get("jp", 0)
+
+
+func set_current_job(unit_id: String, job_id: String) -> void:
+	if not unit_registry.has(unit_id):
+		return
+	var reg: Dictionary = unit_registry[unit_id]
+	if JobTreeData.get_job(job_id).is_empty() or not JobTreeData.meets_prerequisites(job_id, reg.get("job_jp", {})):
+		return
+	reg["current_job_id"] = job_id
+	if not reg.has("job_jp"):
+		reg["job_jp"] = {}
+	if not reg["job_jp"].has(job_id):
+		reg["job_jp"][job_id] = 0
+	save()
+
+
+## User-initiated explicit loadout: count unique usable canonical IDs before the cap.
+func set_equipped_abilities(unit_id: String, ability_ids: Array) -> void:
+	if not unit_registry.has(unit_id):
+		return
+	var equipped: Array[String] = []
+	for ab: Variant in ability_ids:
+		var ab_id := AbilityDBScript.canonical_id(str(ab))
+		if knows_ability(unit_id, ab_id) and not AbilityDBScript.get_ability(ab_id).is_empty() and ab_id not in equipped:
+			equipped.append(ab_id)
+		if equipped.size() >= 4:
+			break
+	unit_registry[unit_id]["equipped_abilities"] = equipped
+	save()
+
+
+#  Battle results
+
+## Called by BattleScene on victory.  Awards JP to surviving player units.
+func apply_victory(map_id: String, rewards: Dictionary,
+		player_unit_ids: Array[String]) -> void:
+	var gld: int = rewards.get("gold", 0)
+	var jp_gain: int = rewards.get("jp", 0)
+	gold += gld
+	run_jp_earned += jp_gain
+	for uid in player_unit_ids:
+		if unit_registry.has(uid):
+			unit_registry[uid]["jp"] = unit_registry[uid].get("jp", 0) + jp_gain
+			JobSystem.new().apply_jp(unit_registry[uid], unit_registry[uid].get("current_job_id", "squire"), jp_gain)
+	if map_id not in completed_stages:
+		completed_stages.append(map_id)
+	pending_rewards = {
+		"gold":    gld,
+		"jp":      jp_gain,
+		"map_id":  map_id,
+		"units":   player_unit_ids.duplicate(),
+	}
+	# BattleScene commits rewards and route advancement together before showing spoils.
+
+
+#  Persistence
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+## Writes current state to disk.  Silent on failure.
+func serialize_state() -> Dictionary:
+	var unit_jp:        Dictionary = {}
+	var unit_learned:   Dictionary = {}
+	var unit_jobs:      Dictionary = {}
+	var unit_job_jp:    Dictionary = {}
+	var unit_equipped:  Dictionary = {}
+	var unit_equipment: Dictionary = {}
+	for uid in unit_registry:
+		var reg: Dictionary = unit_registry[uid]
+		unit_jp[uid]        = reg.get("jp", 0)
+		unit_learned[uid]   = reg.get("learned_abilities", []).duplicate()
+		unit_jobs[uid]      = reg.get("current_job_id", "")
+		unit_job_jp[uid]    = reg.get("job_jp", {}).duplicate()
+		unit_equipped[uid]  = reg.get("equipped_abilities", []).duplicate()
+		unit_equipment[uid] = reg.get("equipment", {}).duplicate()
+
+	if active_run:
+		active_run.inventory = run_inventory.duplicate(true)
+		var rm := get_node_or_null("/root/RunManager")
+		if rm:
+			active_run.run_aether = rm.run_aether
+	var data: Dictionary = {
+		"active_run": active_run.to_dict() if active_run else {},
+		"run_floor_reached": run_floor_reached,
+		"run_jp_earned": run_jp_earned,
+		"unit_resources": unit_registry.duplicate(true),
+		"version":          SAVE_VERSION,
+		"gold":             gold,
+		"completed_stages": completed_stages.duplicate(),
+		"story_flags":      story_flags.duplicate(),
+		"last_run_floor":   last_run_floor,
+		"last_run_victory": last_run_victory,
+		"last_run_death":   last_run_death.duplicate(true),
+		"runs_completed":   runs_completed,
+		"best_floor_reached": best_floor_reached,
+		"unit_jp":          unit_jp,
+		"unit_learned":     unit_learned,
+		"unit_jobs":        unit_jobs,
+		"unit_job_jp":      unit_job_jp,
+		"unit_equipped":    unit_equipped,
+		"unit_equipment":   unit_equipment,
+		"vow_progress":     vow_progress.duplicate(),
+		"sigil_progress":   sigil_progress.duplicate(),
+	}
+
+	return data
+
+
+func save() -> void:
+	var data: Dictionary = practice_session.get("baseline", {}).duplicate(true) if not practice_session.is_empty() else serialize_state()
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if not file:
+		push_warning("GameState.save: could not open %s for writing." % SAVE_PATH)
+		return
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+
+
+## Loads save file.  Returns false if no file or format mismatch.
+## On success populates gold, completed_stages, and per-unit JP/learned.
+func load_save() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if not file:
+		return false
+	var text := file.get_as_text()
+	file.close()
+
+	var parsed: Variant = JSON.parse_string(text)
+	if not parsed is Dictionary:
+		push_warning("GameState.load_save: JSON parse failed or not a dict.")
+		return false
+
+	practice_session.clear()
+	_practice_runtime.clear()
+	return restore_state(parsed)
+
+
+func restore_state(data: Dictionary) -> bool:
+	if data.get("version", 0) != SAVE_VERSION:
+		push_warning("GameState.load_save: version mismatch  starting fresh.")
+		return false
+
+	# Populate registry with defaults first so learnable/base lists are intact
+	_init_defaults()
+
+	gold = int(data.get("gold", 0))
+	var run_data: Dictionary = data.get("active_run", {})
+	active_run = RunState.from_dict(run_data) if not run_data.is_empty() else null
+	run_inventory = active_run.inventory.duplicate(true) if active_run else []
+	run_floor_reached = int(data.get("run_floor_reached", 0))
+	run_jp_earned = int(data.get("run_jp_earned", 0))
+
+	completed_stages.clear()
+	for s: Variant in data.get("completed_stages", []):
+		completed_stages.append(str(s))
+
+	story_flags.clear()
+	for flag: Variant in data.get("story_flags", []):
+		story_flags.append(str(flag))
+	last_run_floor = int(data.get("last_run_floor", 0))
+	last_run_victory = bool(data.get("last_run_victory", false))
+	var saved_last_run_death: Variant = data.get("last_run_death", {})
+	last_run_death = (saved_last_run_death as Dictionary).duplicate(true) if saved_last_run_death is Dictionary else {}
+	runs_completed = int(data.get("runs_completed", 0))
+	best_floor_reached = int(data.get("best_floor_reached", 0))
+
+	var saved_jp:        Dictionary = data.get("unit_jp", {})
+	var saved_learned:   Dictionary = data.get("unit_learned", {})
+	var saved_jobs:      Dictionary = data.get("unit_jobs", {})
+	var saved_job_jp:    Dictionary = data.get("unit_job_jp", {})
+	var saved_equipped:  Dictionary = data.get("unit_equipped", {})
+	var saved_equipment: Dictionary = data.get("unit_equipment", {})
+	var saved_vow_progress: Variant = data.get("vow_progress", {})
+	var saved_sigil_progress: Variant = data.get("sigil_progress", {})
+	vow_progress = {}
+	if saved_vow_progress is Dictionary:
+		vow_progress = (saved_vow_progress as Dictionary).duplicate()
+	sigil_progress = {}
+	if saved_sigil_progress is Dictionary:
+		sigil_progress = (saved_sigil_progress as Dictionary).duplicate()
+	_init_loadout_progress_defaults()
+
+	for uid: String in unit_registry:
+		var saved_resources: Dictionary = data.get("unit_resources", {}).get(uid, {})
+		# Preserve raw saved entitlement/catalog metadata; projections do not migrate it.
+		for key in ["base_abilities", "learnable_abilities"]:
+			if saved_resources.get(key) is Array:
+				unit_registry[uid][key] = saved_resources[key].duplicate()
+		for key in ["base_hp", "current_hp", "current_mp", "current_temper", "current_ether"]:
+			if active_run and saved_resources.has(key):
+				unit_registry[uid][key] = int(saved_resources[key])
+		if saved_jp.has(uid):
+			unit_registry[uid]["jp"] = int(saved_jp[uid])
+		if saved_learned.has(uid):
+			var raw: Array = saved_learned[uid]
+			var typed: Array[String] = []
+			for ab: Variant in raw:
+				typed.append(str(ab))
+			unit_registry[uid]["learned_abilities"] = typed
+		if saved_jobs.has(uid):
+			unit_registry[uid]["current_job_id"] = str(saved_jobs[uid])
+		if saved_job_jp.has(uid) and saved_job_jp[uid] is Dictionary:
+			unit_registry[uid]["job_jp"] = (saved_job_jp[uid] as Dictionary).duplicate()
+		if saved_equipped.has(uid) and saved_equipped[uid] is Array:
+			var eq: Array[String] = []
+			for ab: Variant in saved_equipped[uid]:
+				eq.append(str(ab))
+			unit_registry[uid]["equipped_abilities"] = eq
+		if saved_equipment.has(uid) and saved_equipment[uid] is Dictionary:
+			unit_registry[uid]["equipment"] = (saved_equipment[uid] as Dictionary).duplicate()
+
+	return true
+
+
+## Wipes the save file and resets in-memory state to defaults.
+func delete_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		var dir := DirAccess.open("user://")
+		if dir:
+			dir.remove("save.json")
+	gold = 0
+	active_run = null
+	run_inventory.clear()
+	run_floor_reached = 0
+	run_jp_earned = 0
+	completed_stages.clear()
+	story_flags.clear()
+	last_run_death.clear()
+	last_run_floor = 0
+	last_run_victory = false
+	runs_completed = 0
+	best_floor_reached = 0
+	pending_rewards.clear()
+	vow_progress.clear()
+	sigil_progress.clear()
+	unit_registry.clear()
+	_init_defaults()
+
+
+## One-on-one encounter selection only; progression and combat rules stay shared.
+func begin_zane_duel_practice() -> bool:
+	if not begin_practice():
+		return false
+	practice_session["mode"] = "zane_duel"
+	return true
+
+func begin_illustrated_chapel_practice() -> bool:
+	# Independent visual lane: reuse the safe one-on-one Zane practice rules.
+	# The flag affects the map and UI only, not combat, rewards or saves.
+	if not begin_zane_duel_practice():
+		return false
+	practice_session["illustrated_chapel"] = true
+	return true
+
+
+func is_zane_duel_practice() -> bool:
+	return practice_session.get("mode", "") == "zane_duel"
+
+func begin_practice(map_index: int = 0, encounter_seed: int = 314159) -> bool:
+	if not practice_session.is_empty():
+		return false
+	var baseline := serialize_state()
+	save()
+	_practice_runtime = {"selected_map_index": selected_map_index,
+		"pending_rewards": pending_rewards.duplicate(true), "pending_loot": pending_loot.duplicate(true),
+		"pending_boon_offers": pending_boon_offers.duplicate(true)}
+	var rm := get_node_or_null("/root/RunManager")
+	if rm:
+		var state := {}
+		for key in ["is_run_active", "current_stage", "run_seed", "heat_level", "run_aether", "active_boons"]:
+			state[key] = rm.get(key)
+		state["rng_state"] = rm.rng.state
+		_practice_runtime["run_manager"] = state
+		rm.is_run_active = false
+	var checkpoint := baseline.duplicate(true)
+	checkpoint["active_run"] = {}
+	checkpoint["run_floor_reached"] = 0
+	checkpoint["run_jp_earned"] = 0
+	checkpoint["last_run_death"] = {}
+	practice_session = {"baseline": baseline, "checkpoint": checkpoint,
+		"map_index": clampi(map_index, 0, 1), "seed": encounter_seed, "state": "loading"}
+	_restore_practice_checkpoint()
+	return true
+
+func _restore_practice_checkpoint() -> bool:
+	var checkpoint: Dictionary = practice_session.get("checkpoint", {})
+	if checkpoint.get("version", 0) != SAVE_VERSION or not checkpoint.has("unit_resources"):
+		return false
+	if not restore_state(checkpoint):
+		return false
+	selected_map_index = int(practice_session.get("map_index", 0))
+	pending_rewards.clear()
+	pending_loot.clear()
+	pending_boon_offers.clear()
+	return true
+
+func can_retry_practice() -> bool:
+	var checkpoint: Dictionary = practice_session.get("checkpoint", {})
+	var terminal: bool = practice_session.get("state") == "lost" or (is_zane_duel_practice() and practice_session.get("state") == "won")
+	return terminal and checkpoint.get("version", 0) == SAVE_VERSION and checkpoint.has("unit_resources")
+
+func retry_practice() -> bool:
+	if not can_retry_practice():
+		return false
+	practice_session["state"] = "loading" # Claim before any scene transition.
+	return _restore_practice_checkpoint()
+
+func start_practice_encounter() -> void:
+	if practice_session.get("state") == "loading":
+		seed(int(practice_session.seed))
+		practice_session["state"] = "playing"
+
+func finish_practice(won: bool, rewards: Dictionary = {}) -> bool:
+	if practice_session.get("state") != "playing":
+		return false
+	practice_session["state"] = "won" if won else "lost"
+	if won and not is_zane_duel_practice():
+		var ids: Array[String] = ["kael", "mira", "zane", "lyra"]
+		apply_victory("practice", rewards, ids)
+	return true
+
+func leave_practice() -> bool:
+	if practice_session.is_empty():
+		return false
+	var baseline: Dictionary = practice_session.get("baseline", {})
+	if baseline.is_empty() or not restore_state(baseline):
+		return false
+	selected_map_index = int(_practice_runtime.get("selected_map_index", 0))
+	pending_rewards = _practice_runtime.get("pending_rewards", {}).duplicate(true)
+	pending_loot = _practice_runtime.get("pending_loot", []).duplicate(true)
+	pending_boon_offers = _practice_runtime.get("pending_boon_offers", []).duplicate(true)
+	var rm := get_node_or_null("/root/RunManager")
+	var rm_state: Dictionary = _practice_runtime.get("run_manager", {})
+	if rm and not rm_state.is_empty():
+		for key in rm_state:
+			if key != "rng_state":
+				rm.set(key, rm_state[key])
+		rm.rng.state = rm_state.rng_state
+	practice_session.clear()
+	_practice_runtime.clear()
+	save()
+	return true
+
+## One temporary training-path choice after practice victory. Reuses job rules.
+func choose_practice_job(job_id: String) -> bool:
+	if is_zane_duel_practice() or practice_session.get("state") != "won" or practice_session.get("advancement_used", false):
+		return false
+	var reg: Dictionary = unit_registry.get("kael", {})
+	if job_id == reg.get("current_job_id") or job_id not in JobTreeData.get_available_jobs(reg.get("job_jp", {})):
+		return false
+	var resources: Dictionary = practice_session.checkpoint.get("unit_resources", {}).duplicate(true)
+	set_current_job("kael", job_id)
+	if unit_registry.kael.current_job_id != job_id: return false
+	practice_session["advancement_used"] = true
+	practice_session["checkpoint"] = serialize_state()
+	practice_session.checkpoint["unit_resources"] = resources
+	practice_session["state"] = "loading"
+	return _restore_practice_checkpoint()

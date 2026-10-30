@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "profile_id": "zane_impact_v1",
+  "cues": {
+    "step_a": {
+      "path": "res://assets/audio/zane_impact_v1/step-a.wav",
+      "gain_db": -10.0,
+      "duration_s": 0.148,
+      "sha256": "89e7c21cf37c8b9e20b442766156f539b5715d087b78b6f654df1462ba767058"
+    },
+    "step_b": {
+      "path": "res://assets/audio/zane_impact_v1/step-b.wav",
+      "gain_db": -10.0,
+      "duration_s": 0.156,
+      "sha256": "d0ca2023915a585a6ca68216e075ce487a80ca5919ac6be828b08bf63f9eaf0d"
+    },
+    "sword_load": {
+      "path": "res://assets/audio/zane_impact_v1/sword-load.wav",
+      "gain_db": -12.0,
+      "duration_s": 0.172,
+      "sha256": "b5cc76342d4ec56ae194bf36fda58811347a0541c2f406e7f79c2a9c539e879f"
+    },
+    "sword_release": {
+      "path": "res://assets/audio/zane_impact_v1/sword-release.wav",
+      "gain_db": -7.0,
+      "duration_s": 0.176,
+      "sha256": "8775ac47e7a532e3f8712a68e7da8e54c22f8ea9a51fe26872d8952ecbd7405c"
+    },
+    "sword_hit": {
+      "path": "res://assets/audio/zane_impact_v1/sword-hit.wav",
+      "gain_db": -5.0,
+      "duration_s": 0.27,
+      "sha256": "877ca66b50ed7195264c3dfde5c85e3279a0d0a3ec8f3afd77031c4fa14b3f0f"
+    },
+    "fire_charge": {
+      "path": "res://assets/audio/zane_impact_v1/fire-charge.wav",
+      "gain_db": -10.0,
+      "duration_s": 0.196,
+      "sha256": "c4e4efd69f00432dbdab395b1dbb30df8b9d87b5031a1b13529fad3d68bb9403"
+    },
+    "fire_release": {
+      "path": "res://assets/audio/zane_impact_v1/fire-release.wav",
+      "gain_db": -5.0,
+      "duration_s": 0.25,
+      "sha256": "1983e12a6a1c5d0997ba28fae1d1b17a8b0f79b88876d7b0d7ec67992789bd7c"
+    },
+    "fire_hit": {
+      "path": "res://assets/audio/zane_impact_v1/fire-hit.wav",
+      "gain_db": -5.0,
+      "duration_s": 0.46,
+      "sha256": "fed281ef4ebf354e42b8937f1852fbdd7e14ca985f0fcbee02041affa6178506"
+    },
+    "fire_miss": {
+      "path": "res://assets/audio/zane_impact_v1/fire-miss.wav",
+      "gain_db": -12.0,
+      "duration_s": 0.248,
+      "sha256": "96f33cb7a6c25a1e4cfea6e5c443c53e5571b4da1e12f478a765fa357edd1cbe"
+    },
+    "fire_immune": {
+      "path": "res://assets/audio/zane_impact_v1/fire-immune.wav",
+      "gain_db": -11.0,
+      "duration_s": 0.268,
+      "sha256": "df9be11632562f26fc43d38ac856e1bb98546ba1243dbebe0f4072ba6cb4b1a8"
+    }
+  }
+}

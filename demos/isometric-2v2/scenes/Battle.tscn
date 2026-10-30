@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://d0e22cp1ayo0j"]
+
+[ext_resource type="Script" uid="uid://dplh4s50c7kiu" path="res://scripts/battle/BattleScene.gd" id="1"]
+[ext_resource type="Script" uid="uid://ckv27ayswc8sf" path="res://scripts/battle/BattleManager.gd" id="2"]
+[ext_resource type="Script" uid="uid://dgcdtp0dip6ij" path="res://scripts/grid/TacticalGrid.gd" id="3"]
+[ext_resource type="Script" uid="uid://cgurx2swprk8a" path="res://scripts/battle/TurnOrder.gd" id="4"]
+[ext_resource type="Script" uid="uid://bevekfll5u1j4" path="res://scripts/battle/CombatResolver.gd" id="5"]
+[ext_resource type="Script" uid="uid://qxkumu6c2gar" path="res://scripts/systems/ObjectiveTracker.gd" id="6"]
+[ext_resource type="Script" uid="uid://ba204lsubmkts" path="res://scripts/systems/ElementalSystem.gd" id="7"]
+[ext_resource type="Script" uid="uid://daarbtov7ra3q" path="res://scripts/battle/BattleUI.gd" id="8"]
+
+[node name="BattleScene" type="Node2D" unique_id=1532231646]
+script = ExtResource("1")
+
+[node name="BattleManager" type="Node" parent="." unique_id=2118133252]
+script = ExtResource("2")
+
+[node name="TacticalGrid" type="Node2D" parent="BattleManager" unique_id=1781927981]
+script = ExtResource("3")
+
+[node name="HighlightLayer" type="Node2D" parent="BattleManager/TacticalGrid" unique_id=2093746858]
+z_index = 5
+
+[node name="UnitLayer" type="Node2D" parent="BattleManager/TacticalGrid" unique_id=1786699943]
+z_index = 10
+
+[node name="TurnOrder" type="Node" parent="BattleManager" unique_id=1423857805]
+script = ExtResource("4")
+
+[node name="CombatResolver" type="Node" parent="BattleManager" unique_id=425088478]
+script = ExtResource("5")
+
+[node name="ObjectiveTracker" type="Node" parent="BattleManager" unique_id=201627116]
+script = ExtResource("6")
+
+[node name="ElementalSystem" type="Node" parent="BattleManager" unique_id=1330534804]
+script = ExtResource("7")
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=732535172]
+script = ExtResource("8")

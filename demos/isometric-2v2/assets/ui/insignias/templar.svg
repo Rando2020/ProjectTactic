@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Templar insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-templar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#8c6f2a"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-templar)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#8c6f2a" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#d4af37"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <line x1="32" y1="16" x2="32" y2="52" stroke-width="2.2"></line>
+      
+      <line x1="22" y1="24" x2="42" y2="24" stroke-width="2.4"></line>
+      
+      <circle cx="32" cy="14" r="2.2" fill="currentColor"></circle>
+      
+      <path d="M32 52 L29 56 L35 56 Z" fill="currentColor" stroke="none"></path>
+    </g></g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="64" viewBox="0 0 96 64">
+<defs><clipPath id="top"><path d="M48 0 96 24 48 48 0 24Z"/></clipPath></defs>
+<path d="M0 24 48 48 48 64 0 40Z" fill="#393d3e"/><path d="M48 48 96 24 96 40 48 64Z" fill="#535354"/>
+<path d="M0 24 48 48 48 64 0 40Z" fill="#384246" opacity=".4"/>
+<path d="M48 0 96 24 48 48 0 24Z" fill="#575a58" stroke="#353d40" stroke-width="1"/>
+<g clip-path="url(#top)">
+<path d="M-4 19 21 6 45 17 22 30Z" fill="#8f8373" opacity=".56"/><path d="M46 4 75 17 54 31 27 19Z" fill="#c4b49a" opacity=".18"/>
+<path d="M63 23 102 18 85 38 52 41Z" fill="#383f46" opacity=".25"/><path d="M4 30 29 20 53 33 29 46Z" fill="#252d33" opacity=".17"/>
+<path d="M20 -4 31 15 16 23 39 36 57 28 75 37" fill="none" stroke="#222830" stroke-width="1.2" opacity=".7"/>
+<path d="M59 -4 44 13 62 23 43 36 48 51 M0 24 22 21 M75 15 89 24" fill="none" stroke="#222830" stroke-width=".9" opacity=".65"/>
+<path d="M12 25 19 27 27 27 M70 30 77 27 88 25 M44 8 48 11" fill="none" stroke="#dfd0ae" stroke-width="1" opacity=".24"/>
+<path d="M0 20 Q12 16 21 22 M80 27 Q90 25 96 21" fill="none" stroke="#475745" stroke-width="3" opacity=".3"/>
+<path d="M11 29 15 30 M68 12 72 14 M37 38 43 39 M57 35 62 33" fill="none" stroke="#b5a07c" stroke-width=".7" opacity=".48"/>
+</g>
+<path d="M0 39 48 63 96 39" fill="none" stroke="#141e23" stroke-width="1.2" opacity=".7"/>
+<path d="M14 44 14 48 M38 57 37 60 M72 55 73 51" fill="none" stroke="#a29277" stroke-width=".8" opacity=".45"/>
+</svg>

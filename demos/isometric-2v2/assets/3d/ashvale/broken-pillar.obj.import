@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b5uc4wp2lagi7"
+path="res://.godot/imported/broken-pillar.obj-6fcc6fc3e2bf89faac09034bafdf400b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/broken-pillar.obj-6fcc6fc3e2bf89faac09034bafdf400b.mesh"]
+
+source_file="res://assets/3d/ashvale/broken-pillar.obj"
+dest_files=["res://.godot/imported/broken-pillar.obj-6fcc6fc3e2bf89faac09034bafdf400b.mesh", "res://.godot/imported/broken-pillar.obj-6fcc6fc3e2bf89faac09034bafdf400b.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

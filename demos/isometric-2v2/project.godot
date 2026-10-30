@@ -1,0 +1,49 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
+[application]
+
+config/name="Zane - Isometric Proof"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="ProjectTactic-IsometricProof"
+config/description="Tactical RPG - Godot 4 Implementation"
+config/version="0.1.0"
+config/tags=PackedStringArray("tactical", "rpg", "turn-based")
+run/main_scene="res://prototypes/isometric/Skirmish.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+VFX="*res://scripts/vfx/VFXManager.gd"
+BattleJuiceEffects="*res://prototypes/isometric/BattleJuiceEffects.gd"
+GameState="*res://scripts/systems/GameState.gd"
+SaveSystem="*res://scripts/state/SaveSystem.gd"
+RunManager="*res://scripts/roguelite/RunManager.gd"
+MetaProgression="*res://scripts/roguelite/MetaProgression.gd"
+AudioSettings="*res://scripts/systems/AudioSettings.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.035, 0.055, 0.075, 1)
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

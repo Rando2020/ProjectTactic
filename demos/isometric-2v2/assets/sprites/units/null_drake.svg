@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Ground shadow -->
+  <ellipse cx="32" cy="61" rx="20" ry="4" fill="#00000060"/>
+
+  <!-- === TAIL === -->
+  <ellipse cx="52" cy="54" rx="8" ry="4" fill="#111122" stroke="#0a0a15" stroke-width="1"
+    transform="rotate(-20 52 54)"/>
+  <ellipse cx="58" cy="47" rx="5.5" ry="3" fill="#0d0d1e" stroke="#0a0a15" stroke-width="0.8"
+    transform="rotate(-35 58 47)"/>
+  <polygon points="59,42 63,37 64,44" fill="#080814" stroke="#0a0a15" stroke-width="0.8"/>
+
+  <!-- === WINGS (folded) === -->
+  <polygon points="14,36 2,16 10,14 18,30 20,36" fill="#0d0015" stroke="#1a1a2e" stroke-width="1"/>
+  <polygon points="14,36 6,20 11,22 17,32" fill="#1a0025" opacity="0.7"/>
+  <polygon points="50,36 62,16 54,14 46,30 44,36" fill="#0d0015" stroke="#1a1a2e" stroke-width="1"/>
+  <polygon points="50,36 58,20 53,22 47,32" fill="#1a0025" opacity="0.7"/>
+  <!-- wing ribs -->
+  <line x1="14" y1="36" x2="5"  y2="18" stroke="#220033" stroke-width="1.2"/>
+  <line x1="14" y1="36" x2="10" y2="16" stroke="#220033" stroke-width="1"/>
+  <line x1="50" y1="36" x2="59" y2="18" stroke="#220033" stroke-width="1.2"/>
+  <line x1="50" y1="36" x2="54" y2="16" stroke="#220033" stroke-width="1"/>
+
+  <!-- === BODY === -->
+  <ellipse cx="32" cy="46" rx="20" ry="13" fill="#121222" stroke="#1a1a2e" stroke-width="1.4"/>
+  <ellipse cx="32" cy="45" rx="16" ry="10" fill="#1a1a2e"/>
+  <!-- belly (lighter) -->
+  <ellipse cx="32" cy="47" rx="10" ry="9" fill="#22223a"/>
+  <!-- scale texture -->
+  <ellipse cx="24" cy="38" rx="3.5" ry="2" fill="#0d0d1e" opacity="0.8"/>
+  <ellipse cx="32" cy="36" rx="3.5" ry="2" fill="#0d0d1e" opacity="0.8"/>
+  <ellipse cx="40" cy="38" rx="3.5" ry="2" fill="#0d0d1e" opacity="0.8"/>
+  <ellipse cx="27" cy="43" rx="3" ry="1.8" fill="#0d0d1e" opacity="0.6"/>
+  <ellipse cx="37" cy="43" rx="3" ry="1.8" fill="#0d0d1e" opacity="0.6"/>
+
+  <!-- === CLAWS === -->
+  <polygon points="14,50 8,53 10,57 15,55 16,50" fill="#111122" stroke="#0a0a15" stroke-width="1"/>
+  <polygon points="16,53 10,58 14,60 18,55" fill="#0d0d1e"/>
+  <polygon points="50,50 56,53 54,57 49,55 48,50" fill="#111122" stroke="#0a0a15" stroke-width="1"/>
+  <polygon points="48,53 54,58 50,60 46,55" fill="#0d0d1e"/>
+
+  <!-- === NECK === -->
+  <rect x="26" y="28" width="12" height="16" rx="5" fill="#121222" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="28" y="30" width="8"  height="12" rx="3" fill="#1a1a2e"/>
+
+  <!-- === HEAD (chibi large, dragonish) === -->
+  <ellipse cx="32" cy="22" rx="16" ry="13" fill="#121222" stroke="#1a1a2e" stroke-width="1.5"/>
+  <ellipse cx="32" cy="21" rx="13" ry="10" fill="#1a1a2e"/>
+  <!-- forehead highlight -->
+  <ellipse cx="28" cy="16" rx="7" ry="5" fill="#222233" opacity="0.6"/>
+  <!-- snout -->
+  <ellipse cx="32" cy="29" rx="10" ry="6" fill="#111122" stroke="#1a1a2e" stroke-width="1.2"/>
+  <ellipse cx="32" cy="30" rx="7.5" ry="4" fill="#0a0a18"/>
+  <!-- nostrils -->
+  <circle cx="28.5" cy="28" r="1.2" fill="#050510"/>
+  <circle cx="35.5" cy="28" r="1.2" fill="#050510"/>
+  <!-- fangs -->
+  <polygon points="26,33 28.5,33 27.2,38" fill="#e8e8e0" stroke="#aaaaaa" stroke-width="0.5"/>
+  <polygon points="35.5,33 38,33 36.7,38" fill="#e8e8e0" stroke="#aaaaaa" stroke-width="0.5"/>
+  <!-- mouth line -->
+  <path d="M 24 32 Q 32 35 40 32" stroke="#050510" stroke-width="1.5" fill="none"/>
+  <!-- EYES (glowing red) -->
+  <circle cx="23" cy="18" r="6"   fill="#330000" stroke="#1a1a2e" stroke-width="1"/>
+  <circle cx="41" cy="18" r="6"   fill="#330000" stroke="#1a1a2e" stroke-width="1"/>
+  <circle cx="23" cy="18" r="4"   fill="#990000"/>
+  <circle cx="41" cy="18" r="4"   fill="#990000"/>
+  <circle cx="23" cy="18" r="2.2" fill="#ee2200"/>
+  <circle cx="41" cy="18" r="2.2" fill="#ee2200"/>
+  <circle cx="22" cy="17" r="1"   fill="#ff7700" opacity="0.8"/>
+  <circle cx="40" cy="17" r="1"   fill="#ff7700" opacity="0.8"/>
+  <!-- HORNS -->
+  <polygon points="18,14 12,3 22,10" fill="#1a1a2e" stroke="#0a0a15" stroke-width="1"/>
+  <polygon points="19,13 14,4"       stroke="#2a2a3e" stroke-width="1.5" fill="none"/>
+  <polygon points="46,14 52,3 42,10" fill="#1a1a2e" stroke="#0a0a15" stroke-width="1"/>
+  <polygon points="45,13 50,4"       stroke="#2a2a3e" stroke-width="1.5" fill="none"/>
+  <!-- head spines -->
+  <polygon points="27,10 25,3 29,9"  fill="#111122"/>
+  <polygon points="32,8"  fill="#111122"/>
+  <polygon points="31,8 29,1 33,7"   fill="#111122"/>
+  <polygon points="37,10 39,3 35,9"  fill="#111122"/>
+</svg>

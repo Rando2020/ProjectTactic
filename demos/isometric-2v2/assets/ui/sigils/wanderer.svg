@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Wanderer sigil</title>
+  <defs>
+    <radialGradient id="field" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </radialGradient>
+  </defs>
+  
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#6a4a1a" stroke-width="2"></circle>
+  
+  <circle cx="32" cy="32" r="27.5" fill="url(#field)"></circle>
+  
+  <circle cx="32" cy="32" r="25" fill="none" stroke="#6a4a1a" stroke-width="0.6" opacity="0.5"></circle>
+  
+  <g color="#c8a96e" stroke="currentColor" fill="none" stroke-linecap="round">
+    <line x1="36" y1="14" x2="22" y2="50" stroke-width="2.4"></line>
+    <circle cx="36" cy="14" r="2.2" stroke-width="1.6"></circle>
+    <path d="M37 22 Q44 24 44 30 Q44 35 38 36 Q34 36 33 32 Z" stroke-width="1.6" stroke-linejoin="round"></path>
+    <line x1="38" y1="22" x2="39" y2="20" stroke-width="1.4"></line>
+    <line x1="40" y1="22" x2="41" y2="20" stroke-width="1.4"></line>
+  </g>
+</svg>
