@@ -118,8 +118,11 @@ def main():
    tile=min(state['moves'],key=lambda t:sum(abs(a-b) for a,b in zip(t['grid'],target)))
    click(tile['point']);wait(lambda s:zane(s)['grid']==tile['grid'] and not s['busy'])
   state=action('Attack')
-  if not state.get('result') and state['spent_action']:
-   button('Wait');time.sleep(.25)
+  # A counter or critical sword can end this 90-HP duel before Fire is available.
+  # Start a fresh production-admitted bout for spell coverage, with no HP/RNG edits.
+  cdp.command('Page.navigate',{'url':'http://127.0.0.1:8000/index.html'})
+  state=wait(lambda s:s.get('phase')=='PLAYER_TURN' and s.get('ticket')==0 and not s.get('intro') and zane(s)['hp']==320)
+  shot('fire-fresh-bout')
   state=action('Fire')
   for _ in range(12):
    state=ready()

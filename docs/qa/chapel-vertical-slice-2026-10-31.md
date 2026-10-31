@@ -48,3 +48,5 @@ PR #92 (`fix/chapel-browser-acceptance`) supersedes #91 and contains the full in
 A separate native regression caught a one-frame pose deformation under reduced motion. The preference is now passed into the initial pose call, not only its next process tick.
 
 The 2D sword contact pose is held for 80 ms when the resolver immediately requests recovery, keeping a visible contact beat without delaying damage or changing action timing. Regression coverage checks the hold and return to recovery.
+
+The browser driver separates the sword and Fire exercises into fresh production-admitted bouts. With the unchanged 90-HP enemy, a critical sword/counter sequence can legitimately win before Fire becomes selectable. Reloading the practice scene for spell coverage avoids changing HP, RNG or damage to force a longer encounter. The native flow separately covers Fire then sword within one duel.
