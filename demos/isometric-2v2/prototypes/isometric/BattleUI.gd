@@ -2,6 +2,8 @@ extends BattleUI
 ## Compact proof-only layout; reuses every real command/resource/forecast handler.
 var _proof_skills_panel: PanelContainer
 var _selection: Node
+var _turn_portraits: VBoxContainer
+var _turn_rows: Array[Dictionary] = []
 
 func _build_ui() -> void:
 	super._build_ui()
@@ -19,8 +21,9 @@ func _build_ui() -> void:
 			child.hide()
 		if child is Label and (child.text in ["ACTIVE UNIT", "YOUR NEXT ACTION", "RECENT ACTIONS"] or child.text.begins_with("TURN ORDER")):
 			child.hide()
-	for i in range(4, _timeline_labels.size()):
-		_timeline_labels[i].get_parent().hide()
+	# Replace the buried text-only grid with a visible portrait queue.
+	_timeline_labels[0].get_parent().get_parent().hide()
+	_build_turn_portraits()
 	_cancel_btn.reparent(_chapel_command_buttons)
 	_cancel_btn.text = "Cancel  [Esc]"
 	_cancel_btn.custom_minimum_size = Vector2(190, 56)
@@ -143,3 +146,78 @@ func _on_wait() -> void:
 
 func _on_cancel() -> void:
 	if _selection: _selection.go_back()
+
+# The scheduler projection starts AFTER the active turn has consumed its CT.
+# Keep NOW separate; never label the first future turn as the current actor.
+func _build_turn_portraits() -> void:
+	_turn_portraits = VBoxContainer.new()
+	_turn_portraits.name = "PortraitTurnOrder"
+	_turn_portraits.add_theme_constant_override("separation", 5)
+	_right_panel_root.add_child(_turn_portraits)
+	_right_panel_root.move_child(_turn_portraits, 0)
+	var title := Label.new()
+	title.text = "TURN ORDER"
+	title.add_theme_font_size_override("font_size", 22)
+	_turn_portraits.add_child(title)
+	for i in 5:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size.y = 66
+		_turn_portraits.add_child(panel)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("20212a")
+		style.border_color = Color("ddbc79") if i == 0 else Color("625743")
+		style.set_border_width_all(2 if i == 0 else 1)
+		style.set_content_margin_all(5)
+		style.set_corner_radius_all(5)
+		panel.add_theme_stylebox_override("panel", style)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		panel.add_child(row)
+		var portrait := TextureRect.new()
+		portrait.custom_minimum_size = Vector2(48, 56)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(portrait)
+		var copy := VBoxContainer.new()
+		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(copy)
+		var who := Label.new()
+		who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		who.add_theme_font_size_override("font_size", 22)
+		copy.add_child(who)
+		var when := Label.new()
+		when.add_theme_font_size_override("font_size", 18)
+		copy.add_child(when)
+		_turn_rows.append({"panel":panel, "portrait":portrait, "who":who, "when":when, "unit_id":""})
+
+func _refresh_turn_portraits() -> void:
+	if not battle_manager or not is_instance_valid(_turn_portraits): return
+	var entries: Array = []
+	var active: Unit = battle_manager.units.get(battle_manager.active_unit_id)
+	if is_instance_valid(active) and active.hp > 0:
+		entries.append({"unit_id":active.unit_id, "display_name":active.display_name, "team":active.team, "now":true})
+	for entry in battle_manager.turn_order.get_projected_order(4):
+		entries.append(entry)
+	for i in _turn_rows.size():
+		var row: Dictionary = _turn_rows[i]
+		row.panel.visible = i < entries.size()
+		row.unit_id = ""
+		if i >= entries.size(): continue
+		var entry: Dictionary = entries[i]
+		row.unit_id = entry.unit_id
+		var unit: Unit = battle_manager.units.get(entry.unit_id)
+		row.portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(unit.unit_data.id)) if is_instance_valid(unit) else null
+		row.who.text = entry.display_name
+		var side := "ALLY" if entry.team == "player" else "ENEMY"
+		row.when.text = ("NOW" if entry.get("now", false) else "NEXT %d" % (i if entries[0].get("now", false) else i + 1)) + "  ·  " + side
+		row.when.add_theme_color_override("font_color", Color("9cdbeb") if entry.team == "player" else Color("f2a394"))
+		row.panel.tooltip_text = row.who.text + " · " + row.when.text
+
+func _on_timeline_updated(ordered_units: Array) -> void:
+	super._on_timeline_updated(ordered_units)
+	# tick_until_ready emits just before manager changes active identity.
+	_refresh_turn_portraits.call_deferred()
+
+func _on_turn_started(unit_id: String, team: String) -> void:
+	super._on_turn_started(unit_id, team)
+	_refresh_turn_portraits()
