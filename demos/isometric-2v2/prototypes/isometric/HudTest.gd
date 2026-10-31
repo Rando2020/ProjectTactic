@@ -23,9 +23,11 @@ func run() -> void:
 	for i in 200:
 		if manager.current_phase == BattleManager.Phase.PLAYER_TURN: break
 		await get_tree().create_timer(0.025).timeout
+	ui._selection.select_unit(manager.active_unit_id)
 	ui._preview_panel.size.y = 1000
 	manager.select_command("move")
-	manager._on_tile_hovered(Vector2i(2,3))
+	ui._selection.refresh()
+	ui._selection.set_cursor(Vector2i(2,3))
 	await get_tree().process_frame
 	await get_tree().process_frame
 	check(ui._preview_panel.visible, "hover shows actual forecast")

@@ -18,7 +18,7 @@ func _ready() -> void:
 	add_child(title)
 	var caption := Label.new()
 	caption.position = Vector2(20, 18)
-	caption.text = "THE PAINTED CHAPEL\n2D isometric proof  ·  Click highlighted tiles to commit\nM Move  ·  A Attack  ·  S Skills  ·  W Wait  ·  Esc Cancel"
+	caption.text = "THE PAINTED CHAPEL\n2D isometric proof  ·  Click highlighted tiles to commit\nArrows: cursor  ·  Enter: select  ·  Esc: back  ·  Click/tap a unit"
 	caption.add_theme_font_size_override("font_size", 19)
 	caption.add_theme_color_override("font_color", Color("e0ca9b"))
 	title.add_child(caption)
@@ -33,3 +33,7 @@ func _frame_battlefield_camera() -> void:
 	_camera_base_position = bounds.get_center() + (viewport * 0.5 - area.get_center()) / _camera_zoom_value
 	_battle_camera.position = _camera_base_position
 	_battle_camera.zoom = Vector2.ONE * _camera_zoom_value
+
+# Arrow keys belong to the battlefield cursor, not the camera in this demo.
+func _process(delta: float) -> void:
+	_update_camera_shake(delta)

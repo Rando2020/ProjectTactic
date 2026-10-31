@@ -6,7 +6,9 @@ Zane and Kael fight a Storm Imp and a Void Cultist on a compact painted chapel b
 
 ## Controls
 
-Click commands and highlighted tiles. Keyboard shortcuts: M Move, A Attack, S Skills, W Wait, Esc Cancel. Zane's Fire costs 12 MP. Each ally acts when its initiative turn arrives.
+Click/tap a unit or move the visible cursor with arrow keys and press Enter. Selecting the active ally opens Move, Attack, Skills and Wait beside that unit. Other allies and enemies can be inspected but cannot act out of turn. In the menu, use Up/Down and Enter, or click/tap a command. During targeting, arrows move the cursor and Enter or click/tap commits a legal tile. Esc, right-click or Back cancels targeting and returns to the menu; another Back closes selection. M/A/S/W shortcuts work only after selecting the active ally. Touch uses Godot's mouse emulation through the same GUI-safe input path. Zane's Fire costs 12 MP. Each ally acts when its initiative turn arrives.
+
+Cursor: cream corner brackets. Selected unit: gold diamond. Active turn: blue/red glow. Targeting controls move out of the battlefield so the menu cannot cover destination tiles.
 
 ## Scope and provenance
 
@@ -21,6 +23,8 @@ The source checkpoint passed automated combat/HUD/retry tests and a native Godot
 From the repository root after importing this Godot project:
 
 ```sh
+godot --headless --path demos/isometric-2v2 --scene res://prototypes/isometric/SelectionTest.tscn
+godot --headless --path demos/isometric-2v2 --script res://prototypes/isometric/SelectionGuiTest.gd
 godot --headless --path demos/isometric-2v2 --scene res://prototypes/isometric/BootTest.tscn
 godot --headless --path demos/isometric-2v2 --scene res://prototypes/isometric/HudTest.tscn
 godot --headless --path demos/isometric-2v2 --scene res://prototypes/isometric/SkirmishTest.tscn
@@ -30,3 +34,5 @@ godot --headless --path demos/isometric-2v2 --scene res://prototypes/isometric/J
 Use temporary XDG_DATA_HOME, XDG_CONFIG_HOME and XDG_CACHE_HOME directories for isolated automated tests. More original implementation detail is in `prototypes/isometric/README.md`; its builder commands describe the earlier development checkout, not a requirement to run this packaged folder. `HISTORICAL_DESIGN_README.md` is retained for provenance only.
 
 Packaging note: both original WAV tracks are split into three binary parts each to fit the upload channel. The demo assembles them automatically in memory with no user setup. The assembled bytes and decoded PCM match the original WAVs exactly. Export presets include the parts. Combat rules are unchanged. `MusicTest.gd` validates both tracks in source and exported Web PCK.
+
+Selection update (2026-10-31): 37 selection-state checks and independent GUI-event tests pass. Native Godot tested battlefield click selection, contextual menu, keyboard selection/movement, attack preview and cancellation. Full battle/retry regression remains green. Browser/mobile graphical and physical-touch acceptance remain separate gates.

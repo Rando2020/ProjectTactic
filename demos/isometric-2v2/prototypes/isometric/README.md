@@ -20,7 +20,7 @@ and never edits the original game. The copy uses GL Compatibility and the separa
 `ProjectTactic-IsometricProof` saved-data namespace. First launch enters the 2-vs-2 skirmish;
 leaving the results returns to the standalone title, not the production campaign.
 
-**Controls:** click commands/tiles, or M Move, A Attack, S Skills, W Wait, Esc Cancel.
+**Controls:** click/tap a unit or arrows + Enter to select. The active ally opens a contextual command menu; other units are inspect-only. Up/Down + Enter navigate commands; arrows + Enter select a target. Esc/right-click/Back cancels, then closes. M/A/S/W shortcuts require selecting the active ally.
 Zane and Kael fight a Storm Imp and a Void Cultist on the same 5×5 floor.
 Each ally activates through normal initiative; commands affect the active ally.
 Move toward an enemy for a sword attack. Fire is equipped in a fresh

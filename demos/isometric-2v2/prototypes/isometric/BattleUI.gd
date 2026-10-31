@@ -1,6 +1,7 @@
 extends BattleUI
 ## Compact proof-only layout; reuses every real command/resource/forecast handler.
 var _proof_skills_panel: PanelContainer
+var _selection: Node
 
 func _build_ui() -> void:
 	super._build_ui()
@@ -64,7 +65,7 @@ func _layout_forecast() -> void:
 	if not is_instance_valid(_preview_panel): return
 	var viewport := get_viewport().get_visible_rect().size
 	_preview_panel.size = Vector2(500, _preview_panel.get_combined_minimum_size().y)
-	_preview_panel.position = Vector2(maxf(210, viewport.x - 940), maxf(110, viewport.y - _preview_panel.size.y - 22))
+	_preview_panel.position = Vector2(20, 145)
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	super._on_action_preview_changed(preview)
@@ -77,14 +78,15 @@ func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) 
 	super._on_action_state_changed(can_move, can_act, has_pending)
 	if battle_manager and (battle_manager.active_command.is_empty() or battle_manager.is_resolving_action):
 		_preview_panel.hide()
+	if _selection: _selection.refresh.call_deferred()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
-		if battle_manager and not battle_manager.active_command.is_empty():
-			_on_cancel()
-			get_viewport().set_input_as_handled()
-			return
-	super._unhandled_input(event)
+	if _selection and _selection.handle_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	# Shortcuts are only available after explicitly selecting the active ally.
+	if _selection and _selection.can_command() and not _selection.is_targeting():
+		super._unhandled_input(event)
 
 func _layout_skills() -> void:
 	if not is_instance_valid(_proof_skills_panel): return
@@ -103,3 +105,41 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 	for row in _ability_list.get_children():
 		if row is Button: row.custom_minimum_size.y = 66
 	_layout_skills()
+	if _selection:
+		_selection.refresh.call_deferred()
+		if _ability_list.get_child_count() > 0:
+			_ability_list.get_child(0).grab_focus.call_deferred()
+
+func setup(manager: BattleManager) -> void:
+	super.setup(manager)
+	_selection = preload("res://prototypes/isometric/SelectionController.gd").new()
+	add_child(_selection)
+	_selection.setup(self, manager)
+
+func _layout_chapel_command_dock() -> void:
+	if _selection:
+		_selection.layout_popup()
+	else:
+		super._layout_chapel_command_dock()
+
+func _on_move() -> void:
+	if not _selection or not _selection.can_command(): return
+	super._on_move()
+	_selection.refresh()
+
+func _on_attack() -> void:
+	if not _selection or not _selection.can_command(): return
+	super._on_attack()
+	_selection.refresh()
+
+func _on_ability() -> void:
+	if not _selection or not _selection.can_command(): return
+	super._on_ability()
+	_selection.refresh()
+
+func _on_wait() -> void:
+	if not _selection or not _selection.can_command(): return
+	super._on_wait()
+
+func _on_cancel() -> void:
+	if _selection: _selection.go_back()
