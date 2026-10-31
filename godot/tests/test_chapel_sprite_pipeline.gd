@@ -29,6 +29,10 @@ func run() -> void:
  GameState.practice_session["reduced_zane_motion"] = false
  check(zane.set_melee_pose("anticipation"), "2D Zane supports anticipation")
  check(zane.set_melee_pose("contact"), "2D Zane supports contact")
+ zane.recover_melee_pose()
+ check(zane._sprite_pose.state == "contact", "contact remains visible when resolver immediately starts recovery")
+ zane._sprite_pose.apply(0.09, false)
+ check(zane._sprite_pose.state == "recovery", "contact hold advances to recovery")
  zane.reset_melee_pose()
  check(zane.melee_pose == "idle", "pose reset restores idle")
  check(is_instance_valid(battle.get_node("BattleUI").get("_unit_status_panel")), "Status inspection panel exists")

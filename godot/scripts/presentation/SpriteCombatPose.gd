@@ -5,6 +5,7 @@ var base_scale := Vector2.ONE
 var state := "idle"
 var clock := 0.0
 var side := 1.0
+var recovery_pending := false
 
 func bind(target: Sprite2D) -> void:
  sprite = target
@@ -14,6 +15,12 @@ func bind(target: Sprite2D) -> void:
 func pose(value: String, screen_direction: Vector2, reduced: bool = false) -> bool:
  if not is_instance_valid(sprite): return false
  if value not in ["idle", "anticipation", "contact", "recovery", "cast_anticipation", "cast_release", "cast_recovery"]: return false
+ # The resolver can request recovery in the same frame as contact. Preserve
+ # a rendered contact beat without delaying damage or changing initiative.
+ if value == "recovery" and state == "contact":
+  recovery_pending = true
+  return true
+ recovery_pending = false
  state = value
  clock = 0.0
  side = -1.0 if screen_direction.x < 0.0 else 1.0
@@ -25,6 +32,9 @@ func apply(delta: float, reduced: bool) -> void:
  # The outcome presenter owns scale while a hit reaction is active.
  if sprite.has_meta(&"zane_impact_reaction"): return
  clock += delta
+ if recovery_pending and clock >= 0.08:
+  state = "recovery"
+  recovery_pending = false
  var stretch := Vector2.ONE
  var lean := 0.0
  if not reduced:
@@ -41,6 +51,7 @@ func apply(delta: float, reduced: bool) -> void:
  sprite.rotation = lean
 
 func reset() -> void:
+ recovery_pending = false
  state = "idle"
  clock = 0.0
  if is_instance_valid(sprite):
