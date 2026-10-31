@@ -11,9 +11,30 @@ from capture_browser_screenshots import devtools_target
 OUT = Path('docs/qa/browser-chapel-captures')
 OBS = """(() => {const c=document.querySelector('canvas'); if(!c || !window.__chapelQA)return null;const r=c.getBoundingClientRect();return {state:window.__chapelQA,canvas:{x:r.x,y:r.y,width:r.width,height:r.height}}})()"""
 
+class FrameConnection:
+ """Record real compositor frames without pausing or modifying the game."""
+ def __init__(self, connection):
+  self.connection = connection
+  self.prefix = None
+  self.frame = 0
+ def send(self, payload): return self.connection.send(payload)
+ def close(self): return self.connection.close()
+ def recv(self):
+  payload = self.connection.recv()
+  event = json.loads(payload)
+  if event.get('method') == 'Page.screencastFrame':
+   params = event['params']
+   if self.prefix:
+    (OUT/f'{self.prefix}-frame-{self.frame:03d}.jpg').write_bytes(base64.b64decode(params['data']))
+    self.frame += 1
+   self.connection.send(json.dumps({'id':-1,'method':'Page.screencastFrameAck','params':{'sessionId':params['sessionId']}}))
+  return payload
+
 def main():
  OUT.mkdir(parents=True, exist_ok=True)
- cdp = CDP(websocket.create_connection(devtools_target(9222,45), timeout=15, http_proxy_host=None))
+ frames = FrameConnection(websocket.create_connection(devtools_target(9222,45), timeout=15, http_proxy_host=None))
+ cdp = CDP(frames)
+ action_number = 0
  latest = None
  evidence = []
  def wait(predicate, timeout=40):
@@ -45,6 +66,9 @@ def main():
   click(tile['point'])
   wait(lambda s:zane(s)['grid']==destination and zane(s)['moved'] and not s['busy'])
  def action(command):
+  nonlocal action_number
+  action_number += 1
+  capture = f'{command.lower()}-{action_number}'
   state=ready()
   if command=='Fire':
    button('Skills')
@@ -60,19 +84,25 @@ def main():
   cdp.command('Input.dispatchMouseEvent',{'type':'mouseMoved','x':x,'y':y})
   time.sleep(.12)
   wait(lambda s:bool(s.get('preview')))
-  shot(command.lower()+'-forecast')
+  shot(capture+'-forecast')
   ticket=state['ticket']
   mp=zane(state)['mp']
+  frames.prefix = capture
+  frames.frame = 0
+  cdp.command('Page.startScreencast', {'format':'jpeg','quality':85,'maxWidth':1920,'maxHeight':1080,'everyNthFrame':1})
   click(target['point'])
   wait(lambda s:s.get('busy') and s.get('ticket',0)>ticket)
-  shot(command.lower()+'-anticipation')
+  shot(capture+'-anticipation')
   # Capture multiple real rendered moments; frame names do not assert a specific atlas cell.
   for i in range(4):
    time.sleep(.07)
    latest_state=cdp.evaluate(OBS)
    if latest_state: latest.update(latest_state)
-   shot(command.lower()+f'-sequence-{i}')
+   shot(capture+f'-sequence-{i}')
   after=ready()
+  cdp.command('Page.stopScreencast')
+  frames.prefix = None
+  assert frames.frame > 0, 'No actual compositor frames captured'
   if not after.get('result'):
    assert zane(after)['mp']==mp-(12 if command=='Fire' else 0), 'Action resource cost duplicated'
   return after
