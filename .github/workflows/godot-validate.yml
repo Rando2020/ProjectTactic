@@ -75,6 +75,9 @@ jobs:
       - name: Import project headlessly
         run: godot --headless --path godot --import
 
+      - name: Validate fireball sprite atlas
+        run: godot --headless --path godot --script res://tests/test_fireball_sprite.gd
+
       - name: Validate painted chapel demo
         run: |
           XDG_DATA_HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) godot --headless --path godot res://tests/test_painted_chapel.tscn
