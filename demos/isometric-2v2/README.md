@@ -39,3 +39,13 @@ Selection update (2026-10-31): 37 selection-state checks and independent GUI-eve
 
 ## Portrait turn order
 The right rail begins with the active unit marked **NOW**, followed by four projected turns marked **NEXT 1–4**, with existing portrait/idle art, names, and ALLY/ENEMY labels. Repeated portraits mean that unit's later turn, not another copy of the unit. Projection uses the same CT scheduler as actual turns and updates for speed statuses, defeats and replay. Selecting another unit never changes the current actor. Run `PortraitTurnTest.tscn` for 106 focused checks including victory/replay restoration. Native mouse/keyboard turn advance and layout checked; physical-phone and browser graphical acceptance remain separate.
+
+## Rotatable stage comparison
+
+Choose **Try rotatable stage** above the board, then **Q / E** or the two rotation buttons to turn the camera in 90-degree steps through four views. **Return to painted stage** restores the accepted painted presentation without resetting the battle. Painted remains the initial default. Replay retains the selected presentation and resets the camera to view 1.
+
+The comparison uses an orthographic 3D stone floor/plinth with billboard sprite actors, not rigged 3D characters. Terrain, actors and range highlights share a camera; tile picking uses its ground ray. Arrow cursor movement follows the screen after rotation. Logical facing, unit positions, HP/MP, initiative and targeting remain the same across views. Rotation/presentation switching is temporarily locked while an action resolves.
+
+This is deliberately a flat 5×5 combat floor: perimeter ruins are decorative, not walkable stairs or an elevation ruleset. The procedural stone comparison is a functional depth prototype, not a pixel-identical recreation of the painted chapel. Zane's front/back-and-mirrored facings remain provisional. Browser WebGL2 and physical-phone graphics/touch acceptance remain separate from native Godot validation.
+
+Run `res://prototypes/isometric/RotationTest.tscn` for projection, actor picking, screen-relative cursor, selection preservation, per-angle movement/attack/spell, defeat and replay checks.

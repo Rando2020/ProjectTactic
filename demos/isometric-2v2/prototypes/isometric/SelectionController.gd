@@ -31,7 +31,7 @@ func setup(p_ui: BattleUI, p_manager: BattleManager) -> void:
 	ui._chapel_command_buttons.add_child(_inspect)
 	ui._chapel_command_buttons.move_child(_inspect,1)
 	_help = Label.new()
-	_help.position = Vector2(24,102)
+	_help.position = Vector2(24,118)
 	_help.add_theme_font_size_override("font_size",22)
 	_help.add_theme_color_override("font_color",Color("fff2c5"))
 	_help.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -143,7 +143,7 @@ func _pointed_cell(position: Vector2) -> Vector2i:
 		var unit := value as Unit
 		if not is_instance_valid(unit) or unit.hp <= 0: continue
 		var sprite: Sprite2D = unit._sprite
-		if is_instance_valid(sprite) and sprite.visible:
+		if is_instance_valid(sprite) and (sprite.visible or bool(grid.get("rotatable_mode"))):
 			var point := sprite.get_global_transform_with_canvas().affine_inverse() * position
 			if sprite.get_rect().has_point(point) and sprite.is_pixel_opaque(point) and (not hit or unit.position.y > hit.position.y): hit = unit
 	if hit: return hit.grid_pos
@@ -166,6 +166,11 @@ func handle_input(event: InputEvent) -> bool:
 				return true
 			return false
 	if not event is InputEventKey or not event.pressed: return false
+	if event.keycode in [KEY_Q, KEY_E] and not event.echo:
+		var scene := ui.get_parent()
+		if scene.has_method("rotate_stage"):
+			scene.rotate_stage(-1 if event.keycode == KEY_Q else 1)
+			return true
 	if event.keycode in [KEY_ESCAPE,KEY_BACKSPACE]:
 		go_back(); return true
 	if event.keycode in [KEY_ENTER,KEY_KP_ENTER,KEY_SPACE] and not event.echo:
@@ -183,7 +188,7 @@ func handle_input(event: InputEvent) -> bool:
 		KEY_DOWN: delta = Vector2i(0,1)
 		KEY_UP: delta = Vector2i(0,-1)
 	if delta != Vector2i.ZERO:
-		set_cursor(cursor_cell+delta)
+		set_cursor(cursor_cell + (grid.screen_step(delta) if grid.has_method("screen_step") else delta))
 		return true
 	return false
 
