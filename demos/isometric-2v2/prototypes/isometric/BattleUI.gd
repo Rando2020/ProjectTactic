@@ -1,6 +1,7 @@
 extends BattleUI
 ## Compact proof-only layout; reuses every real command/resource/forecast handler.
 var _proof_skills_panel: PanelContainer
+var _proof_skills_scroll: ScrollContainer
 var _selection: Node
 var _turn_portraits: VBoxContainer
 var _turn_rows: Array[Dictionary] = []
@@ -41,9 +42,15 @@ func _build_ui() -> void:
 		command.add_theme_font_size_override("font_size", 22)
 	_proof_skills_panel = PanelContainer.new()
 	_proof_skills_panel.theme = _right_panel_root.theme
-	_proof_skills_panel.custom_minimum_size = Vector2(350,0)
+	_proof_skills_panel.custom_minimum_size = Vector2.ZERO
 	add_child(_proof_skills_panel)
-	_ability_panel.reparent(_proof_skills_panel)
+	_proof_skills_scroll = ScrollContainer.new()
+	_proof_skills_scroll.follow_focus = true
+	_proof_skills_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_proof_skills_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_proof_skills_panel.add_child(_proof_skills_scroll)
+	_ability_panel.reparent(_proof_skills_scroll)
+	_ability_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_proof_skills_panel.hide()
 	for label in find_children("*", "Label", true, false):
 		label.add_theme_font_size_override("font_size", maxi(22, label.get_theme_font_size("font_size")))
@@ -94,7 +101,24 @@ func _unhandled_input(event: InputEvent) -> void:
 func _layout_skills() -> void:
 	if not is_instance_valid(_proof_skills_panel): return
 	var viewport := get_viewport().get_visible_rect().size
-	_proof_skills_panel.position = Vector2(250, maxf(110, viewport.y * 0.52))
+	var margin := 12.0
+	# Measure the list independently: the scroll viewport must never inherit its
+	# full minimum height. Keep Back outside the scroll so cancellation is reachable.
+	var back := _chapel_command_panel.get_rect()
+	var available_bottom := viewport.y - margin
+	if _chapel_command_panel.visible and battle_manager and battle_manager.active_command == "ability":
+		available_bottom = minf(available_bottom, back.position.y - margin)
+	var available_height := maxf(60, available_bottom - margin)
+	var content := _ability_panel.get_combined_minimum_size()
+	var style := _proof_skills_panel.get_theme_stylebox("panel")
+	var inset := style.get_minimum_size() if style else Vector2.ZERO
+	var width := minf(maxf(350, content.x + inset.x + 20), viewport.x - margin * 2)
+	var height := minf(content.y + inset.y + 20, available_height)
+	_proof_skills_panel.size = Vector2(width, height)
+	var x := back.end.x + margin
+	if x + width > viewport.x - margin: x = margin
+	_proof_skills_panel.position = Vector2(clampf(x, margin, maxf(margin, viewport.x - width - margin)),
+		clampf(back.position.y, margin, maxf(margin, available_bottom - height)))
 
 func _on_ability_panel_visibility_changed() -> void:
 	if is_instance_valid(_proof_skills_panel):
@@ -103,6 +127,8 @@ func _on_ability_panel_visibility_changed() -> void:
 
 func _on_ability_mode_started(usable_ids: Array) -> void:
 	super._on_ability_mode_started(usable_ids)
+	_proof_skills_scroll.scroll_vertical = 0
+	_proof_skills_scroll.scroll_horizontal = 0
 	for label in _ability_panel.find_children("*", "Label", true, false):
 		label.add_theme_font_size_override("font_size", maxi(20, label.get_theme_font_size("font_size")))
 	for row in _ability_list.get_children():

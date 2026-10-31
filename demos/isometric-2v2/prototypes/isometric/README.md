@@ -89,3 +89,6 @@ The earlier reviewed 1-vs-1 proof is preserved at local commit
 base; `Skirmish.tscn` supplies only the two additional existing combatants.
 The legacy practice-mode flag is retained internally for no-reward safe retry;
 it does not constrain the standalone skirmish roster.
+
+## Popup bounds repair
+Skills now measure their own height and stay above the separate Back control, instead of inheriting the bottom-aligned Back position. Long lists scroll and follow keyboard focus. Command menus also scroll on short landscape viewports so Wait/Close remain reachable. `SkillBoundsTest.tscn` covers four viewport sizes, painted/rotatable modes and all camera angles. This does not change abilities, costs, initiative or combat rules.

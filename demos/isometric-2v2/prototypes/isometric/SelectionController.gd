@@ -11,6 +11,7 @@ var _header: Label
 var _inspect: Label
 var _help: Label
 var _last_command := ""
+var _command_scroll: ScrollContainer
 
 func setup(p_ui: BattleUI, p_manager: BattleManager) -> void:
 	ui = p_ui
@@ -23,6 +24,13 @@ func setup(p_ui: BattleUI, p_manager: BattleManager) -> void:
 	cursor.grid = grid
 	cursor.z_index = 3000
 	grid.unit_layer.add_child(cursor)
+	_command_scroll = ScrollContainer.new()
+	_command_scroll.follow_focus = true
+	_command_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_command_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	ui._chapel_command_panel.add_child(_command_scroll)
+	ui._chapel_command_buttons.reparent(_command_scroll)
+	ui._chapel_command_buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_header = ui._chapel_command_buttons.get_child(0)
 	_inspect = Label.new()
 	_inspect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -236,14 +244,19 @@ func layout_popup() -> void:
 	var viewport := ui.get_viewport().get_visible_rect().size
 	var anchor := grid.get_global_transform_with_canvas() * grid._grid_to_local(unit.grid_pos)
 	var panel := ui._chapel_command_panel
-	panel.size = panel.get_combined_minimum_size()
+	var top := 145.0 if viewport.y >= 600 else 12.0
+	var style := panel.get_theme_stylebox("panel")
+	var inset := style.get_minimum_size() if style else Vector2.ZERO
+	var content := ui._chapel_command_buttons.get_combined_minimum_size()
+	panel.size = Vector2(minf(maxf(220, content.x + inset.x + 20), viewport.x - 24),
+		minf(content.y + inset.y, viewport.y - top - 20))
 	var x := anchor.x + 65.0
 	var right_edge := viewport.x - ui._right_panel_scroll.size.x - 50.0
 	if x+panel.size.x > right_edge: x = anchor.x-panel.size.x-65.0
-	panel.position = Vector2(clampf(x,12,maxf(12,viewport.x-panel.size.x-12)),clampf(anchor.y-panel.size.y*0.5,145,maxf(145,viewport.y-panel.size.y-20)))
+	panel.position = Vector2(clampf(x,12,maxf(12,viewport.x-panel.size.x-12)),clampf(anchor.y-panel.size.y*0.5,top,maxf(top,viewport.y-panel.size.y-20)))
 	if is_targeting() or manager.active_command == "ability":
 		# Keep the ground targets clear while aiming. The contextual menu returns
 		# beside the unit after commit/cancel.
-		panel.position = Vector2(20,maxf(145,viewport.y-panel.size.y-24))
+		panel.position = Vector2(20,maxf(top,viewport.y-panel.size.y-24))
 	if is_instance_valid(ui._proof_skills_panel):
-		ui._proof_skills_panel.position = Vector2(clampf(panel.position.x+panel.size.x+12,12,maxf(12,viewport.x-770)),maxf(145,panel.position.y))
+		ui._layout_skills()
