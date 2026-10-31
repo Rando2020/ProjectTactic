@@ -27,6 +27,20 @@ func run() -> void:
  zane.reset_melee_pose()
  check(zane.melee_pose == "idle", "pose reset restores idle")
  check(is_instance_valid(battle.get_node("BattleUI").get("_unit_status_panel")), "Status inspection panel exists")
+ var ui := battle.get_node("BattleUI") as BattleUI
+ check(not ui._status_btn.disabled, "Status command is enabled on a real player turn")
+ var before := [zane.hp, zane.mp, zane.has_moved, zane.has_acted, manager.action_lifecycle.ticket]
+ for viewport_size in [Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(3840,2160)]:
+  get_viewport().content_scale_size = Vector2i.ZERO
+  get_viewport().size = viewport_size
+  await get_tree().process_frame
+  ui._on_unit_status()
+  await get_tree().process_frame
+  check(ui._unit_status_panel.visible, "Status opens at " + str(viewport_size))
+  check(ui._unit_status_panel.size.x <= viewport_size.x and ui._unit_status_panel.size.y <= viewport_size.y, "Status fits viewport " + str(viewport_size))
+  check(ui._unit_status_panel.portrait.texture != null, "Status uses actual portrait")
+  ui._unit_status_panel.hide()
+ check(before == [zane.hp, zane.mp, zane.has_moved, zane.has_acted, manager.action_lifecycle.ticket], "Status spends no action or resources")
  # Provisional views must resolve independently, with a common actual foot origin.
  GameState.practice_session["review_hero_art"] = true
  var textures := {}

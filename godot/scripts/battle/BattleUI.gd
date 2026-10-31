@@ -1494,6 +1494,8 @@ func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) 
 
 
 func _refresh_command_buttons() -> void:
+	if _status_btn:
+		_status_btn.disabled = not _is_player_turn or not battle_manager or battle_manager.is_resolving_action
 	if _ability_panel and battle_manager and battle_manager.active_command != "ability":
 		_ability_panel.visible = false
 	if _move_btn:
