@@ -1,0 +1,449 @@
+{
+  "source_library_id": "libfile_0953684bc2008191b9448fe9ca08a1d5",
+  "source_sha256": "454653e135c94ae0e9f481674b5ad82bdeb7270787cb46f55d6446089aa74fa3",
+  "source_size": [
+    1443,
+    1090
+  ],
+  "canvas_size": [
+    512,
+    512
+  ],
+  "extraction": "One visually seeded 4-connected nonzero-alpha core component per stage. Original source RGBA values unchanged for selected pixels. Detached sparks and halos excluded.",
+  "timing_status": "Proposed preview timing only, not gameplay timing or final animation acceptance.",
+  "travel_direction": "Artwork points upper-right. Not four bespoke directional animations.",
+  "frames": [
+    {
+      "index": 1,
+      "stage": "charge",
+      "file": "frames/01_charge.png",
+      "source_component": 1346,
+      "visible_pixels": 21520,
+      "source_bbox": [
+        65,
+        67,
+        308,
+        257
+      ],
+      "source_anchor": [
+        185,
+        215
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        136,
+        252
+      ],
+      "duration_ms": 90,
+      "sha256": "8fbafbc1d1a633d99b5ac6694f716412f99b4126e7e3916ab90cef180f262d6a"
+    },
+    {
+      "index": 2,
+      "stage": "charge",
+      "file": "frames/02_charge.png",
+      "source_component": 236,
+      "visible_pixels": 29717,
+      "source_bbox": [
+        422,
+        29,
+        661,
+        260
+      ],
+      "source_anchor": [
+        540,
+        213
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        138,
+        216
+      ],
+      "duration_ms": 90,
+      "sha256": "1ae9fe17613956732f63654a467a4c17477be14f0e80c9a4aed756a6b3641af8"
+    },
+    {
+      "index": 3,
+      "stage": "charge",
+      "file": "frames/03_charge.png",
+      "source_component": 658,
+      "visible_pixels": 34787,
+      "source_bbox": [
+        783,
+        46,
+        1028,
+        246
+      ],
+      "source_anchor": [
+        900,
+        213
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        139,
+        233
+      ],
+      "duration_ms": 90,
+      "sha256": "1fac9ccc51af8b2c15af262aeabfbc74b644f790239599b5c2a6a77db02b5ac3"
+    },
+    {
+      "index": 4,
+      "stage": "charge",
+      "file": "frames/04_charge.png",
+      "source_component": 78,
+      "visible_pixels": 37146,
+      "source_bbox": [
+        1151,
+        17,
+        1384,
+        246
+      ],
+      "source_anchor": [
+        1260,
+        213
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        147,
+        204
+      ],
+      "duration_ms": 90,
+      "sha256": "80b9a18d058f61f3c223ca7bebf20b3c84ec445f888df4aef294ca38b249f092"
+    },
+    {
+      "index": 5,
+      "stage": "travel",
+      "file": "frames/05_travel.png",
+      "source_component": 6088,
+      "visible_pixels": 40955,
+      "source_bbox": [
+        16,
+        288,
+        335,
+        531
+      ],
+      "source_anchor": [
+        248,
+        389
+      ],
+      "canvas_pivot": [
+        320,
+        256
+      ],
+      "paste_position": [
+        88,
+        155
+      ],
+      "duration_ms": 70,
+      "sha256": "bc8687f63eeb832b26e9ccf0c65194405e46ab96e31310298ffa7939a93c4ad2"
+    },
+    {
+      "index": 6,
+      "stage": "travel",
+      "file": "frames/06_travel.png",
+      "source_component": 6870,
+      "visible_pixels": 27370,
+      "source_bbox": [
+        397,
+        314,
+        692,
+        515
+      ],
+      "source_anchor": [
+        645,
+        358
+      ],
+      "canvas_pivot": [
+        320,
+        256
+      ],
+      "paste_position": [
+        72,
+        212
+      ],
+      "duration_ms": 70,
+      "sha256": "4be2d1702a863b361d565a98ad1d1ecba6f7c2814d43e667f32c23a1239b6582"
+    },
+    {
+      "index": 7,
+      "stage": "travel",
+      "file": "frames/07_travel.png",
+      "source_component": 6491,
+      "visible_pixels": 32207,
+      "source_bbox": [
+        771,
+        300,
+        1046,
+        517
+      ],
+      "source_anchor": [
+        1005,
+        358
+      ],
+      "canvas_pivot": [
+        320,
+        256
+      ],
+      "paste_position": [
+        86,
+        198
+      ],
+      "duration_ms": 70,
+      "sha256": "e4097ab05ee666d5d9e34812fdc07a26135a9f0084636e1bdd31e18e8d40520d"
+    },
+    {
+      "index": 8,
+      "stage": "travel",
+      "file": "frames/08_travel.png",
+      "source_component": 6072,
+      "visible_pixels": 32863,
+      "source_bbox": [
+        1117,
+        287,
+        1413,
+        527
+      ],
+      "source_anchor": [
+        1374,
+        356
+      ],
+      "canvas_pivot": [
+        320,
+        256
+      ],
+      "paste_position": [
+        63,
+        187
+      ],
+      "duration_ms": 70,
+      "sha256": "d6f9f40ea07cd4be5c9e2ae9e73d37aabae5037e52fe2d2cf8ff8a90393233e2"
+    },
+    {
+      "index": 9,
+      "stage": "impact",
+      "file": "frames/09_impact.png",
+      "source_component": 11801,
+      "visible_pixels": 17705,
+      "source_bbox": [
+        95,
+        591,
+        276,
+        775
+      ],
+      "source_anchor": [
+        185,
+        740
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        166,
+        251
+      ],
+      "duration_ms": 65,
+      "sha256": "1ce5ea480845ff31f59882e7b93368b80b1bd8c333afd759672e89277d9d0a15"
+    },
+    {
+      "index": 10,
+      "stage": "impact",
+      "file": "frames/10_impact.png",
+      "source_component": 11561,
+      "visible_pixels": 36949,
+      "source_bbox": [
+        424,
+        573,
+        676,
+        793
+      ],
+      "source_anchor": [
+        542,
+        760
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        138,
+        213
+      ],
+      "duration_ms": 65,
+      "sha256": "5f297713307e3cf46a08cc763a41952cf0cdfa14bfda6883b467d3b8ec722a5e"
+    },
+    {
+      "index": 11,
+      "stage": "impact",
+      "file": "frames/11_impact.png",
+      "source_component": 11489,
+      "visible_pixels": 51087,
+      "source_bbox": [
+        750,
+        570,
+        1064,
+        797
+      ],
+      "source_anchor": [
+        900,
+        770
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        106,
+        200
+      ],
+      "duration_ms": 80,
+      "sha256": "bf334613ee14b739b171dd0cc58c4095f491d415f2e5bbca711adc2bd46324d6"
+    },
+    {
+      "index": 12,
+      "stage": "impact",
+      "file": "frames/12_impact.png",
+      "source_component": 9764,
+      "visible_pixels": 77291,
+      "source_bbox": [
+        1081,
+        496,
+        1430,
+        806
+      ],
+      "source_anchor": [
+        1260,
+        780
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        77,
+        116
+      ],
+      "duration_ms": 100,
+      "sha256": "e5c16cc51e74677b6b9a93056b015df915e4267f042728ff149f00941a87fd13"
+    },
+    {
+      "index": 13,
+      "stage": "dissipate",
+      "file": "frames/13_dissipate.png",
+      "source_component": 15187,
+      "visible_pixels": 35230,
+      "source_bbox": [
+        73,
+        848,
+        321,
+        1062
+      ],
+      "source_anchor": [
+        190,
+        1040
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        139,
+        208
+      ],
+      "duration_ms": 100,
+      "sha256": "1e4fea613e6db3e2ca86c616d8c77c9223731c38002a385e2e6550ea1c1e04ac"
+    },
+    {
+      "index": 14,
+      "stage": "dissipate",
+      "file": "frames/14_dissipate.png",
+      "source_component": 14966,
+      "visible_pixels": 27661,
+      "source_bbox": [
+        431,
+        835,
+        660,
+        1048
+      ],
+      "source_anchor": [
+        545,
+        1040
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        142,
+        195
+      ],
+      "duration_ms": 110,
+      "sha256": "1ffaccbcfb2631955ea0321083d6ad70d680bd0f8e2345771eca3e5a2d170f25"
+    },
+    {
+      "index": 15,
+      "stage": "dissipate",
+      "file": "frames/15_dissipate.png",
+      "source_component": 15424,
+      "visible_pixels": 21291,
+      "source_bbox": [
+        797,
+        862,
+        1015,
+        1050
+      ],
+      "source_anchor": [
+        900,
+        1040
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        153,
+        222
+      ],
+      "duration_ms": 120,
+      "sha256": "3ca5a0a5505b818b47d366bf8d2a99df06bef2193274d3888d1e675561d1c9ed"
+    },
+    {
+      "index": 16,
+      "stage": "dissipate",
+      "file": "frames/16_dissipate.png",
+      "source_component": 15587,
+      "visible_pixels": 8709,
+      "source_bbox": [
+        1215,
+        871,
+        1347,
+        1048
+      ],
+      "source_anchor": [
+        1260,
+        1040
+      ],
+      "canvas_pivot": [
+        256,
+        400
+      ],
+      "paste_position": [
+        211,
+        231
+      ],
+      "duration_ms": 150,
+      "sha256": "3b04b6df21fd5c3520ccb514758abe76596275fc04e7764bbfd566ea5710322e"
+    }
+  ]
+}

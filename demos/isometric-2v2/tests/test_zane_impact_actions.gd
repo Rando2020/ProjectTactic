@@ -289,7 +289,7 @@ func interruptions() -> void:
 			if fixture == "during travel":
 				var owner = controllers.back().get_ref()
 				check(is_instance_valid(owner) and is_instance_valid(owner._trail) and owner._trail.width_curve != null and owner._trail.gradient != null, "Fire travels with one directionally tapered ember trail")
-				check(is_instance_valid(owner) and is_instance_valid(owner._projectile) and owner._projectile.material is ShaderMaterial, "one projectile carries a local hot-core treatment, not a screen flash")
+				check(is_instance_valid(owner) and is_instance_valid(owner._projectile) and ((owner._projectile is Sprite2D and owner._projectile.has_method("available") and owner._projectile.available()) or owner._projectile.material is ShaderMaterial), "one local projectile uses authored frames or the retained hot-core fallback, not a screen flash")
 			match fixture:
 				"actor death": caster.receive_damage(99999,"magical")
 				"target removal": target.queue_free()
@@ -884,7 +884,7 @@ func travel_observer_frame_delta_contract() -> void:
 		var controller = controllers.back().get_ref()
 		print("Delayed-frame travel observer: wall=%dms release=%s charge_valid=%s" % [Time.get_ticks_msec()-started,phases.has("release"),is_instance_valid(controller._charge)])
 		check(is_instance_valid(controller) and is_instance_valid(controller._trail) and controller._trail.width_curve != null and controller._trail.gradient != null,"Fire travels with one directionally tapered ember trail")
-		check(is_instance_valid(controller) and is_instance_valid(controller._projectile) and controller._projectile.material is ShaderMaterial,"one projectile carries a local hot-core treatment, not a screen flash")
+		check(is_instance_valid(controller) and is_instance_valid(controller._projectile) and ((controller._projectile is Sprite2D and controller._projectile.has_method("available") and controller._projectile.available()) or controller._projectile.material is ShaderMaterial),"one local projectile uses authored frames or the retained hot-core fallback, not a screen flash")
 		manager.action_lifecycle.cancel()
 	)
 	OS.delay_msec(300) # Controlled cold/load frame; never changes production timing.
@@ -908,6 +908,7 @@ func fire_socket_frame_contract() -> void:
 		if stable: rig.set_process(false) # Deliberate stationary-pose control only.
 		var probe := preload("res://tests/fixtures/FireSocketFrameObserver.gd").new()
 		probe.actor = caster
+		probe.tactical_grid = manager.tactical_grid
 		probe.slow_frame_ms = 75 if not stable else 0
 		add_child(probe)
 		VFX.child_entered_tree.connect(probe.observe)
@@ -931,7 +932,7 @@ func fire_socket_frame_contract() -> void:
 		var label := "stable" if stable else "moving slow-frame"
 		print("Fire socket %s: %s" % [label, JSON.stringify({"samples":probe.samples,"render_phases":probe.render_phases})])
 		check(charge_count >= 2 and projectile_count > 0, label + ": observes multiple actual charge frames and real launch")
-		check(max_error <= 8, label + ": every end-of-process charge is within existing 8 px of CURRENT hand (max %.5f)" % max_error)
+		check(max_error <= 8, label + ": authored charge stays within 8 px of CURRENT projected ground; fallback stays at hand (max %.5f)" % max_error)
 		check(max_motion < 0.001 if stable else max_motion > 8, label + ": stationary control or meaningful imported hand movement (%.5f px)" % max_motion)
 		if not stable: check(max_delta >= 0.05, "moving probe includes actual slow engine frame, not a fabricated pose/delta")
 		check(geometry == [caster.position, caster.scale, rig.output.position, rig.output.scale,

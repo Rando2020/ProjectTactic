@@ -5,6 +5,7 @@ signal cue_started(cue_id: String)
 signal phase_presented(phase: String)
 
 const Audio := preload("res://scripts/presentation/ZaneImpactAudio.gd")
+const FireFrames := preload("res://scripts/presentation/FireballFrames.gd")
 const OutcomeLayout := preload("res://scripts/presentation/ZaneOutcomeLayout.gd")
 const REACTION_META := &"zane_impact_reaction"
 
@@ -30,9 +31,9 @@ var _fx: Array[CanvasItem] = []
 var _voices: Array[AudioStreamPlayer] = []
 var _tweens: Array[Tween] = []
 var _reactions: Array[Dictionary] = []
-var _charge: Polygon2D
+var _charge: Node2D
 var _charge_voice: AudioStreamPlayer
-var _projectile: Polygon2D
+var _projectile: Node2D
 var _trail: Line2D
 var _flight_start := Vector2.ZERO
 var _flight_end := Vector2.ZERO
@@ -54,8 +55,9 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	var fire := str(context.ability_id) == "fire"
 	if fire:
 		actor.set_cast_pose("anticipation")
-		_charge = _disc(5, Color(1,0.48,0.12,0.85), "charge")
-		_charge.position = to_local(actor.cast_origin_world())
+		_charge = _fire_sprite("charge")
+		if _charge == null: _charge = _disc(5, Color(1,0.48,0.12,0.85), "charge")
+		_charge.position = _grid_point(actor.grid_pos) if _charge is FireFrames else to_local(actor.cast_origin_world())
 	else:
 		actor.set_melee_pose("anticipation")
 	_phase("charge")
@@ -73,11 +75,14 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	if fire:
 		# Same-frame cast release sampling updates the actual imported socket.
 		actor.set_cast_pose("release")
-		_projectile = _disc(5, Color(1,0.87,0.36), "projectile")
-		_projectile.material = _hot_core_material()
+		_projectile = _fire_sprite("travel")
+		if _projectile == null:
+			_projectile = _disc(5, Color(1,0.87,0.36), "projectile")
+			_projectile.material = _hot_core_material()
 		_projectile.position = to_local(actor.cast_origin_world())
 		var destination := _grid_point(context.destination) + Vector2(0,-30)
 		_flight_direction = (destination - _projectile.position).normalized()
+		if _projectile is FireFrames: _projectile.set_stage("travel", _flight_direction)
 		_trail = _line(PackedVector2Array([_projectile.position,_projectile.position]),Color(1,0.38,0.07,0.7),4,"trail")
 		var taper := Curve.new()
 		taper.add_point(Vector2(0,0))
@@ -118,6 +123,8 @@ func _wait_permitted(seconds: float, move_projectile: bool = false) -> bool:
 		var current := Time.get_ticks_usec()
 		elapsed += float(current-previous)/1000000.0 * maxf(0,Engine.time_scale)
 		previous = current
+		if is_instance_valid(_charge) and _charge is FireFrames: _charge.show_progress(elapsed/seconds)
+		if is_instance_valid(_projectile) and _projectile is FireFrames: _projectile.show_progress(elapsed/seconds)
 		if move_projectile and is_instance_valid(_projectile):
 			_projectile.position = _flight_start.lerp(_flight_end,clampf(elapsed/seconds,0,1))
 	if tree.process_frame.is_connected(clock.advance): tree.process_frame.disconnect(clock.advance)
@@ -143,7 +150,7 @@ func _process(_dt: float) -> void:
 		cancel()
 		return
 	var actor = _actor.get_ref()
-	if is_instance_valid(_charge): _charge.position = to_local(actor.cast_origin_world())
+	if is_instance_valid(_charge): _charge.position = _grid_point(actor.grid_pos) if _charge is FireFrames else to_local(actor.cast_origin_world())
 	if is_instance_valid(_trail) and is_instance_valid(_projectile):
 		var point := _projectile.position
 		_trail.points = PackedVector2Array([point - _flight_direction * 22, point - _flight_direction * 8, point])
@@ -198,6 +205,11 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 			if not result.get("defeated",false) and is_instance_valid(target) and target.is_inside_tree() and not target.is_queued_for_deletion() and target.hp > 0 and not target.is_defeated:
 				_react(target)
 	_place_numbers(numbers,anchors)
+	if fire:
+		var burst := _fire_sprite("impact" if any_impact else "dissipate")
+		if burst != null:
+			burst.position = _grid_point(context.destination)
+			burst.start_tail(any_impact)
 	if any_impact:
 		_phase("impact")
 		_cue("fire_hit" if fire else "sword_hit")
@@ -359,6 +371,16 @@ func _grid_point(tile: Vector2i) -> Vector2:
 		var grid = manager.tactical_grid
 		return to_local(grid.to_global(grid._unit_foot_pos(tile)))
 	return Vector2.ZERO
+
+func _fire_sprite(stage: String) -> Node2D:
+	if not bool(context.get("authored_fire_sheet", false)): return null
+	var sprite := FireFrames.new()
+	if not sprite.available():
+		sprite.free()
+		return null
+	sprite.set_stage(stage)
+	_own(sprite,"fire_sheet_"+stage)
+	return sprite
 
 func _disc(radius: float, color: Color, role: String) -> Polygon2D:
 	var polygon := Polygon2D.new()

@@ -3,6 +3,7 @@ extends Node
 ## A headless dummy renderer does not emit draw signals: process samples are
 ## geometry evidence only. Real pre/post-draw callbacks are labeled separately.
 var actor: Unit
+var tactical_grid: Node2D
 var presenter: Node
 var slow_frame_ms := 0
 var samples: Array[Dictionary] = []
@@ -42,7 +43,11 @@ func _record(stage: String, delta: float = 0.0) -> void:
 		var charge: Vector2 = presenter._charge.global_position
 		row["role"] = "charge"
 		row["point"] = [charge.x, charge.y]
-		row["error"] = charge.distance_to(hand)
+		var authored: bool = presenter._charge is Sprite2D and presenter._charge.has_method("available")
+		var expected: Vector2 = tactical_grid.to_global(tactical_grid._unit_foot_pos(actor.grid_pos)) if authored else hand
+		row["anchor"] = "ground" if authored else "hand"
+		row["expected"] = [expected.x, expected.y]
+		row["error"] = charge.distance_to(expected)
 	elif is_instance_valid(presenter._projectile):
 		var origin: Vector2 = presenter.to_global(presenter._flight_start)
 		row["role"] = "projectile"
