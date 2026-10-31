@@ -49,3 +49,8 @@ The comparison uses an orthographic 3D stone floor/plinth with billboard sprite 
 This is deliberately a flat 5×5 combat floor: perimeter ruins are decorative, not walkable stairs or an elevation ruleset. The procedural stone comparison is a functional depth prototype, not a pixel-identical recreation of the painted chapel. Zane's front/back-and-mirrored facings remain provisional. Browser WebGL2 and physical-phone graphics/touch acceptance remain separate from native Godot validation.
 
 Run `res://prototypes/isometric/RotationTest.tscn` for projection, actor picking, screen-relative cursor, selection preservation, per-angle movement/attack/spell, defeat and replay checks.
+
+### Readability polish
+Battlefield names are full, high-contrast screen-space labels with ally/enemy edge colors. Labels follow movement and camera rotation, avoid one another, and do not intercept selection. The timeline frames existing Kael/enemy artwork as upper-body portraits without changing source images or combat rules.
+
+Regression: `godot --headless --path demos/isometric-2v2 res://prototypes/isometric/ReadabilityTest.tscn` checks both stage modes, all four angles, phone/desktop viewport geometry, clustered units, KO/retry lifecycle and portrait crops.

@@ -24,6 +24,9 @@ func _character_direction_texture(direction: String) -> Texture2D:
 
 func _draw_unit() -> void:
 	super._draw_unit()
+	# Replaced by readable, non-interactive screen-space labels in the demo HUD.
+	for child in get_children():
+		if child is Label and child.text == display_name.left(6): child.hide()
 	_fit_illustrated_actor()
 
 func _refresh_directional_sprite() -> void:

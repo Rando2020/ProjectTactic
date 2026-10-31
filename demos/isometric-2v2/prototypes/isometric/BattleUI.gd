@@ -5,6 +5,8 @@ var _proof_skills_scroll: ScrollContainer
 var _selection: Node
 var _turn_portraits: VBoxContainer
 var _turn_rows: Array[Dictionary] = []
+var _battlefield_labels: Node2D
+var _portrait_cache: Dictionary = {}
 
 func _build_ui() -> void:
 	super._build_ui()
@@ -141,6 +143,9 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 
 func setup(manager: BattleManager) -> void:
 	super.setup(manager)
+	_battlefield_labels = preload("res://prototypes/isometric/BattlefieldLabels.gd").new()
+	add_child(_battlefield_labels)
+	_battlefield_labels.setup(self,manager)
 	_selection = preload("res://prototypes/isometric/SelectionController.gd").new()
 	add_child(_selection)
 	_selection.setup(self, manager)
@@ -232,7 +237,7 @@ func _refresh_turn_portraits() -> void:
 		var entry: Dictionary = entries[i]
 		row.unit_id = entry.unit_id
 		var unit: Unit = battle_manager.units.get(entry.unit_id)
-		row.portrait.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(unit.unit_data.id)) if is_instance_valid(unit) else null
+		row.portrait.texture = _framed_portrait(unit.unit_data.id) if is_instance_valid(unit) else null
 		row.who.text = entry.display_name
 		var side := "ALLY" if entry.team == "player" else "ENEMY"
 		row.when.text = ("NOW" if entry.get("now", false) else "NEXT %d" % (i if entries[0].get("now", false) else i + 1)) + "  ·  " + side
@@ -247,3 +252,18 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 func _on_turn_started(unit_id: String, team: String) -> void:
 	super._on_turn_started(unit_id, team)
 	_refresh_turn_portraits()
+
+func _framed_portrait(id: String) -> Texture2D:
+	if _portrait_cache.has(id): return _portrait_cache[id]
+	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(id))
+	# UI atlas crops preserve every source pixel/file; these frame head and shoulders,
+	# rather than shrinking a complete battlefield actor into a portrait slot.
+	var regions := {"kael":Rect2(35,2,62,72), "storm_imp":Rect2(33,2,62,72), "void_cultist":Rect2(33,2,62,72)}
+	if texture and regions.has(id):
+		var framed := AtlasTexture.new()
+		framed.atlas = texture
+		framed.region = regions[id]
+		framed.filter_clip = true
+		texture = framed
+	_portrait_cache[id] = texture
+	return texture
