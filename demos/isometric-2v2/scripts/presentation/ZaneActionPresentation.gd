@@ -5,8 +5,10 @@ signal cue_started(cue_id: String)
 signal phase_presented(phase: String)
 
 const Audio := preload("res://scripts/presentation/ZaneImpactAudio.gd")
+const MeleeFrames := preload("res://scripts/presentation/MeleeFrames.gd")
 const FireFrames := preload("res://scripts/presentation/FireballFrames.gd")
 const OutcomeLayout := preload("res://scripts/presentation/ZaneOutcomeLayout.gd")
+const MELEE_META := &"authored_melee_motion"
 const REACTION_META := &"zane_impact_reaction"
 
 class PhaseClock:
@@ -35,6 +37,8 @@ var _charge: Node2D
 var _charge_voice: AudioStreamPlayer
 var _projectile: Node2D
 var _trail: Line2D
+var _melee_body: WeakRef
+var _melee_start := Vector2.ZERO
 var _flight_start := Vector2.ZERO
 var _flight_end := Vector2.ZERO
 var _flight_direction := Vector2.RIGHT
@@ -59,7 +63,8 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 		if _charge == null: _charge = _disc(5, Color(1,0.48,0.12,0.85), "charge")
 		_charge.position = _grid_point(actor.grid_pos) if _charge is FireFrames else to_local(actor.cast_origin_world())
 	else:
-		actor.set_melee_pose("anticipation")
+		if not actor.set_melee_pose("anticipation") and bool(context.get("authored_melee_sheet",false)):
+			_melee_prepare(actor)
 	_phase("charge")
 	_charge_voice = _cue("fire_charge" if fire else "sword_load")
 	if not await _wait_permitted(0.20):
@@ -70,6 +75,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	_charge_voice = null
 	_remove_fx(_charge)
 	_charge = null
+	_melee_recover()
 	_phase("release")
 	_cue("fire_release" if fire else "sword_release")
 	if fire:
@@ -268,13 +274,26 @@ func _blade_trail() -> void:
 	if is_instance_valid(rig):
 		var socket = rig.model.find_child("Kael_v2_weapon_socket",true,false)
 		if socket != null: origin = to_local(rig.output.to_global(rig.camera.unproject_position(socket.global_position)))
-	var direction := (_grid_point(context.destination) - origin).normalized()
+	var direction := (_grid_point(context.destination) - _grid_point(actor.grid_pos)).normalized()
+	var slash := _melee_sprite("slash",direction)
+	if slash != null:
+		# Contact-space crescent; source pivot is NOT a weapon socket.
+		slash.position = _grid_point(actor.grid_pos).lerp(_grid_point(context.destination),0.55) + Vector2(0,-55)
+		_melee_depth(slash,Vector2(actor.grid_pos).lerp(Vector2(context.destination),0.55),55.0)
+		return
+	direction = (_grid_point(context.destination) - origin).normalized()
 	var normal := direction.orthogonal()
 	var line := _line(PackedVector2Array([origin-direction*15-normal*8,origin,origin+direction*20+normal*4]),Color(1,0.91,0.67,0.85),2,"blade_trail")
 	_fade(line,0.14)
 
 func _recipient_accent(tile: Vector2i, fire: bool) -> void:
 	var p := _grid_point(tile)+Vector2(0,-25)
+	if not fire:
+		var impact := _melee_sprite("impact")
+		if impact != null:
+			impact.position = _grid_point(tile)+Vector2(0,-50)
+			_melee_depth(impact,Vector2(tile),50.0)
+			return
 	var accent := _line(PackedVector2Array([p+Vector2(-7,6),p,p+Vector2(7,-6)]),Color(1,0.52,0.13) if fire else Color(1,0.91,0.70),2,"recipient_accent")
 	_fade(accent,0.18)
 
@@ -372,6 +391,68 @@ func _grid_point(tile: Vector2i) -> Vector2:
 		return to_local(grid.to_global(grid._unit_foot_pos(tile)))
 	return Vector2.ZERO
 
+func _melee_prepare(actor: Unit) -> void:
+	if bool(context.reduced_motion) or not is_instance_valid(actor.visual): return
+	var body := actor.visual as Node2D
+	_melee_body = weakref(body)
+	_melee_start = body.position
+	var previous: Dictionary = body.get_meta(MELEE_META,{})
+	if previous.has("start"):
+		_melee_start = previous.start
+		var old_tween = previous.tween.get_ref()
+		if old_tween is Tween and old_tween.is_valid(): old_tween.kill()
+		body.position = _melee_start
+	var direction := (_grid_point(context.destination)-_grid_point(actor.grid_pos)).normalized()
+	var tween := _tween()
+	body.set_meta(MELEE_META,{"owner":str(context.action_key),"start":_melee_start,"tween":weakref(tween)})
+	tween.tween_property(body,"position",_melee_start-direction*4.0,0.10)
+	tween.tween_property(body,"position",_melee_start+direction*10.0,0.10)
+
+func _melee_recover() -> void:
+	var body = _melee_body.get_ref() if _melee_body != null else null
+	if is_instance_valid(body) and body.get_meta(MELEE_META,{}).get("owner","") == str(context.action_key):
+		var tween := _tween()
+		body.set_meta(MELEE_META,{"owner":str(context.action_key),"start":_melee_start,"tween":weakref(tween)})
+		tween.tween_property(body,"position",_melee_start,0.16).set_trans(Tween.TRANS_SINE)
+
+func _melee_restore() -> void:
+	var body = _melee_body.get_ref() if _melee_body != null else null
+	if is_instance_valid(body) and body.get_meta(MELEE_META,{}).get("owner","") == str(context.get("action_key","")):
+		body.position = _melee_start
+		body.remove_meta(MELEE_META)
+	_melee_body = null
+
+func _melee_depth(sprite: Node2D, cell: Vector2, height_pixels: float) -> void:
+	var manager = _manager.get_ref() if _manager != null else null
+	if not is_instance_valid(manager): return
+	var grid = manager.tactical_grid
+	var stage = grid.get("stage_view")
+	if bool(grid.get("rotatable_mode")) and is_instance_valid(stage):
+		sprite.use_stage_depth(stage.world_root,stage.camera,Vector3(cell.x*stage.TILE_WORLD,0.025,cell.y*stage.TILE_WORLD),stage.PIXELS_PER_WORLD,height_pixels)
+		return
+	# Painted view: place between actors according to foot depth, below HUDs.
+	var depth := 0
+	var node: CanvasItem = grid.unit_layer
+	while node != null:
+		depth += node.z_index
+		if not node.z_as_relative: break
+		node = node.get_parent() as CanvasItem
+	var actor = _actor.get_ref()
+	var destination_depth: int = grid._unit_depth_for(context.destination)
+	var source_depth: int = grid._unit_depth_for(actor.grid_pos)
+	sprite.z_as_relative = false
+	sprite.z_index = depth + (roundi(lerpf(source_depth,destination_depth,0.55)) if sprite.effect == "slash" else destination_depth) + 11
+
+func _melee_sprite(effect: String, direction: Vector2 = Vector2.RIGHT) -> Node2D:
+	if not bool(context.get("authored_melee_sheet",false)): return null
+	var sprite := MeleeFrames.new()
+	sprite.configure(effect,direction)
+	if not sprite.available():
+		sprite.free()
+		return null
+	_own(sprite,"melee_sheet_"+effect)
+	return sprite
+
 func _fire_sprite(stage: String) -> Node2D:
 	if not bool(context.get("authored_fire_sheet", false)): return null
 	var sprite := FireFrames.new()
@@ -460,6 +541,7 @@ func cancel() -> void:
 			if tween != null and tween.is_valid(): tween.kill()
 		for voice in _voices: _stop_voice(voice)
 		for fx in _fx: _remove_fx(fx)
+		_melee_restore()
 		_restore_reactions()
 		var manager = _manager.get_ref() if _manager != null else null
 		var scene = _scene.get_ref() if _scene != null else null
@@ -481,6 +563,7 @@ func _restore_reactions() -> void:
 	_reactions.clear()
 
 func _exit_tree() -> void:
+	_melee_restore()
 	for voice in _voices: _stop_voice(voice)
 	_restore_reactions()
 

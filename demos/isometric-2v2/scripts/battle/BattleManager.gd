@@ -2518,11 +2518,12 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 		})
 	_action_presentation_context = {}
 	var authored_fire := canonical == "fire" and bool(GameState.practice_session.get("isolated_isometric", false))
-	if authored_fire or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):
+	var authored_melee := kind == "slash" and canonical.is_empty() and bool(GameState.practice_session.get("isolated_isometric", false))
+	if authored_fire or authored_melee or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):
 		var footprint: Array[Vector2i] = []
 		if canonical == "fire": footprint = _aoe_tiles(destination,AbilityDB.get_ability(canonical),actor)
 		else: footprint.append(destination)
-		_action_presentation_context = {"profile_id":"zane_impact_v1", "authored_fire_sheet":authored_fire, "action_key":"%s:%s" % [get_instance_id(),ticket], "ticket":ticket,"actor_id":actor.unit_id,"ability_id":canonical,"kind":kind,"destination":destination,"footprint":footprint,"reduced_motion":bool(GameState.practice_session.get("reduced_zane_motion",false))}
+		_action_presentation_context = {"profile_id":"zane_impact_v1", "authored_fire_sheet":authored_fire, "authored_melee_sheet":authored_melee, "action_key":"%s:%s" % [get_instance_id(),ticket], "ticket":ticket,"actor_id":actor.unit_id,"ability_id":canonical,"kind":kind,"destination":destination,"footprint":footprint,"reduced_motion":bool(GameState.practice_session.get("reduced_zane_motion",false))}
 	var context := _action_presentation_context.duplicate(true)
 	var effects := get_node_or_null("/root/VFX") as VFXManager
 	var lifecycle = action_lifecycle
