@@ -39,7 +39,7 @@ func setup(p_ui: BattleUI, p_manager: BattleManager) -> void:
 	ui._chapel_command_buttons.add_child(_inspect)
 	ui._chapel_command_buttons.move_child(_inspect,1)
 	_help = Label.new()
-	_help.position = Vector2(24,118)
+	_help.position = Vector2(24,154)
 	_help.add_theme_font_size_override("font_size",22)
 	_help.add_theme_color_override("font_color",Color("fff2c5"))
 	_help.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -230,6 +230,7 @@ func refresh() -> void:
 		var focus := ui.get_viewport().gui_get_focus_owner()
 		if focus: focus.release_focus()
 		if grid.tiles.has(cursor_cell): set_cursor(cursor_cell)
+	_help.visible = not busy
 	if active:
 		if grid.active_unit_tile != active.grid_pos and not busy:
 			grid.show_active_unit(active.grid_pos,active.team)

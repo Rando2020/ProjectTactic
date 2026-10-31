@@ -77,7 +77,7 @@ func _layout_forecast() -> void:
 	if not is_instance_valid(_preview_panel): return
 	var viewport := get_viewport().get_visible_rect().size
 	_preview_panel.size = Vector2(500, _preview_panel.get_combined_minimum_size().y)
-	_preview_panel.position = Vector2(20, 145)
+	_preview_panel.position = Vector2(20, 190)
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	super._on_action_preview_changed(preview)
@@ -251,9 +251,14 @@ func _on_timeline_updated(ordered_units: Array) -> void:
 
 func _on_turn_started(unit_id: String, team: String) -> void:
 	super._on_turn_started(unit_id, team)
+	var unit = battle_manager.units.get(unit_id)
+	if is_instance_valid(unit): _active_portrait.texture = _framed_portrait(unit.unit_data.id)
 	_refresh_turn_portraits()
 
 func _framed_portrait(id: String) -> Texture2D:
+	if bool(GameState.practice_session.get("compact_skins", true)) and id in ["zane", "kael"]:
+		var role := "mage" if id == "zane" else "swordsman"
+		return load("res://prototypes/isometric/assets/character-sets/compact/frames/%s/portrait.png" % role)
 	if _portrait_cache.has(id): return _portrait_cache[id]
 	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(id))
 	# UI atlas crops preserve every source pixel/file; these frame head and shoulders,
@@ -267,3 +272,20 @@ func _framed_portrait(id: String) -> Texture2D:
 		texture = framed
 	_portrait_cache[id] = texture
 	return texture
+
+# Forecast columns must use the same appearance as battlefield and turn portraits.
+func _set_preview_portrait(rect: TextureRect, path: String) -> void:
+	for id in ["zane", "kael"]:
+		var role := "mage" if id == "zane" else "swordsman"
+		if path in AssetRegistry.get_character_portrait_candidates(id) or path.contains("compact/frames/%s/portrait.png" % role):
+			rect.set_meta("skin_character_id", id)
+			rect.texture = _framed_portrait(id)
+			rect.flip_h = false
+			return
+	rect.set_meta("skin_character_id", "")
+	super._set_preview_portrait(rect, path)
+
+func refresh_skin_portraits() -> void:
+	for rect in [_preview_actor_portrait, _preview_target_portrait]:
+		if is_instance_valid(rect) and not str(rect.get_meta("skin_character_id", "")).is_empty():
+			rect.texture = _framed_portrait(str(rect.get_meta("skin_character_id")))

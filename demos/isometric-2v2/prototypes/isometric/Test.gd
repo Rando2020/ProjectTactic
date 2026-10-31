@@ -38,6 +38,8 @@ func button(root: Node, label: String) -> Button:
 func fresh_battle() -> BattleScene:
 	var battle := get_tree().current_scene as BattleScene
 	await wait_idle(battle.battle_manager)
+	# Preserve the legacy original-appearance contract; compact is tested separately.
+	battle.set_compact_skins(false)
 	check(battle.tactical_grid.map_data.id == "painted_chapel_practice", "painted map on entry/retry")
 	check(battle.battle_manager.units.size() == 2, "two real fighters")
 	check(not is_instance_valid(battle.tactical_grid.terrain_view), "no 3D terrain")

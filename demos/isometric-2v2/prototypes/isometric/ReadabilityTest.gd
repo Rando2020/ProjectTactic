@@ -61,6 +61,7 @@ func run() -> void:
 				for unit: Unit in battle.battle_manager.units.values(): unit.position = saved[unit.unit_id]
 				await settle()
 	var ui = battle.battle_ui
+	battle.set_compact_skins(false)
 	for id in ["kael","storm_imp","void_cultist"]:
 		var texture: Texture2D = ui._framed_portrait(id)
 		check(texture is AtlasTexture,"portrait crop "+id)

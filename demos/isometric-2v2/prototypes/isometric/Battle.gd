@@ -5,6 +5,7 @@ var _rotate_left: Button
 var _rotate_right: Button
 var _angle_label: Label
 var _stage_caption: Label
+var _skin_button: Button
 
 func _ready() -> void:
 	if GameState.practice_session.is_empty():
@@ -58,7 +59,28 @@ func _build_stage_controls(layer: CanvasLayer) -> void:
 	for button: Button in [_mode_button,_rotate_left,_rotate_right]:
 		button.add_theme_font_size_override("font_size",20)
 		button.focus_mode = Control.FOCUS_NONE
+	_skin_button = Button.new()
+	_skin_button.position = Vector2(20, 118)
+	_skin_button.custom_minimum_size = Vector2(300, 30)
+	_skin_button.add_theme_font_size_override("font_size", 16)
+	_skin_button.focus_mode = Control.FOCUS_NONE
+	_skin_button.pressed.connect(func(): set_compact_skins(not bool(GameState.practice_session.get("compact_skins", true))))
+	layer.add_child(_skin_button)
 	_update_stage_controls()
+
+func set_compact_skins(enabled: bool) -> bool:
+	if battle_manager.is_resolving_action: return false
+	GameState.practice_session["compact_skins"] = enabled
+	for unit in battle_manager.units.values():
+		if is_instance_valid(unit): unit._refresh_directional_sprite()
+	battle_ui._portrait_cache.clear()
+	var active = battle_manager.units.get(battle_manager.active_unit_id)
+	if is_instance_valid(active) and is_instance_valid(battle_ui._active_portrait):
+		battle_ui._active_portrait.texture = battle_ui._framed_portrait(active.unit_data.id)
+	battle_ui._refresh_turn_portraits()
+	battle_ui.refresh_skin_portraits()
+	_update_stage_controls()
+	return true
 
 func set_stage_mode(enabled: bool) -> bool:
 	if battle_manager.is_resolving_action: return false
@@ -84,6 +106,9 @@ func _update_stage_controls() -> void:
 	if not is_instance_valid(_mode_button): return
 	var rotating: bool = tactical_grid.rotatable_mode
 	var busy: bool = battle_manager.is_resolving_action
+	if is_instance_valid(_skin_button):
+		_skin_button.disabled = busy
+		_skin_button.text = "Skins: compact classes · use original" if bool(GameState.practice_session.get("compact_skins", true)) else "Skins: original · use compact classes"
 	_mode_button.disabled = busy
 	_mode_button.text = "Return to painted stage" if rotating else "Try rotatable stage"
 	_rotate_left.visible = rotating

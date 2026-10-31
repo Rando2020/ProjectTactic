@@ -1,6 +1,27 @@
 extends Unit
 ## Proof-only artwork adapter. Combat, movement and facing remain production code.
 var view_quarter := 0
+var _compact_textures: Dictionary = {}
+
+func uses_compact_skin() -> bool:
+	return bool(GameState.practice_session.get("compact_skins", true)) and unit_data != null and unit_data.id in ["zane", "kael"]
+
+func set_melee_pose(pose: String) -> bool:
+	# Compact sheets contain idle directions only. Keep the same class identity
+	# during attacks and let VFXManager use its procedural anticipation fallback.
+	if uses_compact_skin():
+		if pose == "idle":
+			reset_melee_pose()
+			return true
+		return false
+	return super.set_melee_pose(pose)
+
+func _compact_texture(direction: String) -> Texture2D:
+	var role := "mage" if unit_data.id == "zane" else "swordsman"
+	var path := "res://prototypes/isometric/assets/character-sets/compact/frames/%s/%s.png" % [role, _view_facing(direction)]
+	if not _compact_textures.has(path): _compact_textures[path] = load(path)
+	return _compact_textures[path]
+
 
 func set_view_quarter(value: int) -> void:
 	view_quarter = posmod(value,4)
@@ -18,6 +39,7 @@ const FRONT := preload("res://prototypes/isometric/assets/zane-front.png")
 const BACK := preload("res://prototypes/isometric/assets/zane-back.png")
 
 func _character_direction_texture(direction: String) -> Texture2D:
+	if uses_compact_skin(): return _compact_texture(direction)
 	if unit_data != null and unit_data.id == "zane":
 		return BACK if _view_facing(direction) in ["N", "W"] else FRONT
 	return super._character_direction_texture(direction)
@@ -30,10 +52,27 @@ func _draw_unit() -> void:
 	_fit_illustrated_actor()
 
 func _refresh_directional_sprite() -> void:
-	super._refresh_directional_sprite()
+	if is_instance_valid(_sprite) and uses_compact_skin():
+		_sprite.texture = _compact_texture(facing)
+	else:
+		super._refresh_directional_sprite()
+		if is_instance_valid(_sprite) and unit_data != null and unit_data.id == "kael":
+			_sprite.texture = unit_data.sprite_sheet
+			var dimensions := _sprite.texture.get_size()
+			_sprite.scale = Vector2.ONE * (80.0 / maxf(dimensions.x, dimensions.y))
+			_sprite.position = Vector2(0, -dimensions.y * _sprite.scale.y * 0.5)
+			_sprite.offset = Vector2.ZERO
+			_sprite.flip_h = false
 	_fit_illustrated_actor()
 
 func _fit_illustrated_actor() -> void:
+	if uses_compact_skin() and is_instance_valid(_sprite):
+		# Frames are normalized by the deterministic extraction script.
+		_sprite.scale = Vector2.ONE * (86.0 / 600.0)
+		_sprite.position = Vector2.ZERO
+		_sprite.offset = _sprite.texture.get_size() * 0.5 - Vector2(400, 740)
+		_sprite.flip_h = false
+		return
 	if unit_id != "zane" or not is_instance_valid(_sprite):
 		return
 	# Original images retain transparent margins. Anchor to visible boot soles,

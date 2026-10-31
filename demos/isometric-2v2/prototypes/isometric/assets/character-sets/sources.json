@@ -1,0 +1,66 @@
+[
+  {
+    "role": "dragoon",
+    "library_file_id": "libfile_4f5688afa094819184b549138a036841",
+    "created_at": "2026-10-31T06:06:48.843471+00:00",
+    "sha256": "8e58b177c8f94665b8829b9b4bb6c4a17393e61742f9f2bcf1e187675b22433d",
+    "set": "compact",
+    "path": "compact/originals/dragoon.png"
+  },
+  {
+    "role": "mage",
+    "library_file_id": "libfile_fa2f143edd888191b5ce913c622004d1",
+    "created_at": "2026-10-31T06:06:48.050477+00:00",
+    "sha256": "065633e9ca9669a523039a1e039c8a45af30fa929d7e078672fdf2f5d0089e06",
+    "set": "compact",
+    "path": "compact/originals/mage.png"
+  },
+  {
+    "role": "rogue",
+    "library_file_id": "libfile_d27299721b9c8191a57337424ab8f1fd",
+    "created_at": "2026-10-31T06:06:47.114613+00:00",
+    "sha256": "c032c298871ffb9e7fb98c25805b9a6153de548ca58ab0f454d62c444c56da27",
+    "set": "compact",
+    "path": "compact/originals/rogue.png"
+  },
+  {
+    "role": "swordsman",
+    "library_file_id": "libfile_8e65ce69765881919ac4c1aa5759a77d",
+    "created_at": "2026-10-31T06:06:46.218099+00:00",
+    "sha256": "8c892b00518f6b94925ddc36ed9fb9ba561e4d2fa7e7f4e1571031959bd86586",
+    "set": "compact",
+    "path": "compact/originals/swordsman.png"
+  },
+  {
+    "role": "dragoon",
+    "library_file_id": "libfile_18bfe567e8208191bb278da7c3415ac0",
+    "created_at": "2026-10-31T05:59:00.105420+00:00",
+    "sha256": "c59b6a306e94d155c669e4c9b6c3615050068baab99669c335690bd3b2d7cdd7",
+    "set": "painterly",
+    "path": "painterly/originals/dragoon.png"
+  },
+  {
+    "role": "mage",
+    "library_file_id": "libfile_294a85aa054c8191884e42df99037d4f",
+    "created_at": "2026-10-31T05:58:59.230416+00:00",
+    "sha256": "81d5d91cc7b1393a849fb3a6335f1702b1472c17da3cf59d7e338631c454da85",
+    "set": "painterly",
+    "path": "painterly/originals/mage.png"
+  },
+  {
+    "role": "rogue",
+    "library_file_id": "libfile_6f8ef93f57048191bf10aec890ed2c1c",
+    "created_at": "2026-10-31T05:58:58.130412+00:00",
+    "sha256": "6f0b683dd9f25b3ae20c2fd5d41380a47a88110a0b98dea7b1d2c04e38cfa99f",
+    "set": "painterly",
+    "path": "painterly/originals/rogue.png"
+  },
+  {
+    "role": "swordsman",
+    "library_file_id": "libfile_516833a7ab988191975ec2be8522756d",
+    "created_at": "2026-10-31T05:58:57.212108+00:00",
+    "sha256": "73eed48abb76e434f80197dfc34f76cddb8c15d565b8f9455f932ce36d3d36a1",
+    "set": "painterly",
+    "path": "painterly/originals/swordsman.png"
+  }
+]

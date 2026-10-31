@@ -2107,6 +2107,10 @@ func _affinity_label(target: Unit, spell_type: String) -> String:
 func _portrait_path(unit: Unit) -> String:
 	if not unit or not unit.unit_data:
 		return ""
+	# Isolated class-skin adapters supply matching forecast and action-banner art.
+	if unit.has_method("uses_compact_skin") and unit.call("uses_compact_skin"):
+		var role := "mage" if unit.unit_data.id == "zane" else "swordsman"
+		return "res://prototypes/isometric/assets/character-sets/compact/frames/%s/portrait.png" % role
 	# Forecast portraits must resolve to a real file path because BattleUI
 	# loads the image bytes, not an in-memory ImageTexture resource_path.
 	for path: String in AssetRegistry.get_character_portrait_candidates(unit.unit_data.id):

@@ -44,3 +44,24 @@ Zane and Kael face a Storm Imp and Void Cultist on the flat 5×5 chapel floor. I
 ## Remaining limits
 
 Two still Zane poses are mirrored for four interim facings; asymmetric details reverse. They are not four bespoke directions or a walk/sword animation set. Kael and both enemies reuse existing art. Painted stairs and upper architecture are scenery, not a multi-height playable map. Forced lethal-damage defeat fixtures test the loss/retry lifecycle, not natural-loss balance. The FFT-assets-first follow-on is pending the user's own-copy/asset-source clarification; no such assets have been acquired.
+
+## Compact class-skin comparison (2026-10-31)
+
+The isolated demo now defaults to the selected compact **class appearance studies**:
+swordsman on Kael's melee role and mage on Zane's caster role. Names, lore, stats,
+skills and enemy art are unchanged; the mage appearance is not a canonical Zane
+redesign. The **Skins** button restores the original presentation at any time
+outside action resolution. Queue and active portraits follow the selected skin.
+Rogue and dragoon remain import-ready studies, not new combatants.
+
+Both complete original sets are preserved byte-for-byte under
+`prototypes/isometric/assets/character-sets/{compact,painterly}/originals/` with
+source hashes and deterministic extraction. Raw sheets stay in GitHub but are
+excluded from runtime exports to avoid unnecessary download size.
+
+These are static directional cutouts with existing procedural movement, recoil,
+lunge and spell effects—not newly drawn walk or attack frame sequences. Compact
+melee uses that procedural fallback rather than briefly swapping to an unrelated
+legacy attack pose. Front-left directions (and rogue rear-right) are documented
+mirrors; handedness/asymmetric costume details reverse. See the asset README for
+anchors, mapping, provenance and limitations. Original assets are retained.

@@ -73,7 +73,7 @@ func run() -> void:
 		seen[id] = true
 		if id == "kael" and team == "player":
 			kael_hud.shown = battle.battle_ui._unit_name.text.contains("Kael")
-			kael_hud.portrait = battle.battle_ui._active_portrait.texture == AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates("kael")))
+			kael_hud.portrait = battle.battle_ui._active_portrait.texture == battle.battle_ui._framed_portrait("kael"))
 	manager.combat_resolver.combat_resolved.connect(func(_result: Dictionary):
 		if manager.active_unit_id.begins_with("Enemy_"): enemy_actions[manager.active_unit_id] = true)
 	var zane: Unit = manager.units.zane

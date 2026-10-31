@@ -1,0 +1,273 @@
+{
+  "canvas": [
+    800,
+    800
+  ],
+  "foot_anchor": [
+    400,
+    740
+  ],
+  "normalized_head_to_sole_height": 600,
+  "logical_view_mapping": {
+    "N": "NE",
+    "E": "SE",
+    "S": "SW",
+    "W": "NW"
+  },
+  "frames": [
+    {
+      "role": "swordsman",
+      "direction": "E",
+      "source_bounds": [
+        73,
+        31,
+        685,
+        653
+      ],
+      "source_foot_anchor": [
+        370,
+        632
+      ],
+      "source_head_y": 31,
+      "scale": 0.9983361064891847,
+      "mirrored": false,
+      "path": "compact/frames/swordsman/E.png",
+      "sha256": "84bcd5c7adea082900d5872b078cbe7a0d8f6521b959ed66cdb87d89538435bf"
+    },
+    {
+      "role": "swordsman",
+      "direction": "W",
+      "source_bounds": [
+        63,
+        598,
+        647,
+        1192
+      ],
+      "source_foot_anchor": [
+        349,
+        1185
+      ],
+      "source_head_y": 624,
+      "scale": 1.0695187165775402,
+      "mirrored": false,
+      "path": "compact/frames/swordsman/W.png",
+      "sha256": "2eb14ebf6ada1c0fa4ee2ada2bd94a55c0198f9c137b0d0879b74b9d2c8b155c"
+    },
+    {
+      "role": "swordsman",
+      "direction": "N",
+      "source_bounds": [
+        655,
+        628,
+        1226,
+        1220
+      ],
+      "source_foot_anchor": [
+        943,
+        1209
+      ],
+      "source_head_y": 628,
+      "scale": 1.0327022375215147,
+      "mirrored": false,
+      "path": "compact/frames/swordsman/N.png",
+      "sha256": "f90d4b596bf1e44c6c3c03c7e46da463c7605468a732f8f013b4e5a06c1f1250"
+    },
+    {
+      "role": "swordsman",
+      "direction": "S",
+      "mirrored": true,
+      "derived_from": "E",
+      "limitation": "Missing opposing front view; handedness is provisional.",
+      "path": "compact/frames/swordsman/S.png",
+      "sha256": "63d1e92f3d29937a520cd4ab21b5a6f7244b96c824c1eae830002db77373c1bd"
+    },
+    {
+      "role": "mage",
+      "direction": "E",
+      "source_bounds": [
+        144,
+        46,
+        645,
+        613
+      ],
+      "source_foot_anchor": [
+        386,
+        610
+      ],
+      "source_head_y": 60,
+      "scale": 1.0909090909090908,
+      "mirrored": false,
+      "path": "compact/frames/mage/E.png",
+      "sha256": "6ff9ad8fcfa53c3b4a79fae0de7927e1179c77c489b3f1f5e7423481437d2307"
+    },
+    {
+      "role": "mage",
+      "direction": "W",
+      "source_bounds": [
+        77,
+        626,
+        619,
+        1219
+      ],
+      "source_foot_anchor": [
+        389,
+        1213
+      ],
+      "source_head_y": 626,
+      "scale": 1.0221465076660987,
+      "mirrored": false,
+      "path": "compact/frames/mage/W.png",
+      "sha256": "43aa6c721589b83bc719c1d872882ac50cbe91fc90c677430596b81128f9eb36"
+    },
+    {
+      "role": "mage",
+      "direction": "N",
+      "source_bounds": [
+        670,
+        626,
+        1175,
+        1220
+      ],
+      "source_foot_anchor": [
+        961,
+        1215
+      ],
+      "source_head_y": 626,
+      "scale": 1.0186757215619695,
+      "mirrored": false,
+      "path": "compact/frames/mage/N.png",
+      "sha256": "2b08baaa15a24f3d79b07614957566f2771bb01206f94c7870bd63e250cc4f7d"
+    },
+    {
+      "role": "mage",
+      "direction": "S",
+      "mirrored": true,
+      "derived_from": "E",
+      "limitation": "Missing opposing front view; handedness is provisional.",
+      "path": "compact/frames/mage/S.png",
+      "sha256": "11c01407455bc4c2432d5bb5ecff6e12f9216dfcb7bb54cef2b6b898304c3ba0"
+    },
+    {
+      "role": "rogue",
+      "direction": "E",
+      "source_bounds": [
+        89,
+        47,
+        629,
+        643
+      ],
+      "source_foot_anchor": [
+        345,
+        642
+      ],
+      "source_head_y": 47,
+      "scale": 1.0084033613445378,
+      "mirrored": false,
+      "path": "compact/frames/rogue/E.png",
+      "sha256": "69523f05543a1997f226f4e0aed0ec2bb7edda8f6453ea7279004676994f8e5a"
+    },
+    {
+      "role": "rogue",
+      "direction": "W",
+      "source_bounds": [
+        71,
+        633,
+        631,
+        1220
+      ],
+      "source_foot_anchor": [
+        319,
+        1215
+      ],
+      "source_head_y": 633,
+      "scale": 1.0309278350515463,
+      "mirrored": false,
+      "path": "compact/frames/rogue/W.png",
+      "sha256": "7ffad04931c4c8b3936239852b01236a9deba1d395de2c8db7732052b67cbc36"
+    },
+    {
+      "role": "rogue",
+      "direction": "S",
+      "mirrored": true,
+      "derived_from": "E",
+      "limitation": "Missing opposing front view; handedness is provisional.",
+      "path": "compact/frames/rogue/S.png",
+      "sha256": "8809a0fef767a6a6481391f72a790fd627043c68487c94d6e77b393f08c7f1df"
+    },
+    {
+      "role": "rogue",
+      "direction": "N",
+      "mirrored": true,
+      "derived_from": "W",
+      "limitation": "Right-hand figures touch in original; mirrored rear avoids cutting or including neighbor.",
+      "path": "compact/frames/rogue/N.png",
+      "sha256": "17f5ec6aac94611067b7b8a89e973e6ad2fd2147996152d0914005d99abf9fd2"
+    },
+    {
+      "role": "dragoon",
+      "direction": "E",
+      "source_bounds": [
+        26,
+        74,
+        691,
+        636
+      ],
+      "source_foot_anchor": [
+        380,
+        620
+      ],
+      "source_head_y": 74,
+      "scale": 1.098901098901099,
+      "mirrored": false,
+      "path": "compact/frames/dragoon/E.png",
+      "sha256": "4262c7e98733c026c9de4dd607d8f8a48b8a292267dd8c860da194c23184ff1f"
+    },
+    {
+      "role": "dragoon",
+      "direction": "W",
+      "source_bounds": [
+        176,
+        628,
+        632,
+        1192
+      ],
+      "source_foot_anchor": [
+        332,
+        1185
+      ],
+      "source_head_y": 631,
+      "scale": 1.0830324909747293,
+      "mirrored": false,
+      "path": "compact/frames/dragoon/W.png",
+      "sha256": "837c528999a2c5b17c2ffa8f1144330dcebbec187160acae84586defbd3e7810"
+    },
+    {
+      "role": "dragoon",
+      "direction": "N",
+      "source_bounds": [
+        640,
+        638,
+        1240,
+        1208
+      ],
+      "source_foot_anchor": [
+        975,
+        1202
+      ],
+      "source_head_y": 638,
+      "scale": 1.0638297872340425,
+      "mirrored": false,
+      "path": "compact/frames/dragoon/N.png",
+      "sha256": "800e62b922489bcffd337ee8fa55d765b615375496666fbc4a4d027066953907"
+    },
+    {
+      "role": "dragoon",
+      "direction": "S",
+      "mirrored": true,
+      "derived_from": "E",
+      "limitation": "Missing opposing front view; handedness is provisional.",
+      "path": "compact/frames/dragoon/S.png",
+      "sha256": "bbb186180b4baf9c363c521939d283228dd6ea7246b8488c9c9db564e9d72036"
+    }
+  ]
+}
