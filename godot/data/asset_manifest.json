@@ -147,19 +147,19 @@
       "directions": {
         "front": {
           "path": "res://assets/characters/iso-v02/character-swordsman-idle-sw-v02.png",
-          "fallback_path": "res://assets/sprites/units/zane-front-illustrated.png"
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
         },
         "right": {
           "path": "res://assets/characters/iso-v02/character-swordsman-idle-se-v02.png",
-          "fallback_path": "res://assets/sprites/units/zane-right-illustrated.png"
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
         },
         "back": {
           "path": "res://assets/characters/iso-v02/character-swordsman-idle-ne-v02.png",
-          "fallback_path": "res://assets/sprites/units/zane-back-illustrated.png"
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
         },
         "left": {
           "path": "res://assets/characters/iso-v02/character-swordsman-idle-nw-v02.png",
-          "fallback_path": "res://assets/sprites/units/zane-left-illustrated.png"
+          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
         }
       }
     },

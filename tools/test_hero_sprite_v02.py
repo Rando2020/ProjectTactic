@@ -29,6 +29,7 @@ class HeroIsometricV02Contract(unittest.TestCase):
                     expected = f"res://assets/characters/iso-v02/character-{role}-idle-{diagonal}-v02.png"
                     self.assertEqual(spec["path"], expected)
                     self.assertTrue(spec["fallback_path"].startswith("res://assets/"))
+                    self.assertTrue((GODOT / spec["fallback_path"].removeprefix("res://")).is_file())
 
     def test_transparent_256px_sprites_with_common_foot_line(self):
         for unit_id, role in HEROES.items():

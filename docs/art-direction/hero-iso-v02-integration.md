@@ -26,7 +26,7 @@ The existing game uses cardinal facings N/E/S/W rather than diagonal labels. The
 | N | back | ne |
 | W | left | nw |
 
-The adapter in `godot/scripts/units/Unit.gd` calls `AssetRegistry.get_character_direction_candidates(unit_data.id, direction)` and retains `unit_data.sprite_sheet` as a final fallback. For Zane, the previously illustrated directional sprite paths remain first fallback candidates. A 3D opt-in display still owns its visual and is not changed by 2D texture switching.
+The adapter in `godot/scripts/units/Unit.gd` calls `AssetRegistry.get_character_direction_candidates(unit_data.id, direction)` and retains `unit_data.sprite_sheet` as a final fallback. For Zane, the checked-in vanguard idle PNG is the verified fallback because the formerly referenced illustrated per-direction files are absent from this repository. Other heroes use their checked-in v01 idle images as fallbacks. A 3D opt-in display still owns its visual and is not changed by 2D texture switching.
 
 `Unit` anchors sprites with the bottom of their 256px canvas at the tile origin. The authored foot line is y≈245, giving around 3 game-pixel vertical padding at 80px display height. Selection, HP bars, abilities, AI, damage preview, and enemy art are unchanged.
 
