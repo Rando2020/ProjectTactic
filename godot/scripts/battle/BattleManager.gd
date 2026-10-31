@@ -2513,7 +2513,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 			"reduced_motion": bool(GameState.practice_session.get("reduced_zane_motion", false)),
 		})
 	_action_presentation_context = {}
-	if actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire"):
+	if (actor.has_zane_impact_presentation() or actor.has_chapel_sprite_presentation()) and ((kind == "slash" and canonical.is_empty()) or canonical == "fire"):
 		var footprint: Array[Vector2i] = []
 		if canonical == "fire": footprint = _aoe_tiles(destination,AbilityDB.get_ability(canonical),actor)
 		else: footprint.append(destination)

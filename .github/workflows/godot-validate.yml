@@ -46,6 +46,7 @@ jobs:
       - name: Test illustrated portrait and sprite export contracts
         run: |
           python -m unittest discover -s tools -p test_illustrated_zane_contract.py
+          python -m unittest discover -s tools -p test_hero_sprite_v02.py
           python -m unittest discover -s tools -p test_prepare_illustrated_zane.py
 
       - name: Test original Zane impact asset and audio contracts
@@ -74,6 +75,9 @@ jobs:
 
       - name: Import project headlessly
         run: godot --headless --path godot --import
+
+      - name: Validate fireball sprite atlas
+        run: godot --headless --path godot --script res://tests/test_fireball_sprite.gd
 
       - name: Validate painted chapel demo
         run: |
@@ -117,6 +121,11 @@ jobs:
 
       - name: Exercise real illustrated chapel battle
         run: timeout 90s godot --headless --path godot --scene res://tests/test_illustrated_chapel_runtime.tscn
+
+      - name: Validate chapel sprite integration
+        run: |
+          timeout 90s godot --headless --path godot res://tests/test_chapel_sprite_pipeline.tscn
+          XDG_DATA_HOME=$(mktemp -d) timeout 90s godot --headless --path godot res://tests/test_chapel_combat_flow.tscn
 
       - name: Validate responsive battle HUD layout
         run: godot --headless --path godot --script res://tests/test_battle_hud_layout.gd
@@ -320,3 +329,48 @@ jobs:
           name: zane-duel-browser-captures
           path: docs/qa/browser-zane-duel-captures/
           if-no-files-found: error
+
+  chapel-browser:
+    name: Chapel browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hydrate runtime art
+        run: |
+          git lfs fetch --include='godot/**' --exclude='' origin HEAD
+          git lfs checkout 'godot/**'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
+      - name: Export isolated chapel browser build
+        run: |
+          python -m pip install websocket-client
+          godot --headless --path godot --import
+          mkdir -p build/web
+          godot --headless --path godot --export-release Web ../build/web/index.html
+          python tools/export_browser_qa.py --scenario chapel --output build/web-qa-chapel/index.html
+          git diff --exit-code -- godot/project.godot
+      - name: Play chapel with real browser input
+        run: |
+          mkdir -p docs/qa/browser-chapel-captures
+          python -m http.server 8000 --directory build/web-qa-chapel >docs/qa/browser-chapel-captures/server.log 2>&1 &
+          server_pid=$!
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1920,1080 \
+            --remote-debugging-port=9222 --remote-allow-origins='*' \
+            --user-data-dir=/tmp/projecttactic-chapel-chrome \
+            about:blank >docs/qa/browser-chapel-captures/chrome.log 2>&1 &
+          browser_pid=$!
+          trap 'kill "$browser_pid" "$server_pid" 2>/dev/null || true' EXIT
+          python tools/browser_chapel_smoke.py
+      - name: Upload actual chapel browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chapel-browser-evidence
+          path: docs/qa/browser-chapel-captures/
+          if-no-files-found: warn
