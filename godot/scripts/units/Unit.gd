@@ -151,7 +151,7 @@ func _draw_unit() -> void:
 	# All sprites and rects are offset upward so their bottom sits at y = 0.
 	if unit_data and unit_data.sprite_sheet:
 		_sprite = Sprite2D.new()
-		# Zane's painterly directional sprites take priority in normal 2D battles.
+		# Manifest-backed directional sprites take priority for any configured hero.
 		# A missing/corrupt direction falls back to the original UnitData sprite.
 		_sprite.texture = _character_direction_texture(facing)
 		var tex_size := _sprite.texture.get_size()
@@ -471,18 +471,17 @@ func set_facing(new_facing: String) -> void:
 func _character_direction_texture(direction: String) -> Texture2D:
 	if unit_data == null:
 		return null
-	if unit_data.id == "zane":
-		var candidate := AssetRegistry.load_first_texture(
-			AssetRegistry.get_character_direction_candidates("zane", direction))
-		if candidate != null:
-			return candidate
+	var candidate := AssetRegistry.load_first_texture(
+		AssetRegistry.get_character_direction_candidates(unit_data.id, direction))
+	if candidate != null:
+		return candidate
 	return unit_data.sprite_sheet
 
 
 func _refresh_directional_sprite() -> void:
 	if not is_instance_valid(_sprite) or not _idle_visual.is_empty():
 		return
-	if unit_data == null or unit_data.id != "zane" or is_instance_valid(_rig3d):
+	if unit_data == null or is_instance_valid(_rig3d):
 		return
 	var texture := _character_direction_texture(facing)
 	if texture == null or texture == _sprite.texture:

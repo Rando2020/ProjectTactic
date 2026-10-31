@@ -20,11 +20,15 @@ class IllustratedZaneContractTest(unittest.TestCase):
         cls.battle_ui = (GODOT / "scripts/battle/BattleUI.gd").read_text(encoding="utf-8")
         cls.manager = (GODOT / "scripts/battle/BattleManager.gd").read_text(encoding="utf-8")
 
-    def test_only_zane_has_new_direction_manifest(self):
+    def test_four_heroes_have_direction_manifest(self):
         characters = self.manifest["characters"]
-        self.assertEqual({"front", "right", "back", "left"}, set(characters["zane"]["directions"]))
+        heroes = {"zane", "mira", "kael", "lyra"}
         for unit_id, spec in characters.items():
-            if unit_id != "zane":
+            if unit_id in heroes:
+                self.assertEqual({"front", "right", "back", "left"}, set(spec["directions"]))
+                for direction in spec["directions"].values():
+                    self.assertTrue(direction["path"].startswith("res://assets/characters/iso-v02/"))
+            else:
                 self.assertNotIn("directions", spec)
 
     def test_assets_have_stable_fallbacks(self):
@@ -41,7 +45,8 @@ class IllustratedZaneContractTest(unittest.TestCase):
         self.assertIn("func get_character_direction_candidates(", self.asset_registry)
         self.assertIn('_character_direction_texture(facing)', self.unit)
         self.assertIn('_refresh_directional_sprite()', self.unit)
-        self.assertIn('unit_data.id != "zane"', self.unit)
+        self.assertNotIn('unit_data.id != "zane"', self.unit)
+        self.assertIn('get_character_direction_candidates(unit_data.id, direction)', self.unit)
         self.assertIn('get_character_portrait_candidates(uid)', self.character)
         self.assertIn('get_character_portrait_candidates(unit.unit_data.id)', self.manager)
         self.assertIn('get_character_portrait_candidates(unit.unit_data.id)', self.battle_ui)
