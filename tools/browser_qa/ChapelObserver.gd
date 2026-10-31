@@ -26,6 +26,8 @@ func _process(delta: float) -> void:
   state.ticket = manager.action_lifecycle.ticket
   state.action_phase = manager.action_lifecycle.phase
   state.command = manager.active_command
+  state.spent_action = manager.active_unit_has_acted
+  state.spent_move = manager.active_unit_has_moved
   state.units = []
   for unit: Unit in manager.units.values():
    var screen := unit.get_global_transform_with_canvas() * Vector2.ZERO

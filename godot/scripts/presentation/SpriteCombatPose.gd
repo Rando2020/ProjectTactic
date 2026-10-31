@@ -11,13 +11,13 @@ func bind(target: Sprite2D) -> void:
  base_scale = target.scale
  clock = 0.0
 
-func pose(value: String, screen_direction: Vector2) -> bool:
+func pose(value: String, screen_direction: Vector2, reduced: bool = false) -> bool:
  if not is_instance_valid(sprite): return false
  if value not in ["idle", "anticipation", "contact", "recovery", "cast_anticipation", "cast_release", "cast_recovery"]: return false
  state = value
  clock = 0.0
  side = -1.0 if screen_direction.x < 0.0 else 1.0
- apply(0.0, false)
+ apply(0.0, reduced)
  return true
 
 func apply(delta: float, reduced: bool) -> void:

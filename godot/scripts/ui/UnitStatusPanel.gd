@@ -4,6 +4,7 @@ var portrait: TextureRect
 var details: Label
 
 func _ready() -> void:
+ theme = preload("res://scripts/ui/AppointedTheme.gd").build()
  title = "Unit Status"
  min_size = Vector2i(480, 360)
  var row := HBoxContainer.new()
@@ -24,5 +25,8 @@ func inspect(unit: Unit) -> void:
  var effects: Array[String] = []
  for effect: StatusEffect in unit.statuses:
   effects.append("%s (%d)" % [effect.status_id.capitalize(), effect.duration])
- details.text = "%s\n%s\n\nHP  %d / %d\nMP  %d / %d\nTemper  %d    Ether  %d\nFacing  %s\n\n%s" % [unit.display_name, unit.current_job_id.capitalize(), unit.hp, unit.unit_data.base_stats.hp, unit.mp, unit.unit_data.base_stats.mp, unit.temper, unit.ether, unit.facing, ", ".join(effects) if not effects.is_empty() else "No status effects"]
+ var registry: Dictionary = GameState.unit_registry.get(unit.unit_id, {})
+ var job_id := str(registry.get("current_job_id", unit.current_job_id))
+ var job_name := str(JobTreeData.get_job(job_id).get("name", job_id.capitalize()))
+ details.text = "%s\n%s\n\nHP  %d / %d\nMP  %d / %d\nTemper  %d    Ether  %d\nFacing  %s\n\n%s" % [unit.display_name, job_name, unit.hp, unit.unit_data.base_stats.hp, unit.mp, unit.unit_data.base_stats.mp, unit.temper, unit.ether, unit.facing, ", ".join(effects) if not effects.is_empty() else "No status effects"]
  popup_centered()

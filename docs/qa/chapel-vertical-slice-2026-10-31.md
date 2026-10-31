@@ -29,9 +29,9 @@ The review sprites use their supplied 256x256 canvas and common (128,245) anchor
 
 ## Validation
 
-Local Godot 4.6.3 import and Web export succeeded. The new sprite test passed 22 checks after reproducing 10 baseline failures and a separate depth failure. The real chapel combat flow passed 13 checks: legal Fire, double-click guard, one MP charge, one outcome, idle reset, enemy response, zero-MP sword and victory/results.
+Local Godot 4.6.3 import and Web export succeeded. The new sprite test passed 34 checks after reproducing 10 baseline failures and a separate depth failure. The real chapel combat flow passed 13 checks: legal Fire, double-click guard, one MP charge, one outcome, idle reset, enemy response, zero-MP sword and victory/results.
 
-The Python tooling suite passed 168 tests. The initial 32-fixture playable-loop run passed 31 fixtures and caught three legacy Kael offset assertions in `test_playable_loop`. Origin normalization was narrowed to chapel Zane and provisional sprites so legacy presentation retains its exact transform. The affected fixture is rerun before delivery; documented legacy shutdown resource diagnostics remain visible in logs. Native script checks and Web packaging checks are recorded in the PR.
+The Python tooling suite passed 168 tests. The initial 32-fixture playable-loop run passed 31 fixtures and caught three legacy Kael offset assertions in `test_playable_loop`. Origin normalization was narrowed to chapel Zane and provisional sprites so legacy presentation retains its exact transform. The affected fixture passed all 427 checks after correction; documented legacy shutdown resource diagnostics remain visible in logs. Native script checks and Web packaging checks are recorded in the PR.
 
 Local Chromium could not launch: the executor rejects the process-singleton socket (`Operation not permitted`). This is not a browser pass. The isolated `chapel-browser` CI job exports a read-only observer, performs real browser input, and uploads actual screenshots/state/errors to `chapel-browser-evidence`. Production main_scene is restored after export. No observer is installed in production.
 
@@ -40,3 +40,9 @@ Local Chromium could not launch: the executor rejects the process-singleton sock
 Browser evidence must be reviewed for all four provisional facings, foot contact, wall occlusion, 1080p/1440p/4K text and battle visibility, forecast readability, sword/Fire timing, victory and console errors. Successful automated assertions do not certify generated anatomy or visual quality. Default Zane still lacks an approved true four-view set. The existing right rail remains; this change adds contextual Status rather than replacing all HUD layout.
 
 No live deployment, approved artwork replacement, full production-quality acceptance, or merge is claimed. Next: approve identity-correct turnarounds; review the browser captures; refine compact HUD and authored action poses against those captures.
+
+## Actual browser findings and fix follow-up
+
+PR #92 (`fix/chapel-browser-acceptance`) supersedes #91 and contains the full integration. The first browser run exposed Status inheriting a disabled default; a failing button-state regression was added and the command now follows player-turn availability. The second run captured all four facings, 1080p/1440p/4K, Status and a real sword attack with no console errors. It then exposed a QA observer error: Unit.has_acted is not the BattleManager action-spent flag used by the UI. The observer now reports that authoritative flag so the driver waits before choosing Fire. No gameplay rule was changed to satisfy the harness.
+
+A separate native regression caught a one-frame pose deformation under reduced motion. The preference is now passed into the initial pose call, not only its next process tick.

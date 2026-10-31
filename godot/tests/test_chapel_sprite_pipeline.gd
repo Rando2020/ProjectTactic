@@ -22,6 +22,11 @@ func run() -> void:
  for pair in [[Vector2i(4,4),"N"], [Vector2i(5,5),"E"], [Vector2i(4,6),"S"], [Vector2i(3,5),"W"]]:
   zane.face_action(pair[0])
   check(zane.facing == pair[1], "2D attack faces target " + pair[1])
+ GameState.practice_session["reduced_zane_motion"] = true
+ zane.set_melee_pose("anticipation")
+ check(is_zero_approx(zane._sprite.rotation), "reduced motion suppresses the first anticipation frame")
+ zane.reset_melee_pose()
+ GameState.practice_session["reduced_zane_motion"] = false
  check(zane.set_melee_pose("anticipation"), "2D Zane supports anticipation")
  check(zane.set_melee_pose("contact"), "2D Zane supports contact")
  zane.reset_melee_pose()
@@ -36,6 +41,7 @@ func run() -> void:
   await get_tree().process_frame
   ui._on_unit_status()
   await get_tree().process_frame
+  check(ui._unit_status_panel.details.text.contains("Arcanist"), "Status displays the canonical current job")
   check(ui._unit_status_panel.visible, "Status opens at " + str(viewport_size))
   check(ui._unit_status_panel.size.x <= viewport_size.x and ui._unit_status_panel.size.y <= viewport_size.y, "Status fits viewport " + str(viewport_size))
   check(ui._unit_status_panel.portrait.texture != null, "Status uses actual portrait")

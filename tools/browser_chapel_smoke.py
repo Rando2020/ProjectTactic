@@ -118,13 +118,13 @@ def main():
    tile=min(state['moves'],key=lambda t:sum(abs(a-b) for a,b in zip(t['grid'],target)))
    click(tile['point']);wait(lambda s:zane(s)['grid']==tile['grid'] and not s['busy'])
   state=action('Attack')
-  if not state.get('result') and zane(state)['acted']:
+  if not state.get('result') and state['spent_action']:
    button('Wait');time.sleep(.25)
   state=action('Fire')
   for _ in range(12):
    state=ready()
    if state.get('result'): break
-   if zane(state)['acted']:
+   if state['spent_action']:
     button('Wait');time.sleep(.25)
    else: action('Fire')
   state=wait(lambda s:bool(s.get('result')))

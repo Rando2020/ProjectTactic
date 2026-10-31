@@ -58,7 +58,7 @@ var _pose_textures: Dictionary = {}
 func set_melee_pose(pose: String) -> bool:
 	if _sprite_pose != null and not is_instance_valid(_rig3d):
 		melee_pose = pose
-		return _sprite_pose.pose(pose, _facing_screen_direction(facing))
+		return _sprite_pose.pose(pose, _facing_screen_direction(facing), bool(GameState.practice_session.get("reduced_zane_motion", false)))
 	if is_instance_valid(_rig3d):
 		_rig3d.play(pose)
 		melee_pose = pose
@@ -748,7 +748,7 @@ func face_action(destination: Vector2i) -> void:
 
 func recover_melee_pose() -> void:
 	if _sprite_pose != null:
-		_sprite_pose.pose("recovery", _facing_screen_direction(facing))
+		_sprite_pose.pose("recovery", _facing_screen_direction(facing), bool(GameState.practice_session.get("reduced_zane_motion", false)))
 	if is_instance_valid(_rig3d) and _rig3d.state == "contact":
 		_rig3d.play("recovery")
 	elif is_instance_valid(_rig3d) and _rig3d.state == "cast_release":
@@ -768,7 +768,7 @@ func disable_3d_prototype() -> void:
 func set_cast_pose(pose: String) -> bool:
 	if _sprite_pose != null and not is_instance_valid(_rig3d):
 		melee_pose = "cast_" + pose
-		return _sprite_pose.pose(melee_pose, _facing_screen_direction(facing))
+		return _sprite_pose.pose(melee_pose, _facing_screen_direction(facing), bool(GameState.practice_session.get("reduced_zane_motion", false)))
 	if not is_instance_valid(_rig3d):
 		return false
 	_rig3d.play("cast_" + pose)
