@@ -15,7 +15,13 @@ func _process(delta: float) -> void:
  var state := {"scene":scene.scene_file_path, "viewport":point(get_viewport().get_visible_rect().size), "buttons":[], "enemy_turns":enemy_turns}
  for button in scene.find_children("*", "Button", true, false):
   if button.is_visible_in_tree() and not button.disabled:
-   state.buttons.append({"text":button.text, "point":point(button.get_global_rect().get_center())})
+   var caption: String = button.text
+   if caption.is_empty():
+    var labels := PackedStringArray()
+    for label in button.find_children("*", "Label", true, false):
+     if label.is_visible_in_tree(): labels.append(label.text)
+    caption = " ".join(labels)
+   state.buttons.append({"text":caption, "point":point(button.get_global_rect().get_center())})
  if scene is BattleScene:
   var manager: BattleManager = scene.battle_manager
   var grid: TacticalGrid = scene.tactical_grid
