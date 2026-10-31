@@ -53,6 +53,8 @@ var _preview_amount_label: Label
 var _preview_hit_label: Label
 var _preview_crit_label: Label
 var _preview_note_label: Label
+var _unit_status_panel: AcceptDialog
+var _status_btn: Button
 var _chapel_command_panel: PanelContainer
 var _chapel_command_buttons: VBoxContainer
 var _loadout_panel: PanelContainer
@@ -387,6 +389,13 @@ func _build_chapel_command_dock() -> void:
 		button.add_theme_font_size_override("font_size", 15)
 		if button == _ability_btn:
 			button.text = "Skills"
+	_status_btn = _cmd_btn(_chapel_command_buttons, "Status", _on_unit_status)
+	_chapel_command_buttons.move_child(_status_btn, _wait_btn.get_index())
+	_status_btn.custom_minimum_size = Vector2(156, 42)
+	_unit_status_panel = preload("res://scripts/ui/UnitStatusPanel.gd").new()
+	add_child(_unit_status_panel)
+	if GameState.practice_session.get("review_hero_art", false):
+		header.text = "ART REVIEW · PROVISIONAL"
 	_chapel_command_panel.resized.connect(_layout_chapel_command_dock)
 
 
@@ -1111,6 +1120,7 @@ func _on_log(text: String) -> void:
 
 
 func _on_phase_changed(phase: String) -> void:
+	if is_instance_valid(_unit_status_panel): _unit_status_panel.hide()
 	_phase_label.text = phase.replace("_", " ")
 	_is_player_turn = phase == "PLAYER_TURN"
 	_refresh_command_buttons()
@@ -1844,3 +1854,9 @@ func _play_sfx(sfx_id: String) -> void:
 
 func _battle_theme() -> Theme:
 	return preload("res://scripts/ui/AppointedTheme.gd").build()
+
+
+func _on_unit_status() -> void:
+	if not battle_manager or battle_manager.is_resolving_action: return
+	var unit: Unit = battle_manager.units.get(battle_manager.active_unit_id)
+	if is_instance_valid(unit): _unit_status_panel.inspect(unit)

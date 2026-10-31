@@ -46,7 +46,7 @@ class IllustratedZaneContractTest(unittest.TestCase):
         self.assertIn('_character_direction_texture(facing)', self.unit)
         self.assertIn('_refresh_directional_sprite()', self.unit)
         self.assertNotIn('unit_data.id != "zane"', self.unit)
-        self.assertIn('get_character_direction_candidates(unit_data.id, direction)', self.unit)
+        self.assertIn('get_character_direction_candidates(unit_data.id, direction,', self.unit)
         self.assertIn('get_character_portrait_candidates(uid)', self.character)
         self.assertIn('get_character_portrait_candidates(unit.unit_data.id)', self.manager)
         self.assertIn('get_character_portrait_candidates(unit.unit_data.id)', self.battle_ui)

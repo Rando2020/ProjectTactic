@@ -50,11 +50,15 @@ const MELEE_POSES := {
 	"anticipation": {"path": "res://assets/characters/character-vanguard-anticipation-v01.png", "anchor": Vector2(656, 1155), "body_height": 930.0},
 	"contact": {"path": "res://assets/characters/character-vanguard-contact-v01.png", "anchor": Vector2(625, 1145), "body_height": 980.0},
 }
+var _sprite_pose: RefCounted
 var melee_pose := "idle"
 var _idle_visual: Dictionary = {}
 var _pose_textures: Dictionary = {}
 
 func set_melee_pose(pose: String) -> bool:
+	if _sprite_pose != null and not is_instance_valid(_rig3d):
+		melee_pose = pose
+		return _sprite_pose.pose(pose, _facing_screen_direction(facing))
 	if is_instance_valid(_rig3d):
 		_rig3d.play(pose)
 		melee_pose = pose
@@ -85,6 +89,7 @@ func set_melee_pose(pose: String) -> bool:
 	return true
 
 func reset_melee_pose() -> void:
+	if _sprite_pose != null: _sprite_pose.reset()
 	if is_instance_valid(_rig3d):
 		_rig3d.play("idle")
 	if is_instance_valid(_sprite) and not _idle_visual.is_empty():
@@ -163,6 +168,7 @@ func _draw_unit() -> void:
 		_sprite.position = Vector2(0, -tex_size.y * _sprite.scale.y * 0.5)
 		var sprite_top := _sprite.position.y - tex_size.y * _sprite.scale.y * 0.5
 		_hud_bar_y = min(_hud_bar_y, sprite_top - 8.0)
+		_configure_sprite_origin()
 		_sprite.z_index = 10
 		add_child(_sprite)
 	else:
@@ -472,7 +478,7 @@ func _character_direction_texture(direction: String) -> Texture2D:
 	if unit_data == null:
 		return null
 	var candidate := AssetRegistry.load_first_texture(
-		AssetRegistry.get_character_direction_candidates(unit_data.id, direction))
+		AssetRegistry.get_character_direction_candidates(unit_data.id, direction, bool(GameState.practice_session.get("review_hero_art", false))))
 	if candidate != null:
 		return candidate
 	return unit_data.sprite_sheet
@@ -493,6 +499,7 @@ func _refresh_directional_sprite() -> void:
 	var target_size := 80.0 if team == "player" else 95.0
 	_sprite.scale = Vector2.ONE * (target_size / maxf(size.x, size.y))
 	_sprite.position = Vector2(0, -size.y * _sprite.scale.y * 0.5)
+	_configure_sprite_origin()
 
 
 
@@ -733,10 +740,15 @@ func set_walk_presentation(walking: bool) -> void:
 		_rig3d.play("walk" if walking else "idle")
 
 func face_action(destination: Vector2i) -> void:
+	var delta := destination - grid_pos
+	if delta != Vector2i.ZERO:
+		set_facing(("E" if delta.x > 0 else "W") if abs(delta.x) >= abs(delta.y) else ("S" if delta.y > 0 else "N"))
 	if is_instance_valid(_rig3d):
 		_rig3d.face(destination - grid_pos)
 
 func recover_melee_pose() -> void:
+	if _sprite_pose != null:
+		_sprite_pose.pose("recovery", _facing_screen_direction(facing))
 	if is_instance_valid(_rig3d) and _rig3d.state == "contact":
 		_rig3d.play("recovery")
 	elif is_instance_valid(_rig3d) and _rig3d.state == "cast_release":
@@ -754,6 +766,9 @@ func disable_3d_prototype() -> void:
 		_sprite.show()
 
 func set_cast_pose(pose: String) -> bool:
+	if _sprite_pose != null and not is_instance_valid(_rig3d):
+		melee_pose = "cast_" + pose
+		return _sprite_pose.pose(melee_pose, _facing_screen_direction(facing))
 	if not is_instance_valid(_rig3d):
 		return false
 	_rig3d.play("cast_" + pose)
@@ -764,3 +779,28 @@ func cast_origin_world() -> Vector2:
 
 func supports_3d_presentation() -> bool:
 	return str(get_meta("archetype_id", unit_id)) in ["kael", "mira", "zane", "void_cultist"]
+
+
+func _configure_sprite_origin() -> void:
+	var size := _sprite.texture.get_size()
+	var source := str(_sprite.texture.get_meta("source_path", _sprite.texture.resource_path))
+	# Keep legacy offsets unchanged outside the chapel/review pipeline.
+	if not source.contains("/iso-v02/") and not (unit_id == "zane" and GameState.practice_session.get("illustrated_chapel", false)):
+		return
+	var anchor := Vector2(size.x * 0.5, size.y)
+	if source.contains("/iso-v02/"):
+		anchor = Vector2(128, 245)
+	_sprite.position = Vector2.ZERO
+	_sprite.offset = size * 0.5 - anchor
+	_sprite.flip_h = false
+	if unit_id == "zane" and GameState.practice_session.get("illustrated_chapel", false):
+		if _sprite_pose == null:
+			_sprite_pose = preload("res://scripts/presentation/SpriteCombatPose.gd").new()
+		_sprite_pose.bind(_sprite)
+
+func has_chapel_sprite_presentation() -> bool:
+	return _sprite_pose != null and not is_instance_valid(_rig3d)
+
+func _process(delta: float) -> void:
+	if has_chapel_sprite_presentation() and hp > 0 and not is_defeated:
+		_sprite_pose.apply(delta, bool(GameState.practice_session.get("reduced_zane_motion", false)))

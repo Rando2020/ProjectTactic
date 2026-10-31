@@ -17,9 +17,10 @@ QA_MAIN = b'run/main_scene="res://tests/browser_qa/BattleBrowserQA.tscn"'
 
 @contextmanager
 def staged_qa_project(root: Path, scenario: str = 'quickstep'):
-    if scenario not in ('quickstep', 'zane-showcase', 'zane-duel'):
+    if scenario not in ('quickstep', 'zane-showcase', 'zane-duel', 'chapel'):
         raise ValueError(f'Unknown browser QA scenario: {scenario}')
     qa_main = {'quickstep': QA_MAIN,
+               'chapel': b'run/main_scene="res://tests/browser_qa/ChapelBootstrap.tscn"',
                'zane-showcase': b'run/main_scene="res://tests/browser_qa/ZaneShowcaseBootstrap.tscn"',
                'zane-duel': b'run/main_scene="res://tests/browser_qa/ZaneDuelBootstrap.tscn"'}[scenario]
     project = root / 'godot/project.godot'
@@ -69,7 +70,7 @@ def run_godot(executable: str, arguments: list[str], environment: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--godot', default='godot')
-    parser.add_argument('--scenario', choices=['quickstep', 'zane-showcase', 'zane-duel'], default='quickstep')
+    parser.add_argument('--scenario', choices=['quickstep', 'zane-showcase', 'zane-duel', 'chapel'], default='quickstep')
     parser.add_argument('--production-pck', type=Path, default=ROOT / 'build/web/index.pck')
     parser.add_argument('--output', type=Path, default=ROOT / 'build/web-qa/index.html')
     parser.add_argument('--validate-only', action='store_true', help='Validate observer without exporting')

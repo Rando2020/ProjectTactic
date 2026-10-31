@@ -89,6 +89,7 @@ func _build_ui() -> void:
 	_add_menu_button("Practice: Zane vs Storm Imp", _on_duel_practice_pressed)
 	_add_menu_button("Painted Chapel / Play Art Preview", _on_painted_chapel_pressed)
 	_add_menu_button("Illustrated Chapel / Play 2.5D Battle", _on_illustrated_chapel_pressed)
+	_add_menu_button("Chapel / Provisional Sprite Review", _on_sprite_review_pressed)
 	_add_menu_button("How to Play", _on_load_pressed)
 	_add_menu_button("Music On / Off", _on_options_pressed)
 	_add_menu_button("Credits", _on_credits_pressed)
@@ -311,3 +312,10 @@ func _on_illustrated_chapel_pressed() -> void:
 
 func _apply_ui_size() -> void:
 	UISettings.shared().apply_tree(self, get_viewport().get_visible_rect().size)
+
+
+func _on_sprite_review_pressed() -> void:
+	if GameState.begin_illustrated_chapel_practice():
+		GameState.practice_session["review_hero_art"] = true
+		music_player.stop()
+		get_tree().change_scene_to_file("res://scenes/Battle.tscn")

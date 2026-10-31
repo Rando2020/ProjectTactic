@@ -490,12 +490,13 @@ static func get_character_portrait_candidates(unit_id: String) -> Array[String]:
 	return candidates
 
 
-static func get_character_direction_candidates(unit_id: String, facing: String) -> Array[String]:
+static func get_character_direction_candidates(unit_id: String, facing: String, review_art: bool = false) -> Array[String]:
 	var candidates: Array[String] = []
 	var entry: Dictionary = get_manifest().get("characters", {}).get(unit_id, {})
 	var directions: Dictionary = entry.get("directions", {})
 	var direction_name: String = {"N": "back", "E": "right", "S": "front", "W": "left"}.get(facing, "front")
-	_append_entry_paths(candidates, directions.get(direction_name, {}))
+	if review_art or entry.get("direction_status", "approved") == "approved":
+		_append_entry_paths(candidates, directions.get(direction_name, {}))
 	_append_entry_paths(candidates, entry.get("idle", {}))
 	return candidates
 
@@ -539,6 +540,7 @@ static func load_first_texture(paths: Array[String]) -> Texture2D:
 			var decoded := image.load_jpg_from_buffer(bytes) if path.get_extension().to_lower() in ["jpg", "jpeg"] else image.load_png_from_buffer(bytes)
 			if decoded == OK:
 				var source_texture := ImageTexture.create_from_image(image)
+				source_texture.set_meta("source_path", path)
 				_texture_cache[path] = source_texture
 				return source_texture
 		if ResourceLoader.exists(path, "Texture2D"):

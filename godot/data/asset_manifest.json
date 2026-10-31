@@ -161,7 +161,8 @@
           "path": "res://assets/characters/iso-v02/character-swordsman-idle-nw-v02.png",
           "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
         }
-      }
+      },
+      "direction_status": "provisional-review-only"
     },
     "mira": {
       "art_id": "character-arcanist",
@@ -186,7 +187,8 @@
           "path": "res://assets/characters/iso-v02/character-mage-idle-nw-v02.png",
           "fallback_path": "res://assets/characters/character-arcanist-idle-v01.png"
         }
-      }
+      },
+      "direction_status": "provisional-review-only"
     },
     "kael": {
       "art_id": "character-warden",
@@ -211,7 +213,8 @@
           "path": "res://assets/characters/iso-v02/character-dragoon-idle-nw-v02.png",
           "fallback_path": "res://assets/characters/character-warden-idle-v01.png"
         }
-      }
+      },
+      "direction_status": "provisional-review-only"
     },
     "lyra": {
       "art_id": "character-wayfarer",
@@ -236,7 +239,8 @@
           "path": "res://assets/characters/iso-v02/character-rogue-idle-nw-v02.png",
           "fallback_path": "res://assets/characters/character-wayfarer-idle-v01.png"
         }
-      }
+      },
+      "direction_status": "provisional-review-only"
     },
     "void_cultist": {
       "art_id": "enemy-hollow-cantor",

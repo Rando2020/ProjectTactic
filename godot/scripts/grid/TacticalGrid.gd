@@ -92,6 +92,7 @@ func _process(delta: float) -> void:
 func initialize_from_map(p_map_data: MapData) -> void:
 	_configure_layers()
 	map_data = p_map_data
+	_configure_layers()
 	_environment_theme_id = map_data.environment_theme_id if map_data else "default"
 	if map_data and not map_data.painted_background.is_empty():
 		tile_size = map_data.painted_tile_size
@@ -107,7 +108,7 @@ func _configure_layers() -> void:
 	if highlight_layer:
 		highlight_layer.z_index = 1000
 	if unit_layer:
-		unit_layer.z_index = 2000
+		unit_layer.z_index = 0 if map_data and map_data.environment_theme_id == "ruined-chapel" else 2000
 
 
 func _build_tiles() -> void:
@@ -461,7 +462,7 @@ func _draw_props() -> void:
 			float(prop_data.get("offset_x", 0.0)),
 			float(prop_data.get("offset_y", -2.0))
 		)
-		sprite.z_index = _depth_for(pos) + 80
+		sprite.z_index = _unit_depth_for(pos) + 10 if _environment_theme_id == "ruined-chapel" else _depth_for(pos) + 80
 		add_child(sprite)
 
 
@@ -839,6 +840,7 @@ func move_unit_visual(unit_id: String, from: Vector2i, to: Vector2i) -> void:
 					previous.position = pos
 					previous.tick = tick
 					child.position = pos
+					if _environment_theme_id == "ruined-chapel": child.z_index = 500 + roundi(pos.y * 2.0)
 					unit_visual_position_changed.emit(unit_id, child.global_position),
 				start_pos,
 				end_pos,
@@ -986,6 +988,8 @@ func _height_at(pos: Vector2i) -> int:
 
 
 func _unit_depth_for(pos: Vector2i) -> int:
+	if _environment_theme_id == "ruined-chapel":
+		return 500 + roundi(_unit_foot_pos(pos).y * 2.0)
 	return _depth_for(pos) + 100
 
 
