@@ -29,6 +29,9 @@ var _finished := false
 var _outcomes_presented := false
 var _lead_in_complete := false
 var _tail_deadline := 0
+var _authored_fire_active := false
+var _fire_tail_elapsed := 0.0
+var _fire_tail: Node2D
 var _fx: Array[CanvasItem] = []
 var _voices: Array[AudioStreamPlayer] = []
 var _tweens: Array[Tween] = []
@@ -60,6 +63,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	if fire:
 		actor.set_cast_pose("anticipation")
 		_charge = _fire_sprite("charge")
+		_authored_fire_active = _charge is FireFrames
 		if _charge == null: _charge = _disc(5, Color(1,0.48,0.12,0.85), "charge")
 		_charge.position = _grid_point(actor.grid_pos) if _charge is FireFrames else to_local(actor.cast_origin_world())
 	else:
@@ -67,7 +71,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 			_melee_prepare(actor)
 	_phase("charge")
 	_charge_voice = _cue("fire_charge" if fire else "sword_load")
-	if not await _wait_permitted(0.20):
+	if not await _wait_permitted(FireFrames.CHARGE_DURATION if _authored_fire_active else 0.20):
 		_presenting = false
 		cancel()
 		return
@@ -89,17 +93,18 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 		var destination := _grid_point(context.destination) + Vector2(0,-30)
 		_flight_direction = (destination - _projectile.position).normalized()
 		if _projectile is FireFrames: _projectile.set_stage("travel", _flight_direction)
-		_trail = _line(PackedVector2Array([_projectile.position,_projectile.position]),Color(1,0.38,0.07,0.7),4,"trail")
-		var taper := Curve.new()
-		taper.add_point(Vector2(0,0))
-		taper.add_point(Vector2(1,1))
-		_trail.width_curve = taper
-		var heat := Gradient.new()
-		heat.colors = PackedColorArray([Color(1,0.20,0.03,0),Color(1,0.65,0.20,0.9)])
-		_trail.gradient = heat
+		if not _authored_fire_active:
+			_trail = _line(PackedVector2Array([_projectile.position,_projectile.position]),Color(1,0.38,0.07,0.7),4,"trail")
+			var taper := Curve.new()
+			taper.add_point(Vector2(0,0))
+			taper.add_point(Vector2(1,1))
+			_trail.width_curve = taper
+			var heat := Gradient.new()
+			heat.colors = PackedColorArray([Color(1,0.20,0.03,0),Color(1,0.65,0.20,0.9)])
+			_trail.gradient = heat
 		_flight_start = _projectile.position
 		_flight_end = destination
-		if not await _wait_permitted(0.22,true):
+		if not await _wait_permitted(FireFrames.TRAVEL_DURATION if _authored_fire_active else 0.22,true):
 			_presenting = false
 			cancel()
 			return
@@ -127,7 +132,12 @@ func _wait_permitted(seconds: float, move_projectile: bool = false) -> bool:
 			valid = false
 			break
 		var current := Time.get_ticks_usec()
-		elapsed += float(current-previous)/1000000.0 * maxf(0,Engine.time_scale)
+		if _authored_fire_active:
+			# One scaled presentation clock; cap a slow frame so none of the four
+			# authored poses disappears between rendered frames. No wall-clock deadline.
+			elapsed += minf(maxf(get_process_delta_time(),0.0), seconds/8.0)
+		else:
+			elapsed += float(current-previous)/1000000.0 * maxf(0,Engine.time_scale)
 		previous = current
 		if is_instance_valid(_charge) and _charge is FireFrames: _charge.show_progress(elapsed/seconds)
 		if is_instance_valid(_projectile) and _projectile is FireFrames: _projectile.show_progress(elapsed/seconds)
@@ -155,6 +165,14 @@ func _process(_dt: float) -> void:
 	if not _living_actor() or (not _finished and not _current_ticket()):
 		cancel()
 		return
+	if _authored_fire_active and _outcomes_presented:
+		# Recovery may release camera controls before the cosmetic smoke retires.
+		# Reproject the immutable destination tile, never a possibly defeated target.
+		if is_instance_valid(_fire_tail): _fire_tail.position = _grid_point(context.destination)
+		_fire_tail_elapsed += minf(maxf(_dt,0.0), FireFrames.MAX_VISUAL_STEP)
+		if _finished and _fire_tail_elapsed >= FireFrames.TAIL_DURATION + 0.05 and (not is_instance_valid(_fire_tail) or not _fire_tail._tail):
+			queue_free()
+			return
 	var actor = _actor.get_ref()
 	if is_instance_valid(_charge): _charge.position = _grid_point(actor.grid_pos) if _charge is FireFrames else to_local(actor.cast_origin_world())
 	if is_instance_valid(_trail) and is_instance_valid(_projectile):
@@ -169,12 +187,12 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 	_outcomes_presented = true
 	_tail_deadline = Time.get_ticks_msec() + 550
 	var fire := str(context.ability_id) == "fire"
-	if fire:
+	if fire and not _authored_fire_active:
 		for tile: Vector2i in context.footprint.slice(0,3):
 			var p := _grid_point(tile)
 			var fan := _line(PackedVector2Array([p+Vector2(-22,0),p+Vector2(0,-10),p+Vector2(22,0)]),Color(1,0.45,0.12,0.65),3,"fan_tile")
 			_fade(fan,0.25)
-	else:
+	elif not fire:
 		_blade_trail()
 	var any_impact := false
 	var any_immune := false
@@ -214,12 +232,13 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 	if fire:
 		var burst := _fire_sprite("impact" if any_impact else "dissipate")
 		if burst != null:
+			_fire_tail = burst
 			burst.position = _grid_point(context.destination)
 			burst.start_tail(any_impact)
 	if any_impact:
 		_phase("impact")
 		_cue("fire_hit" if fire else "sword_hit")
-		if fire: _embers(_grid_point(context.destination)+Vector2(0,-20))
+		if fire and not _authored_fire_active: _embers(_grid_point(context.destination)+Vector2(0,-20))
 		if not bool(context.reduced_motion):
 			var scene = _scene.get_ref() if _scene != null else null
 			if is_instance_valid(scene):
@@ -287,6 +306,7 @@ func _blade_trail() -> void:
 	_fade(line,0.14)
 
 func _recipient_accent(tile: Vector2i, fire: bool) -> void:
+	if fire and _authored_fire_active: return
 	var p := _grid_point(tile)+Vector2(0,-25)
 	if not fire:
 		var impact := _melee_sprite("impact")
@@ -524,6 +544,9 @@ func finish() -> void:
 	_stop_flight()
 	_remove_fx(_charge)
 	_stop_voice(_charge_voice)
+	if _authored_fire_active and _outcomes_presented:
+		# _process retires the complete scaled tail. Hit-pause cannot consume it.
+		return
 	var remaining := maxf(0,float(_tail_deadline-Time.get_ticks_msec())/1000.0)
 	if remaining <= 0:
 		queue_free()

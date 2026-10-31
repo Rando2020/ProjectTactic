@@ -10,7 +10,12 @@ var _frames: Array[Texture2D] = []
 var _tail := false
 var _tail_elapsed := 0.0
 var _tail_hit := false
-const TAIL_DURATION := 0.50
+const CHARGE_DURATION := 0.36
+const TRAVEL_DURATION := 0.36
+const IMPACT_DURATION := 0.40
+const DISSIPATE_DURATION := 0.40
+const TAIL_DURATION := IMPACT_DURATION + DISSIPATE_DURATION
+const MAX_VISUAL_STEP := 0.05
 
 func _init() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
@@ -28,7 +33,7 @@ func set_stage(value: String, direction: Vector2 = Vector2.RIGHT) -> void:
 	rotation = direction.angle() - SOURCE_TRAVEL_ANGLE if stage == "travel" else 0.0
 	# Fixed ground anchor for charge/impact/smoke; head anchor for travel.
 	offset = Vector2(-64,0) if stage == "travel" else Vector2(0,-144)
-	scale = Vector2.ONE * (0.19 if stage == "travel" else (0.24 if stage == "charge" else 0.28))
+	scale = Vector2.ONE * (0.27 if stage == "travel" else (0.32 if stage == "charge" else 0.38))
 	show_progress(0.0)
 
 func show_progress(progress: float) -> void:
@@ -44,12 +49,12 @@ func start_tail(hit: bool) -> void:
 
 func _process(delta: float) -> void:
 	if not _tail: return
-	_tail_elapsed += delta
+	_tail_elapsed += minf(maxf(delta, 0.0), MAX_VISUAL_STEP)
 	if _tail_elapsed >= TAIL_DURATION:
 		_tail = false
 		hide()
 		return
-	if stage == "impact" and _tail_elapsed >= 0.25:
+	if stage == "impact" and _tail_elapsed >= IMPACT_DURATION:
 		stage = "dissipate"
-	if stage == "impact": show_progress(_tail_elapsed/0.25)
-	else: show_progress((_tail_elapsed-0.25)/0.25 if _tail_hit else _tail_elapsed/TAIL_DURATION)
+	if stage == "impact": show_progress(_tail_elapsed/IMPACT_DURATION)
+	else: show_progress((_tail_elapsed-IMPACT_DURATION)/DISSIPATE_DURATION if _tail_hit else _tail_elapsed/TAIL_DURATION)

@@ -54,3 +54,24 @@ Run `res://prototypes/isometric/RotationTest.tscn` for projection, actor picking
 Battlefield names are full, high-contrast screen-space labels with ally/enemy edge colors. Labels follow movement and camera rotation, avoid one another, and do not intercept selection. The timeline frames existing Kael/enemy artwork as upper-body portraits without changing source images or combat rules.
 
 Regression: `godot --headless --path demos/isometric-2v2 res://prototypes/isometric/ReadabilityTest.tscn` checks both stage modes, all four angles, phone/desktop viewport geometry, clustered units, KO/retry lifecycle and portrait crops.
+
+### Authored Fire readability pass (2026-10-31)
+
+The supplied Fire sheet is unchanged. Its four charge frames now occupy 0.36 s,
+travel 0.36 s, impact 0.40 s and smoke 0.40 s at normal presentation speed.
+Charge/travel/impact scales are 0.32/0.27/0.38 (previously 0.24/0.19/0.28).
+Authored playback suppresses the competing procedural trail, fan marks, recipient
+accent and embers; original-game procedural fallback remains available.
+A scaled, bounded visual clock preserves poses on slow frames and completes the
+whole tail through hit-pause instead of retiring it at a 550 ms wall deadline.
+This is visual windup, not charge-turn, haste or initiative-delay gameplay.
+
+All 15 active demo suites pass against the exported PCK, including 123 new actual
+Skirmish readability/lifecycle checks (all 16 poses at 30 FPS, quarter time-scale,
+and 8 FPS; one MP12/damage application; cancellation/retry/KO cleanup).
+Native Sky screenshots inspected painted/all four rotations and original skins;
+an uninterrupted 24-screenshot sequence sampled normal time-scale playback.
+These samples are not a continuous video or a physical-phone/WebGL2 performance
+claim. Original detached halo/spark ambiguity remains documented in the asset
+manifest; no source pixels were repainted or reassigned. Already validated authored
+melee slash/impact integration is retained without combat-rule changes.

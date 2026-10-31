@@ -44,7 +44,7 @@ func frame_contract() -> void:
 		sprite.show()
 		sprite.start_tail(hit)
 		var previous: int = sprite.frame_index
-		for step in 49:
+		for step in int(FRAMES.TAIL_DURATION * 100.0) - 1:
 			sprite._process(0.01)
 			check(sprite.frame_index >= previous, "tail never rewinds authored frames")
 			previous = sprite.frame_index
@@ -63,7 +63,7 @@ func interruptions() -> void:
 		schedule_action_interruption(fixture,func():
 			if fixture == "during travel":
 				var owner = controllers.back().get_ref()
-				check(is_instance_valid(owner) and is_instance_valid(owner._trail) and owner._trail.width_curve != null and owner._trail.gradient != null, "Fire travels with one directionally tapered ember trail")
+				check(is_instance_valid(owner) and not is_instance_valid(owner._trail), "Authored Fire travels without a competing procedural trail")
 				check(is_instance_valid(owner) and is_instance_valid(owner._projectile) and owner._projectile is Sprite2D and owner._projectile.available(), "one projectile uses the complete local authored frame set")
 			match fixture:
 				"actor death": caster.receive_damage(99999,"magical")
