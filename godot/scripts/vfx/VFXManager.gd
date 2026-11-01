@@ -643,6 +643,8 @@ func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
 #  crack the floor -> big finish -> shatter -> linger.
 
 const SPELL_PATH_HOLD := 0.16
+const FRONT_SPIKE_SCALE := 0.6
+const FRONT_SPIKE_ALPHA := 0.82
 
 ## Beat 1. Motes gather into the casting hand while a core glow swells.
 func play_spell_charge(origin: Vector2, element: String, duration: float = 0.20) -> void:
@@ -685,7 +687,7 @@ func play_spell_path(from_world: Vector2, to_world: Vector2, element: String,
 ## Beats 5-8 at contact: flash ring + floor cracks, the big cluster around the
 ## target, shatter into shards, then element atmosphere (snow, embers, ...).
 func play_spell_finale(caster_grid: Vector2i, target_grid: Vector2i, element: String,
-		profile: Dictionary, seed_value: int = 0) -> void:
+		profile: Dictionary, seed_value: int = 0, occluder: CanvasItem = null) -> void:
 	var skin := ImpactJuice.skin_for(element)
 	var tier := str(profile.get("tier", "normal"))
 	var center := gp(target_grid)
@@ -712,10 +714,19 @@ func play_spell_finale(caster_grid: Vector2i, target_grid: Vector2i, element: St
 	# 6b. The big cluster around the enemy.
 	var cluster := ImpactJuice.cluster_layout(center, tier, seed_value)
 	var shatter_at := float(ImpactJuice.FINALE.shatter)
+	# Keep the enemy readable: spikes behind the target draw behind it at full
+	# size; spikes in front draw over it but shorter and slightly see-through.
+	var occluder_z := _absolute_z(occluder) if is_instance_valid(occluder) else -1
 	for i in range(cluster.size()):
 		var spike: Dictionary = cluster[i]
 		var delay := float(spike.delay)
-		_spawn_spike(spike.pos, float(spike.length), float(spike.tilt), skin, delay, shatter_at - delay, seed_value + 500 + i)
+		var in_front := float(spike.pos.y) > center.y + 2.0
+		var length := float(spike.length) * (FRONT_SPIKE_SCALE if in_front else 1.0)
+		var z := -1
+		if occluder_z >= 0:
+			z = occluder_z + (1 if in_front else -1)
+		_spawn_spike(spike.pos, length, float(spike.tilt), skin, delay, shatter_at - delay, seed_value + 500 + i,
+			z, FRONT_SPIKE_ALPHA if in_front else 1.0)
 	# Sparks still read the hit direction, tinted to the element.
 	play_punch_sparks(center + Vector2(0, -26), profile, skin.body)
 	# 8. Atmosphere.
@@ -724,7 +735,7 @@ func play_spell_finale(caster_grid: Vector2i, target_grid: Vector2i, element: St
 
 
 func _spawn_spike(pos: Vector2, length: float, tilt: float, skin: Dictionary,
-		delay: float, hold: float, seed_value: int) -> void:
+		delay: float, hold: float, seed_value: int, z_override: int = -1, alpha: float = 1.0) -> void:
 	var outline := ImpactJuice.spike_polygon(length, skin, seed_value)
 	var root := Node2D.new()
 	root.position = pos
@@ -743,7 +754,8 @@ func _spawn_spike(pos: Vector2, length: float, tilt: float, skin: Dictionary,
 	core.color = skin.core
 	root.add_child(core)
 	_spawn(root)
-	root.z_index = 200 + int(pos.y * 0.05)
+	root.z_index = z_override if z_override >= 0 else 200 + int(pos.y * 0.05)
+	root.modulate.a = alpha
 	root.visible = false
 	var tw := create_tween()
 	tw.tween_interval(maxf(delay, 0.0))
@@ -845,6 +857,19 @@ func _ground_ring(center: Vector2, color: Color, duration: float, grow: float) -
 	tw.tween_property(ring, "scale", Vector2(grow, grow), duration).set_ease(Tween.EASE_OUT)
 	tw.tween_property(ring, "modulate:a", 0.0, duration)
 	tw.chain().tween_callback(ring.queue_free)
+
+
+## Effective draw depth of a canvas item (sums relative z up the tree).
+func _absolute_z(item: CanvasItem) -> int:
+	var z := 0
+	var node: Node = item
+	while node is CanvasItem:
+		var canvas := node as CanvasItem
+		z += canvas.z_index
+		if not canvas.z_as_relative:
+			break
+		node = node.get_parent()
+	return z
 
 
 func _disc_node(radius: float, color: Color) -> Polygon2D:

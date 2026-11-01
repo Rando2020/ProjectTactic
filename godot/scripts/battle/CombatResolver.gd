@@ -10,6 +10,7 @@ signal combat_resolved(result: Dictionary)
 signal impact_presented(impact: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+const UISettings := preload("res://scripts/ui/UISettings.gd")
 # Synchronous feedback policy during receive_damage; never changes damage authority.
 var damage_feedback_owner: StringName = &""
 func resolve_attack(attacker: Unit, target: Unit,
@@ -128,7 +129,7 @@ func resolve_spell(caster: Unit, target: Unit,
 	if vfx_n and feedback_owner.is_empty():
 		var vfx := vfx_n as VFXManager
 		if ImpactJuice.has_staged_spell(element):
-			vfx.play_spell_finale(caster.grid_pos, target.grid_pos, element, impact, caster.get_instance_id() ^ target.get_instance_id())
+			vfx.play_spell_finale(caster.grid_pos, target.grid_pos, element, impact, caster.get_instance_id() ^ target.get_instance_id(), target.visual as CanvasItem)
 		vfx.play_damage_number(target.grid_pos, int(formula.get("hp_damage", final_damage)), num_color)
 
 	if feedback_owner.is_empty(): BattleJuiceEffects.punch(target, impact)
@@ -270,10 +271,10 @@ func _impact_profile(source: Unit, target: Unit, hp_damage: int, critical: bool,
 	var max_hp := 1
 	if target.unit_data and target.unit_data.base_stats:
 		max_hp = int(target.unit_data.base_stats.hp)
-	var reduced := false
+	var reduced: bool = UISettings.shared().reduced_motion
 	var gs := get_node_or_null("/root/GameState")
 	if gs and "practice_session" in gs:
-		reduced = bool(gs.practice_session.get("reduced_zane_motion", false))
+		reduced = reduced or bool(gs.practice_session.get("reduced_zane_motion", false))
 	return ImpactJuice.hit_profile({
 		"hp_damage": hp_damage, "max_hp": max_hp, "critical": critical,
 		"defeated": target.hp <= 0, "kind": kind, "element": element,

@@ -50,7 +50,8 @@ fire as flame tongues, thunder as jagged bolts, dark as thorns.
 
 - **Global RNG is combat's.** Cosmetics use a private `RandomNumberGenerator` and fixed-seed particles. Tests assert the combat roll stream is unchanged.
 - **Mechanical results stay clean.** The impact recipe is emitted on `impact_presented`, not added to the result dictionary, so scoped and unscoped outcomes stay identical.
-- **Reduced motion** (`practice_session.reduced_zane_motion`) removes shake and knockback and halves hitstop. The flash stays.
+- **Reduced motion** removes shake and knockback and halves hitstop. The flash, sound and spell visuals stay. It comes from the persistent title-screen toggle ("Screen Motion", saved in `UISettings.reduced_motion`) or the session-only practice comfort flag (`practice_session.reduced_zane_motion`), whichever is on.
+- **The target stays readable.** Finale spikes behind the target draw behind its sprite at full size; spikes in front draw over it shorter and slightly see-through.
 - The Zane impact profile path (`feedback_owner`) is untouched and keeps owning its own presentation.
 
 ## Tuning knobs

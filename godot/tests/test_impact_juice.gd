@@ -25,6 +25,9 @@ func run() -> void:
 	await _test_live_physical_hit()
 	await _test_live_spell()
 	await _test_staged_lead_in()
+	_test_motion_setting()
+	await _test_reduced_motion_live()
+	await _test_cluster_layering()
 	print("Impact juice: %d checks, %d failures" % [checks, failures])
 	get_tree().quit(1 if failures > 0 else 0)
 
@@ -277,3 +280,78 @@ func _spike_count(vfx: Node) -> int:
 			if child.get_child(0) is Polygon2D:
 				n += 1
 	return n
+
+
+# --- Accessibility + readability ---------------------------------------------
+
+func _test_motion_setting() -> void:
+	var settings = load("res://scripts/ui/UISettings.gd").new()
+	settings.settings_path = "user://test_impact_juice_ui.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(settings.settings_path))
+	settings.set_mode(2)
+	settings.set_reduced_motion(true)
+	var reloaded = load("res://scripts/ui/UISettings.gd").new()
+	reloaded.settings_path = settings.settings_path
+	reloaded.load_settings()
+	check(reloaded.reduced_motion, "reduced motion persists across sessions")
+	check(reloaded.mode == 2, "saving motion keeps the UI size preference")
+	reloaded.set_mode(1)
+	var again = load("res://scripts/ui/UISettings.gd").new()
+	again.settings_path = settings.settings_path
+	again.load_settings()
+	check(again.reduced_motion and again.mode == 1, "saving UI size keeps the motion preference")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(settings.settings_path))
+
+
+func _test_reduced_motion_live() -> void:
+	var shared = load("res://scripts/ui/UISettings.gd").shared()
+	var previous: bool = shared.reduced_motion
+	shared.set_reduced_motion(true, false)
+	var battle := _make_battle()
+	var manager: BattleManager = battle.battle_manager
+	var target: Unit = _enemy(manager, "storm_imp")
+	target.facing = "E"
+	target.hp = 999
+	var impacts: Array[Dictionary] = []
+	manager.combat_resolver.impact_presented.connect(func(i: Dictionary) -> void: impacts.append(i))
+	var visual := target.visual as CanvasItem
+	var rest: Vector2 = visual.position
+	manager.combat_resolver.resolve_attack(manager.units.zane, target, {}, {}, "slash")
+	check(impacts.size() == 1 and float(impacts[0].shake_px) == 0.0, "global reduced motion removes screen shake")
+	var moved := false
+	for i in range(30):
+		await get_tree().process_frame
+		if visual.position.distance_to(rest) > 0.5: moved = true
+	check(not moved, "global reduced motion removes knockback")
+	shared.set_reduced_motion(previous, false)
+	await _dispose(battle)
+
+
+func _test_cluster_layering() -> void:
+	var battle := _make_battle()
+	var manager: BattleManager = battle.battle_manager
+	var target: Unit = _enemy(manager, "storm_imp")
+	var vfx: VFXManager = get_node("/root/VFX")
+	var occluder := target.visual as CanvasItem
+	var occ_z := vfx._absolute_z(occluder)
+	var profile := ImpactJuice.hit_profile({"hp_damage": 30, "max_hp": 100, "kind": "spell", "element": "blizzard", "seed": 1})
+	var existing := {}
+	for child in vfx.get_children(): existing[child] = true
+	vfx.play_spell_finale(manager.units.zane.grid_pos, target.grid_pos, "blizzard", profile, 77, occluder)
+	await get_tree().create_timer(0.15).timeout
+	var behind := 0
+	var front := 0
+	var front_ok := true
+	for child in vfx.get_children():
+		if existing.has(child) or not (child is Node2D) or child.get_child_count() != 3:
+			continue
+		if child.z_index < occ_z:
+			behind += 1
+		elif child.z_index > occ_z:
+			front += 1
+			if child.modulate.a >= 1.0: front_ok = false
+	check(behind >= 3, "cluster spikes behind the enemy draw behind it")
+	check(front >= 1, "some spikes still wrap in front of the enemy")
+	check(front_ok, "front spikes are see-through so the enemy stays readable")
+	await get_tree().create_timer(0.6).timeout
+	await _dispose(battle)

@@ -6,6 +6,9 @@ const LABELS := ["Auto", "Standard (100%)", "Large (125%)", "Extra large (150%)"
 static var _shared: RefCounted
 var settings_path := "user://ui_settings.cfg"
 var mode := 0
+## Accessibility: no camera shake, no hit knockback, shorter hitstop. Flashes,
+## sound and spell visuals stay. Persistent, unlike the session-only practice flag.
+var reduced_motion := false
 
 static func shared() -> RefCounted:
 	if _shared == null:
@@ -16,15 +19,27 @@ static func shared() -> RefCounted:
 func set_mode(value: Variant, persist := true) -> void:
 	mode = value if typeof(value) == TYPE_INT and value >= 0 and value < LABELS.size() else 0
 	if persist:
-		var config := ConfigFile.new()
-		config.set_value("accessibility", "ui_size", mode)
-		if config.save(settings_path) != OK:
-			push_warning("UI size could not be saved; it still applies this session.")
+		_save("ui_size", mode, "UI size")
 	changed.emit()
+
+func set_reduced_motion(value: bool, persist := true) -> void:
+	reduced_motion = value
+	if persist:
+		_save("reduced_motion", reduced_motion, "Motion preference")
+	changed.emit()
+
+## Read-modify-write so each preference keeps the others.
+func _save(key: String, value: Variant, label: String) -> void:
+	var config := ConfigFile.new()
+	config.load(settings_path)
+	config.set_value("accessibility", key, value)
+	if config.save(settings_path) != OK:
+		push_warning("%s could not be saved; it still applies this session." % label)
 
 func load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(settings_path) == OK:
+		reduced_motion = bool(config.get_value("accessibility", "reduced_motion", false))
 		set_mode(config.get_value("accessibility", "ui_size", 0), false)
 
 func effective_scale(viewport_size: Vector2) -> float:
