@@ -10,19 +10,7 @@ const PORTRAITS := {
 	"kael": ["res://assets/sprites/units/kael-idle-isometric.png"],
 	"lyra": ["res://assets/sprites/units/lyra-idle-isometric.png"],
 }
-const BASE_STATS := {
-	"zane": {"level": 11, "hp": 320, "mp": 90, "move": 4, "jump": 2, "speed": 8, "physical": 42, "magic": 48, "bravery": 80, "faith": 70},
-	"mira": {"level": 10, "hp": 280, "mp": 120, "move": 4, "jump": 2, "speed": 7, "physical": 28, "magic": 54, "bravery": 65, "faith": 84},
-	"kael": {"level": 12, "hp": 380, "mp": 55, "move": 4, "jump": 2, "speed": 6, "physical": 55, "magic": 32, "bravery": 92, "faith": 54},
-	"lyra": {"level": 10, "hp": 240, "mp": 70, "move": 4, "jump": 2, "speed": 9, "physical": 52, "magic": 18, "bravery": 72, "faith": 60},
-}
-const SLOT_LABELS := {
-	"main_hand": "Main Hand",
-	"off_hand": "Off Hand",
-	"head": "Head",
-	"body": "Body",
-	"accessory": "Accessory",
-}
+const SLOT_LABELS := EquipmentRules.SLOTS
 
 var _gs: Node
 var _selected_uid: String = "zane"
@@ -77,13 +65,13 @@ func _build_ui() -> void:
 		child.queue_free()
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.025, 0.026, 0.030)
+	bg.color = Color("d8cbb0")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	_add_stone_floor(bg)
 
 	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.34)
+	shade.color = Color(0.87, 0.82, 0.70, 0.87)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
 
@@ -95,7 +83,7 @@ func _build_ui() -> void:
 	add_child(_scroll)
 	# Keep authored text sizes; reflow the panels instead of shrinking the canvas.
 	_content_width = get_viewport().get_visible_rect().size.x - 152 - _scroll.get_v_scroll_bar().get_combined_minimum_size().x
-	_stacked = _content_width < 1840 + 34 + 1320
+	_stacked = _content_width < 1240
 	var margin := MarginContainer.new()
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -118,13 +106,13 @@ func _build_ui() -> void:
 	_root.add_child(content)
 
 	var left := VBoxContainer.new()
-	left.custom_minimum_size.x = 0 if _stacked else 1840
+	left.custom_minimum_size.x = 0 if _stacked else 540
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.add_theme_constant_override("separation", 18)
 	content.add_child(left)
 
 	var right_panel := _panel(Color(0.05, 0.055, 0.07, 0.92), Color(0.72, 0.62, 0.42, 0.45), 18)
-	right_panel.custom_minimum_size.x = 0 if _stacked else 1320
+	right_panel.custom_minimum_size.x = 0 if _stacked else 620
 	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(right_panel)
 	_detail_panel = VBoxContainer.new()
@@ -138,10 +126,10 @@ func _build_ui() -> void:
 
 func _build_top_bar() -> void:
 	var top := HBoxContainer.new()
-	top.custom_minimum_size.y = 88
+	top.custom_minimum_size.y = 52
 	_root.add_child(top)
 
-	var crumb := _label("Units > Status > %s" % _active_tab, 42, Color(0.91, 0.84, 0.66), true)
+	var crumb := _label("Company / %s" % _active_tab, 42, Color(0.91, 0.84, 0.66), true)
 	crumb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(crumb)
 
@@ -155,19 +143,19 @@ func _build_top_bar() -> void:
 func _build_roster(parent: VBoxContainer) -> void:
 	var selected := _get_reg(_selected_uid)
 	var hero := BoxContainer.new()
-	hero.vertical = _content_width < 1400
-	hero.custom_minimum_size.y = 390
+	hero.vertical = _content_width < 900
+	hero.custom_minimum_size.y = 0
 	hero.add_theme_constant_override("separation", 30)
 	parent.add_child(hero)
 
 	var portrait_panel := _panel(Color(0.06, 0.065, 0.08, 0.95), Color(0.95, 0.83, 0.48, 0.62), 12)
-	portrait_panel.custom_minimum_size = Vector2(310, 330)
+	portrait_panel.custom_minimum_size = Vector2(150, 170)
 	hero.add_child(portrait_panel)
 	var portrait := TextureRect.new()
 	portrait.texture = _unit_texture(_selected_uid)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.custom_minimum_size = Vector2(280, 305)
+	portrait.custom_minimum_size = Vector2(140, 160)
 	portrait_panel.add_child(portrait)
 
 	var info := VBoxContainer.new()
@@ -180,15 +168,14 @@ func _build_roster(parent: VBoxContainer) -> void:
 	unit_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_row.add_child(unit_name)
 	var stats := _stats_for(_selected_uid)
-	name_row.add_child(_label("Lv.%d   EXP 0" % int(stats.get("level", 1)), 34, Color(0.86, 0.88, 0.93), true, HORIZONTAL_ALIGNMENT_RIGHT))
+	name_row.add_child(_label("Level %d" % int(stats.get("level", 1)), 34, Color(0.86, 0.88, 0.93), true, HORIZONTAL_ALIGNMENT_RIGHT))
 	info.add_child(_job_line(_selected_uid))
-	info.add_child(_bar_line("HP", int(stats.get("hp", 1)), int(stats.get("hp", 1)), Color(0.48, 0.92, 0.16)))
-	info.add_child(_bar_line("MP", int(stats.get("mp", 1)), int(stats.get("mp", 1)), Color(0.92, 0.50, 0.38)))
-	info.add_child(_bar_line("CT", 100, 100, Color(0.95, 0.72, 0.12)))
+	info.add_child(_bar_line("HP", int(stats.get("hp", 1)), int(stats.get("hp", 1)), Color(0.39, 0.56, 0.28)))
+	info.add_child(_bar_line("MP", int(stats.get("mp", 1)), int(stats.get("mp", 1)), Color(0.68, 0.36, 0.28)))
+	info.add_child(_bar_line("Ether", int(stats.max_ether), int(stats.max_ether), Color(0.38, 0.63, 0.72)))
 	var brave_faith := HBoxContainer.new()
 	brave_faith.add_theme_constant_override("separation", 28)
-	brave_faith.add_child(_chip("Bravery %d" % int(stats.get("bravery", 70)), Color(0.72, 0.82, 0.92)))
-	brave_faith.add_child(_chip("Faith %d" % int(stats.get("faith", 70)), Color(0.72, 0.82, 0.92)))
+	brave_faith.add_child(_chip("Temper %d" % int(stats.max_temper), Color(0.72, 0.52, 0.32)))
 	brave_faith.add_child(_chip("JP %d" % int(selected.get("jp", 0)), Color(0.55, 0.92, 1.0)))
 	info.add_child(brave_faith)
 
@@ -206,8 +193,8 @@ func _build_roster(parent: VBoxContainer) -> void:
 	roster_panel.add_child(_padded(roster_box, 18, 16))
 	roster_box.add_child(_section("ROSTER"))
 	_roster_grid = GridContainer.new()
-	var roster_width := _content_width if _stacked else _content_width - 1320 - 34
-	_roster_grid.columns = clampi(int((roster_width - 38 + 26) / (410 + 26)), 1, 4)
+	var roster_width := _content_width if _stacked else _content_width - 620 - 34
+	_roster_grid.columns = clampi(int((roster_width - 38 + 26) / (220 + 26)), 1, 4)
 	_roster_grid.add_theme_constant_override("h_separation", 26)
 	_roster_grid.add_theme_constant_override("v_separation", 28)
 	_roster_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -217,20 +204,22 @@ func _build_roster(parent: VBoxContainer) -> void:
 
 
 func _build_footer() -> void:
-	var foot := HBoxContainer.new()
+	var foot := VBoxContainer.new()
 	foot.custom_minimum_size.y = 70
 	foot.add_theme_constant_override("separation", 24)
 	_root.add_child(foot)
 	_hint_label = _label("Q/E change unit    1-4 switch panel    Enter confirms buttons    Esc returns", 28, Color(0.76, 0.73, 0.66), false)
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_hint_label.add_theme_font_size_override("font_size", 28)
+	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	foot.add_child(_hint_label)
 	var back := _button("Back to Hub", Color(0.78, 0.74, 0.68))
-	back.custom_minimum_size = Vector2(260, 58)
+	back.custom_minimum_size = Vector2(170, 44)
 	back.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/HubScene.tscn"))
 	foot.add_child(back)
 	var next := _button("Select Stage", Color(1.0, 0.82, 0.36))
-	next.custom_minimum_size = Vector2(280, 58)
+	next.custom_minimum_size = Vector2(170, 44)
 	next.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/StageSelect.tscn"))
 	foot.add_child(next)
 
@@ -256,7 +245,7 @@ func _build_tabs() -> void:
 		var b := _button(tab, Color(0.90, 0.84, 0.68) if tab == _active_tab else Color(0.58, 0.57, 0.54))
 		b.toggle_mode = true
 		b.button_pressed = tab == _active_tab
-		b.custom_minimum_size = Vector2(230, 54)
+		b.custom_minimum_size = Vector2(130, 44)
 		b.pressed.connect(_set_tab.bind(tab))
 		_tab_row.add_child(b)
 
@@ -299,8 +288,8 @@ func _build_jobs_tab(reg: Dictionary) -> void:
 	for tier in [1, 2, 3]:
 		_detail_panel.add_child(_section(["BASIC", "ADVANCED", "ASCENDED"][tier - 1]))
 		var row := GridContainer.new()
-		var detail_width := _content_width if _stacked else 1320.0
-		row.columns = clampi(int((detail_width - 58 + 14) / (390 + 14)), 1, 3)
+		var detail_width := _content_width if _stacked else 620.0
+		row.columns = clampi(int((detail_width - 58 + 14) / (270 + 14)), 1, 3)
 		row.add_theme_constant_override("h_separation", 14)
 		row.add_theme_constant_override("v_separation", 14)
 		_detail_panel.add_child(row)
@@ -313,7 +302,7 @@ func _build_abilities_tab(reg: Dictionary) -> void:
 	_detail_panel.add_child(_wrapped("Learn with JP, then equip up to four abilities for battle.", 28, Color(0.78, 0.76, 0.70)))
 	_detail_panel.add_child(_section("EQUIPPED"))
 	var equipped: Array = _gs.get_equipped_abilities(_selected_uid) if _gs else []
-	var equipped_row := HBoxContainer.new()
+	var equipped_row := HFlowContainer.new()
 	equipped_row.add_theme_constant_override("separation", 10)
 	_detail_panel.add_child(equipped_row)
 	for i in range(4):
@@ -341,22 +330,56 @@ func _build_abilities_tab(reg: Dictionary) -> void:
 
 func _build_equipment_tab(reg: Dictionary) -> void:
 	_detail_panel.add_child(_section("EQUIPMENT"))
-	_detail_panel.add_child(_wrapped("Equipment is staged for the demo: the screen saves a loadout shape now, and item stats can plug into these slots next.", 28, Color(0.78, 0.76, 0.70)))
+	_detail_panel.add_child(_wrapped("Choose a piece from the company stores. Each item can be carried by one character.", 24, Color.WHITE))
 	var equipment: Dictionary = reg.get("equipment", {})
-	for slot in ["main_hand", "off_hand", "head", "body", "accessory"]:
-		_detail_panel.add_child(_rich_line(SLOT_LABELS.get(slot, slot), equipment.get(slot, "Empty"), Color(0.94, 0.90, 0.76)))
-	_detail_panel.add_child(_section("NEXT HOOK"))
-	_detail_panel.add_child(_wrapped("Loot from runs should populate inventory, then this panel can assign weapon and armor bonuses to the battle stats.", 28, Color(0.74, 0.72, 0.66)))
+	var owned: Array = _gs.get_owned_equipment()
+	for slot in EquipmentRules.SLOTS:
+		var item := EquipmentRules.find_item(owned, str(equipment.get(slot, "")))
+		_detail_panel.add_child(_rich_line(EquipmentRules.SLOTS[slot], str(item.get("name", "Empty")), Color.WHITE))
+		if not item.is_empty():
+			var remove := _button("Unequip", Color("cbb377"))
+			remove.pressed.connect(func() -> void:
+				_gs.unequip_item(_selected_uid, slot)
+				_refresh_all()
+				_focus_active_tab())
+			_detail_panel.add_child(remove)
+		for candidate in owned:
+			if EquipmentRules.slot_for(candidate) != slot or candidate == item:
+				continue
+			var owner: String = _gs.equipment_owner(str(candidate.id))
+			var supported := EquipmentRules.supported(candidate)
+			var proposed := equipment.duplicate()
+			proposed[slot] = candidate.id
+			var current := _stats_for(_selected_uid)
+			var preview: Dictionary = _gs.get_character_stats(_selected_uid, proposed)
+			var changes: Array[String] = []
+			for key in ["hp", "physical", "magic", "speed", "max_temper"]:
+				var difference := int(preview[key]) - int(current[key])
+				if difference:
+					changes.append("%s %+d" % [str(key).replace("_", " ").capitalize(), difference])
+			var caption: String = candidate.name + ("  /  " + ", ".join(changes) if not changes.is_empty() else "")
+			if not owner.is_empty():
+				caption += " — " + str(_get_reg(owner).get("display_name", owner))
+			if not supported:
+				caption += " — effect not available yet"
+			var choose := _button(caption, Color("cbb377"))
+			choose.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			choose.disabled = not owner.is_empty() or not supported
+			choose.pressed.connect(func() -> void:
+				_gs.equip_item(_selected_uid, str(candidate.id), slot)
+				_refresh_all()
+				_focus_active_tab())
+			_detail_panel.add_child(choose)
 
 
 func _unit_roster_button(uid: String) -> Button:
 	var reg := _get_reg(uid)
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(410, 310)
+	btn.custom_minimum_size = Vector2(220, 230)
 	btn.text = ""
 	btn.pressed.connect(_select_unit.bind(uid))
 	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.055, 0.060, 0.070, 0.88)
+	st.bg_color = Color("e5d7ba")
 	st.border_color = Color(1.0, 0.83, 0.34, 0.85) if uid == _selected_uid else Color(0.58, 0.52, 0.42, 0.35)
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 2 if uid == _selected_uid else 1)
 	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]: st.set_corner_radius(c, 10)
@@ -368,12 +391,13 @@ func _unit_roster_button(uid: String) -> Button:
 	box.add_theme_constant_override("separation", 4)
 	btn.add_child(_padded(box, 10, 10))
 	var image := TextureRect.new()
-	image.texture = _unit_texture(uid)
+	image.texture = AssetRegistry.load_first_texture(AssetRegistry.get_character_candidates(uid))
+	image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	image.custom_minimum_size = Vector2(210, 170)
 	box.add_child(image)
-	box.add_child(_label("Lv.%d  %s" % [int(BASE_STATS.get(uid, {}).get("level", 1)), reg.get("display_name", uid)], 28, Color(1.0, 0.94, 0.78), true, HORIZONTAL_ALIGNMENT_CENTER))
+	box.add_child(_label("Lv.%d  %s" % [int(_stats_for(uid).get("level", 1)), reg.get("display_name", uid)], 28, Color(1.0, 0.94, 0.78), true, HORIZONTAL_ALIGNMENT_CENTER))
 	var job := JobTreeData.get_job(reg.get("current_job_id", "squire"))
 	box.add_child(_label(job.get("name", "Squire"), 22, Color(0.74, 0.80, 0.90), true, HORIZONTAL_ALIGNMENT_CENTER))
 	return btn
@@ -386,13 +410,32 @@ func _job_card(job_id: String, current_job: String, job_jp: Dictionary) -> Contr
 	var jp := int(job_jp.get(job_id, 0))
 	var level := JobTreeData._jp_to_level(jp)
 	var card := _panel(Color(0.07, 0.075, 0.090, 0.95), Color(1.0, 0.82, 0.34, 0.75) if is_current else Color(0.5, 0.5, 0.5, 0.25), 8)
-	card.custom_minimum_size = Vector2(390, 210)
+	card.custom_minimum_size = Vector2(270, 210)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 8)
 	card.add_child(_padded(box, 16, 12))
 	box.add_child(_label(("* " if is_current else "") + job.get("name", job_id.capitalize()), 30, Color(1.0, 0.92, 0.62) if can_change else Color(0.42, 0.40, 0.38), true))
-	box.add_child(_label("Lv.%d   JP %d" % [level, jp], 22, Color(0.58, 0.84, 1.0) if can_change else Color(0.42, 0.42, 0.42), false))
+	box.add_child(_label(("MASTERED  " if level >= 6 else "") + "Lv.%d   JP %d" % [level, jp], 22, Color(0.58, 0.84, 1.0) if can_change else Color(0.42, 0.42, 0.42), false))
 	box.add_child(_wrapped(job.get("description", ""), 20, Color(0.76, 0.74, 0.68) if can_change else Color(0.42, 0.40, 0.38)))
+	var icon_path: String = job.get("icon", "")
+	if ResourceLoader.exists(icon_path):
+		var emblem := TextureRect.new()
+		emblem.texture = load(icon_path)
+		emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		emblem.custom_minimum_size = Vector2(48, 48)
+		box.add_child(emblem)
+	for prerequisite in job.get("prerequisites", {}):
+		var needed := int(job.prerequisites[prerequisite])
+		var earned := JobTreeData._jp_to_level(int(job_jp.get(prerequisite, 0)))
+		box.add_child(_wrapped("%s: level %d / %d" % [JobTreeData.get_job(prerequisite).get("name", prerequisite), earned, needed], 20, Color.WHITE))
+	if level < 6:
+		var progress := ProgressBar.new()
+		progress.max_value = JobTreeData.JP_PER_LEVEL[mini(level, 5)]
+		progress.value = jp
+		progress.show_percentage = false
+		progress.custom_minimum_size.y = 8
+		box.add_child(progress)
 	var b := _button("Current" if is_current else ("Change" if can_change else "Locked"), Color(1.0, 0.82, 0.34) if can_change else Color(0.40, 0.38, 0.34))
 	b.disabled = is_current or not can_change
 	b.pressed.connect(_on_change_job.bind(job_id))
@@ -407,11 +450,11 @@ func _ability_summary(ab_id: String, ab: Dictionary, with_equip_button: bool) ->
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
-	info.add_child(_label(ab.get("display_name", ab_id), 27, Color(0.92, 0.90, 0.82), true))
+	info.add_child(_wrapped(ab.get("display_name", ab_id), 27, Color.WHITE))
 	if ab.is_empty():
 		info.add_child(_label("Unavailable — progress retained" if with_equip_button else "Ability not available yet", 20, Color(0.58, 0.64, 0.72), false))
 		return row
-	info.add_child(_label("MP %d   Range %d   %s" % [int(ab.get("mp_cost", 0)), int(ab.get("range", 0)), str(ab.get("spell_type", "physical")).capitalize()], 20, Color(0.58, 0.64, 0.72), false))
+	info.add_child(_wrapped("MP %d   Range %d   %s" % [int(ab.get("mp_cost", 0)), int(ab.get("range", 0)), str(ab.get("spell_type", "physical")).capitalize()], 20, Color.WHITE))
 	if with_equip_button:
 		var equipped: Array = _gs.get_equipped_abilities(_selected_uid) if _gs else []
 		var btn_text := "Remove" if AbilityDB.canonical_id(ab_id) in equipped else "Equip"
@@ -520,18 +563,7 @@ func _known_abilities(reg: Dictionary) -> Array[String]:
 
 
 func _stats_for(uid: String) -> Dictionary:
-	var base: Dictionary = BASE_STATS.get(uid, {}).duplicate()
-	var reg := _get_reg(uid)
-	var bonuses := JobTreeData.compute_stat_bonuses(reg.get("job_jp", {}))
-	base["hp"] = int(base.get("hp", 1)) + int(bonuses.get("max_hp", 0))
-	base["mp"] = int(base.get("mp", 1)) + int(bonuses.get("max_ether", 0))
-	base["physical"] = int(base.get("physical", 0)) + int(bonuses.get("physical", 0))
-	base["magic"] = int(base.get("magic", 0)) + int(bonuses.get("magic", 0))
-	var configured_speed := int(base.get("speed", 0))
-	base["speed"] = configured_speed + int(bonuses.get("speed", 0))
-	if configured_speed > 0:
-		base["speed"] = maxi(1, int(base["speed"]))
-	return base
+	return _gs.get_character_stats(uid) if _gs else CharacterStats.calculate(uid, {}, [])
 
 
 func _get_reg(uid: String) -> Dictionary:
@@ -566,7 +598,7 @@ func _bar_line(label: String, value: int, maximum: int, color: Color) -> Control
 	bar.max_value = maximum
 	bar.value = value
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(560, 34)
+	bar.custom_minimum_size = Vector2(140, 22)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var fill := StyleBoxFlat.new()
 	fill.bg_color = color
@@ -579,7 +611,7 @@ func _bar_line(label: String, value: int, maximum: int, color: Color) -> Control
 
 func _small_stat(label: String, value: int) -> Control:
 	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(150, 80)
+	box.custom_minimum_size = Vector2(75, 60)
 	box.add_child(_label(label, 18, Color(0.58, 0.60, 0.66), true, HORIZONTAL_ALIGNMENT_CENTER))
 	box.add_child(_label(str(value), 34, Color(0.94, 0.92, 0.86), true, HORIZONTAL_ALIGNMENT_CENTER))
 	return box
@@ -587,7 +619,7 @@ func _small_stat(label: String, value: int) -> Control:
 
 func _stat_tile(label: String, value: int) -> Control:
 	var p := _panel(Color(0.07, 0.075, 0.09, 0.90), Color(0.45, 0.45, 0.48, 0.25), 8)
-	p.custom_minimum_size = Vector2(390, 110)
+	p.custom_minimum_size = Vector2(240, 70)
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	p.add_child(_padded(box, 16, 14))
@@ -634,8 +666,8 @@ func _label(text: String, size: int, color: Color, display: bool = false, align:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = align
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", color)
+	l.add_theme_font_size_override("font_size", clampi(roundi(size * 0.65), 18, 36))
+	l.add_theme_color_override("font_color", Color("302b25"))
 	if display:
 		l.add_theme_font_override("font", DISPLAY_FONT)
 	return l
@@ -655,14 +687,18 @@ func _button(text: String, color: Color) -> Button:
 	b.add_theme_stylebox_override("normal", st)
 	b.add_theme_stylebox_override("hover", st)
 	b.add_theme_stylebox_override("pressed", st)
+	var focus := st.duplicate() as StyleBoxFlat
+	focus.border_color = Color("efd08a")
+	focus.set_border_width_all(3)
+	b.add_theme_stylebox_override("focus", focus)
 	return b
 
 
 func _panel(bg: Color, border: Color, radius: int) -> PanelContainer:
 	var p := PanelContainer.new()
 	var st := StyleBoxFlat.new()
-	st.bg_color = bg
-	st.border_color = border
+	st.bg_color = Color("eee4ce")
+	st.border_color = Color("a68b54")
 	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: st.set_border_width(side, 1)
 	for c in [CORNER_TOP_LEFT, CORNER_TOP_RIGHT, CORNER_BOTTOM_LEFT, CORNER_BOTTOM_RIGHT]: st.set_corner_radius(c, radius)
 	p.add_theme_stylebox_override("panel", st)
