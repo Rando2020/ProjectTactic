@@ -115,8 +115,6 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	else:
 		formula = CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
 		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
-		if bonuses.get("brand_bonus", 0.0) > 0.0 and target.has_status("burn"):
-			dmg = int(round(float(dmg) * (1.0 + float(bonuses["brand_bonus"]))))
 
 	var affinity: float = float(formula.get("affinity", 1.0))
 	var aff_label := _affinity_label(affinity)
@@ -182,6 +180,25 @@ static func quick_spell(caster: Unit, ability: Dictionary) -> Dictionary:
 	}
 
 
+static func area(caster: Unit, ability: Dictionary) -> Dictionary:
+	var element := CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
+	var is_heal: bool = element == "heal" or ability.get("type", "") == "heal"
+	var is_buff: bool = element == "buff" or ability.get("type", "") == "buff"
+	var is_area: bool = int(ability.get("aoe_radius", 0)) > 0 or str(ability.get("aoe_type", "")) in ["fan", "cross", "line", "radius", "nova"]
+	if is_heal:
+		element = "heal"
+	return {
+		"visible": true, "mode": "Area" if is_area else "Ability", "actor_name": caster.display_name,
+		"target_name": "Area selection" if is_area else "Select a valid unit", "ability_name": ability.get("display_name", "Ability"),
+		"element": element, "element_icon": ELEMENT_ICONS.get(element, "*"),
+		"element_color": ELEMENT_COLORS.get(element, Color.WHITE),
+		"amount_label": ("AREA HEAL" if is_heal else ("AREA BUFF" if is_buff else "AREA EFFECT")) if is_area else "SELECT TARGET",
+		"is_heal": is_heal, "is_buff": is_buff, "targetless": true,
+		"mp_cost": int(ability.get("mp_cost", 0)),
+		"note": "Hover a valid unit to inspect its outcome. Other affected targets resolve separately." if is_area else "Hover a valid unit to inspect damage, healing or status effects.",
+	}
+
+
 static func _compact_breakdown(formula: Dictionary, extra_notes: Array[String] = []) -> Array[String]:
 	var parts: Array[String] = []
 	for item in formula.get("explain", []):
@@ -223,7 +240,6 @@ static func _status_preview(ability: Dictionary) -> String:
 
 static func _affinity_label(affinity: float) -> String:
 	if affinity == 0.0: return "IMMUNE"
-	if affinity <= 0.3: return "ABSORBS"
 	if affinity < 1.0: return "RESISTS"
 	if affinity >= 2.0: return "WEAK x%.1f!" % affinity
 	if affinity > 1.0: return "WEAK x%.1f" % affinity
@@ -232,7 +248,6 @@ static func _affinity_label(affinity: float) -> String:
 
 static func _affinity_color(affinity: float) -> Color:
 	if affinity == 0.0: return Color(0.5, 0.5, 0.55)
-	if affinity <= 0.3: return Color(0.4, 0.9, 0.4)
 	if affinity < 1.0: return Color(0.4, 0.75, 1.0)
 	if affinity > 1.0: return Color(1.0, 0.65, 0.2)
 	return Color.WHITE

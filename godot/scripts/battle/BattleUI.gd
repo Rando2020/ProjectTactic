@@ -53,6 +53,8 @@ var _preview_amount_label: Label
 var _preview_hit_label: Label
 var _preview_crit_label: Label
 var _preview_note_label: Label
+var _preview_outcome_label: Label
+var _preview_hp_bar: ProgressBar
 var _chapel_command_panel: PanelContainer
 var _chapel_command_buttons: VBoxContainer
 var _loadout_panel: PanelContainer
@@ -717,11 +719,20 @@ func _build_action_preview_panel() -> void:
 	_preview_target_label = _preview_label(row, "Target", 13, Color(1.0, 0.76, 0.72))
 
 	var result_row := VBoxContainer.new()
-	result_row.add_theme_constant_override("separation", 18)
+	result_row.add_theme_constant_override("separation", 6)
 	center.add_child(result_row)
-	_preview_amount_label = _preview_label(result_row, "--", 34, Color(1.0, 0.92, 0.35))
+	_preview_amount_label = _preview_label(result_row, "--", 24, Color(1.0, 0.92, 0.35))
 	_preview_hit_label = _preview_label(result_row, "Hit --", 12, Color(0.75, 0.95, 0.85))
 	_preview_crit_label = _preview_label(result_row, "Crit --", 12, Color(0.9, 0.75, 1.0))
+	_preview_outcome_label = _preview_label(result_row, "", 14, Color(1.0, 0.76, 0.48))
+	_preview_hp_bar = ProgressBar.new()
+	_preview_hp_bar.custom_minimum_size.y = 10
+	_preview_hp_bar.show_percentage = false
+	_preview_hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hp_fill := StyleBoxFlat.new()
+	hp_fill.bg_color = Color(0.42, 0.72, 0.57)
+	_preview_hp_bar.add_theme_stylebox_override("fill", hp_fill)
+	result_row.add_child(_preview_hp_bar)
 
 	_preview_note_label = _preview_label(center, "", 11, Color(0.72, 0.78, 0.84))
 	_preview_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1326,18 +1337,19 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	var is_heal: bool = preview.get("is_heal", false) == true
 	var is_buff: bool = preview.get("is_buff", false) == true
 	var aff_lbl: String = str(preview.get("affinity_label", ""))
-	var aff_col: Color = preview.get("affinity_color", Color.WHITE)
 
 	var el_icon: String = str(preview.get("element_icon", ""))
 	var mode: String = str(preview.get("mode", "Forecast")).to_upper()
 	_preview_mode_label.text = ("%s  %s" % [el_icon, mode]).strip_edges()
 	_preview_mode_label.add_theme_color_override("font_color", el_color)
 
-	_preview_actor_label.text = "ATTACKER\n%s" % str(preview.get("actor_name", preview.get("actor", "-")))
+	_preview_actor_label.text = "ACTOR\n%s" % str(preview.get("actor_name", preview.get("actor", "-")))
 
 	var ab_name: String = str(preview.get("ability_name", preview.get("action", "")))
 	var boon_pct: int = int(preview.get("boon_bonus_pct", 0))
 	var ab_text: String = ab_name
+	if preview.has("mp_cost"):
+		ab_text += "  |  %d MP" % int(preview.mp_cost)
 	if boon_pct > 0:
 		ab_text += "\n+%d%% boon" % boon_pct
 	_preview_action_label.text = ab_text
@@ -1347,64 +1359,49 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	var hp_b: int = int(preview.get("hp_before", 0))
 	var hp_a: int = int(preview.get("hp_after", 0))
 	var max_hp: int = int(preview.get("max_hp", 1))
+	var outcome := CombatOutcome.project(preview)
 	var hp_text := ""
 	if hp_b > 0:
-		hp_text = "\nHP %d -> %d" % [hp_b, hp_a]
-		if hp_a <= 0:
-			hp_text += "  KO"
+		hp_text = "\nHP %d -> %d%s" % [hp_b, hp_a, " on normal hit" if not outcome.is_empty() else ""]
 	_preview_target_label.text = "TARGET\n%s%s" % [t_name, hp_text]
 	_preview_target_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.55) if hp_a <= 0 and hp_b > 0 else Color(1.0, 0.76, 0.72))
+	_preview_hp_bar.visible = hp_b > 0 and not bool(preview.get("targetless", false))
+	_preview_hp_bar.max_value = maxi(1, max_hp)
+	_preview_hp_bar.value = hp_a
+	_preview_hp_bar.tooltip_text = "Projected HP after a normal hit" if not outcome.is_empty() else "Projected HP after this action"
+	_preview_outcome_label.text = CombatOutcome.ko_label(outcome)
+	_preview_outcome_label.visible = not _preview_outcome_label.text.is_empty()
 
 	var dmg: int = int(preview.get("damage", 0))
 	var heal: int = int(preview.get("heal", 0))
-	if is_heal:
+	if preview.has("amount_label"):
+		_preview_amount_label.text = str(preview.amount_label)
+		_preview_amount_label.add_theme_color_override("font_color", el_color)
+	elif is_heal:
 		_preview_amount_label.text = "+%d HP" % heal
 		_preview_amount_label.add_theme_color_override("font_color", Color(0.45, 0.95, 0.55))
 	elif is_buff:
 		_preview_amount_label.text = "BUFF"
 		_preview_amount_label.add_theme_color_override("font_color", Color(0.55, 0.75, 1.0))
-	elif preview.has("amount_label"):
-		_preview_amount_label.text = str(preview.get("amount_label", ""))
-		_preview_amount_label.add_theme_color_override("font_color", el_color)
 	else:
-		var dmin: int = int(preview.get("damage_min", dmg))
-		var dmax: int = int(preview.get("damage_max", dmg))
-		_preview_amount_label.text = "%d-%d" % [dmin, dmax] if dmax > dmin else str(dmg)
+		_preview_amount_label.text = "%d HP on hit" % dmg
 		_preview_amount_label.add_theme_color_override("font_color", el_color)
 
-	if not aff_lbl.is_empty():
-		var aff_display := "%s  %s" % [str(preview.get("element_icon", "")), aff_lbl]
-		var affinity_val: float = float(preview.get("affinity", 1.0))
-		if affinity_val >= 2.0:
-			aff_display += " !!"
-		elif affinity_val > 1.0:
-			aff_display += " !"
-		_preview_hit_label.text = aff_display
-		_preview_hit_label.add_theme_color_override("font_color", aff_col)
-	else:
-		var hit: int = int(preview.get("hit_pct", 100))
-		var hit_confidence := ""
-		if hit >= 95:
-			hit_confidence = " high"
-		elif hit >= 75:
-			hit_confidence = " steady"
-		elif hit >= 50:
-			hit_confidence = " risky"
-		else:
-			hit_confidence = " poor"
-		_preview_hit_label.text = "Hit %d%%%s" % [hit, hit_confidence]
+	if not outcome.is_empty():
+		_preview_hit_label.text = "Hit %d%%" % int(preview.get("hit_pct", 100))
+		if not aff_lbl.is_empty():
+			_preview_hit_label.text += "  |  " + aff_lbl
 		_preview_hit_label.add_theme_color_override("font_color", Color(0.75, 0.95, 0.85))
+	else:
+		_preview_hit_label.text = ""
+	_preview_hit_label.visible = not _preview_hit_label.text.is_empty()
 
-	var jp: int = int(preview.get("jp_gain", 6))
 	var crit_pct: int = int(preview.get("crit_pct", 0))
-	var crit_text := "+%d JP" % jp
-	if crit_pct > 0:
-		crit_text = "Crit %d%%  +%d JP" % [crit_pct, jp]
-	if hp_b > 0 and hp_a <= 0:
-		crit_text += "  KO"
-	elif hp_b > 0 and max_hp > 0 and float(hp_a) / float(max_hp) < 0.25:
-		crit_text += "  Low HP"
+	var crit_text := ""
+	if crit_pct > 0 and not outcome.is_empty():
+		crit_text = "Critical: %d HP (%d%% of hits)\nTarget HP on critical: %d" % [int(preview.get("crit_damage", dmg)), crit_pct, int(outcome.critical_hp_after)]
 	_preview_crit_label.text = crit_text
+	_preview_crit_label.visible = not crit_text.is_empty()
 	_preview_crit_label.add_theme_color_override("font_color", Color(0.48, 0.86, 1.0))
 
 	# Organize notes by priority for better readability
