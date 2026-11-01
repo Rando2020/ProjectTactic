@@ -39,7 +39,7 @@ func run() -> void:
 	var cycle := 0
 	while is_inside_tree():
 		cycle += 1
-		for id in ["thunderstrike","void_pulse","dark_breath","shadow_mend","mighty_strike","defend"]:
+		for id in ["fire","thunderstrike","void_pulse","dark_breath","shadow_mend","mighty_strike","defend"]:
 			_reset_units()
 			var actor: Unit = manager.units.zane
 			var target: Unit = manager.units.Enemy_1
@@ -62,7 +62,7 @@ func run() -> void:
 			else:
 				await get_tree().create_timer(3.0).timeout
 			var ability: Dictionary = AbilityDB.get_ability(id)
-			if id=="thunderstrike": await manager._execute_aoe_ability(actor,target.grid_pos,ability)
+			if id in ["fire","thunderstrike"]: await manager._execute_aoe_ability(actor,target.grid_pos,ability)
 			else: await manager._execute_ability(actor,target,ability)
 			await manager._recover_action()
 			print("VISUAL_QA_DONE ",id)

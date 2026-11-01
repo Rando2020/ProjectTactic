@@ -107,7 +107,9 @@ func _ensure_audio_buses() -> void:
 func _ensure_bus(bus_name: String, send_to: String) -> void:
 	var bus_index := AudioServer.get_bus_index(bus_name)
 	if bus_index == -1:
-		AudioServer.add_bus()
+		# Godot 4.6 Web sample add_bus(-1) reorders Master in its JS graph.
+		# Growing count uses the stable append path and preserves all bus sends.
+		AudioServer.bus_count += 1
 		bus_index = AudioServer.bus_count - 1
 		AudioServer.set_bus_name(bus_index, bus_name)
 	AudioServer.set_bus_send(bus_index, send_to)

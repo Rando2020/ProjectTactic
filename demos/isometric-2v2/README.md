@@ -99,3 +99,10 @@ New checks: SkillFeedbackTest, SkillPreviewTest, SkillCompletionLifecycleTest,
 (press Space per spell), excluded from runtime exports. It is not manual battle or
 browser acceptance. Generated PCM cues are original; audible acceptance requires an
 audio device. Runtime asset hashes/crop verification are in the modular-spells folder.
+
+
+### Visibility, sound and rotation correction
+
+Spell art is enlarged using occupied content bounds, with a visible0.64s caster buildup (cosmetic only, not turn charge). Channel/release/contact cues are distinct. Web audio bus creation preserves the Master→output route; user volume settings remain respected.
+
+Q/E or the visible rotation buttons now switch the painted view to the existing rotatable stone comparison and turn it. The view label explains the switch; Return to painted restores the artwork. This does not make painted artwork itself rotatable.

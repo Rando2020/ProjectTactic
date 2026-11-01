@@ -9,7 +9,7 @@ const DATA: Dictionary = {
           320,
           551
         ],
-        "scale": 0.23
+        "scale": 0.34
       },
       {
         "file": "frames/shared_tier1-02.png",
@@ -17,7 +17,7 @@ const DATA: Dictionary = {
           311,
           552
         ],
-        "scale": 0.23
+        "scale": 0.34
       },
       {
         "file": "frames/shared_tier1-03.png",
@@ -25,7 +25,7 @@ const DATA: Dictionary = {
           320,
           492
         ],
-        "scale": 0.23
+        "scale": 0.34
       },
       {
         "file": "frames/shared_tier1-04.png",
@@ -33,7 +33,7 @@ const DATA: Dictionary = {
           313,
           492
         ],
-        "scale": 0.23
+        "scale": 0.34
       }
     ]
   },
@@ -45,7 +45,7 @@ const DATA: Dictionary = {
           198,
           328
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-02.png",
@@ -53,7 +53,7 @@ const DATA: Dictionary = {
           185,
           328
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-03.png",
@@ -61,7 +61,7 @@ const DATA: Dictionary = {
           179,
           328
         ],
-        "scale": 0.42
+        "scale": 0.62
       }
     ],
     "action": [
@@ -71,7 +71,7 @@ const DATA: Dictionary = {
           198,
           335
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-05.png",
@@ -79,7 +79,7 @@ const DATA: Dictionary = {
           185,
           335
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-06.png",
@@ -87,7 +87,7 @@ const DATA: Dictionary = {
           179,
           335
         ],
-        "scale": 0.42
+        "scale": 0.62
       }
     ],
     "collision": [
@@ -97,7 +97,7 @@ const DATA: Dictionary = {
           198,
           295
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-08.png",
@@ -105,7 +105,7 @@ const DATA: Dictionary = {
           185,
           295
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-09.png",
@@ -113,7 +113,7 @@ const DATA: Dictionary = {
           179,
           295
         ],
-        "scale": 0.42
+        "scale": 0.62
       }
     ],
     "dissipation": [
@@ -123,7 +123,7 @@ const DATA: Dictionary = {
           198,
           216
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-11.png",
@@ -131,7 +131,7 @@ const DATA: Dictionary = {
           185,
           216
         ],
-        "scale": 0.42
+        "scale": 0.62
       },
       {
         "file": "frames/lightning-12.png",
@@ -139,7 +139,7 @@ const DATA: Dictionary = {
           179,
           216
         ],
-        "scale": 0.42
+        "scale": 0.62
       }
     ]
   },
@@ -151,7 +151,7 @@ const DATA: Dictionary = {
           237,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -160,7 +160,7 @@ const DATA: Dictionary = {
           232,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -169,7 +169,7 @@ const DATA: Dictionary = {
           210,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       }
     ],
@@ -180,7 +180,7 @@ const DATA: Dictionary = {
           325,
           130
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "projectile"
       },
       {
@@ -189,7 +189,7 @@ const DATA: Dictionary = {
           315,
           130
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "projectile"
       },
       {
@@ -198,7 +198,7 @@ const DATA: Dictionary = {
           290,
           130
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "projectile"
       }
     ],
@@ -209,7 +209,7 @@ const DATA: Dictionary = {
           237,
           285
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       },
       {
@@ -218,7 +218,7 @@ const DATA: Dictionary = {
           232,
           285
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       },
       {
@@ -227,7 +227,7 @@ const DATA: Dictionary = {
           210,
           285
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       }
     ],
@@ -238,7 +238,7 @@ const DATA: Dictionary = {
           237,
           260
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       },
       {
@@ -247,7 +247,7 @@ const DATA: Dictionary = {
           232,
           260
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       },
       {
@@ -256,7 +256,7 @@ const DATA: Dictionary = {
           210,
           260
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "target"
       }
     ]
@@ -269,7 +269,7 @@ const DATA: Dictionary = {
           240,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "caster"
       },
       {
@@ -278,7 +278,7 @@ const DATA: Dictionary = {
           215,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "caster"
       },
       {
@@ -287,7 +287,7 @@ const DATA: Dictionary = {
           220,
           310
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "caster"
       }
     ],
@@ -298,7 +298,7 @@ const DATA: Dictionary = {
           355,
           110
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "projectile"
       },
       {
@@ -307,7 +307,7 @@ const DATA: Dictionary = {
           320,
           110
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "projectile"
       },
       {
@@ -316,7 +316,7 @@ const DATA: Dictionary = {
           305,
           100
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "projectile"
       }
     ],
@@ -327,7 +327,7 @@ const DATA: Dictionary = {
           240,
           295
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       },
       {
@@ -336,7 +336,7 @@ const DATA: Dictionary = {
           215,
           295
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       },
       {
@@ -345,7 +345,7 @@ const DATA: Dictionary = {
           220,
           295
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       }
     ],
@@ -356,7 +356,7 @@ const DATA: Dictionary = {
           240,
           270
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       },
       {
@@ -365,7 +365,7 @@ const DATA: Dictionary = {
           215,
           270
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       },
       {
@@ -374,7 +374,7 @@ const DATA: Dictionary = {
           220,
           270
         ],
-        "scale": 0.34,
+        "scale": 0.56,
         "anchor_mode": "target"
       }
     ]
@@ -387,7 +387,7 @@ const DATA: Dictionary = {
           325,
           290
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -396,7 +396,7 @@ const DATA: Dictionary = {
           260,
           290
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -405,7 +405,7 @@ const DATA: Dictionary = {
           215,
           290
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       }
     ],
@@ -416,7 +416,7 @@ const DATA: Dictionary = {
           325,
           265
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -425,7 +425,7 @@ const DATA: Dictionary = {
           260,
           265
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -434,7 +434,7 @@ const DATA: Dictionary = {
           215,
           265
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       }
     ],
@@ -445,7 +445,7 @@ const DATA: Dictionary = {
           325,
           240
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -454,7 +454,7 @@ const DATA: Dictionary = {
           260,
           240
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -463,7 +463,7 @@ const DATA: Dictionary = {
           215,
           240
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       }
     ],
@@ -474,7 +474,7 @@ const DATA: Dictionary = {
           325,
           244
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -483,7 +483,7 @@ const DATA: Dictionary = {
           260,
           244
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       },
       {
@@ -492,7 +492,7 @@ const DATA: Dictionary = {
           215,
           244
         ],
-        "scale": 0.34,
+        "scale": 0.52,
         "anchor_mode": "caster"
       }
     ]

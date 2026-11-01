@@ -10,7 +10,7 @@ var _frames: Array[Texture2D] = []
 var _tail := false
 var _tail_elapsed := 0.0
 var _tail_hit := false
-const CHARGE_DURATION := 0.36
+const CHARGE_DURATION := 0.64
 const TRAVEL_DURATION := 0.36
 const IMPACT_DURATION := 0.40
 const DISSIPATE_DURATION := 0.40
@@ -33,7 +33,7 @@ func set_stage(value: String, direction: Vector2 = Vector2.RIGHT) -> void:
 	rotation = direction.angle() - SOURCE_TRAVEL_ANGLE if stage == "travel" else 0.0
 	# Fixed ground anchor for charge/impact/smoke; head anchor for travel.
 	offset = Vector2(-64,0) if stage == "travel" else Vector2(0,-144)
-	scale = Vector2.ONE * (0.27 if stage == "travel" else (0.32 if stage == "charge" else 0.38))
+	scale = Vector2.ONE * (0.40 if stage == "travel" else (0.47 if stage == "charge" else 0.56))
 	show_progress(0.0)
 
 func show_progress(progress: float) -> void:

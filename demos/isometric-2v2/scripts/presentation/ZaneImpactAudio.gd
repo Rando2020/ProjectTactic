@@ -17,6 +17,15 @@ static func play_cue(cue_id: String, owner: Node) -> AudioStreamPlayer:
 	_voices = alive
 	if _voices.size() >= MAX_VOICES:
 		return null
+	# Only the authored 2D demo extends its visual windup. Keep original WAVs and
+	# cue identities untouched for legacy scenes and all other phases.
+	var presentation: Variant = owner.get("context")
+	if cue_id == "fire_charge" and presentation is Dictionary and bool(presentation.get("authored_fire_sheet",false)):
+		var build := preload("res://scripts/presentation/ModularSpellAudio.gd").play("charge",owner)
+		if is_instance_valid(build):
+			_voices.append(weakref(build))
+			if owner.has_signal("cue_started"): owner.emit_signal("cue_started",cue_id)
+		return build
 	if _cues.is_empty():
 		if not FileAccess.file_exists(MANIFEST): return null
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST))

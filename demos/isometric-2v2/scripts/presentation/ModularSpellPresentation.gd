@@ -2,7 +2,7 @@
 extends "res://scripts/presentation/ZaneActionPresentation.gd"
 const Frames := preload("res://scripts/presentation/ModularSpellFrames.gd")
 const SpellAudio := preload("res://scripts/presentation/ModularSpellAudio.gd")
-const CAST_SECONDS := 0.32
+const CAST_SECONDS := 0.64
 const FORM_SECONDS := 0.18
 const ACTION_SECONDS := 0.20
 const COLLISION_SECONDS := 0.24
@@ -117,8 +117,10 @@ func _position_spell_stage() -> void:
 	if not is_instance_valid(_stage_sprite): return
 	if _projectile_spell and _active_phase == "action":
 		var actor = _actor.get_ref()
-		var origin := _grid_point(actor.grid_pos)+Vector2(0,-40.8)
-		var destination := _grid_point(context.destination)+Vector2(0,-40.8)
+		var contact_frame: Dictionary = Frames.Catalog.DATA[str(context.ability_id)]["collision"][0]
+		var contact_offset := Vector2(0,-120.0*float(contact_frame.scale))
+		var origin := _grid_point(actor.grid_pos)+contact_offset
+		var destination := _grid_point(context.destination)+contact_offset
 		_stage_sprite.position = origin.lerp(destination,_travel_progress)
 		_stage_sprite.rotation = (destination-origin).angle()+PI/4.0
 	else:

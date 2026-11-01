@@ -46,12 +46,12 @@ func _build_stage_controls(layer: CanvasLayer) -> void:
 	_rotate_left = Button.new()
 	_rotate_left.text = "↶  Q"
 	_rotate_left.custom_minimum_size = Vector2(84,44)
-	_rotate_left.pressed.connect(func(): rotate_stage(-1))
+	_rotate_left.pressed.connect(func(): request_stage_rotation(-1))
 	row.add_child(_rotate_left)
 	_rotate_right = Button.new()
 	_rotate_right.text = "E  ↷"
 	_rotate_right.custom_minimum_size = Vector2(84,44)
-	_rotate_right.pressed.connect(func(): rotate_stage(1))
+	_rotate_right.pressed.connect(func(): request_stage_rotation(1))
 	row.add_child(_rotate_right)
 	_angle_label = Label.new()
 	_angle_label.add_theme_font_size_override("font_size",20)
@@ -92,6 +92,13 @@ func set_stage_mode(enabled: bool) -> bool:
 	_update_stage_controls()
 	return true
 
+## The painted image cannot rotate. An explicit rotation request switches to the
+## existing rotatable comparison instead of silently consuming the user's key.
+func request_stage_rotation(step: int) -> bool:
+	if battle_manager.is_resolving_action: return false
+	if not tactical_grid.rotatable_mode and not set_stage_mode(true): return false
+	return rotate_stage(step)
+
 func rotate_stage(step: int) -> bool:
 	if battle_manager.is_resolving_action or not tactical_grid.rotatable_mode: return false
 	tactical_grid.rotate_view(step)
@@ -111,11 +118,14 @@ func _update_stage_controls() -> void:
 		_skin_button.text = "Skins: compact classes · use original" if bool(GameState.practice_session.get("compact_skins", true)) else "Skins: original · use compact classes"
 	_mode_button.disabled = busy
 	_mode_button.text = "Return to painted stage" if rotating else "Try rotatable stage"
-	_rotate_left.visible = rotating
-	_rotate_right.visible = rotating
+	_rotate_left.visible = true
+	_rotate_right.visible = true
 	_rotate_left.disabled = busy
 	_rotate_right.disabled = busy
-	_angle_label.text = "View %d / 4 · flat playable floor" % (tactical_grid.quarter_turn+1) if rotating else "Painted comparison"
+	var rotation_hint := "Rotate the stone stage 90 degrees" if rotating else "Switch from painted backdrop to the rotatable stone stage, then rotate"
+	_rotate_left.tooltip_text = rotation_hint + " (Q)"
+	_rotate_right.tooltip_text = rotation_hint + " (E)"
+	_angle_label.text = "View %d / 4 · flat playable floor" % (tactical_grid.quarter_turn+1) if rotating else "Q / E: switch + rotate"
 	_stage_caption.text = ("THE STONE CHAPEL · ROTATABLE COMPARISON" if rotating else "THE PAINTED CHAPEL") + "\n2 vs 2  ·  Arrows: cursor  ·  Enter: select  ·  Esc: back"
 
 

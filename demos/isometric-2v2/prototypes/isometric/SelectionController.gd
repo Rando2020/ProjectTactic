@@ -176,8 +176,8 @@ func handle_input(event: InputEvent) -> bool:
 	if not event is InputEventKey or not event.pressed: return false
 	if event.keycode in [KEY_Q, KEY_E] and not event.echo:
 		var scene := ui.get_parent()
-		if scene.has_method("rotate_stage"):
-			scene.rotate_stage(-1 if event.keycode == KEY_Q else 1)
+		if scene.has_method("request_stage_rotation"):
+			scene.request_stage_rotation(-1 if event.keycode == KEY_Q else 1)
 			return true
 	if event.keycode in [KEY_ESCAPE,KEY_BACKSPACE]:
 		go_back(); return true
