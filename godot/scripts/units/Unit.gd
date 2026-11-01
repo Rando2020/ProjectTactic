@@ -326,9 +326,17 @@ func _update_hp_bar() -> void:
 
 
 ## Flash red on hit, restore normal colour.
-func animate_hit() -> void:
+## directional_hold > 0: BattleJuiceEffects already owns the white flash and the
+## directional knockback, so skip the fixed jitter and tint after the flash.
+func animate_hit(directional_hold: float = 0.0) -> void:
 	if is_instance_valid(_rig3d):
 		_rig3d.play("hit")
+	if directional_hold > 0.0:
+		var tint := create_tween()
+		tint.tween_interval(directional_hold)
+		tint.tween_property(self, "modulate", Color(1.0, 0.62, 0.56, 1.0), 0.04)
+		tint.tween_property(self, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.20)
+		return
 	var start_pos := position
 	var tween := create_tween()
 	tween.set_parallel(true)

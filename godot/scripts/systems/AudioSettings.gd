@@ -7,12 +7,14 @@ const BUS_GAME := "Game"
 const BUS_MUSIC := "Music"
 const BUS_FX := "FX"
 
+## Paths, not preloads: these WAVs live in LFS and a checkout without the LFS
+## objects must still compile this autoload (preload would be a parse error).
 const SFX_STREAMS := {
-	"ui_confirm": preload("res://assets/audio/sfx/ui-confirm.wav"),
-	"attack_impact": preload("res://assets/audio/sfx/attack-impact.wav"),
-	"spell_cast": preload("res://assets/audio/sfx/spell-cast.wav"),
-	"victory": preload("res://assets/audio/sfx/victory-chime.wav"),
-	"defeat": preload("res://assets/audio/sfx/defeat-sting.wav"),
+	"ui_confirm": "res://assets/audio/sfx/ui-confirm.wav",
+	"attack_impact": "res://assets/audio/sfx/attack-impact.wav",
+	"spell_cast": "res://assets/audio/sfx/spell-cast.wav",
+	"victory": "res://assets/audio/sfx/victory-chime.wav",
+	"defeat": "res://assets/audio/sfx/defeat-sting.wav",
 }
 
 var game_volume: int = 100
@@ -59,17 +61,42 @@ func get_volume(bus_name: String) -> int:
 			return 100
 
 
-func play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
-	var stream: AudioStream = SFX_STREAMS.get(sfx_id)
+## Combat-juice cues load lazily so a missing file never breaks boot.
+const JUICE_STREAM_PATHS := {
+	"juice_whack": "res://assets/audio/battle_juice_v1/hit-whack.wav",
+	"juice_thwip": "res://assets/audio/battle_juice_v1/hit-thwip.wav",
+	"juice_shatter": "res://assets/audio/battle_juice_v1/ice-shatter.wav",
+	"fire_hit": "res://assets/audio/zane_impact_v1/fire-hit.wav",
+	"sword_hit": "res://assets/audio/zane_impact_v1/sword-hit.wav",
+}
+var _juice_streams: Dictionary = {}
+
+
+func play_sfx(sfx_id: String, volume_db: float = 0.0, pitch_scale: float = 1.0) -> void:
+	var stream: AudioStream = _juice_stream(sfx_id)
 	if not stream:
 		return
 	var player := AudioStreamPlayer.new()
 	player.stream = stream
 	player.bus = BUS_FX
 	player.volume_db = volume_db
+	player.pitch_scale = clampf(pitch_scale, 0.5, 2.0)
+	# Impact sounds must land during hitstop, not after it.
+	player.process_mode = Node.PROCESS_MODE_ALWAYS
 	player.finished.connect(player.queue_free)
 	add_child(player)
 	player.play()
+
+
+func _juice_stream(sfx_id: String) -> AudioStream:
+	if _juice_streams.has(sfx_id):
+		return _juice_streams[sfx_id]
+	var path := str(SFX_STREAMS.get(sfx_id, JUICE_STREAM_PATHS.get(sfx_id, "")))
+	var stream: AudioStream = null
+	if not path.is_empty() and ResourceLoader.exists(path):
+		stream = load(path) as AudioStream
+	_juice_streams[sfx_id] = stream
+	return stream
 
 
 func apply_all() -> void:

@@ -61,3 +61,6 @@ godot/assets/characters/portraits/zane-portrait-illustrated.png -filter -diff -m
 
 # Painted chapel runtime background, available in clean checkouts.
 godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -diff -merge -text
+
+# Small authored battle-juice cue pack (tools/generate_battle_juice_audio.py); plain blobs for clean checkouts.
+godot/assets/audio/battle_juice_v1/*.wav -filter -diff -merge -text

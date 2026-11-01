@@ -17,6 +17,7 @@ var _camera_shake_timer: float = 0.0
 var _zane_kick_remaining := 0.0
 var _zane_kick_duration := 0.0
 var _zane_kick_vector := Vector2.ZERO
+var _impact_shake_pending := false
 
 const CAMERA_PAN_SPEED := 560.0
 const CAMERA_MIN_ZOOM := 0.60
@@ -120,6 +121,7 @@ func _ready() -> void:
 	battle_manager.unit_defeated.connect(_on_unit_defeated)
 	battle_manager.unit_moved.connect(_on_unit_moved)
 	battle_manager.combat_resolver.combat_resolved.connect(_on_combat_resolved)
+	battle_manager.combat_resolver.impact_presented.connect(_on_impact_presented)
 
 
 func _start_battle_music() -> void:
@@ -252,10 +254,25 @@ func _on_combat_resolved(result: Dictionary) -> void:
 	if result.get("missed", false) == true:
 		_camera_shake(2.0, 0.10)
 		return
+	if _impact_shake_pending:
+		_impact_shake_pending = false
+		return
 	var amount := int(result.get("hp_damage", result.get("damage", 0)))
 	if amount <= 0:
 		return
 	_camera_shake(clamp(float(amount) * 0.10, 2.5, 8.0), 0.16)
+
+
+## ImpactJuice recipe: tier-scaled shake, plus a directional kick on big hits.
+## Arrives just before combat_resolved for the same hit, which then skips its
+## legacy damage-scaled shake.
+func _on_impact_presented(impact: Dictionary) -> void:
+	_impact_shake_pending = true
+	if float(impact.get("shake_px", 0.0)) <= 0.0:
+		return
+	_camera_shake(float(impact.shake_px), float(impact.shake_sec))
+	if str(impact.get("tier", "")) in ["critical", "finisher"]:
+		apply_zane_impact_kick(impact.get("direction", Vector2.ZERO), float(impact.shake_px) * 0.6, 0.18)
 
 
 func _camera_shake(strength: float, duration: float) -> void:
