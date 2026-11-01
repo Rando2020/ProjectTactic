@@ -594,7 +594,7 @@ func present_action(actor: Unit, destination: Vector2i, kind: String, permitted:
 	if not context.is_empty():
 		var key := str(context.action_key)
 		cancel_action(key)
-		var controller := preload("res://scripts/presentation/ZaneActionPresentation.gd").new()
+		var controller = preload("res://scripts/presentation/ModularSpellPresentation.gd").new() if bool(context.get("authored_spell_sheet",false)) else preload("res://scripts/presentation/ZaneActionPresentation.gd").new()
 		_action_presenters[key] = controller
 		add_child(controller)
 		var reference: WeakRef = weakref(controller)

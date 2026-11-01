@@ -244,11 +244,12 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 			if is_instance_valid(scene):
 				var actor = _actor.get_ref()
 				var direction := (_grid_point(context.destination) - to_local(actor.global_position)).normalized()
-				scene.apply_zane_impact_kick(direction,3.0 if fire else 2.0,0.12 if fire else 0.10)
+				var heavy := str(context.ability_id) == "mighty_strike"
+				scene.apply_zane_impact_kick(direction,3.0 if fire else (2.6 if heavy else 2.0),0.12 if fire or heavy else 0.10)
 				_phase("kick")
 		_phase("pause")
 		var juice := get_node_or_null("/root/BattleJuiceEffects")
-		if juice != null: juice.trigger_pause(60 if fire else 80)
+		if juice != null: juice.trigger_pause(60 if fire else (95 if str(context.ability_id) == "mighty_strike" else 80))
 	elif fire:
 		_cue("fire_immune" if any_immune else "fire_miss")
 		_phase("deflect" if any_immune else "dissipate")

@@ -75,3 +75,27 @@ These samples are not a continuous video or a physical-phone/WebGL2 performance
 claim. Original detached halo/spark ambiguity remains documented in the asset
 manifest; no source pixels were repainted or reassigned. Already validated authored
 melee slash/impact integration is retained without combat-rule changes.
+
+### Complete existing skill feedback (2026-11-01)
+
+Thunderstrike, Void Pulse, Dark Breath and Shadow Mend share the same Tier 1
+casting art, then use separate formation/action/contact/dissipation sequences.
+Thunderstrike stays grounded and links its actual chained recipients; Dark Breath
+remains a narrow single-target attack, not a cone. Damage, healing and newly applied
+status labels come from the authoritative resolver. Defend uses a physical gold
+brace ring and “Until next turn”; Mighty Strike has a slightly stronger melee accent.
+Fire/basic attacks, skill costs, powers, status rules and turn scheduling are unchanged.
+Original source sheets/manifests are retained; runtime excludes raw originals.
+
+Skill forecasts now connect target portraits and conditional HP/status estimates to
+outlined actual turn-queue entries, including chain/fan collateral. Enemy intent is
+labeled CURRENT PLAN / may change. Empty area centers do not invent a target or
+damage; Defend previews itself when its button is focused. No queue-shifting or new
+charge-turn mechanic is implied. Preview cancellation removes the links.
+
+New checks: SkillFeedbackTest, SkillPreviewTest, SkillCompletionLifecycleTest,
+`tests/modular/test_frames.gd` and `tests/modular/test_presentation.tscn`.
+`SkillVisualQA.tscn -- --manual` is a controlled native real-manager visual harness
+(press Space per spell), excluded from runtime exports. It is not manual battle or
+browser acceptance. Generated PCM cues are original; audible acceptance requires an
+audio device. Runtime asset hashes/crop verification are in the modular-spells folder.

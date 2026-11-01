@@ -1134,23 +1134,26 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		if target == caster:
 			se_data["duration"] = int(se_data.get("duration", 1)) + 1
 		var vfx_node := get_node_or_null("/root/VFX")
-		if vfx_node and not se_data.is_empty():
+		if vfx_node and feedback_owner.is_empty() and not se_data.is_empty():
 			var vfx := vfx_node as VFXManager
 			match se_data.get("id", ""):
 				"haste":   vfx.play_haste(target.grid_pos)
 				"protect": vfx.play_protect(target.grid_pos)
 				_:         vfx.play_aura(target.grid_pos, Color(0.6, 0.8, 1.0))
+		var buff_result: Dictionary = {}
 		if not se_data.is_empty():
-			_try_apply_status(target, se_data)
+			buff_result["status_applied"] = _try_apply_status(target, se_data)
 		if not skip_setup:
+			_present_action_outcomes([_presentation_record(target,buff_result)])
 			log_message.emit("%s casts %s on %s!" % [caster.display_name, ab_name, target.display_name])
-		return {"executed": true, "outcome": {}}
+		return {"executed": true, "outcome": buff_result}
 
 	#  Heal
 	if spell_type == "cure" or ability.get("type", "") == "heal":
-		var heal_result := combat_resolver.resolve_heal(caster, target, base_power)
+		var heal_result := combat_resolver.resolve_heal(caster, target, base_power, feedback_owner)
 		if not skip_setup:
 			log_message.emit("%s uses %s on %s!" % [caster.display_name, ab_name, target.display_name])
+			_present_action_outcomes([_presentation_record(target,heal_result)])
 		return {"executed": true, "outcome": heal_result}
 
 	#  Physical
@@ -1169,7 +1172,8 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		# Authored secondary status follows this recipient's actual hit, not damage.
 		var se_data: Dictionary = ability.get("status_effect", {})
 		if not se_data.is_empty() and (not status_requires_hit or not result.get("missed", false)):
-			_try_apply_status(target, se_data)
+			result["status_applied"] = _try_apply_status(target, se_data)
+		if not skip_setup: _present_action_outcomes([_presentation_record(target,result)])
 		# JP award for physical ability
 		if not skip_setup:
 			_award_jp(caster, "action_used")
@@ -1202,7 +1206,7 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 	# Ground/on-cast effects above are independent; only this secondary is gated.
 	var se_data2: Dictionary = ability.get("status_effect", {})
 	if not se_data2.is_empty() and (not status_requires_hit or not spell_result.get("missed", false)):
-		_try_apply_status(target, se_data2)
+		spell_result["status_applied"] = _try_apply_status(target, se_data2)
 	if not skip_setup: _present_action_outcomes([_presentation_record(target,spell_result)])
 	return {"executed": true, "outcome": spell_result}
 
@@ -1256,17 +1260,23 @@ func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -
 			return true
 		var falloff: float = ability.get("chain_falloff", 0.40)
 		var power_mult     := 1.0
+		var chain_records: Array[Dictionary] = []
+		var chain_owner := _presentation_feedback_owner()
 		for i: int in range(chain_targets.size()):
 			var tgt: Unit = chain_targets[i]
 			var chain_ab  := ability.duplicate()
 			chain_ab["base_power"] = int(float(ability.get("base_power", 100)) * power_mult)
-			var execution := await _execute_ability_with_result(caster, tgt, chain_ab, true, AbilityDB.secondary_status_requires_hit(ability))
+			var record := _presentation_record(tgt,{})
+			var execution := await _execute_ability_with_result(caster, tgt, chain_ab, true, AbilityDB.secondary_status_requires_hit(ability), chain_owner)
 			if execution["executed"]:
+				record.outcome = execution.outcome.duplicate(true)
+				chain_records.append(record)
 				var outcome_text := _combat_outcome_text(execution["outcome"])
 				if not outcome_text.is_empty():
 					var prefix := "" if i == 0 else "arcs to "
 					log_message.emit("%s%s: %s" % [prefix, tgt.display_name, outcome_text])
 			power_mult *= (1.0 - falloff)
+		_present_action_outcomes(chain_records)
 		return true
 
 	#  All other shapes
@@ -1910,40 +1920,73 @@ func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
 	var fc := ForecastCalculator.attack(attacker, target, tile_att, tile_tar)
 	fc["actor_portrait"] = _portrait_path(attacker)
 	fc["target_portrait"] = _portrait_path(target)
-	return _with_run_bonus_context(_with_position_context(fc, attacker, target), attacker, target)
+	return _with_target_context(_with_run_bonus_context(_with_position_context(fc, attacker, target), attacker, target), attacker, target)
 
 
 func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dictionary:
 	var caster: Unit = _living_unit(active_unit_id)
-	if not caster or grid_pos not in tactical_grid.ability_tiles:
-		return {}
+	if not caster: return {}
+	var self_cast := AbilityDB.get_range(ability).y == 0 and grid_pos == caster.grid_pos
+	if not self_cast and grid_pos not in tactical_grid.ability_tiles: return {}
 	var target := _unit_at_pos(grid_pos)
 	if ability.get("id", "") == "long_shot" and (not target or not _ability_target_in_range(caster, target, ability)):
 		return {}
 	if not target:
-		# AoE with no unit under cursor  show basic info
+		# An empty center is not a combatant. Show only actual recipient forecasts,
+		# rather than a made-up generic damage range or a substitute portrait.
+		if not ability.has("aoe_type"): return {}
 		var area_fc := ForecastCalculator.quick_spell(caster, ability)
-		return {
+		var area_preview := {
 			"visible": true, "mode": "Ability",
 			"actor": caster.display_name, "actor_portrait": _portrait_path(caster),
-			"target": "Area (%d tiles)" % ability.get("aoe_radius",1),
+			"target": "Area · empty center",
 			"target_portrait": "",
 			"ability_name": ability.get("display_name","?"),
 			"element": area_fc["element"], "element_icon": area_fc["element_icon"],
 			"element_color": area_fc["element_color"],
-			"damage": area_fc["boosted_damage"], "damage_min": int(area_fc["boosted_damage"]*0.9),
-			"damage_max": int(area_fc["boosted_damage"]*1.1),
+			"damage": 0, "damage_min": 0, "damage_max": 0, "amount_label":"AREA",
 			"affinity_label": "", "boon_bonus_pct": area_fc["boon_pct"],
 			"hp_before": 0, "hp_after": 0, "max_hp": 1,
 			"status_preview": "", "jp_gain": 6, "is_heal": false, "is_buff": false,
 		}
+		return _with_target_context(area_preview,caster,null,ability,grid_pos)
 	var target_type: String = ability.get("target_type", "enemy")
-	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
+	var valid := self_cast or (target_type == "enemy" and target.team != caster.team) or (target_type != "enemy" and target.team == caster.team)
 	if not valid: return {}
 	var spell_fc := ForecastCalculator.spell(caster, target, ability, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
 	spell_fc["actor_portrait"] = _portrait_path(caster)
 	spell_fc["target_portrait"] = _portrait_path(target)
-	return _with_run_bonus_context(_with_position_context(spell_fc, caster, target), caster, target)
+	return _with_target_context(_with_run_bonus_context(_with_position_context(spell_fc, caster, target), caster, target), caster, target, ability)
+
+
+## Read-only UI linkage to the same ordered recipients and current AI planner.
+## Forecasts are conditional estimates, never a reservation or initiative edit.
+func _with_target_context(preview: Dictionary, actor: Unit, target: Unit, ability: Dictionary = {}, center: Vector2i = Vector2i(-1,-1)) -> Dictionary:
+	preview["actor_id"] = actor.unit_id
+	preview["target_id"] = target.unit_id if is_instance_valid(target) else ""
+	preview["target_intent"] = _evaluate_enemy_intent(target) if is_instance_valid(target) and target.team == "enemy" else {}
+	var recipients: Array[Unit] = []
+	if is_instance_valid(target):
+		recipients.append(target)
+		center = target.grid_pos
+	var shape := str(ability.get("aoe_type", ""))
+	if not shape.is_empty(): recipients = _get_aoe_targets(center, ability, actor)
+	var affected: Array[Dictionary] = []
+	var multiplier := 1.0
+	for recipient: Unit in recipients:
+		var forecast: Dictionary = preview
+		if not ability.is_empty():
+			var recipient_ability := ability.duplicate(true)
+			if shape == "chain": recipient_ability["base_power"] = int(float(ability.get("base_power",100)) * multiplier)
+			forecast = ForecastCalculator.spell(actor,recipient,recipient_ability,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(recipient.grid_pos))
+			if shape == "chain": multiplier *= 1.0 - float(ability.get("chain_falloff",0.40))
+		affected.append({"unit_id":recipient.unit_id, "target_name":recipient.display_name,
+			"hp_before":forecast.get("hp_before",recipient.hp), "hp_after":forecast.get("hp_after",recipient.hp),
+			"max_hp":forecast.get("max_hp",recipient.unit_data.base_stats.hp), "status_preview":forecast.get("status_preview",""),
+			"damage":forecast.get("damage",0), "hit_pct":forecast.get("hit_pct",100),
+			"role":"primary" if recipient == target else shape})
+	preview["affected_targets"] = affected
+	return preview
 
 
 func _with_position_context(preview: Dictionary, actor: Unit, target: Unit) -> Dictionary:
@@ -2152,12 +2195,12 @@ func _process_terrain_hazards(unit: Unit) -> void:
 				(vfx_node as VFXManager).play_fire(unit.grid_pos)
 
 
-func _try_apply_status(target: Unit, se_data: Dictionary) -> void:
+func _try_apply_status(target: Unit, se_data: Dictionary) -> Dictionary:
 	if not is_instance_valid(target) or target.hp <= 0:
-		return
+		return {}
 	var sid: String = se_data.get("id", "")
 	if sid == "" or target.has_status(sid):
-		return
+		return {}
 	var se := StatusEffect.new()
 	se.status_id    = sid
 	se.display_name = sid.capitalize()
@@ -2166,6 +2209,7 @@ func _try_apply_status(target: Unit, se_data: Dictionary) -> void:
 	se.damage_type  = se_data.get("damage_type", "pure")
 	target.apply_status(se)
 	log_message.emit("%s is now %s!" % [target.display_name, sid.to_upper()])
+	return {"id": sid, "duration": se.duration, "display_name": se.display_name}
 
 
 func _on_status_tick(unit_id: String, status_id: String, damage: int) -> void:
@@ -2490,6 +2534,9 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	is_resolving_action = true
 	_emit_action_state()
 	var canonical := AbilityDB.canonical_id(ability_id)
+	if canonical == "mighty_strike": kind = "slash"
+	# AoE admission remains tile-based; its banner may still identify the primary.
+	if target == null: target = _unit_at_pos(destination)
 	# A read-only portrait accent is dispatched only after the existing lifecycle
 	# accepts the action. It never waits for UI and never predicts damage.
 	if kind in ["slash", "arrow", "cast"] and target != actor:
@@ -2518,12 +2565,14 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 		})
 	_action_presentation_context = {}
 	var authored_fire := canonical == "fire" and bool(GameState.practice_session.get("isolated_isometric", false))
-	var authored_melee := kind == "slash" and canonical.is_empty() and bool(GameState.practice_session.get("isolated_isometric", false))
-	if authored_fire or authored_melee or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):
+	var authored_melee := (kind == "slash" and canonical.is_empty() or canonical == "mighty_strike") and bool(GameState.practice_session.get("isolated_isometric", false))
+	var authored_spell := canonical in ["thunderstrike", "void_pulse", "dark_breath", "shadow_mend", "defend"] and bool(GameState.practice_session.get("isolated_isometric", false))
+	if authored_melee: kind = "slash"
+	if authored_fire or authored_melee or authored_spell or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):
 		var footprint: Array[Vector2i] = []
 		if canonical == "fire": footprint = _aoe_tiles(destination,AbilityDB.get_ability(canonical),actor)
 		else: footprint.append(destination)
-		_action_presentation_context = {"profile_id":"zane_impact_v1", "authored_fire_sheet":authored_fire, "authored_melee_sheet":authored_melee, "action_key":"%s:%s" % [get_instance_id(),ticket], "ticket":ticket,"actor_id":actor.unit_id,"ability_id":canonical,"kind":kind,"destination":destination,"footprint":footprint,"reduced_motion":bool(GameState.practice_session.get("reduced_zane_motion",false))}
+		_action_presentation_context = {"profile_id":"zane_impact_v1", "authored_fire_sheet":authored_fire, "authored_melee_sheet":authored_melee, "authored_spell_sheet":authored_spell, "action_key":"%s:%s" % [get_instance_id(),ticket], "ticket":ticket,"actor_id":actor.unit_id,"ability_id":canonical,"kind":kind,"destination":destination,"footprint":footprint,"reduced_motion":bool(GameState.practice_session.get("reduced_zane_motion",false))}
 	var context := _action_presentation_context.duplicate(true)
 	var effects := get_node_or_null("/root/VFX") as VFXManager
 	var lifecycle = action_lifecycle

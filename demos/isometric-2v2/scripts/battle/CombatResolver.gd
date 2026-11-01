@@ -187,19 +187,20 @@ func resolve_spell(caster: Unit, target: Unit,
 	return result
 
 
-func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
+func resolve_heal(_caster: Unit, target: Unit, heal_amount: int, feedback_owner: StringName = &"") -> Dictionary:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var formula := CombatFormula.calculate_heal(target, heal_amount, int(bonuses.get("heal_bonus", 0)))
 	var before_hp := target.hp
 	target.heal(int(formula["heal"]))
 	heal_amount = target.hp - before_hp
-	_play_sfx("spell_cast", -4.0)
+	if feedback_owner.is_empty(): _play_sfx("spell_cast", -4.0)
 	var vfx_n := get_node_or_null("/root/VFX")
-	if vfx_n:
+	if vfx_n and feedback_owner.is_empty():
 		var vfx := vfx_n as VFXManager
 		vfx.play_cure(target.grid_pos)
 		vfx.play_heal_number(target.grid_pos, heal_amount)
 	var result := {"healed": heal_amount}
+	if not feedback_owner.is_empty(): result["feedback_owner"] = feedback_owner
 	combat_resolved.emit(result)
 	return result
 
