@@ -615,7 +615,9 @@ func _refresh_highlights() -> void:
 		glow_ring.position = _grid_to_local(active_unit_tile)
 		glow_ring.z_index = _depth_for(active_unit_tile) + 51
 		highlight_layer.add_child(glow_ring)
-		_add_tile_badge(active_unit_tile, "ACTIVE", active_color)
+		# Chapel portraits and turn UI identify the actor; keep feet unobscured.
+		if _environment_theme_id != "ruined-chapel":
+			_add_tile_badge(active_unit_tile, "ACTIVE", active_color)
 	if _is_valid_pos(selected_tile):
 		_add_selected_tile_guidance()
 	if _is_valid_pos(target_tile):

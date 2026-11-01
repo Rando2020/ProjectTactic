@@ -50,3 +50,7 @@ A separate native regression caught a one-frame pose deformation under reduced m
 The 2D sword contact pose is held for 80 ms when the resolver immediately requests recovery, keeping a visible contact beat without delaying damage or changing action timing. Regression coverage checks the hold and return to recovery.
 
 The browser driver separates the sword and Fire exercises into fresh production-admitted bouts. With the unchanged 90-HP enemy, a critical sword/counter sequence can legitimately win before Fire becomes selectable. Reloading the practice scene for spell coverage avoids changing HP, RNG or damage to force a longer encounter. The native flow separately covers Fire then sword within one duel.
+
+## Follow-up: chapel overlays
+
+Chapel instructions now start collapsed behind View & quality settings and remain accessible through that toggle. The chapel active tile retains its outline/glow but omits the redundant ACTIVE badge over the character feet. Other environments retain their badges and practice instructions. The broader right-rail redesign is still pending. Three native assertions cover the instruction toggle lifecycle; CI and browser captures must validate this follow-up separately from the preceding green checkpoint.

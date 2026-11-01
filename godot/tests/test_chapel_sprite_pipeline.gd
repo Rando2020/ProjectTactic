@@ -38,6 +38,14 @@ func run() -> void:
  check(is_instance_valid(battle.get_node("BattleUI").get("_unit_status_panel")), "Status inspection panel exists")
  var ui := battle.get_node("BattleUI") as BattleUI
  check(not ui._status_btn.disabled, "Status command is enabled on a real player turn")
+ var instructions: Label = battle.comparison_panel.chapel_instructions
+ check(is_instance_valid(instructions) and not instructions.visible, "chapel instructions start collapsed")
+ for button in battle.comparison_panel.find_children("*", "Button", true, false):
+  if button.text == "View & quality settings":
+   button.pressed.emit()
+   check(instructions.visible, "chapel instructions remain accessible")
+   button.pressed.emit()
+   check(not instructions.visible, "chapel instructions collapse again")
  var before := [zane.hp, zane.mp, zane.has_moved, zane.has_acted, manager.action_lifecycle.ticket]
  for viewport_size in [Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(3840,2160)]:
   get_viewport().content_scale_size = Vector2i.ZERO
