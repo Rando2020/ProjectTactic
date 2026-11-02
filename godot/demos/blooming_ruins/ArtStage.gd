@@ -9,14 +9,18 @@ var portrait: TextureRect
 
 func build_materials() -> void:
 	super.build_materials()
-	for material in materials:
-		material.set_shader_parameter("atlas", SURFACES)
-	# Give stair treads the quiet coping surface rather than huge paving joints.
-	materials[3].set_shader_parameter("ground", true)
-	var shader: Shader = materials[0].shader
-	shader.code = shader.code.replace("source_color;", "source_color, filter_linear_mipmap;")
-	shader.code = shader.code.replace("ground ? world.xz*0.19", "abs(normal_world.y)>0.5 ? world.xz*0.19")
-	shader.code = shader.code.replace("ROUGHNESS=1.0;", "if(abs(normal_world.y)<0.5){ALBEDO*=vec3(0.91,0.88,1.0);} ROUGHNESS=1.0;")
+	for i in materials.size():
+		var mat := ShaderMaterial.new()
+		mat.shader = preload("res://demos/blooming_ruins/RuinsStone.gdshader")
+		mat.set_shader_parameter("atlas", SURFACES)
+		mat.set_shader_parameter("surface", i)
+		materials[i] = mat
+
+func world(cell: Vector2i) -> Vector3:
+	var point := super.world(cell)
+	if cell.x in [2, 9] and cell.y in [3, 4]:
+		point.y = (6.5 if cell.y == 3 else 2.5) * 1.95 / 8.0
+	return point
 
 func build_world() -> void:
 	super.build_world()
@@ -33,6 +37,8 @@ func build_world() -> void:
 		if child is Sprite3D:
 			remove_child(child)
 			child.queue_free()
+		elif child is MeshInstance3D and child.mesh is PlaneMesh and child.position.z > 5.0:
+			child.material_override = materials[1] # Continuous worn courtyard and path edges.
 		elif child is MeshInstance3D and child.mesh is BoxMesh:
 			var dimensions: Vector3 = child.mesh.size
 			if dimensions.x > 90:
@@ -41,6 +47,9 @@ func build_world() -> void:
 				child.hide() # replaced by painted gateway; objective diamond stays visible
 			elif dimensions.z < 0.6 and dimensions.x == 2:
 				child.material_override = materials[3]
+				var rise := (floorf((9.0 - child.position.z) / 0.5) + 1.0) * 1.95 / 8.0
+				child.mesh.size.y = rise
+				child.position.y = rise * 0.5
 	var backdrop := MeshInstance3D.new()
 	backdrop.name = "DistantPaintedValley"
 	var quad := QuadMesh.new()
@@ -81,8 +90,8 @@ func build_world() -> void:
 		var border := cell.x in [0, 11] or cell.y in [0, 10] or bool(sim.tiles[cell].blocked)
 		if cell.x in [2, 9]: continue
 		if border:
-			for i in 3:
-				var id := "pink-shrub" if i == 0 else "pink-flowers"
+			for i in random.randi_range(1, 4):
+				var id: String = ["cream-shrub", "grass", "pink-flowers", "pink-shrub"][random.randi_range(0, 3)]
 				place(id, world(cell) + Vector3(random.randf_range(-0.8, 0.8), 0.03, random.randf_range(-0.8, 0.8)), random.randf_range(0.0032, 0.0045))
 		elif cell.y in [3, 7] and cell.x % 3 == 1:
 			place("grass", world(cell) + Vector3(0.8, 0.03, 0.8), 0.0027)
