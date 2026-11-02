@@ -7,6 +7,10 @@ as a background. Campaign scenes and the default project entry point are unchang
 
 ![Actual Godot capture](../../../docs/previews/blooming-ruins-godot.png)
 
+See the [repository integration review](../../../docs/design/blooming-ruins-integration.md)
+before extending this experiment. The production game already has a 3D terrain
+presentation seam, canonical character loadouts and a complete battle lifecycle.
+
 ## Play
 
 Open the repository's `godot/project.godot`, open
