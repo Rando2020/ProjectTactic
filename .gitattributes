@@ -66,3 +66,6 @@ godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -d
 godot/demos/blooming_ruins/assets/terrain.png -filter -diff -merge -text
 godot/demos/blooming_ruins/assets/sprites.png -filter -diff -merge -text
 docs/previews/blooming-ruins-godot.png -filter -diff -merge -text
+# Compact generated scenery pack and actual review capture, available without LFS hydration.
+godot/assets/environments/blooming-ruins-v2/*.png -filter -diff -merge -text
+docs/previews/blooming-ruins-art-v2-godot.png -filter -diff -merge -text

@@ -11,6 +11,10 @@ See the [repository integration review](../../../docs/design/blooming-ruins-inte
 before extending this experiment. The production game already has a 3D terrain
 presentation seam, canonical character loadouts and a complete battle lifecycle.
 
+For the newer painted scenery, open `ArtPreview.tscn` or run `PlayArt.cmd`.
+Its [v2 environment kit](../../assets/environments/blooming-ruins-v2/README.md)
+adds nineteen raster elements, UI ornaments, import settings and placement code.
+
 ## Play
 
 Open the repository's `godot/project.godot`, open

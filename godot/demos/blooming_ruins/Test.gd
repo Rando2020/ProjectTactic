@@ -1,5 +1,6 @@
 extends Node
 const Encounter := preload("res://demos/blooming_ruins/Encounter.gd")
+@export var scene_path := "res://demos/blooming_ruins/BloomingRuins.tscn"
 var checks := 0
 var failures := 0
 func check(ok: bool, title: String) -> void:
@@ -52,11 +53,14 @@ func run() -> void:
 	losing.check_result()
 	check(losing.result == "DEFEAT", "party defeat detected")
 	losing.dispose()
-	var scene: Node = load("res://demos/blooming_ruins/BloomingRuins.tscn").instantiate()
+	var scene: Node = load(scene_path).instantiate()
 	add_child(scene)
 	await get_tree().process_frame
 	await get_tree().physics_frame
 	await get_tree().physics_frame
+	if scene.has_method("place"):
+		check(scene.art_regions.size() == 14, "all fourteen scenery regions are imported")
+		check(scene.get_node_or_null("DistantPaintedValley") != null, "distant scenery is installed")
 	var screen_point: Vector2 = scene.camera.unproject_position(scene.world(Vector2i(2, 9)) + Vector3.UP * 1.5)
 	check(scene.pick(screen_point) == Vector2i(2, 9), "clicking character body selects its own cell")
 	await scene.click(Vector2i(2, 6))
