@@ -46,6 +46,13 @@ func run() -> void:
    check(instructions.visible, "chapel instructions remain accessible")
    button.pressed.emit()
    check(not instructions.visible, "chapel instructions collapse again")
+ check(not ui._chapel_log.visible, "chapel log starts collapsed")
+ ui._chapel_log_toggle.button_pressed = true
+ check(ui._chapel_log.visible, "live chapel log expands")
+ ui._chapel_log_toggle.button_pressed = false
+ check(not ui._chapel_log.visible, "live chapel log collapses")
+ check(ui._hp_label.visible and ui._mp_label.visible, "essential resources remain visible")
+ check(not ui._temper_label.visible and not ui._ether_label.visible, "secondary stats use Status inspection")
  var before := [zane.hp, zane.mp, zane.has_moved, zane.has_acted, manager.action_lifecycle.ticket]
  for viewport_size in [Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(3840,2160)]:
   get_viewport().content_scale_size = Vector2i.ZERO

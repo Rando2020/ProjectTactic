@@ -55,6 +55,8 @@ var _preview_crit_label: Label
 var _preview_note_label: Label
 var _unit_status_panel: AcceptDialog
 var _status_btn: Button
+var _chapel_log: VBoxContainer
+var _chapel_log_toggle: Button
 var _chapel_command_panel: PanelContainer
 var _chapel_command_buttons: VBoxContainer
 var _loadout_panel: PanelContainer
@@ -330,8 +332,23 @@ func _build_ui() -> void:
 
 	root.add_child(_separator())
 
-	# Battle log
-	root.add_child(_section_label("RECENT ACTIONS"))
+	# Preserve the live log while collapsing secondary detail in the chapel.
+	var log_parent: VBoxContainer = root
+	if GameState.practice_session.get("illustrated_chapel", false):
+		_chapel_log_toggle = Button.new()
+		_chapel_log_toggle.text = "Recent actions"
+		_chapel_log_toggle.toggle_mode = true
+		root.add_child(_chapel_log_toggle)
+		_chapel_log = VBoxContainer.new()
+		_chapel_log.visible = false
+		root.add_child(_chapel_log)
+		_chapel_log_toggle.toggled.connect(func(open: bool) -> void: _chapel_log.visible = open)
+		log_parent = _chapel_log
+		crest.hide()
+		_temper_label.hide()
+		_ether_label.hide()
+	else:
+		root.add_child(_section_label("RECENT ACTIONS"))
 	for i in range(LOG_SIZE):
 		var lbl := Label.new()
 		lbl.text = ""
@@ -339,7 +356,7 @@ func _build_ui() -> void:
 		lbl.add_theme_color_override("font_color", Color(0.75, 0.78, 0.82))
 		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		root.add_child(lbl)
+		log_parent.add_child(lbl)
 		_log_labels.append(lbl)
 
 	_build_intro_banner()

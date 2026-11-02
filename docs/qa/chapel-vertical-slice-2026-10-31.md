@@ -54,3 +54,5 @@ The browser driver separates the sword and Fire exercises into fresh production-
 ## Follow-up: chapel overlays
 
 Chapel instructions now start collapsed behind View & quality settings and remain accessible through that toggle. The chapel active tile retains its outline/glow but omits the redundant ACTIVE badge over the character feet. Other environments retain their badges and practice instructions. The broader right-rail redesign is still pending. Three native assertions cover the instruction toggle lifecycle; CI and browser captures must validate this follow-up separately from the preceding green checkpoint.
+
+The next chapel-only density pass collapses the live recent-action log behind a toggle, removes the decorative crest, and keeps Temper/Ether in Status instead of duplicating them in the rail. HP, MP, turn order and command behavior remain intact. Five native checks cover log disclosure and resource visibility. This reduces vertical clutter; it does not yet replace the right rail.
