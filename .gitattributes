@@ -61,3 +61,8 @@ godot/assets/characters/portraits/zane-portrait-illustrated.png -filter -diff -m
 
 # Painted chapel runtime background, available in clean checkouts.
 godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -diff -merge -text
+
+# Small demo atlases ship in ordinary Git so NOVA receives complete runtime art.
+godot/demos/blooming_ruins/assets/terrain.png -filter -diff -merge -text
+godot/demos/blooming_ruins/assets/sprites.png -filter -diff -merge -text
+docs/previews/blooming-ruins-godot.png -filter -diff -merge -text
