@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://demos/blooming_ruins/ArtStage.gd" id="1"]
+[node name="BloomingRuinsArtPreview" type="Node3D"]
+script = ExtResource("1")
