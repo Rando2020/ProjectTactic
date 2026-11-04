@@ -1,0 +1,10 @@
+{
+  "file": "chapel-stone-scatter-clean-v2.png",
+  "prompt": "Edit the transition scatter reference into a cleaner GAME OVERLAY. Preserve the crescent layout and cream stone / muted moss / lilac flowers, but REMOVE ALL dust, fog, haze, glow and painted ground between objects. Keep ONLY discrete opaque limestone chips, opaque tiny moss tufts and three small flower clusters, each with crisp antialiased edges. Leave genuinely transparent gaps between every chip and throughout the rest of canvas. Do not add a background, floor, platform, shadow, border, text or new objects. Keep the same camera and framing. Opaque subjects, fully transparent negative space.",
+  "reference": "candidates/chapel-stone-soil-scatter-v1.png",
+  "tool": "built-in image_gen",
+  "transparent_background": true,
+  "status": "generated_candidate",
+  "approval_status": "not_approved",
+  "runtime_status": "not_integrated"
+}

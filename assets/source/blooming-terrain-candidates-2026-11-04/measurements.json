@@ -1,0 +1,122 @@
+[
+  {
+    "file": "chapel-low-wall-broken-end-v1.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "sha256": "528086c1843bddb6af5230196436a3083e6e3c0ff3141a5569e7818707311c70",
+    "alpha_zero_fraction": 0.8607672645973595,
+    "alpha_range": [
+      0,
+      255
+    ],
+    "bounds_alpha_128": [
+      531,
+      179,
+      1240,
+      723
+    ],
+    "nonzero_alpha_bounds": [
+      0,
+      19,
+      1760,
+      887
+    ],
+    "border_nonzero": 14,
+    "border_max_alpha": 1,
+    "alpha_1_to_7_pixels": 6917,
+    "alpha_8_to_127_pixels": 1987
+  },
+  {
+    "file": "chapel-low-wall-corner-v1.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "sha256": "2f6cba3628be0be4d8eb31e8abd7a77f690a25a740caef26a60979f772f34951",
+    "alpha_zero_fraction": 0.8518326217733541,
+    "alpha_range": [
+      0,
+      255
+    ],
+    "bounds_alpha_128": [
+      451,
+      235,
+      1322,
+      667
+    ],
+    "nonzero_alpha_bounds": [
+      0,
+      0,
+      1750,
+      887
+    ],
+    "border_nonzero": 60,
+    "border_max_alpha": 1,
+    "alpha_1_to_7_pixels": 8650,
+    "alpha_8_to_127_pixels": 2441
+  },
+  {
+    "file": "chapel-stone-scatter-clean-v2.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "sha256": "bf6c27d05e3f110a05da6ced736499789dfafe070c44899f766121748cf91c11",
+    "alpha_zero_fraction": 0.9567039372420622,
+    "alpha_range": [
+      0,
+      255
+    ],
+    "bounds_alpha_128": [
+      264,
+      310,
+      1506,
+      652
+    ],
+    "nonzero_alpha_bounds": [
+      128,
+      255,
+      1558,
+      788
+    ],
+    "border_nonzero": 0,
+    "border_max_alpha": 0,
+    "alpha_1_to_7_pixels": 30319,
+    "alpha_8_to_127_pixels": 8444
+  },
+  {
+    "file": "chapel-stone-soil-scatter-v1.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "mode": "RGBA",
+    "sha256": "519d2464a3ec1dfb0c8d1e4dc49d1374e7459287f4864ace28df801607109136",
+    "alpha_zero_fraction": 0.8023212658353341,
+    "alpha_range": [
+      0,
+      255
+    ],
+    "bounds_alpha_128": [
+      266,
+      309,
+      1501,
+      650
+    ],
+    "nonzero_alpha_bounds": [
+      23,
+      19,
+      1744,
+      871
+    ],
+    "border_nonzero": 0,
+    "border_max_alpha": 0,
+    "alpha_1_to_7_pixels": 236637,
+    "alpha_8_to_127_pixels": 45235
+  }
+]

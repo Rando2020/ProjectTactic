@@ -1,0 +1,33 @@
+[
+  {
+    "file": "chapel-low-wall-corner-v1.png",
+    "prompt": "Use case: stylized-concept. Asset type: isolated modular scenery sprite for ProjectTactic's fixed-camera isometric ruined chapel. Image 1 is MATERIAL AND PALETTE reference only. Create ONE short L-shaped corner of a ruined low wall, cream limestone with lavender-gray shaded faces, ochre weathering and only a few tiny lilac flowers. Two perpendicular arms, each two large blocks long, sharing one corner pier; clean square masonry with a flat coping top, roughly knee-high, no tall pieces. Fixed orthographic elevated camera with a 2:1 ground diamond (edges about 26.6 degrees from horizontal). Both external faces visible; no perspective convergence. Keep a small readable silhouette and crisp base contact edge. Painterly texture matching reference, quiet lighting from upper left. Entire object centered with at least 10% transparent padding. Genuine transparent background, no floor platform, no ground plane, no labels, no text, no character, no shadow outside footprint. This is a candidate for assembly testing, not a full scene.",
+    "reference": "references/chapel-broken-pillar.png",
+    "tool": "built-in image_gen",
+    "transparent_background": true,
+    "status": "generated_candidate",
+    "approval_status": "not_approved",
+    "runtime_status": "not_integrated"
+  },
+  {
+    "file": "chapel-low-wall-broken-end-v1.png",
+    "prompt": "Use case: stylized-concept. Image 1 is the exact material, lighting and orthographic camera reference for a modular ruined-chapel prop kit. Create ONE short straight low-wall TERMINAL segment in this same cream limestone, lavender-gray shadows, ochre weathering and sparse lilac-flower style. The wall runs from upper-left to lower-right along the reference's left arm axis, with ONE intact squared connection at upper-left and an uneven broken termination at lower-right, showing a few chunky broken blocks resting tightly inside its footprint. Same masonry course height and coping thickness as reference. Two blocks long, low enough to keep game characters readable. Orthographic camera, ground edges slope 1 vertical for 2 horizontal. No perspective convergence. Clean base contact line, no surrounding floor, no platform. Entire single object centered with 10% padding on genuine transparent background. No text, labels, characters, decorative pedestal, cast shadow outside footprint or extra walls.",
+    "reference": "candidates/chapel-low-wall-corner-v1.png",
+    "tool": "built-in image_gen",
+    "transparent_background": true,
+    "status": "generated_candidate",
+    "approval_status": "not_approved",
+    "runtime_status": "not_integrated"
+  },
+  {
+    "file": "chapel-stone-soil-scatter-v1.png",
+    "prompt": "Use case: stylized-concept. Asset type: transparent terrain transition overlay for continuous painted isometric ground. Image 1 is material/color reference only. Create ONE flat irregular crescent-shaped scatter of tiny weathered cream limestone chips, a little ochre dust, fine muted moss and three very small lilac flowers. This overlay softens the edge where a paved courtyard meets soil; it is NOT a square tile or a raised platform, no wall and no column. All chips lie flat on the same invisible ground plane, with fixed orthographic 2:1 isometric perspective and restrained lavender shadows. Sparse open composition: much of the interior and outer edge must be genuinely transparent so underlying ground shows through. Feather the scatter by fewer chips, not a painted rectangle or opaque haze. Centered with broad transparent padding. Painterly, cohesive with reference. No baked shadow outside the chips, no grid, border, text, label, scenery or characters.",
+    "reference": "references/chapel-broken-pillar.png",
+    "tool": "built-in image_gen",
+    "transparent_background": true,
+    "status": "study_only",
+    "approval_status": "not_approved",
+    "runtime_status": "not_integrated",
+    "note": "Faint dust and diffuse alpha; retained as the original source, not a validated transition."
+  }
+]
