@@ -1,0 +1,1426 @@
+{
+  "schema": "projecttactic-production-catalog-1",
+  "created": "2026-11-04",
+  "purpose": "Production backlog and contracts, not an engine-loadable manifest and not a claim that planned assets exist.",
+  "art_direction": "Continuous painterly Blooming Ruins/chapel: cream stone, lavender shadow, ochre earth, lilac flowers; strong tactical silhouettes; interface decisions remain highest salience.",
+  "priority_legend": {
+    "P0": "Close the current 2v2 playable slice first. Reuse or repair existing assets before generation.",
+    "P1": "Strengthen the same environment and supported mechanics after P0 is accepted.",
+    "P2": "Later roster/content; do not generate before a concrete gameplay slot exists."
+  },
+  "status_legend": {
+    "planned": "Brief and acceptance contract only.",
+    "generated_candidate": "File exists; not normalized or accepted.",
+    "normalized_candidate": "Dimensions/pivots/files verified; art still subject to review.",
+    "engine_verified": "Imported and checked in the target engine/runtime.",
+    "accepted": "Art and gameplay-scale review passed; approval source recorded.",
+    "shipped": "Verified in the specific delivered build.",
+    "study_only": "Exploratory output exists; not yet a coherent production candidate for its intended slot.",
+    "approved_reference": "An already approved visual identity reference; does not imply engine readiness or approval of derived candidates."
+  },
+  "assets": [
+    {
+      "asset_id": "terrain-chapel-cream-stone",
+      "family": "terrain",
+      "priority": "P0",
+      "purpose": "Main walkable floor; cream stone and lavender shadow, restrained painterly faceting.",
+      "required_variants": "3 interchangeable surface variants",
+      "delivery_contract": "Transparent PNG, iso96 adapter: 96\u00d764, top diamond 96\u00d748, anchor (48,24); source master 4\u00d7; semantic material ID independent of render format.",
+      "acceptance": "3\u00d73 adjacency test; no baked selection border; top plane remains readable under four units.",
+      "evidence_status": "Legacy SVG chapel stone exists in recovered source; no new painterly version verified. A November 4 rough stone material study is registered, but it is not palette-matched, seam-tested or a runtime tile.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": [
+        "stone-material-study-20261104"
+      ]
+    },
+    {
+      "asset_id": "terrain-chapel-cracked-stone",
+      "family": "terrain",
+      "priority": "P0",
+      "purpose": "Break repetition without changing walkability.",
+      "required_variants": "2 decorative variants",
+      "delivery_contract": "Transparent PNG, iso96 adapter: 96\u00d764, top diamond 96\u00d748, anchor (48,24); source master 4\u00d7; semantic material ID independent of render format.",
+      "acceptance": "Cracks are smaller than hazard marks and do not read as gaps.",
+      "evidence_status": "Legacy SVG cracked stone exists in recovered source; no new painterly version verified.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-ochre-soil",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Continuous warm earth between paving.",
+      "required_variants": "3 surface variants",
+      "delivery_contract": "Transparent PNG, iso96 adapter: 96\u00d764, top diamond 96\u00d748, anchor (48,24); source master 4\u00d7; semantic material ID independent of render format.",
+      "acceptance": "Neighboring cells do not look like separate trays; no bright border.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-stone-soil-blend",
+      "family": "terrain",
+      "priority": "P0",
+      "purpose": "Hide the grid in the world while keeping it available for decisions.",
+      "required_variants": "4 edge masks + 4 corner masks",
+      "delivery_contract": "Transparent material/decal patches, 192\u00d796 runtime target; masks and covered cell offsets explicit.",
+      "acceptance": "Cross-cell patches do not change walkability; no seam at visible joins.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "cream-stone; ochre-soil; rendering adapter",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-lilac-growth",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Low flowers and moss at broken stone edges.",
+      "required_variants": "4 clumps + sparse/dense masks",
+      "delivery_contract": "Transparent low-ground decals; 128\u00d7128 master cells with defined contact origin.",
+      "acceptance": "Flowers stay quieter than units, target highlights, and spells.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-slab-edge",
+      "family": "terrain",
+      "priority": "P0",
+      "purpose": "Readable outside boundary for the isolated grid and raised areas.",
+      "required_variants": "2 lit faces + 2 chipped variations",
+      "delivery_contract": "96\u00d764 iso block edge adapters; separate side-face art for height extension.",
+      "acceptance": "No double-thick internal seams; logical height step remains 14 px in the legacy renderer.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-steps",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Readable traversable rise without pretending painted stairs are gameplay.",
+      "required_variants": "4 orientations",
+      "delivery_contract": "Separate top/contact plane, riser, declared start/end height; PNG iso or mesh adapter.",
+      "acceptance": "Units stand on declared contact surface; path cost and jump rules come from gameplay data.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "verified elevation and camera contract",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-retaining-wall",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Vertical occlusion and level boundary.",
+      "required_variants": "4 orientations + end cap",
+      "delivery_contract": "Mesh/material preferred for rotating stage; isolated 2D views only as fallback.",
+      "acceptance": "No exposed missing back faces on camera turn; unit occlusion tested.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-rubble",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Readable blocked cells with broken masonry, not decorative cracks.",
+      "required_variants": "3 silhouettes",
+      "delivery_contract": "Transparent PNG, iso96 adapter: 96\u00d764, top diamond 96\u00d748, anchor (48,24); source master 4\u00d7; semantic material ID independent of render format.",
+      "acceptance": "Blocked footprint is visually clear; tooltip says blocked; visual and pathfinding footprints match.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-chapel-shallow-water",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Water state for elemental reactions.",
+      "required_variants": "2 quiet surfaces + 4 boundary masks",
+      "delivery_contract": "Transparent PNG, iso96 adapter: 96\u00d764, top diamond 96\u00d748, anchor (48,24); source master 4\u00d7; semantic material ID independent of render format.",
+      "acceptance": "Distinct from ice in grayscale; do not imply an unimplemented interaction.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-state-scorched",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Persistent post-fire terrain state.",
+      "required_variants": "3 footprints",
+      "delivery_contract": "Separate transparent decal over base tile, 96\u00d748 footprint.",
+      "acceptance": "Terrain effect appears only when rules apply it; remains recognizable after VFX vanish.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-state-frozen",
+      "family": "terrain",
+      "priority": "P1",
+      "purpose": "Persistent frozen surface with angular rime.",
+      "required_variants": "2 centers + 4 boundary masks",
+      "delivery_contract": "Separate transparent 96\u00d748 footprint.",
+      "acceptance": "Distinct from water, movement range, and damage AoE.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "terrain-state-void",
+      "family": "terrain",
+      "priority": "P2",
+      "purpose": "Hostile corruption/anchor state when a map uses it.",
+      "required_variants": "Dormant/active/cleared",
+      "delivery_contract": "Separate ground decal + vertical accent; declare footprint.",
+      "acceptance": "No false objective; strength comes from shape and motion, not violet alone.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-broken-pillar",
+      "family": "props",
+      "priority": "P0",
+      "purpose": "Strong chapel silhouette and a readable obstacle.",
+      "required_variants": "Short/tall/broken variants",
+      "delivery_contract": "RGBA crop and foot pivot; collider/occupied-cell metadata separate; 3D or four views for rotating stage.",
+      "acceptance": "Rear units can be inspected; no undeclared walkability changes.",
+      "evidence_status": "New painterly candidate candidates/chapel-broken-pillar.png exists with genuine alpha reported. Footprint, scale, occlusion and camera/rotation acceptance are still pending; older SVG remains historical fallback.",
+      "production_status": "generated_candidate",
+      "runtime_status": "not_validated",
+      "dependencies": "declare contact origin and occupied cells; integration scale; occlusion; supported camera/rotation tests",
+      "output_files": [
+        "candidates/chapel-broken-pillar.png"
+      ],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": [
+        "chapel-pillar-candidate-20261104"
+      ]
+    },
+    {
+      "asset_id": "prop-chapel-low-wall",
+      "family": "props",
+      "priority": "P1",
+      "purpose": "Cover/blocked silhouette and composition edge.",
+      "required_variants": "4 orientations + end cap",
+      "delivery_contract": "Mesh with material master or four-view PNG fallback.",
+      "acceptance": "All orientations connect; hover silhouette or cutaway keeps hidden targets identifiable.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-arch",
+      "family": "props",
+      "priority": "P1",
+      "purpose": "One architectural focal point, mostly outside combat footprint.",
+      "required_variants": "Intact remnant/broken remnant",
+      "delivery_contract": "Modular mesh preferred; separate foreground occluder for a 2D fallback.",
+      "acceptance": "Never bake a unit or spell into architecture; obscured tiles can be selected.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-pew",
+      "family": "props",
+      "priority": "P2",
+      "purpose": "Environmental storytelling around play area.",
+      "required_variants": "Intact/broken",
+      "delivery_contract": "RGBA or mesh; declared footprint and base pivot.",
+      "acceptance": "Silhouette cannot be confused with climbable stair.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-banner",
+      "family": "props",
+      "priority": "P2",
+      "purpose": "Faction storytelling without noisy terrain.",
+      "required_variants": "2 original symbols; calm/wind variants",
+      "delivery_contract": "Separate cloth/material from support.",
+      "acceptance": "No copied franchise insignia; reduced-motion still provided.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-lantern",
+      "family": "props",
+      "priority": "P1",
+      "purpose": "Small warm light contrasting lavender ambient.",
+      "required_variants": "Unlit/lit + 3 flame frames",
+      "delivery_contract": "Support and emissive effect separate.",
+      "acceptance": "No baked spotlight across neighbors; flash reduction supported.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-flower-clump",
+      "family": "props",
+      "priority": "P1",
+      "purpose": "Lilac environmental cohesion at scene margins.",
+      "required_variants": "4 shapes",
+      "delivery_contract": "Transparent cutout; base pivot; optional low-poly cards.",
+      "acceptance": "No conspicuous repetition on the central walkable grid.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "prop-chapel-debris",
+      "family": "props",
+      "priority": "P2",
+      "purpose": "Scale and age without visual noise.",
+      "required_variants": "4 tiny rock/wood scatter pieces",
+      "delivery_contract": "Transparent cutouts, no gameplay collision by default.",
+      "acceptance": "Scatter stays inside allocated visual density and cannot impersonate blocked tiles.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-hover",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Pointer or keyboard focus location.",
+      "required_variants": "Thin outline + four corner ticks",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-active",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Current acting unit location.",
+      "required_variants": "Double diamond + upright chevron",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-move",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Legal movement cells.",
+      "required_variants": "Dotted inner edge + blue-cyan wash",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-path",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Proposed path and destination.",
+      "required_variants": "Connected nodes + direction arrows + endpoint flag",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-move-confirm",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Destination pending confirmation.",
+      "required_variants": "Footprint marker + confirm/cancel affordance",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-attack",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Legal hostile target range.",
+      "required_variants": "Solid bracket edge + crosshair motif",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-aoe",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Actual affected cells before commit.",
+      "required_variants": "Hatched fill + clear boundary + ally warning badge",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-invalid",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "Unavailable cell or target.",
+      "required_variants": "Slash marker + reason label anchor",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-danger",
+      "family": "tactical-overlay",
+      "priority": "P1",
+      "purpose": "Previewed enemy threat.",
+      "required_variants": "Dashed warning edge + warning triangle",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-objective",
+      "family": "tactical-overlay",
+      "priority": "P1",
+      "purpose": "Objective or interaction location.",
+      "required_variants": "Diamond inset + star/notch marker",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-facing",
+      "family": "tactical-overlay",
+      "priority": "P0",
+      "purpose": "End-turn direction choice.",
+      "required_variants": "Four discrete arrows; focused/selected/disabled",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "tactical-occluded-unit",
+      "family": "tactical-overlay",
+      "priority": "P1",
+      "purpose": "Keep concealed combatants findable.",
+      "required_variants": "Neutral silhouette rim + team badge",
+      "delivery_contract": "Transparent 96\u00d748 PNG or SVG diamond; center (48,24); same geometry as grid; clean mask independent of terrain.",
+      "acceptance": "Identifiable without color; visible over cream stone, soil, water and VFX; logical state matches displayed state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-panel-system",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "One restrained interface language across battle and menus.",
+      "required_variants": "Base/raised/modal/tooltip surfaces; 9-slice corners",
+      "delivery_contract": "96\u00d796 decorative frame master with declared 12 px safe border; scalable engine layout.",
+      "acceptance": "Text is never baked into art; panels stretch without corner distortion; decorative detail stays outside text zones.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-button-system",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Legible commands and explicit confirmation.",
+      "required_variants": "Default/hover/focus/pressed/selected/disabled/loading/error",
+      "delivery_contract": "SVG for structural icons; PNG only for decorative materials; engine-rendered labels and numbers; export light/dark QA.",
+      "acceptance": "Keyboard focus is distinct from hover; disabled reason available; selected state not color-only.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-command-icons",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Fast recognition of current command set.",
+      "required_variants": "Move, Attack, Skills, Wait, Confirm, Cancel, Inspect, Undo",
+      "delivery_contract": "SVG for structural icons; PNG only for decorative materials; engine-rendered labels and numbers; export light/dark QA. 24/32/48 px QA.",
+      "acceptance": "One consistent stroke/solid language; each icon labeled in UI; no generated lettering.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-unit-inspector",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Inspect allies and enemies without consuming a turn.",
+      "required_variants": "Ally/enemy/active/KO/unknown values",
+      "delivery_contract": "Layout component using live portrait, team shape, HP/MP, status rows and separate close control.",
+      "acceptance": "Selection of enemy opens read-only details; inspector never silently changes the acting unit.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-action-forecast",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Explain action consequences before committing.",
+      "required_variants": "Valid/invalid/lethal/miss-risk/insufficient-resource/friendly-fire",
+      "delivery_contract": "Layout component; attacker, target, ability, HP change, cost, hit/status values only if the rules provide them.",
+      "acceptance": "Numbers match resolver; absent mechanics are omitted, not fabricated; Cancel preserves reversible state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-turn-order",
+      "family": "ui",
+      "priority": "P1",
+      "purpose": "Show who acts next.",
+      "required_variants": "Current/next/ally/enemy/KO/reordered",
+      "delivery_contract": "Portrait badge strip with initiative data source.",
+      "acceptance": "Displays actual order; badges retain team shape and readable focus at small size.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-resource-bars",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Readable health and resource state.",
+      "required_variants": "HP/MP; full/partial/critical/empty/preview-loss/preview-heal",
+      "delivery_contract": "SVG for structural icons; PNG only for decorative materials; engine-rendered labels and numbers; export light/dark QA. Separate numeric labels and segmented/outlined visual cues.",
+      "acceptance": "Actual and forecast values cannot be mistaken; bar animation never delays authoritative labels.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-status-icons",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Status visibility that supports enemy inspection.",
+      "required_variants": "Silence, Burn, Frozen, Stunned, Guarded, Haste, Slow, KO",
+      "delivery_contract": "SVG for structural icons; PNG only for decorative materials; engine-rendered labels and numbers; export light/dark QA. 24/32/48 px QA; live duration stack label.",
+      "acceptance": "Only game-supported states appear; label and tooltip define consequence and duration source.",
+      "evidence_status": "Haste study file is registered as study_only. Edge cleanup, small-scale review and a verified gameplay slot remain pending. No status implementation is implied.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": [
+        "haste-icon-study-20261104"
+      ]
+    },
+    {
+      "asset_id": "ui-context-prompt",
+      "family": "ux",
+      "priority": "P0",
+      "purpose": "Instructions change with state instead of staying generic.",
+      "required_variants": "Command, Move preview, Move confirm, Target preview, Action confirm, Facing, Resolving, Result",
+      "delivery_contract": "Text tokens + command glyphs rendered by engine; no generated raster text.",
+      "acceptance": "Displayed action and Cancel behavior match input handlers in every state.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-results",
+      "family": "ui",
+      "priority": "P0",
+      "purpose": "Make victory/defeat and replay unambiguous.",
+      "required_variants": "Victory/defeat/replay-pending",
+      "delivery_contract": "Panel/layout reuse, outcome mark, replay control.",
+      "acceptance": "Replay restores units, resources, facing, terrain states and camera as defined by the scenario.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-pause-settings",
+      "family": "ux",
+      "priority": "P1",
+      "purpose": "Accessible animation and input controls.",
+      "required_variants": "Paused/resume/settings; audio, reduced motion, VFX intensity, text scale",
+      "delivery_contract": "Layout component using the same button/panel styles.",
+      "acceptance": "No background command commits through pause; adjustments are visibly reflected.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "ui-camera-controls",
+      "family": "ux",
+      "priority": "P1",
+      "purpose": "Discoverable quarter-turn stage rotation.",
+      "required_variants": "Rotate-left/right/reset; unavailable state",
+      "delivery_contract": "Labeled controls and glyphs, independent from unit-facing selector.",
+      "acceptance": "Camera rotation does not change world-facing logic or active selection; UI does not advertise unavailable rotation.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "sprite-zane",
+      "family": "hero",
+      "priority": "P0",
+      "purpose": "Primary swordsman identity in the existing 2v2 demo.",
+      "required_variants": "4 idle facings first; then 4-frame breathing per facing, 6 walk, 4 attack, 4 cast, 2 hurt, 1 KO per facing",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Silhouette and costume remain identical across views; sword hand never swaps; anchors do not drift.",
+      "evidence_status": "Existing approved front reference retained. New rear NE and NW images are generated, unapproved candidates, not a completed direction set. Visible heights are 983 and 841 px versus 1064 px for the approved front. Feet/scale remain unregistered; pouch, scarf, coat and sword pose vary; opposite front SW missing. See candidate register and exact prototype adapters.",
+      "production_status": "generated_candidate",
+      "runtime_status": "not_validated",
+      "dependencies": "identity reconciliation; missing opposite-front view; per-image foot anchors/body scale; exact illustrated prototype adapter; direction/camera tests",
+      "output_files": [
+        "candidates/zane-rear-ne.png",
+        "candidates/zane-rear-nw.png"
+      ],
+      "notes": "Two new rear candidates exist, not two approved production sprites. Approved front reference is references/zane-front-approved.png. Do not apply proposed 128\u00d7128 normalization or historical 80 px scaling without adaptation.",
+      "registered_candidate_ids": [
+        "zane-front-existing-approved",
+        "zane-rear-ne-candidate-20261104",
+        "zane-rear-nw-candidate-20261104"
+      ]
+    },
+    {
+      "asset_id": "sprite-kael",
+      "family": "hero",
+      "priority": "P0",
+      "purpose": "Distinct allied heavy/defender identity in the existing 2v2 demo.",
+      "required_variants": "4 idle facings first; breathing/walk/attack/hurt/KO follow same state contract",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Recognizable beside Zane in monochrome at gameplay scale; equipment does not fuse with body.",
+      "evidence_status": "Legacy art present in recovered demo; full new directional/animation set not verified.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "approved identity; pivot adapter",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "sprite-mira",
+      "family": "hero",
+      "priority": "P2",
+      "purpose": "Caster roster expansion after current demo art closes.",
+      "required_variants": "4 idle + cast/hurt/KO; breathing and walk after identity",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Face, hair, staff and clothing correspond to approved portrait; no unapproved rename.",
+      "evidence_status": "Arcanist is an art-production role in old asset bible, not authority to rename Mira.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "sprite-lyra",
+      "family": "hero",
+      "priority": "P2",
+      "purpose": "Ranged/mobile roster expansion.",
+      "required_variants": "4 idle + attack/hurt/KO; breathing and walk after identity",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Bow/weapon and cloak read at small scale; projectile release hand has one consistent location.",
+      "evidence_status": "Wayfarer is an art-production role in old asset bible, not authority to rename Lyra.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "enemy-void-cultist",
+      "family": "enemy",
+      "priority": "P0",
+      "purpose": "Readable hostile caster already in the 2v2 demo.",
+      "required_variants": "4 idle directions; then breathing/cast/hurt/KO per direction",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Front/rear identity clear; eyes/clasp stay front-only; four feet register to one anchor.",
+      "evidence_status": "Local candidate-v01 has four unique idles and true alpha; raw feet unaligned, details drift; explicitly review-only. New November 4 front/rear/opposite studies are registered separately as study_only: inconsistent staff handedness prevents treating them as a production direction set.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "normalize candidate only after identity accepted; extend runtime directional lookup beyond Zane",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": [
+        "cultist-front-study-20261104",
+        "cultist-rear-study-20261104",
+        "cultist-opposite-study-20261104"
+      ]
+    },
+    {
+      "asset_id": "enemy-storm-imp",
+      "family": "enemy",
+      "priority": "P0",
+      "purpose": "Small, fast hostile silhouette distinct from the Cultist.",
+      "required_variants": "4 idle directions; then breathing/move/attack/hurt/KO",
+      "delivery_contract": "Four authored NE/SE/SW/NW facings; proposed normalized 128\u00d7128 RGBA canvas, foot anchor (64,112); larger weapons may use declared larger canvas; no silent mirroring.",
+      "acceptance": "Short/wide or compact asymmetric silhouette, clearly distinct from robed caster; contact/shadow establishes position.",
+      "evidence_status": "Legacy Storm Imp exists in recovered 2v2 demo; new production set not verified.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "enemy-null-drake",
+      "family": "enemy",
+      "priority": "P2",
+      "purpose": "Heavy hostile silhouette for later content.",
+      "required_variants": "4 idle directions; attack/hurt/KO",
+      "delivery_contract": "Declared 1-cell or multi-cell gameplay footprint first; texture may overhang without changing occupancy.",
+      "acceptance": "Footprint must be chosen by gameplay, not inferred from illustration; no silent replacement with a humanoid.",
+      "evidence_status": "Old bible maps an art role Hollow Bulwark to Null Drake; that is not a rename or final visual approval.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "portrait-current-roster",
+      "family": "portraits",
+      "priority": "P1",
+      "purpose": "Unify portraits with the actual unit identities.",
+      "required_variants": "Zane, Kael, Void Cultist, Storm Imp; neutral and KO frame states",
+      "delivery_contract": "Square 512 master, 128/64 exports; face-safe crop; borders are UI, not baked into portrait.",
+      "acceptance": "Portrait and in-world sprite equipment/colors match; readable at 48\u201364 px.",
+      "evidence_status": "Recovered demo has existing portraits; audit and reuse before regenerating.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-shared-tier1-cast",
+      "family": "vfx",
+      "priority": "P0",
+      "purpose": "Reusable caster-side anticipation module.",
+      "required_variants": "Existing 4 frames; no new element-specific charge sequence unless necessary",
+      "delivery_contract": "RGBA frames plus explicit crop/pivot/time manifest; source/target anchor roles declared; quiet anticipation, visible impact, clean fade.",
+      "acceptance": "Same module reused without pixel edits; proposed timing does not impose gameplay charge delay.",
+      "evidence_status": "Existing shared cast4 in both local Ice and Lightning kits; hand-estimated anchors, no engine validation. v11 archive independently verifies these 4 shared frames among the 52 modular frames.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-fire",
+      "family": "vfx",
+      "priority": "P0",
+      "purpose": "Polish a spell already usable by the current demo.",
+      "required_variants": "Existing 16 frames first; create only an evidenced missing or defective phase.",
+      "delivery_contract": "RGBA frames plus explicit crop/pivot/time manifest; source/target anchor roles declared; quiet anticipation, visible impact, clean fade.",
+      "acceptance": "Fire reads as fire, target and caster anchors are separate, and effect ends fully clear.",
+      "evidence_status": "16 real 512\u00d7512 Fire frames verified in v11 archive (charge/travel/impact/dissipation); reuse before regenerating. See verified-reusable-frames.csv.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "current Fire ability event/cost verified; reference existing shared cast",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-physical-hit",
+      "family": "vfx",
+      "priority": "P0",
+      "purpose": "Readable contact for existing Attack.",
+      "required_variants": "Existing slash4/impact4 first; miss/guard feedback only if a gap remains.",
+      "delivery_contract": "Small isolated 128\u00d7128 contact effects plus explicit hit event.",
+      "acceptance": "Impact aligns to target body, not tile center; miss never shows damage spark.",
+      "evidence_status": "8 real 1024\u00d71024 melee frames verified in v11 archive: 4 slash + 4 impact; runtime display scaling needs review.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-silence",
+      "family": "vfx",
+      "priority": "P0",
+      "purpose": "Communicate a status already used by the Cultist.",
+      "required_variants": "Application pulse + persistent status badge + expiration",
+      "delivery_contract": "Brief cast/impact art; persistent condition belongs to UI/status layer.",
+      "acceptance": "Status is readable after effect ends; label explains why Skills is unavailable.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-ice",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Reuse existing element-specific sequence without restarting work.",
+      "required_variants": "4 casting + 12 existing Ice candidate frames",
+      "delivery_contract": "RGBA frames plus explicit crop/pivot/time manifest; source/target anchor roles declared; quiet anticipation, visible impact, clean fade.",
+      "acceptance": "Frozen angular identity; anchors align; last frame clears; no claim of runtime integration.",
+      "evidence_status": "Local modular Ice candidate exists; source crops and manifest require runtime validation.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-lightning",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Reuse existing original lightning candidate and repair concrete issues.",
+      "required_variants": "4 casting + 12 existing Lightning frames",
+      "delivery_contract": "RGBA frames plus explicit crop/pivot/time manifest; source/target anchor roles declared; quiet anticipation, visible impact, clean fade.",
+      "acceptance": "Decide whether ability is a pillar or descending strike; reduce bright last sparks; validate at 96 px.",
+      "evidence_status": "Local candidate has 12 unique pixel-exact frames; effect reads as electrical pillar; untested dynamic continuity/engine integration. v11 archive also contains the 12 Lightning frames and ModularSpellCatalog.gd entries; code references are not a new playback pass.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-shadow-mend",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Reuse the existing enemy restorative effect rather than invent a new healing pack.",
+      "required_variants": "Existing 12 element-specific frames + shared casting as required by current behavior",
+      "delivery_contract": "Soft rising arcs and open protective shape; do not add a new ability to justify an asset.",
+      "acceptance": "Distinguishable as restoration from hostile Void Pulse; heal target and HP change match actual gameplay.",
+      "evidence_status": "12 real Shadow Mend frames in v11 modular-spells archive; source entries in ModularSpellCatalog.gd. Not re-playtested today.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "verify existing enemy ability mapping before integrating",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-ko",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Communicate defeat without hiding combat state.",
+      "required_variants": "Hit-to-KO transition; quiet end pose",
+      "delivery_contract": "Short impact accent plus authored KO pose; separate from permanent unit logic.",
+      "acceptance": "Matches actual HP state; does not obscure victory/replay control; reduced-motion alternative.",
+      "evidence_status": "New production brief; no matching new production output verified",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "",
+      "output_files": [],
+      "notes": "Variant counts are requested deliverables, not assets claimed as complete.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-void-pulse",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Existing hostile expanding energy effect; inspect actual caster/target/AoE use.",
+      "required_variants": "Existing 12 element-specific frames; reuse shared casting where mapped",
+      "delivery_contract": "RGBA frames with explicit rectangles, semantic anchors, phase durations and gameplay event mapping.",
+      "acceptance": "Origin, direction and affected tiles match the real ability; does not obscure confirmation or result; final frame clears.",
+      "evidence_status": "12 real Void Pulse frames verified in v11 modular-spells archive; source catalog entries exist; not re-playtested today.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "verify current ability mapping and review existing frames before new generation",
+      "output_files": [],
+      "notes": "This row plans validation/repair of verified existing art. It does not claim a newly generated output.",
+      "registered_candidate_ids": []
+    },
+    {
+      "asset_id": "vfx-dark-breath",
+      "family": "vfx",
+      "priority": "P1",
+      "purpose": "Existing directional breath effect; preserve directional origin and actual affected cells.",
+      "required_variants": "Existing 12 element-specific frames; reuse shared casting where mapped",
+      "delivery_contract": "RGBA frames with explicit rectangles, semantic anchors, phase durations and gameplay event mapping.",
+      "acceptance": "Origin, direction and affected tiles match the real ability; does not obscure confirmation or result; final frame clears.",
+      "evidence_status": "12 real Dark Breath frames verified in v11 modular-spells archive; source catalog entries exist; not re-playtested today.",
+      "production_status": "planned",
+      "runtime_status": "not_validated",
+      "dependencies": "verify current ability mapping and review existing frames before new generation",
+      "output_files": [],
+      "notes": "This row plans validation/repair of verified existing art. It does not claim a newly generated output.",
+      "registered_candidate_ids": []
+    }
+  ],
+  "existing_inventory": [
+    {
+      "collection_id": "modular-spells-v11",
+      "file_count": 52,
+      "breakdown": {
+        "shared_tier1": 4,
+        "lightning": 12,
+        "void_pulse": 12,
+        "dark_breath": 12,
+        "shadow_mend": 12
+      },
+      "status": "real image bytes verified in archived source; code catalog exists; not re-playtested today",
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/assets/modular-spells/frames/",
+      "evidence_file": "verified-reusable-frames.csv"
+    },
+    {
+      "collection_id": "fireball-v11",
+      "file_count": 16,
+      "frame_dimensions": [
+        512,
+        512
+      ],
+      "status": "real image bytes verified in archived source; not re-playtested today",
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/assets/fireball/frames/",
+      "evidence_file": "verified-reusable-frames.csv"
+    },
+    {
+      "collection_id": "melee-v11",
+      "file_count": 8,
+      "breakdown": {
+        "slash": 4,
+        "impact": 4
+      },
+      "frame_dimensions": [
+        1024,
+        1024
+      ],
+      "status": "real image bytes verified in archived source; not re-playtested today",
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/assets/melee/frames/",
+      "evidence_file": "verified-reusable-frames.csv"
+    }
+  ],
+  "status_note": "Family production status does not imply all required views or states exist. Individual entries in candidate_register are authoritative for candidate/reference approval and readiness. Existing historical inventory remains separately documented.",
+  "catalog_revision": "1.1-github",
+  "updated": "2026-11-04",
+  "candidate_register_file": "candidate-register.json",
+  "candidate_register": [
+    {
+      "candidate_id": "zane-front-existing-approved",
+      "asset_family_id": "sprite-zane",
+      "label": "Zane existing front identity reference",
+      "status": "approved_reference",
+      "reference": {
+        "repository_path": "references/zane-front-approved.png"
+      },
+      "approval_status": "approved_existing_reference",
+      "runtime_status": "not_validated",
+      "scope": "Existing approved identity reference; not a new production delivery.",
+      "qa_notes": "Retained as the approved front identity reference from current project review. Approval of this front image does not approve new rear images or complete the directional set.",
+      "required_next_steps": "Preserve original reference; match face, costume, accessories and weapon identity across new views.",
+      "qa_measurements": {
+        "visible_height_px": 1064,
+        "measurement_source": "Alpha >=128 visible bounds from source candidate QA; not an engine measurement."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "d299d45c28f164620beee1d88871edea780ce4ad3c4873f1bea86735b64ab236",
+        "size_bytes": 942507,
+        "dimensions_px": [
+          1254,
+          1254
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "zane-rear-ne-candidate-20261104",
+      "asset_family_id": "sprite-zane",
+      "label": "Zane rear NE candidate",
+      "status": "generated_candidate",
+      "reference": {
+        "repository_path": "candidates/zane-rear-ne.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "Feet and display scale are not registered to the approved front. Pouch, scarf, coat and sword pose vary across the studies. Opposite front SW remains missing. These images are not animation and do not complete a production four-direction set.",
+      "required_next_steps": "Reconcile costume/accessory/weapon identity; author missing opposite front; measure per-file foot pivot and body bounds; normalize display scale; test direction changes and camera-relative facing in the exact prototype.",
+      "qa_measurements": {
+        "visible_height_px": 983,
+        "approved_front_visible_height_px": 1064,
+        "measurement_source": "Alpha >=128 visible bounds from source candidate QA; not an engine measurement."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "f8a512493aa5b013574a99ce1575e50ebfcd3e5b06bc71d9a3cbfeab21468836",
+        "size_bytes": 798842,
+        "dimensions_px": [
+          1254,
+          1254
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "zane-rear-nw-candidate-20261104",
+      "asset_family_id": "sprite-zane",
+      "label": "Zane rear NW candidate",
+      "status": "generated_candidate",
+      "reference": {
+        "repository_path": "candidates/zane-rear-nw.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "Feet and display scale are not registered to the approved front. Pouch, scarf, coat and sword pose vary across the studies. Opposite front SW remains missing. These images are not animation and do not complete a production four-direction set.",
+      "required_next_steps": "Reconcile costume/accessory/weapon identity; author missing opposite front; measure per-file foot pivot and body bounds; normalize display scale; test direction changes and camera-relative facing in the exact prototype.",
+      "qa_measurements": {
+        "visible_height_px": 841,
+        "approved_front_visible_height_px": 1064,
+        "measurement_source": "Alpha >=128 visible bounds from source candidate QA; not an engine measurement."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "34611d7e1190ab06df24cd229bd7850e10651cf3dabb286163bec5ef899d73db",
+        "size_bytes": 573396,
+        "dimensions_px": [
+          1254,
+          1254
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "chapel-pillar-candidate-20261104",
+      "asset_family_id": "prop-chapel-broken-pillar",
+      "label": "Painterly broken pillar candidate",
+      "status": "generated_candidate",
+      "reference": {
+        "repository_path": "candidates/chapel-broken-pillar.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "Genuine transparency reported in project QA. No accepted gameplay footprint, scale or engine presentation yet.",
+      "required_next_steps": "Declare contact pivot and occupied cells; check scene scale, blocked movement/line of sight, foreground occlusion and hidden-unit inspection; test supported camera views/rotation. Transparency alone is not production acceptance.",
+      "qa_measurements": {
+        "alpha": "genuine_alpha_reported",
+        "footprint": "unassigned",
+        "rotation_test": "not_run",
+        "measurement_source": "Current project QA supplied with registration request."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "6a06b8363787955d48a48ea4a1cfa1304653b01d4462316d1dd0466b13ead88b",
+        "size_bytes": 1070205,
+        "dimensions_px": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "cultist-front-study-20261104",
+      "asset_family_id": "enemy-void-cultist",
+      "label": "Cultist front study",
+      "status": "study_only",
+      "reference": {
+        "repository_path": "studies/cultist-front-study.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "One of three exploratory directional studies. Staff handedness changes across views, so this is not a consistent replacement sprite set.",
+      "required_next_steps": "Reconcile identity and equipment side; author registered directions; inspect alpha edges and gameplay size; engine-test only after the set is coherent.",
+      "qa_measurements": {
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA",
+        "sha256": "23bd50b9980883f959aacf0c5f0a58bc044ff114b3009d2f7947c32c7370262e",
+        "measurement_source": "Local file headers and hashes verified for this revision; qualitative limits from accompanying study README."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "23bd50b9980883f959aacf0c5f0a58bc044ff114b3009d2f7947c32c7370262e",
+        "size_bytes": 906058,
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "cultist-rear-study-20261104",
+      "asset_family_id": "enemy-void-cultist",
+      "label": "Cultist rear study",
+      "status": "study_only",
+      "reference": {
+        "repository_path": "studies/cultist-rear-study.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "One of three exploratory directional studies. Staff handedness changes across views, so this is not a consistent replacement sprite set.",
+      "required_next_steps": "Reconcile identity and equipment side; author registered directions; inspect alpha edges and gameplay size; engine-test only after the set is coherent.",
+      "qa_measurements": {
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA",
+        "sha256": "a313bf0f3ff77855dd225e44974c82c22fb0591ae73703528aeca5ed77c1d28c",
+        "measurement_source": "Local file headers and hashes verified for this revision; qualitative limits from accompanying study README."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "a313bf0f3ff77855dd225e44974c82c22fb0591ae73703528aeca5ed77c1d28c",
+        "size_bytes": 860388,
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "cultist-opposite-study-20261104",
+      "asset_family_id": "enemy-void-cultist",
+      "label": "Cultist opposite study",
+      "status": "study_only",
+      "reference": {
+        "repository_path": "studies/cultist-opposite-study.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "One of three exploratory directional studies. Staff handedness changes across views, so this is not a consistent replacement sprite set.",
+      "required_next_steps": "Reconcile identity and equipment side; author registered directions; inspect alpha edges and gameplay size; engine-test only after the set is coherent.",
+      "qa_measurements": {
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA",
+        "sha256": "31c6186ab942d7cf10a641d6d6f56c8221ffbdef31ab5e4a84321b2aaad85e27",
+        "measurement_source": "Local file headers and hashes verified for this revision; qualitative limits from accompanying study README."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "31c6186ab942d7cf10a641d6d6f56c8221ffbdef31ab5e4a84321b2aaad85e27",
+        "size_bytes": 905369,
+        "dimensions_px": [
+          1312,
+          1199
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "haste-icon-study-20261104",
+      "asset_family_id": "ui-status-icons",
+      "label": "Haste icon study",
+      "status": "study_only",
+      "reference": {
+        "repository_path": "studies/haste-icon-study.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "Exploratory icon candidate. Needs edge cleanup and small-scale review. Its existence does not establish that Haste is supported or equipped in the current demo.",
+      "required_next_steps": "Verify a real gameplay/status slot before promotion; clean and normalize the icon; review at 24/32/48 px with label and other status icons.",
+      "qa_measurements": {
+        "dimensions_px": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA",
+        "sha256": "b44cbe5cd6ce6623630f38aa7a24352e83c7dae51496edfa1aa3e4205039c667",
+        "measurement_source": "Local file headers and hashes verified for this revision; qualitative limits from accompanying study README."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "b44cbe5cd6ce6623630f38aa7a24352e83c7dae51496edfa1aa3e4205039c667",
+        "size_bytes": 2029669,
+        "dimensions_px": [
+          1536,
+          1024
+        ],
+        "mode": "RGBA"
+      }
+    },
+    {
+      "candidate_id": "stone-material-study-20261104",
+      "asset_family_id": "terrain-chapel-cream-stone",
+      "label": "Stone material study",
+      "status": "study_only",
+      "reference": {
+        "repository_path": "studies/stone-material-study.png"
+      },
+      "approval_status": "not_approved",
+      "runtime_status": "not_validated",
+      "scope": "Individual candidate or study only; not a complete asset set.",
+      "qa_notes": "Rough material study, not yet matched to the approved continuous cream-stone terrain and not seam-tested. It is not a runtime tile.",
+      "required_next_steps": "Match approved cream/lavender palette and material scale; make a continuous 3\u00d73 or mesh surface test; validate transitions before any tile export.",
+      "qa_measurements": {
+        "dimensions_px": [
+          1774,
+          887
+        ],
+        "mode": "RGBA",
+        "sha256": "6570fa2badba8404a47eec452f747056df74a89d931ff3c5c30101cc7124b7d7",
+        "measurement_source": "Local file headers and hashes verified for this revision; qualitative limits from accompanying study README."
+      },
+      "recorded_date": "2026-11-04",
+      "file_integrity": {
+        "sha256": "6570fa2badba8404a47eec452f747056df74a89d931ff3c5c30101cc7124b7d7",
+        "size_bytes": 1254254,
+        "dimensions_px": [
+          1774,
+          887
+        ],
+        "mode": "RGBA"
+      }
+    }
+  ],
+  "runtime_adapters": {
+    "prototype_illustrated_zane": {
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/Unit.gd",
+      "source_lines": [
+        78,
+        88
+      ],
+      "scale_expression": "86.0 / 1080.0",
+      "front_anchor_px": [
+        650,
+        1150
+      ],
+      "rear_anchor_px": [
+        630,
+        1160
+      ],
+      "anchor_selection": "Rear for camera-relative view N or W; front otherwise.",
+      "provisional_mirroring": "Camera-relative views W and S use flip_h with offset adjustment.",
+      "scope": "These values fit the existing illustrated Zane images, not the new rear candidates; do not copy without measuring new file anchors."
+    },
+    "prototype_compact_skin": {
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/Unit.gd",
+      "source_lines": [
+        68,
+        75
+      ],
+      "scale_expression": "86.0 / 600.0",
+      "anchor_px": [
+        400,
+        740
+      ],
+      "scope": "Separate compact-skin branch. Not the illustrated Zane scaling contract."
+    },
+    "prototype_kael_fallback": {
+      "source": "ProjectTactic-v11-source.tar.gz: demos/isometric-2v2/prototypes/isometric/Unit.gd",
+      "source_lines": [
+        59,
+        65
+      ],
+      "scale_expression": "80.0 / max(texture_width, texture_height)",
+      "scope": "Kael fallback only in this branch; not a universal prototype character rule."
+    },
+    "historical_base_unit": {
+      "scale_expression": "80 px ally / 95 px enemy maximum-canvas dimension targets",
+      "scope": "Historical base Unit.gd behavior previously inspected; overridden by prototype-specific illustrated/compact paths. Do not treat this as exact Zane prototype scale."
+    }
+  }
+}
