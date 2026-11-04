@@ -1,0 +1,2 @@
+# Keep these bounded review PNGs self-contained; do not affect other asset rules.
+*.png -filter -diff -merge -text
