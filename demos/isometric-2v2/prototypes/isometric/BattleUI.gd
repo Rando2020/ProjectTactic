@@ -226,12 +226,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		if _ability_list.get_child_count() > 0:
 			_ability_list.get_child(0).grab_focus.call_deferred()
 
+func _make_selection_controller():
+	return preload("res://prototypes/isometric/SelectionController.gd").new()
+
 func setup(manager: BattleManager) -> void:
 	super.setup(manager)
 	_battlefield_labels = preload("res://prototypes/isometric/BattlefieldLabels.gd").new()
 	add_child(_battlefield_labels)
 	_battlefield_labels.setup(self,manager)
-	_selection = preload("res://prototypes/isometric/SelectionController.gd").new()
+	_selection = _make_selection_controller()
 	add_child(_selection)
 	_selection.setup(self, manager)
 
