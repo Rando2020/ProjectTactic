@@ -1,0 +1,37 @@
+{
+  "initial_state": "commands",
+  "states": {
+    "commands": {
+      "hint": "Choose Move, Attack, Skills or Wait. Inspect does not spend your turn.",
+      "commit_allowed": false
+    },
+    "move_preview": {
+      "hint": "Review the route. Confirm moves; Cancel returns to commands.",
+      "commit_allowed": true
+    },
+    "target_preview": {
+      "hint": "Review the target and affected units. Confirm commits the action.",
+      "commit_allowed": true
+    },
+    "inspect_enemy": {
+      "hint": "Inspecting an enemy. Close returns to your previous selection.",
+      "commit_allowed": false
+    },
+    "choose_facing": {
+      "hint": "Choose a facing, then confirm to end your turn.",
+      "commit_allowed": true
+    },
+    "resolved": {
+      "hint": "Action resolved. Wait for the next available command.",
+      "commit_allowed": false
+    }
+  },
+  "rules": [
+    "Preview never changes position, HP, MP or turn order.",
+    "Inspect preserves active actor and pending selection.",
+    "Cancel restores preceding state without cost.",
+    "Confirm must revalidate turn ownership, destination/targets and resources.",
+    "Disable duplicate confirmation while resolution is pending.",
+    "Facing labels must follow camera orientation, not assume world N means screen up."
+  ]
+}
