@@ -1,0 +1,10 @@
+config_version=5
+[application]
+config/name="Zane directional review - candidates"
+run/main_scene="res://Review.tscn"
+[display]
+window/size/viewport_width=1200
+window/size/viewport_height=760
+[rendering]
+renderer/rendering_method="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false

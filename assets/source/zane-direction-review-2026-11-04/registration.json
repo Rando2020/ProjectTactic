@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "target_height": 85,
+  "anchor_method": "Manual horizontal foot-center estimate; vertical review baseline at lowest alpha>=128 pixel. Not a calibrated ground-plane pivot.",
+  "views": [
+    {
+      "direction": "SE",
+      "file": "images/zane-se-reference.png",
+      "sha256": "d299d45c28f164620beee1d88871edea780ce4ad3c4873f1bea86735b64ab236",
+      "alpha_bounds": [
+        192,
+        103,
+        1017,
+        1167
+      ],
+      "anchor": [
+        650,
+        1167
+      ],
+      "flip_h": false,
+      "accepted": true,
+      "status": "approved-reference"
+    },
+    {
+      "direction": "SW",
+      "file": "images/zane-sw-candidate.png",
+      "sha256": "cb19662628e53dc09075739cd021205453795e9c117d8fb531f0be9320a7e457",
+      "alpha_bounds": [
+        252,
+        118,
+        975,
+        1141
+      ],
+      "anchor": [
+        625,
+        1141
+      ],
+      "flip_h": false,
+      "accepted": false,
+      "status": "unapproved-candidate"
+    },
+    {
+      "direction": "NE",
+      "file": "images/zane-ne-candidate.png",
+      "sha256": "f8a512493aa5b013574a99ce1575e50ebfcd3e5b06bc71d9a3cbfeab21468836",
+      "alpha_bounds": [
+        310,
+        101,
+        1126,
+        1084
+      ],
+      "anchor": [
+        600,
+        1084
+      ],
+      "flip_h": false,
+      "accepted": false,
+      "status": "unapproved-candidate"
+    },
+    {
+      "direction": "NW",
+      "file": "images/zane-nw-candidate.png",
+      "sha256": "34611d7e1190ab06df24cd229bd7850e10651cf3dabb286163bec5ef899d73db",
+      "alpha_bounds": [
+        450,
+        184,
+        979,
+        1025
+      ],
+      "anchor": [
+        655,
+        1025
+      ],
+      "flip_h": false,
+      "accepted": false,
+      "status": "unapproved-candidate"
+    }
+  ]
+}
