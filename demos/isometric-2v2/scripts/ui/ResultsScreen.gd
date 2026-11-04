@@ -481,6 +481,9 @@ Future JP follows this path. No abilities are granted for free."
 	leave.pressed.connect(_leave_practice)
 	column.add_child(leave)
 
+func _practice_battle_scene() -> String:
+	return "res://prototypes/blooming/BloomingBattle.tscn" if _gs.practice_session.get("blooming_ruins", false) else "res://prototypes/isometric/Skirmish.tscn"
+
 func _retry_practice() -> void:
 	if _transitioning:
 		return
@@ -489,7 +492,7 @@ func _retry_practice() -> void:
 		_transitioning = false
 		_practice_notice.text = "Retry unavailable. Return to the Hearth to leave practice."
 		return
-	get_tree().change_scene_to_file.call_deferred("res://prototypes/isometric/Skirmish.tscn")
+	get_tree().change_scene_to_file.call_deferred(_practice_battle_scene())
 
 func _leave_practice() -> void:
 	if _transitioning:
@@ -507,7 +510,7 @@ func _choose_practice_job(job_id: String) -> void:
 		_practice_notice.text = "Training choice unavailable. Your saved descent is unchanged."
 		return
 	_transitioning = true
-	get_tree().change_scene_to_file.call_deferred("res://prototypes/isometric/Skirmish.tscn")
+	get_tree().change_scene_to_file.call_deferred(_practice_battle_scene())
 
 
 func _apply_ui_size() -> void:

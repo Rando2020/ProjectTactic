@@ -117,6 +117,13 @@ func _layout_forecast() -> void:
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	super._on_action_preview_changed(preview)
+	var is_move := str(preview.get("mode", "")) == "Move"
+	for field in [_preview_amount_label, _preview_hit_label, _preview_crit_label]:
+		field.visible = not is_move
+	if is_move:
+		_preview_actor_label.text = "UNIT\n%s" % str(preview.get("actor", ""))
+		_preview_target_label.text = "DESTINATION\n%s" % str(preview.get("target", ""))
+		_preview_note_label.text = "%s · %s · %s\n%s" % [str(preview.get("status_preview", "")), str(preview.get("range_label", "")), str(preview.get("height_label", "")), str(preview.get("note", ""))]
 	_clear_preview_connections()
 	if not preview.is_empty() and bool(preview.get("visible", false)):
 		_preview_primary = str(preview.get("target_id", ""))
@@ -152,7 +159,7 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	for portrait in [_preview_actor_portrait, _preview_target_portrait]:
 		portrait.get_parent().visible = portrait.texture != null
 	if not preview.is_empty():
-		_preview_mode_label.text = "FORECAST · Select skill to commit" if battle_manager and battle_manager.active_command == "ability" else "FORECAST · Click highlighted tile to commit"
+		_preview_mode_label.text = "FORECAST · Select skill to review" if battle_manager and battle_manager.active_command == "ability" else "FORECAST · Select highlighted tile to review"
 		_preview_note_label.tooltip_text = _preview_note_label.text
 	_layout_forecast()
 
@@ -226,12 +233,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 		if _ability_list.get_child_count() > 0:
 			_ability_list.get_child(0).grab_focus.call_deferred()
 
+func _make_selection_controller():
+	return preload("res://prototypes/isometric/SelectionController.gd").new()
+
 func setup(manager: BattleManager) -> void:
 	super.setup(manager)
 	_battlefield_labels = preload("res://prototypes/isometric/BattlefieldLabels.gd").new()
 	add_child(_battlefield_labels)
 	_battlefield_labels.setup(self,manager)
-	_selection = preload("res://prototypes/isometric/SelectionController.gd").new()
+	_selection = _make_selection_controller()
 	add_child(_selection)
 	_selection.setup(self, manager)
 
@@ -242,23 +252,29 @@ func _layout_chapel_command_dock() -> void:
 		super._layout_chapel_command_dock()
 
 func _on_move() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_move()
 	_selection.refresh()
 
 func _on_attack() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_attack()
 	_selection.refresh()
 
 func _on_ability() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_ability()
 	_selection.refresh()
 
 func _on_wait() -> void:
-	if not _selection or not _selection.can_command(): return
-	super._on_wait()
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	_selection.begin_wait()
+
+func _select_ability(ability_id: String) -> void:
+	if _selection: _selection.select_skill(ability_id)
+
+func _on_confirm() -> void:
+	if _selection: _selection.confirm_review()
 
 func _on_cancel() -> void:
 	if _selection: _selection.go_back()

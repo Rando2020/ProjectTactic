@@ -1801,11 +1801,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 			_play_sfx("ui_confirm")
 			_ability_panel.visible = false
 			if battle_manager:
-				battle_manager.select_ability(captured_id))
+				_select_ability(captured_id))
 		_ability_list.add_child(btn)
 		UISettings.shared().apply_tree(btn, get_viewport().get_visible_rect().size)
 		row.minimum_size_changed.connect(func() -> void: btn.custom_minimum_size.y = maxf(64, row.get_combined_minimum_size().y + 8))
 		btn.custom_minimum_size.y = maxf(64, row.get_combined_minimum_size().y + 8)
+
+
+func _select_ability(ability_id: String) -> void:
+	if battle_manager: battle_manager.select_ability(ability_id)
 
 
 #  Button callbacks

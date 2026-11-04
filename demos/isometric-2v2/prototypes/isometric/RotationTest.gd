@@ -152,6 +152,7 @@ func run() -> void:
 		ui._on_move()
 		selection.set_cursor(Vector2i(2,3))
 		selection.activate_cursor()
+		ui._on_confirm()
 		check(manager.is_resolving_action,"move resolves angle%d"%angle)
 		check(not battle.rotate_stage(1) and not battle.set_stage_mode(false),"busy projection mutation refused angle%d"%angle)
 		await wait_resolution(manager)
@@ -178,6 +179,7 @@ func run() -> void:
 			ui._on_attack()
 			selection.set_cursor(enemy.grid_pos)
 			selection.activate_cursor()
+			ui._on_confirm()
 			await wait_resolution(manager)
 			check(attacked.count >= 1,"real attack resolved (counter may follow) angle%d"%angle)
 		else:
@@ -187,6 +189,7 @@ func run() -> void:
 			selection.set_cursor(manager.units.Enemy_2.grid_pos)
 			check(manager.units.Enemy_2.grid_pos in grid.ability_tiles,"Fire legal angle%d"%angle)
 			selection.activate_cursor()
+			ui._on_confirm()
 			await wait_resolution(manager)
 			check(manager.units.zane.mp == before_mp-12,"real Fire charged once angle%d"%angle)
 		check(grid.quarter_turn == angle,"action cannot rotate view angle%d"%angle)

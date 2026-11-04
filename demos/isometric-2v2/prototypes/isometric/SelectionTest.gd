@@ -66,6 +66,9 @@ func run() -> void:
 	selection.set_cursor(Vector2i(2,3))
 	selection.activate_cursor()
 	selection.activate_cursor()
+	check(not manager.is_resolving_action, "double target click remains review-only")
+	ui._on_confirm()
+	ui._on_confirm()
 	check(manager.is_resolving_action, "double movement gated during resolution")
 	for i in 1000:
 		if not manager.is_resolving_action: break
@@ -101,6 +104,8 @@ func run() -> void:
 	check(manager.active_unit_id == "zane", "hidden wait callback cannot act unselected")
 	selection.select_unit("zane")
 	ui._on_wait()
+	check(not selection.selected_id.is_empty(), "Wait retains actor for facing choice")
+	ui._on_confirm()
 	check(selection.selected_id.is_empty(), "end turn clears selection")
 	for i in 2000:
 		if manager.current_phase == BattleManager.Phase.PLAYER_TURN and manager.active_unit_id != "zane": break
