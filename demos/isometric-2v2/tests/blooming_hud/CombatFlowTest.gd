@@ -42,6 +42,7 @@ func run() -> void:
 	for i in 1000:
 		if manager.current_phase == BattleManager.Phase.PLAYER_TURN: break
 		await get_tree().create_timer(0.025).timeout
+	check(not ui._intro_banner.visible, "Blooming avoids duplicate intro banner overlapping objective and hint")
 	selection.select_unit("Enemy_1")
 	await capture("enemy-inspection")
 	check(selection._inspect.is_visible_in_tree(), "Blooming exposes selected enemy inspection")
@@ -54,6 +55,11 @@ func run() -> void:
 	selection.set_cursor(destination)
 	selection.activate_cursor()
 	check(actor.grid_pos == start and not manager.is_resolving_action, "first target click only stages move")
+	check(ui._preview_actor_label.text.begins_with("UNIT"), "move forecast labels unit rather than attacker")
+	check(ui._preview_target_label.text.begins_with("DESTINATION"), "move forecast labels destination")
+	check(not ui._preview_amount_label.visible and not ui._preview_hit_label.visible and not ui._preview_crit_label.visible, "move forecast omits damage hit and JP fields")
+	check(ui._preview_panel.size.y <= 180 and ui._preview_panel.size.x <= 680, "movement review stays compact")
+	check(not ui._bloom_objective_panel.get_rect().intersects(ui._bloom_hint.get_rect()), "objective and hint do not overlap")
 	await capture("move-review")
 	check(ui._confirm_btn.is_visible_in_tree() and not ui._confirm_btn.disabled, "staged move has explicit confirmation")
 	if actor.grid_pos == start:

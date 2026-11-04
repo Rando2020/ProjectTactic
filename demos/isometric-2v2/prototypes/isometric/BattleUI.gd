@@ -117,6 +117,13 @@ func _layout_forecast() -> void:
 
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	super._on_action_preview_changed(preview)
+	var is_move := str(preview.get("mode", "")) == "Move"
+	for field in [_preview_amount_label, _preview_hit_label, _preview_crit_label]:
+		field.visible = not is_move
+	if is_move:
+		_preview_actor_label.text = "UNIT\n%s" % str(preview.get("actor", ""))
+		_preview_target_label.text = "DESTINATION\n%s" % str(preview.get("target", ""))
+		_preview_note_label.text = "%s · %s · %s\n%s" % [str(preview.get("status_preview", "")), str(preview.get("range_label", "")), str(preview.get("height_label", "")), str(preview.get("note", ""))]
 	_clear_preview_connections()
 	if not preview.is_empty() and bool(preview.get("visible", false)):
 		_preview_primary = str(preview.get("target_id", ""))

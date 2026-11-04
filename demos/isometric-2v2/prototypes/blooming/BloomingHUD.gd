@@ -12,6 +12,7 @@ var _bloom_mp_bar: ProgressBar
 var _bloom_armor: Label
 var _bloom_hint: Label
 var _bloom_ready := false
+var _bloom_move_forecast := false
 var _bloom_last_area := Rect2()
 
 class BloomingSelection extends "res://prototypes/isometric/SelectionController.gd":
@@ -306,12 +307,16 @@ func _layout_skills() -> void:
 	_proof_skills_panel.position = Vector2(area.end.x-width-12,bottom-height)
 	_proof_skills_panel.size = Vector2(width,height)
 
+func _on_action_preview_changed(preview: Dictionary) -> void:
+	_bloom_move_forecast = str(preview.get("mode", "")) == "Move"
+	super._on_action_preview_changed(preview)
+
 func _layout_forecast() -> void:
 	if not _bloom_ready or not is_instance_valid(_forecast_content): return
 	var area := gameplay_rect(get_viewport().get_visible_rect().size)
 	var bottom := area.end.y-148
-	var width := minf(840,area.size.x-24)
-	var height := minf(270,maxf(80,bottom-128))
+	var width := minf(680 if _bloom_move_forecast else 840,area.size.x-24)
+	var height := minf(180 if _bloom_move_forecast else 270,maxf(80,bottom-128))
 	var x := 12.0
 	var y := bottom-height
 	if _proof_skills_panel.visible:
@@ -344,5 +349,8 @@ func _refresh_active_resources() -> void:
 			_bloom_armor.visible = unit.temper > 0 or unit.ether > 0
 
 func _on_battle_started(display_name: String, objective: String) -> void:
-	super._on_battle_started(display_name, objective)
+	# The persistent objective already introduces this scene. The inherited
+	# transient banner occupies the same top-left space as the objective/hint.
+	_objective_label.text = objective
+	_intro_banner.hide()
 	_mission_label.text = "THE BLOOMING RUINS"
