@@ -5,8 +5,12 @@ class_name CombatResolver
 extends Node
 
 signal combat_resolved(result: Dictionary)
+## Presentation-only recipe for the hit that is about to resolve. Kept off the
+## result dictionary so mechanical outcomes stay identical across feedback owners.
+signal impact_presented(impact: Dictionary)
 
 const RunBonusesUtil := preload("res://scripts/roguelike/RunBonuses.gd")
+const UISettings := preload("res://scripts/ui/UISettings.gd")
 # Synchronous feedback policy during receive_damage; never changes damage authority.
 var damage_feedback_owner: StringName = &""
 func resolve_attack(attacker: Unit, target: Unit,
@@ -42,12 +46,12 @@ func resolve_attack(attacker: Unit, target: Unit,
 		dmg_color = Color(1.0, 0.78, 0.2)
 
 	var vfx_n := get_node_or_null("/root/VFX")
+	var dmg_result := _receive_damage_with_feedback(target, incoming_damage, "physical", feedback_owner)
+	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
+	var impact := _impact_profile(attacker, target, actual_hp_damage, did_crit, "arrow" if vfx_mode == "arrow" else "melee", "")
 	if vfx_n and feedback_owner.is_empty():
 		var vfx := vfx_n as VFXManager
-		if vfx_mode == "arrow":
-			vfx.play_arrow(attacker.grid_pos, target.grid_pos, preview_hp_damage, dmg_color)
-		else:
-			vfx.play_attack(attacker.grid_pos, target.grid_pos, preview_hp_damage, dmg_color)
+		vfx.play_punchy_attack(attacker.grid_pos, target.grid_pos, preview_hp_damage, dmg_color, impact, "arrow" if vfx_mode == "arrow" else "melee")
 		if did_crit:
 			vfx.play_tactical_tag(target.grid_pos, "CRIT", Color(1.0, 0.22, 0.10))
 		elif flank_m >= 1.25:
@@ -55,21 +59,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		elif flank_m > 1.0:
 			vfx.play_tactical_tag(target.grid_pos, "SIDE", Color(1.0, 0.78, 0.20))
 
-	if feedback_owner.is_empty(): _play_sfx("attack_impact", -3.0)
-	var dmg_result := _receive_damage_with_feedback(target, incoming_damage, "physical", feedback_owner)
-	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
-
-	# Trigger hit effects based on damage intensity
-	var hit_intensity := "normal"
-	if actual_hp_damage > 150:
-		hit_intensity = "critical"
-	elif actual_hp_damage > 100:
-		hit_intensity = "heavy"
-	elif actual_hp_damage > 50:
-		hit_intensity = "normal"
-	else:
-		hit_intensity = "light"
-	if feedback_owner.is_empty(): BattleJuiceEffects.trigger_hit([target.unit_id], hit_intensity, 80, 300, 150)
+	if feedback_owner.is_empty(): BattleJuiceEffects.punch(target, impact)
 
 	if target.hp <= 0:
 		if vfx_n and feedback_owner.is_empty():
@@ -77,7 +67,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 			get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
 			get_tree().create_timer(0.38).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
 	elif feedback_owner.is_empty() and target.has_method("animate_hit"):
-		target.animate_hit()
+		target.animate_hit(float(impact.flash_sec))
 
 	_apply_elite_on_hit(attacker, target, actual_hp_damage)
 
@@ -105,6 +95,8 @@ func resolve_attack(attacker: Unit, target: Unit,
 	if not feedback_owner.is_empty():
 		result["feedback_owner"] = feedback_owner
 		result["defeated"] = bool(dmg_result.get("defeated",false))
+	else:
+		impact_presented.emit(_impact_summary(impact))
 	combat_resolved.emit(result)
 	return result
 
@@ -131,38 +123,23 @@ func resolve_spell(caster: Unit, target: Unit,
 	var affinity := float(formula.get("affinity", 1.0))
 	var num_color := _element_damage_color(affinity, el_mult)
 	var vfx_n := get_node_or_null("/root/VFX")
-	if vfx_n and feedback_owner.is_empty():
-		var vfx := vfx_n as VFXManager
-		match element:
-			"fire": vfx.play_fire(target.grid_pos)
-			"blizzard": vfx.play_blizzard(target.grid_pos)
-			"thunder": vfx.play_thunder(target.grid_pos)
-			"wind": vfx.play_wind(target.grid_pos)
-			"holy": vfx.play_holy(target.grid_pos)
-			"dark": vfx.play_dark(target.grid_pos)
-		vfx.play_damage_number(target.grid_pos, int(formula.get("hp_damage", final_damage)), num_color)
-
 	var dmg_result := _receive_damage_with_feedback(target, final_damage, "magical", feedback_owner)
 	var actual_hp_damage := int(dmg_result.get("hp_damage", 0))
+	var impact := _impact_profile(caster, target, actual_hp_damage, false, "spell", element)
+	if vfx_n and feedback_owner.is_empty():
+		var vfx := vfx_n as VFXManager
+		if ImpactJuice.has_staged_spell(element):
+			vfx.play_spell_finale(caster.grid_pos, target.grid_pos, element, impact, caster.get_instance_id() ^ target.get_instance_id(), target.visual as CanvasItem)
+		vfx.play_damage_number(target.grid_pos, int(formula.get("hp_damage", final_damage)), num_color)
 
-	# Trigger hit effects for spell damage
-	var spell_intensity := "normal"
-	if actual_hp_damage > 150:
-		spell_intensity = "critical"
-	elif actual_hp_damage > 100:
-		spell_intensity = "heavy"
-	elif actual_hp_damage > 50:
-		spell_intensity = "normal"
-	else:
-		spell_intensity = "light"
-	if feedback_owner.is_empty(): BattleJuiceEffects.trigger_hit([target.unit_id], spell_intensity, 60, 250, 120)
+	if feedback_owner.is_empty(): BattleJuiceEffects.punch(target, impact)
 
 	if target.hp <= 0 and vfx_n and feedback_owner.is_empty():
 		var death_pos := target.grid_pos
 		get_tree().create_timer(0.22).timeout.connect(func() -> void: (vfx_n as VFXManager).play_ko(death_pos))
 		get_tree().create_timer(0.42).timeout.connect(func() -> void: (vfx_n as VFXManager).play_death(death_pos))
 	elif feedback_owner.is_empty() and target.has_method("animate_hit"):
-		target.animate_hit()
+		target.animate_hit(float(impact.flash_sec))
 
 	_apply_elite_on_hit(caster, target, actual_hp_damage)
 	_apply_spell_curses(caster, target, element, actual_hp_damage, bonuses)
@@ -183,6 +160,8 @@ func resolve_spell(caster: Unit, target: Unit,
 	if not feedback_owner.is_empty():
 		result["feedback_owner"] = feedback_owner
 		result["defeated"] = bool(dmg_result.get("defeated",false))
+	else:
+		impact_presented.emit(_impact_summary(impact))
 	combat_resolved.emit(result)
 	return result
 
@@ -282,6 +261,30 @@ func _show_miss(target: Unit) -> void:
 		var vfx := vfx_n as VFXManager
 		vfx.play_target_ping(target.grid_pos, Color(0.65, 0.72, 0.82, 0.75))
 		vfx.play_miss(target.grid_pos)
+
+
+## Presentation recipe from the AUTHORITATIVE applied outcome (never predicted).
+func _impact_profile(source: Unit, target: Unit, hp_damage: int, critical: bool, kind: String, element: String) -> Dictionary:
+	var vfx := get_node_or_null("/root/VFX") as VFXManager
+	var from := vfx.gp(source.grid_pos) if vfx else Vector2(source.grid_pos)
+	var to := vfx.gp(target.grid_pos) if vfx else Vector2(target.grid_pos)
+	var max_hp := 1
+	if target.unit_data and target.unit_data.base_stats:
+		max_hp = int(target.unit_data.base_stats.hp)
+	var reduced: bool = UISettings.shared().reduced_motion
+	var gs := get_node_or_null("/root/GameState")
+	if gs and "practice_session" in gs:
+		reduced = reduced or bool(gs.practice_session.get("reduced_zane_motion", false))
+	return ImpactJuice.hit_profile({
+		"hp_damage": hp_damage, "max_hp": max_hp, "critical": critical,
+		"defeated": target.hp <= 0, "kind": kind, "element": element,
+		"from": from, "to": to, "reduced_motion": reduced,
+	})
+
+
+## The slice of the recipe BattleScene needs for camera shake / kick.
+static func _impact_summary(impact: Dictionary) -> Dictionary:
+	return {"tier": impact.tier, "shake_px": impact.shake_px, "shake_sec": impact.shake_sec, "direction": impact.direction}
 
 
 func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:

@@ -2522,7 +2522,10 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	var effects := get_node_or_null("/root/VFX") as VFXManager
 	var lifecycle = action_lifecycle
 	if effects:
-		await effects.present_action(actor,destination,kind,func() -> bool: return lifecycle.presentation_valid(ticket),context)
+		var element := ""
+		if not canonical.is_empty():
+			element = CombatFormula.normalize_element(str(AbilityDB.get_ability(canonical).get("spell_type", "")))
+		await effects.present_action(actor,destination,kind,func() -> bool: return lifecycle.presentation_valid(ticket),context,element)
 	if not is_instance_valid(self): return false
 	var lead_completed := context.is_empty() or (effects != null and effects.action_lead_in_completed(str(context.action_key)))
 	if not lead_completed and action_lifecycle.ticket == ticket and action_lifecycle.phase == "anticipation":
