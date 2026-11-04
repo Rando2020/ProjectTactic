@@ -1,0 +1,28 @@
+{
+  "size": [
+    1774,
+    887
+  ],
+  "mode": "RGBA",
+  "sha256": "3812f27c4f55e4217e22e31ea545896d68e28a8327ad0bd00aecc46e93f14235",
+  "bytes": 497033,
+  "alpha_range": [
+    0,
+    255
+  ],
+  "fully_transparent_fraction": 0.8558833660197593,
+  "fully_opaque_fraction": 8.261637151438351e-06,
+  "bounds_alpha_at_least_1": [
+    25,
+    9,
+    1747,
+    861
+  ],
+  "bounds_alpha_at_least_128": [
+    346,
+    93,
+    1423,
+    727
+  ],
+  "edge_max_alpha": 0
+}
