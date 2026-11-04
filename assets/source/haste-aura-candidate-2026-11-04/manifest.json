@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "asset_id": "vfx-haste-application-aura-candidate-20261104",
+  "status": "generated-candidate",
+  "approved": false,
+  "runtime_integrated": false,
+  "asset_type": "single static world-space effect layer",
+  "file": "art/haste-application-aura-candidate.png",
+  "sha256": "3812f27c4f55e4217e22e31ea545896d68e28a8327ad0bd00aecc46e93f14235",
+  "width": 1774,
+  "height": 887,
+  "frame_count": 1,
+  "pivot": null,
+  "runtime_width_px": null,
+  "animation_timing": null,
+  "purpose": "Painterly visual upgrade candidate for the existing procedural Haste application effect, distinct from the existing UI icon study.",
+  "limitations": [
+    "Not an animation cycle or a gameplay implementation.",
+    "Existing Haste Line2D effect remains unchanged.",
+    "No layer split: front/back arc occlusion needs design before unit compositing.",
+    "Pivot, runtime size, timing and visibility on terrain unverified.",
+    "No final visual or gameplay acceptance."
+  ],
+  "provenance": {
+    "generator": "OpenAI built-in image generation",
+    "date": "2026-11-04",
+    "inputs": "Text prompt only; original candidate for ProjectTactic",
+    "pixel_edits": "None; original PNG copied unchanged."
+  },
+  "proposed_review_canvas_width_px": 132,
+  "proposed_visible_width_px": 81
+}
