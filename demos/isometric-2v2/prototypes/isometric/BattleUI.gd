@@ -152,7 +152,7 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 	for portrait in [_preview_actor_portrait, _preview_target_portrait]:
 		portrait.get_parent().visible = portrait.texture != null
 	if not preview.is_empty():
-		_preview_mode_label.text = "FORECAST · Select skill to commit" if battle_manager and battle_manager.active_command == "ability" else "FORECAST · Click highlighted tile to commit"
+		_preview_mode_label.text = "FORECAST · Select skill to review" if battle_manager and battle_manager.active_command == "ability" else "FORECAST · Select highlighted tile to review"
 		_preview_note_label.tooltip_text = _preview_note_label.text
 	_layout_forecast()
 
@@ -245,23 +245,29 @@ func _layout_chapel_command_dock() -> void:
 		super._layout_chapel_command_dock()
 
 func _on_move() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_move()
 	_selection.refresh()
 
 func _on_attack() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_attack()
 	_selection.refresh()
 
 func _on_ability() -> void:
-	if not _selection or not _selection.can_command(): return
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
 	super._on_ability()
 	_selection.refresh()
 
 func _on_wait() -> void:
-	if not _selection or not _selection.can_command(): return
-	super._on_wait()
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	_selection.begin_wait()
+
+func _select_ability(ability_id: String) -> void:
+	if _selection: _selection.select_skill(ability_id)
+
+func _on_confirm() -> void:
+	if _selection: _selection.confirm_review()
 
 func _on_cancel() -> void:
 	if _selection: _selection.go_back()

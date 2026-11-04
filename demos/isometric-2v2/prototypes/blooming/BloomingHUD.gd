@@ -19,8 +19,8 @@ class BloomingSelection extends "res://prototypes/isometric/SelectionController.
 		if is_instance_valid(ui): ui.call("_layout_bloom_commands")
 	func refresh() -> void:
 		super.refresh()
-		if is_instance_valid(_header): _header.hide()
-		if is_instance_valid(_inspect): _inspect.hide()
+		if is_instance_valid(_header): _header.visible = not can_command()
+		if is_instance_valid(_inspect): _inspect.visible = not can_command()
 		if is_instance_valid(_help):
 			_help.hide()
 			ui._bloom_hint.text = _help.text
@@ -287,8 +287,9 @@ func _layout_bloom_commands() -> void:
 	var minimum_x := _bloom_active_panel.get_rect().end.x+10
 	var width := minf(640,area.end.x-minimum_x-12)
 	var x := maxf(minimum_x,(area.size.x-width)*0.5)
-	_chapel_command_panel.position = Vector2(x,area.end.y-120)
-	_chapel_command_panel.size = Vector2(width,108)
+	var height := minf(maxf(108, _chapel_command_buttons.get_combined_minimum_size().y + 16), area.size.y - 140)
+	_chapel_command_panel.position = Vector2(x,area.end.y-height-12)
+	_chapel_command_panel.size = Vector2(width,height)
 	for button: Button in [_move_btn,_attack_btn,_ability_btn,_wait_btn]:
 		button.custom_minimum_size.x = maxf(62,(width-32)/4)
 	_layout_skills()

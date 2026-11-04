@@ -62,6 +62,7 @@ func run() -> void:
 	manager.turn_started.connect(func(id: String, _team: String): observed.append(id))
 	ui._selection.select_unit(manager.active_unit_id)
 	ui._on_wait()
+	ui._on_confirm()
 	for i in 2000:
 		if manager.current_phase == BattleManager.Phase.PLAYER_TURN and manager.active_unit_id == "kael": break
 		await get_tree().create_timer(0.025).timeout
