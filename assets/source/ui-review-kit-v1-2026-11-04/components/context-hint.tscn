@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Theme" path="res://review-theme.tres" id="1"]
+[node name="Hint" type="PanelContainer"]
+theme = ExtResource("1")
+custom_minimum_size = Vector2(560, 0)
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+[node name="Title" type="Label" parent="Content"]
+layout_mode = 2
+text = "CONTEXT / TARGET REVIEW"
+[node name="Body" type="Label" parent="Content"]
+layout_mode = 2
+text = "Review the target and affected units. Confirm commits the action."
+autowrap_mode = 3
+[node name="Actions" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+[node name="Button0" type="Button" parent="Content/Actions"]
+custom_minimum_size = Vector2(80, 48)
+layout_mode = 2
+text = "Confirm action"
+[node name="Button1" type="Button" parent="Content/Actions"]
+custom_minimum_size = Vector2(80, 48)
+layout_mode = 2
+text = "Cancel"

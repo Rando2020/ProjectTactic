@@ -1,0 +1,112 @@
+[
+  {
+    "path": "README.md",
+    "sha256": "1711345af226a2dc52cd8ecd6ff5ebcd779df7e33e7833408fb0192ae445d55e",
+    "bytes": 4932
+  },
+  {
+    "path": "components/confirmation-card.tscn",
+    "sha256": "00856bc989d108b5361a90a5c56194c772aa5b6188f11f8f5647511c2ca2a1ce",
+    "bytes": 958
+  },
+  {
+    "path": "components/context-hint.tscn",
+    "sha256": "edd573e60c857a7104885e19f7a48749d4321ac7e90d356fdc81241ce8f70947",
+    "bytes": 957
+  },
+  {
+    "path": "components/enemy-inspector.tscn",
+    "sha256": "8e7b2e085328e45758f3430662c0dacdf3800e87689bd144bf4f206959f54325",
+    "bytes": 837
+  },
+  {
+    "path": "components/facing-selector.tscn",
+    "sha256": "75ebca66c7f2bd548f526cea4a3eecc63ebef11edcfd16da641423760d117185",
+    "bytes": 1456
+  },
+  {
+    "path": "icons/cancel.svg",
+    "sha256": "61492e081fd6e4d2a86aa3b595b9c1b1e99400298637e21af7a43837fc57c3b1",
+    "bytes": 217
+  },
+  {
+    "path": "icons/confirm.svg",
+    "sha256": "728996b58f3728eaa1d2b11638b7bd20729ffec01f065379cc84ee6db0380cc0",
+    "bytes": 211
+  },
+  {
+    "path": "icons/facing.svg",
+    "sha256": "c701f2279737468483c2923ac8004520c2d76c90e6c1a512d965e73a0ecfdfe7",
+    "bytes": 216
+  },
+  {
+    "path": "icons/inspect.svg",
+    "sha256": "a3903c92d659c988591d9947220d7b620bb1a783931ad2157de9a7de0962cc1b",
+    "bytes": 274
+  },
+  {
+    "path": "icons/warning.svg",
+    "sha256": "d47492274ba59acdad7441d053e3cfdeb7fb5c80309a7b0372d8cdcfe1310b19",
+    "bytes": 227
+  },
+  {
+    "path": "manifest.json",
+    "sha256": "17b8947a1418a4dc6855787d3b8750f66514db5478cede74801a307c1977badd",
+    "bytes": 726
+  },
+  {
+    "path": "project.godot",
+    "sha256": "b1cc13b46a5dede3596965cc23d79ce519acd046cc7f6253a5fd90da9a1f3017",
+    "bytes": 288
+  },
+  {
+    "path": "review/contract-tests.log",
+    "sha256": "feabb4add9e2ca3374e538560634d1ec97dc4f4ce89aab12f3d726e36ea9b2f6",
+    "bytes": 102
+  },
+  {
+    "path": "review/contrast.json",
+    "sha256": "ec6cf6f5ce0f04324f276aa0728a05ff32f42ec034fcde19ef2ec5a8e9b5c44a",
+    "bytes": 95
+  },
+  {
+    "path": "review/godot-run.log",
+    "sha256": "a9912b85473f126d3f4f63ec824170c828df3473a292f866dde86cafda5b66da",
+    "bytes": 73
+  },
+  {
+    "path": "review/native-contract.log",
+    "sha256": "bcf02a3323cf5d4c33bdc0eee6499bd8f70266dd76b9e6e84f91e1545f91394f",
+    "bytes": 114
+  },
+  {
+    "path": "review-theme.tres",
+    "sha256": "e9ef1a952be4387882ab8ee3cbcab1b211b44d7af371bc97d9d687c0c02c251e",
+    "bytes": 3344
+  },
+  {
+    "path": "review.html",
+    "sha256": "b9d002d8366774dfa30d364beb8cfc4ab60483111675cdd1b6881db4bbaea69e",
+    "bytes": 8938
+  },
+  {
+    "path": "review.tscn",
+    "sha256": "a03b45af82a8226a47481293b9b961af626b366131dea51cf846f634d5b18556",
+    "bytes": 5168
+  },
+  {
+    "path": "state-contract.json",
+    "sha256": "d67636204b85281205e77bf9de3d55b644b95ab4c87b0131d459917717e221c0",
+    "bytes": 1294
+  },
+  {
+    "path": "tests/test_contract.py",
+    "sha256": "85c4b35f3eb389a41f7ae1c89e775214b095058270ce44d4ec3e4efc86aa0057",
+    "bytes": 1076
+  },
+  {
+    "path": "tests/test_native.gd",
+    "sha256": "86948ae28ca8c59c2fb2de0a2e84f5b78f1e2520f150040042f6a309b7863174",
+    "bytes": 1678
+  }
+]

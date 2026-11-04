@@ -1,0 +1,27 @@
+{
+  "status": "isolated_review_prototype",
+  "gameplay_integrated": false,
+  "components": [
+    "confirmation-card",
+    "enemy-inspector",
+    "facing-selector",
+    "context-hint"
+  ],
+  "minimum_control_px": 48,
+  "icon_source_px": 32,
+  "tokens": {
+    "ink": "#101923",
+    "panel": "#182936",
+    "paper": "#f1e6d2",
+    "gold": "#c9aa73",
+    "focus": "#7bd3c1",
+    "muted": "#b8bdc4",
+    "danger": "#ffb4a9"
+  },
+  "source_basis": [
+    "Blooming Ruins bloom-theme.tres at 8d5284e",
+    "AppointedTheme.gd existing project source",
+    "production-catalog-2026-11-04 on main at 3b1958e"
+  ],
+  "notes": "Sample values are fixtures, not current game stats. Requires controller integration and in-game acceptance."
+}
