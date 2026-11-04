@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "project": "ProjectTactic",
+  "package": "Blooming Ruins terrain and prop candidates",
+  "generated_date": "2026-11-04",
+  "approval": "none",
+  "runtime_changes": false,
+  "target_logical_tile_pixels": [
+    96,
+    48
+  ],
+  "target_tile_projection_validated": false,
+  "assets": [
+    {
+      "id": "chapel-low-wall-broken-end-v1",
+      "file": "candidates/chapel-low-wall-broken-end-v1.png",
+      "status": "candidate_unapproved",
+      "runtime_ready": false,
+      "category": "decorative_architecture",
+      "camera": "fixed approximately 30 degree isometric; exact projection unverified",
+      "occupancy_cells": null,
+      "pivot_pixels": null,
+      "registration_status": "pending scene-scale and base-contact registration",
+      "rotation_variants": [],
+      "sha256": "528086c1843bddb6af5230196436a3083e6e3c0ff3141a5569e7818707311c70"
+    },
+    {
+      "id": "chapel-low-wall-corner-v1",
+      "file": "candidates/chapel-low-wall-corner-v1.png",
+      "status": "candidate_unapproved",
+      "runtime_ready": false,
+      "category": "decorative_architecture",
+      "camera": "fixed approximately 30 degree isometric; exact projection unverified",
+      "occupancy_cells": null,
+      "pivot_pixels": null,
+      "registration_status": "pending scene-scale and base-contact registration",
+      "rotation_variants": [],
+      "sha256": "2f6cba3628be0be4d8eb31e8abd7a77f690a25a740caef26a60979f772f34951"
+    },
+    {
+      "id": "chapel-stone-scatter-clean-v2",
+      "file": "candidates/chapel-stone-scatter-clean-v2.png",
+      "status": "candidate_unapproved",
+      "runtime_ready": false,
+      "category": "decorative_ground_scatter",
+      "camera": "fixed approximately 30 degree isometric; exact projection unverified",
+      "occupancy_cells": null,
+      "pivot_pixels": null,
+      "registration_status": "pending scene-scale and base-contact registration",
+      "rotation_variants": [],
+      "sha256": "bf6c27d05e3f110a05da6ced736499789dfafe070c44899f766121748cf91c11"
+    },
+    {
+      "id": "chapel-stone-soil-scatter-v1",
+      "file": "candidates/chapel-stone-soil-scatter-v1.png",
+      "status": "study_only_superseded",
+      "runtime_ready": false,
+      "category": "decorative_ground_scatter",
+      "camera": "fixed approximately 30 degree isometric; exact projection unverified",
+      "occupancy_cells": null,
+      "pivot_pixels": null,
+      "registration_status": "pending scene-scale and base-contact registration",
+      "rotation_variants": [],
+      "sha256": "519d2464a3ec1dfb0c8d1e4dc49d1374e7459287f4864ace28df801607109136"
+    }
+  ]
+}

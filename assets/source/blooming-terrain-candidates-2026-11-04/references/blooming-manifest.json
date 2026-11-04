@@ -1,0 +1,229 @@
+{
+  "assets": [
+    {
+      "file": "surfaces.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "sha256": "51d5ee51f24d8b88dd410e8371650940c7ab44745fe6cb4053d84961792d17a1"
+    },
+    {
+      "file": "foliage.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "b925df9bf934ffb7ba4af24ad493d67c0c009bb42a7f03f2320b9a3b2ec35c80",
+      "transparent_fraction": 0.6623,
+      "regions": {
+        "cypress": {
+          "rect": [
+            182,
+            12,
+            208,
+            548
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "pink-shrub": {
+          "rect": [
+            534,
+            167,
+            476,
+            383
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "pink-flowers": {
+          "rect": [
+            1096,
+            284,
+            373,
+            265
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "hanging-ivy": {
+          "rect": [
+            87,
+            573,
+            427,
+            431
+          ],
+          "pivot": "top-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "grass": {
+          "rect": [
+            625,
+            649,
+            340,
+            267
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "cream-shrub": {
+          "rect": [
+            1036,
+            682,
+            452,
+            279
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        }
+      }
+    },
+    {
+      "file": "architecture.png",
+      "size": [
+        1374,
+        1145
+      ],
+      "mode": "RGBA",
+      "sha256": "88ea56efca2394f7a3924a569564d0716df5796fd5bf0715c314542888e312cc",
+      "transparent_fraction": 0.7621,
+      "regions": {
+        "column": {
+          "rect": [
+            271,
+            48,
+            179,
+            475
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "broken-column": {
+          "rect": [
+            918,
+            242,
+            203,
+            280
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "ruined-pier": {
+          "rect": [
+            264,
+            590,
+            244,
+            493
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "arch": {
+          "rect": [
+            756,
+            587,
+            504,
+            530
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        }
+      }
+    },
+    {
+      "file": "props.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "9e8e575883d34595f817cc3e2a69917b1049c7cb3b69bcd861465adc25cf0794",
+      "transparent_fraction": 0.6979,
+      "regions": {
+        "banner": {
+          "rect": [
+            279,
+            24,
+            318,
+            523
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "pots": {
+          "rect": [
+            871,
+            133,
+            429,
+            380
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "rubble": {
+          "rect": [
+            168,
+            602,
+            504,
+            332
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        },
+        "low-wall": {
+          "rect": [
+            760,
+            552,
+            705,
+            438
+          ],
+          "pivot": "bottom-center",
+          "collision": "none",
+          "alpha_cutoff": 0.5
+        }
+      }
+    },
+    {
+      "file": "distance.png",
+      "size": [
+        1672,
+        941
+      ],
+      "mode": "RGB",
+      "sha256": "490734d0fd807936941d879365440de7df2284227c4a896d96c83f5dba8aa3b3"
+    }
+  ],
+  "tool": "built-in image_gen",
+  "status": "generated; preview acceptance required",
+  "camera": "fixed isometric, approximately 30 degrees down",
+  "tile_world_units": 2,
+  "collision": "decorative cutouts have no collision; gameplay owns occupancy",
+  "characters": "reuse ProjectTactic asset_manifest.json; no new character canon in this pack",
+  "surface_quadrants": [
+    "paving",
+    "ochre-soil",
+    "masonry",
+    "coping-and-stairs"
+  ],
+  "limits": [
+    "Seamless repetition not guaranteed by generation; inspect repeated materials.",
+    "Not meshes or animation frames; cutouts require a fixed camera.",
+    "Do not rasterize UI text; use the supplied Godot theme."
+  ]
+}

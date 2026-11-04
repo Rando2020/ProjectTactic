@@ -1,0 +1,2 @@
+# Source-review PNGs must be available in clean checkouts.
+*.png -filter -diff -merge -text
