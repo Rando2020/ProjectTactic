@@ -146,20 +146,20 @@
       },
       "directions": {
         "front": {
-          "path": "res://assets/sprites/units/zane-front-illustrated.png",
-          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+          "path": "res://assets/characters/iso-v02/character-swordsman-idle-sw-v02.png",
+          "fallback_path": "res://assets/sprites/units/zane-front-illustrated.png"
         },
         "right": {
-          "path": "res://assets/sprites/units/zane-right-illustrated.png",
-          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+          "path": "res://assets/characters/iso-v02/character-swordsman-idle-se-v02.png",
+          "fallback_path": "res://assets/sprites/units/zane-right-illustrated.png"
         },
         "back": {
-          "path": "res://assets/sprites/units/zane-back-illustrated.png",
-          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+          "path": "res://assets/characters/iso-v02/character-swordsman-idle-ne-v02.png",
+          "fallback_path": "res://assets/sprites/units/zane-back-illustrated.png"
         },
         "left": {
-          "path": "res://assets/sprites/units/zane-left-illustrated.png",
-          "fallback_path": "res://assets/characters/character-vanguard-idle-v01.png"
+          "path": "res://assets/characters/iso-v02/character-swordsman-idle-nw-v02.png",
+          "fallback_path": "res://assets/sprites/units/zane-left-illustrated.png"
         }
       }
     },
@@ -168,6 +168,24 @@
       "idle": {
         "path": "res://assets/characters/character-arcanist-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/mira.png"
+      },
+      "directions": {
+        "front": {
+          "path": "res://assets/characters/iso-v02/character-mage-idle-sw-v02.png",
+          "fallback_path": "res://assets/characters/character-arcanist-idle-v01.png"
+        },
+        "right": {
+          "path": "res://assets/characters/iso-v02/character-mage-idle-se-v02.png",
+          "fallback_path": "res://assets/characters/character-arcanist-idle-v01.png"
+        },
+        "back": {
+          "path": "res://assets/characters/iso-v02/character-mage-idle-ne-v02.png",
+          "fallback_path": "res://assets/characters/character-arcanist-idle-v01.png"
+        },
+        "left": {
+          "path": "res://assets/characters/iso-v02/character-mage-idle-nw-v02.png",
+          "fallback_path": "res://assets/characters/character-arcanist-idle-v01.png"
+        }
       }
     },
     "kael": {
@@ -175,6 +193,24 @@
       "idle": {
         "path": "res://assets/characters/character-warden-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/kael.png"
+      },
+      "directions": {
+        "front": {
+          "path": "res://assets/characters/iso-v02/character-dragoon-idle-sw-v02.png",
+          "fallback_path": "res://assets/characters/character-warden-idle-v01.png"
+        },
+        "right": {
+          "path": "res://assets/characters/iso-v02/character-dragoon-idle-se-v02.png",
+          "fallback_path": "res://assets/characters/character-warden-idle-v01.png"
+        },
+        "back": {
+          "path": "res://assets/characters/iso-v02/character-dragoon-idle-ne-v02.png",
+          "fallback_path": "res://assets/characters/character-warden-idle-v01.png"
+        },
+        "left": {
+          "path": "res://assets/characters/iso-v02/character-dragoon-idle-nw-v02.png",
+          "fallback_path": "res://assets/characters/character-warden-idle-v01.png"
+        }
       }
     },
     "lyra": {
@@ -182,6 +218,24 @@
       "idle": {
         "path": "res://assets/characters/character-wayfarer-idle-v01.png",
         "fallback_path": "res://assets/sprites/units/lyra.png"
+      },
+      "directions": {
+        "front": {
+          "path": "res://assets/characters/iso-v02/character-rogue-idle-sw-v02.png",
+          "fallback_path": "res://assets/characters/character-wayfarer-idle-v01.png"
+        },
+        "right": {
+          "path": "res://assets/characters/iso-v02/character-rogue-idle-se-v02.png",
+          "fallback_path": "res://assets/characters/character-wayfarer-idle-v01.png"
+        },
+        "back": {
+          "path": "res://assets/characters/iso-v02/character-rogue-idle-ne-v02.png",
+          "fallback_path": "res://assets/characters/character-wayfarer-idle-v01.png"
+        },
+        "left": {
+          "path": "res://assets/characters/iso-v02/character-rogue-idle-nw-v02.png",
+          "fallback_path": "res://assets/characters/character-wayfarer-idle-v01.png"
+        }
       }
     },
     "void_cultist": {

@@ -46,6 +46,7 @@ jobs:
       - name: Test illustrated portrait and sprite export contracts
         run: |
           python -m unittest discover -s tools -p test_illustrated_zane_contract.py
+          python -m unittest discover -s tools -p test_hero_sprite_v02.py
           python -m unittest discover -s tools -p test_prepare_illustrated_zane.py
 
       - name: Test original Zane impact asset and audio contracts
