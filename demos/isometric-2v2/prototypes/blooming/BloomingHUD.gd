@@ -5,7 +5,7 @@ var tester_collapsed := false
 var _bloom_objective_panel: PanelContainer
 var _bloom_active_panel: PanelContainer
 var _bloom_turn_strip: HBoxContainer
-var _bloom_command_row: HBoxContainer
+var _bloom_command_row: GridContainer
 var _bloom_rail_toggle: Button
 var _bloom_skin_toggle: Button
 var _bloom_mp_bar: ProgressBar
@@ -109,7 +109,7 @@ func _build_ui() -> void:
 		control.custom_minimum_size = Vector2.ZERO
 		if control is Label: _compact_label(control,18 if control == _unit_name else 15)
 	_unit_name.custom_minimum_size.y = 24
-	_unit_name.max_lines_visible = 1
+	_unit_name.max_lines_visible = 2
 	_hp_bar.custom_minimum_size.y = 8
 	_hp_bar.show_percentage = false
 	_bloom_mp_bar = ProgressBar.new()
@@ -132,7 +132,8 @@ func _build_ui() -> void:
 	_compact_label(_bloom_hint,15)
 	add_child(_bloom_hint)
 
-	_bloom_command_row = HBoxContainer.new()
+	_bloom_command_row = GridContainer.new()
+	_bloom_command_row.columns = 4
 	_bloom_command_row.name = "BloomingCommands"
 	_bloom_command_row.add_theme_constant_override("separation",5)
 	_chapel_command_buttons.add_child(_bloom_command_row)
@@ -192,6 +193,10 @@ func _build_ui() -> void:
 		_compact_label(label,16)
 	_right_panel_root.add_theme_constant_override("separation",7)
 	_build_compact_forecast()
+	# Text and visibility changes update container minima on the next frame.
+	# Re-anchor the bottom band after those measurements settle.
+	for content in [_bloom_active_panel, _bloom_objective_panel, _chapel_command_buttons]:
+		content.minimum_size_changed.connect(func(): _layout_persistent_hud.call_deferred())
 	_bloom_ready = true
 	_layout_persistent_hud()
 
@@ -241,7 +246,8 @@ func _build_compact_forecast() -> void:
 	_preview_panel.add_theme_stylebox_override("panel",_surface())
 
 func gameplay_rect(viewport_size: Vector2) -> Rect2:
-	var rail_width := 40.0 if tester_collapsed else clampf(viewport_size.x * 0.23,240,320)
+	var factor: float = UISettings.shared().effective_scale(viewport_size)
+	var rail_width := 48.0 * factor if tester_collapsed else clampf(viewport_size.x * 0.23,240,320 * factor)
 	return Rect2(Vector2.ZERO,Vector2(maxf(1,viewport_size.x-rail_width-12),viewport_size.y))
 
 func set_tester_collapsed(collapsed: bool) -> void:
@@ -251,27 +257,30 @@ func set_tester_collapsed(collapsed: bool) -> void:
 func _layout_persistent_hud() -> void:
 	if not _bloom_ready: return
 	var viewport := get_viewport().get_visible_rect().size
+	UISettings.shared().apply_tree(self, viewport)
+	var factor: float = UISettings.shared().effective_scale(viewport)
 	var area := gameplay_rect(viewport)
+	_objective_label.custom_minimum_size.y = 36 * factor
 	var rail_x := area.end.x + 8
 	_right_panel_bg.visible = not tester_collapsed
 	_right_panel_scroll.visible = not tester_collapsed
-	_right_panel_bg.position = Vector2(rail_x,40)
-	_right_panel_bg.size = Vector2(viewport.x-rail_x-8,viewport.y-48)
+	_right_panel_bg.position = Vector2(rail_x,56 * factor)
+	_right_panel_bg.size = Vector2(viewport.x-rail_x-8,viewport.y-56 * factor-8)
 	_right_panel_scroll.position = _right_panel_bg.position + Vector2(8,8)
 	_right_panel_scroll.size = _right_panel_bg.size - Vector2(16,16)
-	_bloom_rail_toggle.position = Vector2(rail_x,8)
-	_bloom_rail_toggle.size = Vector2(viewport.x-rail_x-8,28)
 	_bloom_rail_toggle.text = "‹" if tester_collapsed else "TESTER / INTENT   ›"
+	_bloom_rail_toggle.position = Vector2(rail_x,8)
+	_bloom_rail_toggle.size = Vector2(viewport.x-rail_x-8,44 * factor)
 	_bloom_objective_panel.position = Vector2(12,12)
-	_bloom_objective_panel.size = Vector2(minf(280,area.size.x*0.39),72)
+	_bloom_objective_panel.size = Vector2(minf(300 * factor,area.size.x*0.45),96 * factor)
 	_bloom_turn_strip.position = Vector2(maxf(_bloom_objective_panel.get_rect().end.x+12,(area.size.x-320)*0.5),12)
 	_bloom_turn_strip.size = Vector2(320,78)
 	if _bloom_turn_strip.position.x + 320 > area.end.x-12:
 		_bloom_turn_strip.position.x = area.end.x-332
-	_bloom_active_panel.position = Vector2(12,viewport.y-140)
-	_bloom_active_panel.size = Vector2(clampf(area.size.x*0.31,230,300),128)
-	_bloom_hint.position = Vector2(12,96)
-	_bloom_hint.size = Vector2(area.size.x-24,24)
+	_bloom_active_panel.size = Vector2(330 * factor, maxf(160 * factor, _bloom_active_panel.get_combined_minimum_size().y))
+	_bloom_active_panel.position = Vector2(12,viewport.y-_bloom_active_panel.size.y-12)
+	_bloom_hint.position = Vector2(12, _bloom_objective_panel.get_rect().end.y+8)
+	_bloom_hint.size = Vector2(area.size.x-24,32 * factor)
 	_layout_bloom_commands()
 	_layout_skills()
 	_layout_forecast()
@@ -288,19 +297,29 @@ func _layout_bloom_commands() -> void:
 	var minimum_x := _bloom_active_panel.get_rect().end.x+10
 	var width := minf(640,area.end.x-minimum_x-12)
 	var x := maxf(minimum_x,(area.size.x-width)*0.5)
-	var height := minf(maxf(108, _chapel_command_buttons.get_combined_minimum_size().y + 16), area.size.y - 140)
+	var factor: float = UISettings.shared().effective_scale(get_viewport().get_visible_rect().size)
+	# Wrap the real buttons, rather than letting their minimum widths overflow.
+	_bloom_command_row.columns = 2 if width < 540 * factor else 4
+	for button: Button in [_move_btn,_attack_btn,_ability_btn,_wait_btn]:
+		button.custom_minimum_size.x = 0
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var height := maxf(108 * factor, _chapel_command_buttons.get_combined_minimum_size().y + 16)
 	_chapel_command_panel.position = Vector2(x,area.end.y-height-12)
 	_chapel_command_panel.size = Vector2(width,height)
-	for button: Button in [_move_btn,_attack_btn,_ability_btn,_wait_btn]:
-		button.custom_minimum_size.x = maxf(62,(width-32)/4)
 	_layout_skills()
+
+func _bloom_content_bottom() -> float:
+	return minf(_bloom_active_panel.position.y, _chapel_command_panel.position.y) - 12
+
+func _bloom_content_top() -> float:
+	return _bloom_hint.get_rect().end.y + 8
 
 func _layout_skills() -> void:
 	if not _bloom_ready or not is_instance_valid(_proof_skills_panel): return
 	var area := gameplay_rect(get_viewport().get_visible_rect().size)
 	var width := minf(430,area.size.x-24)
-	var bottom := area.end.y-148
-	var available_height := maxf(80,bottom-128)
+	var bottom := _bloom_content_bottom()
+	var available_height := maxf(80,bottom-_bloom_content_top())
 	if area.size.x < 900 and _preview_panel.visible and _proof_skills_panel.visible:
 		available_height = maxf(60,(available_height-8)*0.5)
 	var height := minf(_ability_panel.get_combined_minimum_size().y+24,available_height)
@@ -314,9 +333,12 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 func _layout_forecast() -> void:
 	if not _bloom_ready or not is_instance_valid(_forecast_content): return
 	var area := gameplay_rect(get_viewport().get_visible_rect().size)
-	var bottom := area.end.y-148
+	var bottom := _bloom_content_bottom()
 	var width := minf(680 if _bloom_move_forecast else 840,area.size.x-24)
-	var height := minf(180 if _bloom_move_forecast else 270,maxf(80,bottom-128))
+	# Keep the original forecast top clear of retargetable board cells as
+	# the resource/command band grows. Overflow stays in the real scroll view.
+	var forecast_top := maxf(_bloom_content_top(), area.end.y - 418)
+	var height := minf(180 if _bloom_move_forecast else 270,maxf(80,bottom-forecast_top))
 	var x := 12.0
 	var y := bottom-height
 	if _proof_skills_panel.visible:
@@ -325,8 +347,8 @@ func _layout_forecast() -> void:
 		else:
 			width = minf(430,area.size.x-24)
 			x = area.end.x-width-12
-			height = maxf(60,(bottom-128-8)*0.5)
-			y = 128
+			height = maxf(60,(bottom-_bloom_content_top()-8)*0.5)
+			y = _bloom_content_top()
 	_preview_panel.position = Vector2(x,y)
 	_preview_panel.size = Vector2(width,height)
 	_layout_skills()
