@@ -1,0 +1,37 @@
+[
+  {
+    "path": "demos/isometric-2v2/prototypes/blooming/BloomingMap.gd",
+    "unchanged": true,
+    "sha256": "ffb7e2416a055320de6911c031b0a3ad1ed108c3c662070268b17b3e2b21cc88"
+  },
+  {
+    "path": "demos/isometric-2v2/prototypes/blooming/BloomingGrid.gd",
+    "unchanged": true,
+    "sha256": "d2343388bf0b12fbad38c1e478d9812d870d3847f6ab74a1f5bb8faa742b5670"
+  },
+  {
+    "path": "demos/isometric-2v2/assets/environments/blooming-ruins-v2/foliage.png",
+    "unchanged": true,
+    "sha256": "b925df9bf934ffb7ba4af24ad493d67c0c009bb42a7f03f2320b9a3b2ec35c80"
+  },
+  {
+    "path": "demos/isometric-2v2/assets/environments/blooming-ruins-v2/architecture.png",
+    "unchanged": true,
+    "sha256": "88ea56efca2394f7a3924a569564d0716df5796fd5bf0715c314542888e312cc"
+  },
+  {
+    "path": "demos/isometric-2v2/assets/environments/blooming-ruins-v2/distance.png",
+    "unchanged": true,
+    "sha256": "490734d0fd807936941d879365440de7df2284227c4a896d96c83f5dba8aa3b3"
+  },
+  {
+    "path": "demos/isometric-2v2/assets/environments/blooming-ruins-v2/props.png",
+    "unchanged": true,
+    "sha256": "9e8e575883d34595f817cc3e2a69917b1049c7cb3b69bcd861465adc25cf0794"
+  },
+  {
+    "path": "demos/isometric-2v2/assets/environments/blooming-ruins-v2/surfaces.png",
+    "unchanged": true,
+    "sha256": "51d5ee51f24d8b88dd410e8371650940c7ab44745fe6cb4053d84961792d17a1"
+  }
+]
