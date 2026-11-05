@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode unshaded, cull_disabled;
 uniform sampler2D atlas : source_color, filter_linear_mipmap;
 uniform int surface = 0;
+uniform float soil_floor_y = 0.;
 varying vec3 pos;
 varying vec3 face;
 void vertex(){
@@ -38,9 +39,12 @@ void fragment(){
 		float cap=smoothstep(.009-aa,.009+aa,seam);
 		color=mix(slab*vec3(.38,.34,.44),slab,cap);
 		color+=slab*.13*(1.-smoothstep(.018,.07,seam))*cap*step(f.y,.5);
-		if(surface==1){
-			float track=min(abs(p.x-4.),abs(p.x-18.))-1.12;
-			float boundary=min(15.-p.y,track)+(field(p*1.1)-.5)*.55+(field(id*.72)-.5)*1.15;
+		// One continuous garden field across road/stone cells, only at ground level.
+		if(abs(pos.y-soil_floor_y)<.01){
+			// Two-cell approaches align with stair columns 2-3 and 8-9.
+			float track=min(abs(p.x-5.),abs(p.x-17.))-2.;
+			float court=min(min(p.x-1.,21.-p.x),min(p.y-5.,15.-p.y));
+			float boundary=min(court,track)+(field(p*1.1)-.5)*.55+(field(p*.72)-.5)*1.15;
 			vec2 dirt_uv=p*.12+.035*vec2(field(p*.47),field(p*.47+19.));
 			vec3 dirt=paint(vec2(.5,0),dirt_uv)*mix(.82,1.02,field(p*.44));
 			color=mix(color,dirt,smoothstep(-.12,.24,boundary));

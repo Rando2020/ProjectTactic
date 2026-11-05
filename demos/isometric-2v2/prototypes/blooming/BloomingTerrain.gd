@@ -70,6 +70,7 @@ func _material(surface: int) -> ShaderMaterial:
   material.shader=preload("res://prototypes/blooming/BloomingSurface.gdshader")
   material.set_shader_parameter("atlas",load(ART+"surfaces.png"))
   material.set_shader_parameter("surface",surface)
+  material.set_shader_parameter("soil_floor_y",_visual_root.to_global(Vector3(0,BASE_TILE_TOP_Y,0)).y)
   _materials[surface]=material
  return _materials[surface]
 

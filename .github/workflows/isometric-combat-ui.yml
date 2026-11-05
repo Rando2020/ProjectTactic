@@ -32,6 +32,7 @@ jobs:
           project="$PWD/demos/isometric-2v2"
           godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/blooming_ground/ContractTest.tscn
           # Test.tscn is the retired 1v1 title-route contract, not the 2v2 scene.
           # Legacy main-game practice-route failures are documented in the QA note.
           for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn; do
@@ -50,6 +51,18 @@ jobs:
           test -s build/combat-ui/captures/enemy-inspection.png
           test -s build/combat-ui/captures/move-review.png
           test -s build/combat-ui/captures/wait-facing.png
+      - name: Verify continuous lower-ground rendering
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/combat-ui/ground
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_ground/RenderedGroundTest.tscn -- --capture-dir="$PWD/build/combat-ui/ground" 2>&1 | tee build/combat-ui/ground-renderer.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_ground/Capture.tscn -- --capture-dir="$PWD/build/combat-ui/ground" --label=before --original-ground 2>&1 | tee build/combat-ui/ground-before.log
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_ground/Capture.tscn -- --capture-dir="$PWD/build/combat-ui/ground" --label=after 2>&1 | tee build/combat-ui/ground-capture.log
+          test -s build/combat-ui/ground/after-overview.png
+          test -s build/combat-ui/ground/after-movement-highlights.png
+          test -s build/combat-ui/ground/before-overview.png
+          test -s build/combat-ui/ground/before-movement-highlights.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
