@@ -1921,22 +1921,10 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 	if ability.get("id", "") == "long_shot" and (not target or not _ability_target_in_range(caster, target, ability)):
 		return {}
 	if not target:
-		# AoE with no unit under cursor  show basic info
-		var area_fc := ForecastCalculator.quick_spell(caster, ability)
-		return {
-			"visible": true, "mode": "Ability",
-			"actor": caster.display_name, "actor_portrait": _portrait_path(caster),
-			"target": "Area (%d tiles)" % ability.get("aoe_radius",1),
-			"target_portrait": "",
-			"ability_name": ability.get("display_name","?"),
-			"element": area_fc["element"], "element_icon": area_fc["element_icon"],
-			"element_color": area_fc["element_color"],
-			"damage": area_fc["boosted_damage"], "damage_min": int(area_fc["boosted_damage"]*0.9),
-			"damage_max": int(area_fc["boosted_damage"]*1.1),
-			"affinity_label": "", "boon_bonus_pct": area_fc["boon_pct"],
-			"hp_before": 0, "hp_after": 0, "max_hp": 1,
-			"status_preview": "", "jp_gain": 6, "is_heal": false, "is_buff": false,
-		}
+		# No target means no resistance, armor, affinity or capped healing to project.
+		var area_fc := ForecastCalculator.area(caster, ability)
+		area_fc["actor_portrait"] = _portrait_path(caster)
+		return area_fc
 	var target_type: String = ability.get("target_type", "enemy")
 	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
 	if not valid: return {}

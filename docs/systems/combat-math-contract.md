@@ -174,3 +174,18 @@ adds 15); damage-only holy bonuses are not advertised as heal multipliers.
 Unwired curse descriptions are not activated as new healing mechanics.
 Targetless area previews remain a separate presentation path, not a per-target
 HP projection.
+
+## Direct-hit outcome probabilities and presentation
+
+`CombatOutcome.project` derives miss, normal-hit, critical-hit, KO probability,
+and expected capped HP loss from the existing forecast. Critical chance is
+conditional on a successful hit. It does not roll RNG or mutate units. KO
+probability applies to the selected direct hit, not chain recipients, counters,
+DoT or follow-up procs. See `combat-clarity-and-balance-audit.md` for equations.
+
+The HUD keeps accuracy visible alongside affinity, labels normal and critical
+damage separately, and labels projected HP as conditional on a normal hit.
+Targetless selection shows cost and effect category without fabricated damage
+ranges or hit chance. Positive affinity below one is resistance, never absorption.
+Magical previews no longer apply the Brand bonus that their execution path does
+not apply. Costs, damage resolution, stat scaling and reward grants are unchanged.
