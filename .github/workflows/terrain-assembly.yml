@@ -1,0 +1,38 @@
+name: Terrain assembly diagnostic
+on:
+  pull_request:
+    paths:
+      - 'tools/terrain-assembly-proof/**'
+      - '.github/workflows/terrain-assembly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  terrain-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Verify unchanged sources and import
+        run: |
+          python tools/terrain-assembly-proof/verify_sources.py
+          godot --headless --path tools/terrain-assembly-proof --import
+      - name: Run contract tests and rendered diagnostic
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/terrain-proof
+          godot --headless --path tools/terrain-assembly-proof -- --self-test 2>&1 | tee build/terrain-proof/tests.log
+          xvfb-run -a godot --path tools/terrain-assembly-proof -- --capture-dir="$PWD/build/terrain-proof" 2>&1 | tee build/terrain-proof/capture.log
+          ! grep -E 'SCRIPT ERROR:|FAIL:' build/terrain-proof/*.log
+          test -s build/terrain-proof/terrain-assembly.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terrain-assembly-evidence
+          path: build/terrain-proof/

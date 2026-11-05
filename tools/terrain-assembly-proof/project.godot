@@ -1,0 +1,10 @@
+config_version=5
+[application]
+config/name="Terrain assembly proof - unapproved candidates"
+run/main_scene="res://Assembly.tscn"
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=1000
+[rendering]
+renderer/rendering_method="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.11,0.13,0.18,1)

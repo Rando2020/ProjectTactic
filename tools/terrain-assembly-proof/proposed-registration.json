@@ -1,0 +1,98 @@
+{
+  "approval": "none",
+  "tile_size": [
+    96,
+    48
+  ],
+  "collision": "none; proposals do not affect gameplay",
+  "assets": {
+    "existing": {
+      "file": "blooming-props.png",
+      "region": [
+        760,
+        552,
+        705,
+        438
+      ],
+      "pivot": [
+        352.5,
+        438
+      ],
+      "scale": 0.182648401826484,
+      "visible_size": [
+        705,
+        438
+      ],
+      "occupancy_cells": null,
+      "status": "diagnostic_proposal_not_validated",
+      "sha256": "9e8e575883d34595f817cc3e2a69917b1049c7cb3b69bcd861465adc25cf0794"
+    },
+    "corner": {
+      "file": "chapel-low-wall-corner-v1.png",
+      "pivot": [
+        886,
+        665
+      ],
+      "scale": 0.18,
+      "visible_size": [
+        871,
+        432
+      ],
+      "occupancy_cells": [
+        [
+          0,
+          0
+        ],
+        [
+          -1,
+          0
+        ],
+        [
+          0,
+          -1
+        ]
+      ],
+      "status": "diagnostic_proposal_not_validated",
+      "sha256": "2f6cba3628be0be4d8eb31e8abd7a77f690a25a740caef26a60979f772f34951"
+    },
+    "end": {
+      "file": "chapel-low-wall-broken-end-v1.png",
+      "pivot": [
+        886,
+        650
+      ],
+      "scale": 0.18,
+      "visible_size": [
+        709,
+        544
+      ],
+      "occupancy_cells": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "status": "diagnostic_proposal_not_validated",
+      "sha256": "528086c1843bddb6af5230196436a3083e6e3c0ff3141a5569e7818707311c70"
+    },
+    "scatter": {
+      "file": "chapel-stone-scatter-clean-v2.png",
+      "pivot": [
+        887,
+        600
+      ],
+      "scale": 0.12,
+      "visible_size": [
+        1242,
+        342
+      ],
+      "occupancy_cells": [],
+      "status": "diagnostic_proposal_not_validated",
+      "sha256": "bf6c27d05e3f110a05da6ced736499789dfafe070c44899f766121748cf91c11"
+    }
+  }
+}
