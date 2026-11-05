@@ -17,7 +17,7 @@ Headless tests check projection and alpha-aware vs rectangular occlusion. They d
 2. Shared source scale 0.18. This does not imply matched stone dimensions.
 3. A one-point corner/end join attempt. The right corner base endpoint and left broken-end base endpoint are estimated from original source pixels. End caps, thickness, elevation and axis direction still require review. This is not a modular kit acceptance.
 4. Candidate corner footprint proposal with front/back 46px diagnostic silhouettes and loose decorative scatter. Coral cells are a gameplay footprint hypothesis, not collision.
-5. Transparent-canvas and solid-stone head probes reproduce false positives from rectangle-only fading. Alpha probe uses source alpha >= 0.5, matching Blooming's cutoff. This is a diagnostic proposal, not a live occlusion patch. Single head probes are not complete body visibility tests.
+5. Transparent-canvas and solid-stone head probes reproduce false positives from rectangle-only fading. Alpha probe uses source alpha >= 0.5, matching Blooming's cutoff. This is a diagnostic proposal, not a live occlusion patch. Both sampled points are asserted to match the actual 46px silhouette tips, and both actors are behind the wall by depth. The existing game uses a nominal -32px head offset; this fixture uses its own exact silhouette tip. A second capture applies 0.30 alpha after detecting the opaque behind-wall head. Single head probes are not complete body visibility tests.
 
 ## Known numeric findings
 

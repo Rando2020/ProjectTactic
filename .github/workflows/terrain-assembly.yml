@@ -28,9 +28,10 @@ jobs:
           set -o pipefail
           mkdir -p build/terrain-proof
           godot --headless --path tools/terrain-assembly-proof -- --self-test 2>&1 | tee build/terrain-proof/tests.log
-          xvfb-run -a godot --path tools/terrain-assembly-proof -- --capture-dir="$PWD/build/terrain-proof" 2>&1 | tee build/terrain-proof/capture.log
+          xvfb-run -a godot --audio-driver Dummy --path tools/terrain-assembly-proof -- --capture-dir="$PWD/build/terrain-proof" 2>&1 | tee build/terrain-proof/capture.log
           ! grep -E 'SCRIPT ERROR:|FAIL:' build/terrain-proof/*.log
           test -s build/terrain-proof/terrain-assembly.png
+          test -s build/terrain-proof/terrain-occlusion-fade.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:

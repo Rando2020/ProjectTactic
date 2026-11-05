@@ -1,5 +1,6 @@
 extends Node2D
 ## Standalone diagnostic only. No gameplay integration or visual acceptance.
+const ACTOR_HEIGHT := 46.0
 const META_PATH = "res://proposed-registration.json"
 var meta: Dictionary
 var sprites: Array[Sprite2D] = []
@@ -46,11 +47,12 @@ func probe_head(s: Sprite2D, global_head: Vector2) -> Dictionary:
   opaque=im.get_pixelv(Vector2i(pixel)).a>=0.5
  return {"rectangle":in_rect,"alpha":opaque}
 
-func actor(pos: Vector2) -> void:
+func actor(pos: Vector2) -> Polygon2D:
  var body := Polygon2D.new()
- body.polygon=PackedVector2Array([Vector2(-10,0),Vector2(10,0),Vector2(8,-32),Vector2(0,-46),Vector2(-8,-32)])
+ body.polygon=PackedVector2Array([Vector2(-10,0),Vector2(10,0),Vector2(8,-32),Vector2(0,-ACTOR_HEIGHT),Vector2(-8,-32)])
  body.color=Color("57cddd"); body.position=pos; body.z_index=int(pos.y)
  add_child(body)
+ return body
 
 func _ready() -> void:
  meta=JSON.parse_string(FileAccess.get_file_as_string(META_PATH))
@@ -84,8 +86,12 @@ func _ready() -> void:
  label_at("5  Existing rectangle occlusion vs alpha probe",Vector2(755,450))
  var occluder:=make_sprite("corner",panels[4])
  var clear_head: Vector2=occluder.to_global(occluder.offset+Vector2(887,120))
- var solid_head: Vector2=occluder.to_global(occluder.offset+Vector2(887,550))
- actor(clear_head+Vector2(0,32)); actor(solid_head+Vector2(0,32))
+ var solid_head: Vector2=occluder.to_global(occluder.offset+Vector2(887,400))
+ var clear_actor:=actor(clear_head+Vector2(0,ACTOR_HEIGHT))
+ var solid_actor:=actor(solid_head+Vector2(0,ACTOR_HEIGHT))
+ assert(clear_actor.to_global(Vector2(0,-ACTOR_HEIGHT)).is_equal_approx(clear_head))
+ assert(solid_actor.to_global(Vector2(0,-ACTOR_HEIGHT)).is_equal_approx(solid_head))
+ assert(clear_actor.z_index<occluder.z_index and solid_actor.z_index<occluder.z_index)
  var clear_test:=probe_head(occluder,clear_head)
  var solid_test:=probe_head(occluder,solid_head)
  label_at("Transparent head: box=%s / alpha=%s"%[clear_test.rectangle,clear_test.alpha],Vector2(755,805),16)
@@ -109,6 +115,12 @@ func _ready() -> void:
    var error:=get_viewport().get_texture().get_image().save_png(dir+"/terrain-assembly.png")
    assert(error==OK)
    print("CAPTURE: "+dir+"/terrain-assembly.png")
+   # Apply actual fade only after a behind-wall opaque head is confirmed.
+   occluder.modulate.a=0.30
+   label_at("Alpha-aware fade applied: solid head is behind stone.",Vector2(755,880),16)
+   await RenderingServer.frame_post_draw
+   error=get_viewport().get_texture().get_image().save_png(dir+"/terrain-occlusion-fade.png")
+   assert(error==OK)
    get_tree().quit()
 
 func _draw() -> void:
