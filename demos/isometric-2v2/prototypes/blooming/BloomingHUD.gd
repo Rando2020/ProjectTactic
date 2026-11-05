@@ -209,27 +209,35 @@ func _refresh_appearance_control() -> void:
 	_bloom_skin_toggle.disabled = battle_manager != null and battle_manager.is_resolving_action
 
 func _build_compact_forecast() -> void:
-	# Reuse authoritative text and portraits, but remove the inherited tall column.
+	# Put the decision on the first page of the existing scroll view. The
+	# portraits and repeated instructions must not squeeze the action/HP result.
 	var center := _preview_mode_label.get_parent()
-	var identities := HBoxContainer.new()
-	identities.add_theme_constant_override("separation",12)
-	center.add_child(identities)
-	center.move_child(identities,1)
-	for label in [_preview_actor_label,_preview_action_label,_preview_target_label]:
-		label.reparent(identities)
+	var summary := VBoxContainer.new()
+	summary.add_theme_constant_override("separation",5)
+	_forecast_content.add_child(summary)
+	_forecast_content.move_child(summary,0)
+	for label in [_preview_action_label,_preview_target_label]:
+		label.reparent(summary)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.add_theme_font_size_override("font_size",17)
-		label.custom_minimum_size.y = 54
+		label.custom_minimum_size.y = 0
+	_preview_actor_label.reparent(center)
+	_preview_actor_label.add_theme_font_size_override("font_size",17)
+	_preview_actor_label.custom_minimum_size.y = 54
 	var results := HBoxContainer.new()
 	results.add_theme_constant_override("separation",18)
-	center.add_child(results)
+	summary.add_child(results)
 	for label in [_preview_amount_label,_preview_hit_label,_preview_crit_label]:
 		label.reparent(results)
 		label.add_theme_font_size_override("font_size",22 if label == _preview_amount_label else 17)
 		label.custom_minimum_size.y = 28
+	_preview_mode_label.reparent(_forecast_content)
+	_forecast_content.move_child(_preview_mode_label,1)
 	_preview_mode_label.add_theme_font_size_override("font_size",17)
 	_preview_mode_label.custom_minimum_size.y = 22
 	_preview_note_label.reparent(_forecast_content)
+	# Status/counter warnings and tactical detail come before decorative portraits
+	# and repeated instructions when the player scrolls beyond the summary.
 	_forecast_content.move_child(_preview_note_label,1)
 	_preview_note_label.add_theme_font_size_override("font_size",17)
 	_preview_note_label.max_lines_visible = -1
@@ -243,6 +251,7 @@ func _build_compact_forecast() -> void:
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.add_theme_font_size_override("font_size",16)
 		label.custom_minimum_size.y = 44
+	_preview_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_preview_panel.add_theme_stylebox_override("panel",_surface())
 
 func gameplay_rect(viewport_size: Vector2) -> Rect2:
@@ -329,6 +338,9 @@ func _layout_skills() -> void:
 func _on_action_preview_changed(preview: Dictionary) -> void:
 	_bloom_move_forecast = str(preview.get("mode", "")) == "Move"
 	super._on_action_preview_changed(preview)
+	# Preserve every authoritative identity, HP and KO value, using the available
+	# row width instead of spending three lines on the TARGET prefix.
+	_preview_target_label.text = _preview_target_label.text.replace("\n", " · ")
 
 func _layout_forecast() -> void:
 	if not _bloom_ready or not is_instance_valid(_forecast_content): return

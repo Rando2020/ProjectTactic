@@ -32,6 +32,7 @@ jobs:
           project="$PWD/demos/isometric-2v2"
           godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/test_action_clash_readability.tscn
           # Test.tscn is the retired 1v1 title-route contract, not the 2v2 scene.
           # Legacy main-game practice-route failures are documented in the QA note.
           for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn; do
