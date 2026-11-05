@@ -354,3 +354,20 @@ func _on_battle_started(display_name: String, objective: String) -> void:
 	_objective_label.text = objective
 	_intro_banner.hide()
 	_mission_label.text = "THE BLOOMING RUINS"
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Escape keeps backing out of combat first. From the unselected board it
+	# reaches the existing settings panel instead of becoming a dead key.
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		if _settings_overlay.visible or (_selection and _selection.selected_id.is_empty()):
+			_toggle_settings_overlay()
+			get_viewport().set_input_as_handled()
+			return
+	super._unhandled_input(event)
+
+func _toggle_settings_overlay() -> void:
+	super._toggle_settings_overlay()
+	if _settings_overlay.visible:
+		# Blooming's persistent HUD is created after the inherited overlay.
+		# Keep the modal above it so clicks cannot reach combat controls.
+		move_child(_settings_overlay, get_child_count() - 1)
