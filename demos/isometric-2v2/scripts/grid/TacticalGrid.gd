@@ -747,8 +747,9 @@ func _add_aoe_tile_count_badge(positions: Array[Vector2i]) -> void:
 	var badge_text := "AoE: %d" % positions.size()
 	var world_pos := _grid_to_local(center_pos)
 
-	# Background panel
+	# Decorative area counts must not block spell targeting beneath them.
 	var bg_panel := ColorRect.new()
+	bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg_panel.size = Vector2(72.0, 26.0)
 	bg_panel.position = world_pos + Vector2(-36.0, 24.0)
 	bg_panel.color = Color(1.0, 0.22, 0.1, 0.70)  # Hot red, semi-transparent
