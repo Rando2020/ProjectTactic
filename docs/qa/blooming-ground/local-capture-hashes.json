@@ -1,0 +1,18 @@
+{
+  "before-overview.png": {
+    "sha256": "99de5b9aab29543202cba167278c52d7d3f3327cb358badad7955fd7378cf532",
+    "bytes": 697855
+  },
+  "before-movement-highlights.png": {
+    "sha256": "e15e2cb58d3bfa31c81dc65f8177350ee7c70557378797eee262ea35e054f4a9",
+    "bytes": 702452
+  },
+  "after-overview.png": {
+    "sha256": "732a8048b049779aaff84e639607dcdb1879e88558c1c259a76d052782cc9c63",
+    "bytes": 693311
+  },
+  "after-movement-highlights.png": {
+    "sha256": "339958fb347d698aa500794872ec0fff917ff4401b5cb3ae193ae8ae802d92ca",
+    "bytes": 698489
+  }
+}

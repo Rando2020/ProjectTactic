@@ -1,0 +1,111 @@
+{
+	"checks": 13,
+	"failures": [],
+	"renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+	"results": [
+		{
+			"center": "(12.0, 0.0, 13.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "lower-floor-tag-independent"
+		},
+		{
+			"center": "(12.0, 0.0, 15.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "soil-transition-tag-independent"
+		},
+		{
+			"center": "(12.0, 0.0, 13.0)",
+			"different_pixels": 12544,
+			"expected_difference": true,
+			"extent": 2.0,
+			"max_channel_error": 0.784313723444939,
+			"name": "garden-soil-present"
+		},
+		{
+			"center": "(12.0, 3.54, 3.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "upper-landing-preserved"
+		},
+		{
+			"center": "(12.0, 3.54, 13.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "elevated-garden-patch-preserved"
+		},
+		{
+			"center": "(5.0, 1.08, 10.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "stair-tread-preserved"
+		},
+		{
+			"center": "(5.0, 0.8, 10.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 1.0,
+			"max_channel_error": 0.0,
+			"name": "stair-riser-preserved"
+		},
+		{
+			"center": "(12.0, 1.0, 5.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "retaining-face-preserved"
+		},
+		{
+			"center": "(4.0, 0.0, 14.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 0.01,
+			"max_channel_error": 0.0,
+			"name": "path-center-4"
+		},
+		{
+			"center": "(6.0, 0.0, 14.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 0.01,
+			"max_channel_error": 0.0,
+			"name": "path-center-6"
+		},
+		{
+			"center": "(16.0, 0.0, 14.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 0.01,
+			"max_channel_error": 0.0,
+			"name": "path-center-16"
+		},
+		{
+			"center": "(18.0, 0.0, 14.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 0.01,
+			"max_channel_error": 0.0,
+			"name": "path-center-18"
+		},
+		{
+			"center": "(0.0, 0.0, 12.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 0.01,
+			"max_channel_error": 0.0,
+			"name": "lower-perimeter-preserved"
+		}
+	]
+}

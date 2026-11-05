@@ -1,0 +1,10 @@
+{
+	"height_step": 32.0,
+	"map_road_6_6": "road",
+	"map_stone_6_7": "stone",
+	"move_highlights": 62,
+	"stair_foot_height": 0,
+	"stair_landing_height": 4,
+	"tile_size": "(128, 64)",
+	"zane_cell": "(3, 8)"
+}
