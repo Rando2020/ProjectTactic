@@ -774,6 +774,8 @@ func _add_aoe_tile_count_badge(positions: Array[Vector2i]) -> void:
 func _add_tile_badge(pos: Vector2i, text: String, color: Color) -> void:
 	# Background panel for better readability
 	var bg_panel := ColorRect.new()
+	# Decorative guidance must not consume board input before _unhandled_input.
+	bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg_panel.size = Vector2(66.0, 26.0)
 	bg_panel.position = _grid_to_local(pos) + Vector2(-33.0, -16.0)
 	bg_panel.color = Color(color.r * 0.3, color.g * 0.3, color.b * 0.3, 0.75)
