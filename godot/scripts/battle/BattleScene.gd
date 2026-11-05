@@ -658,38 +658,20 @@ func _spawn_player_units() -> Array[Unit]:
 	var zane_spawn := Vector2i(4, 5) if duel else Vector2i(1, 6)
 	if duel and GameState.practice_session.get("painted_chapel", false):
 		zane_spawn = Vector2i(1, 3)
-	result.append(_make_unit("zane", "Zane", "player", zane_spawn,
-		320, 90,  4, 2, 8, 42, 48, 80,  110,
-		gs.get_all_abilities("zane") if gs else ["mighty_strike", "wind_slash"]))
+	result.append(_make_party_unit("zane", zane_spawn))
 	if not duel:
-		result.append(_make_unit("mira", "Mira Vey", "player", Vector2i(2, 6),
-			280, 120, 4, 2, 7, 28, 54, 65,  130,
-			gs.get_all_abilities("mira") if gs else ["fire", "thunder", "blizzard", "cure", "holy"]))
-		result.append(_make_unit("kael", "Kael", "player", Vector2i(1, 7),
-			380, 55,  4, 2, 6, 55, 32, 110, 70,
-			gs.get_all_abilities("kael") if gs else ["mighty_strike"]))
-		result.append(_make_unit("lyra", "Lyra", "player", Vector2i(0, 7),
-			240, 70, 4, 2, 9, 52, 18, 55, 65,
-			gs.get_all_abilities("lyra") if gs else ["pin_shot"],
-			{}, 2, 4))
+		result.append(_make_party_unit("mira", Vector2i(2, 6)))
+		result.append(_make_party_unit("kael", Vector2i(1, 7)))
+		result.append(_make_party_unit("lyra", Vector2i(0, 7)))
 	_apply_pending_deployment(result, gs)
 	# Apply curse move penalty
 	var bonuses := RunBonuses.for_current_run()
 	var move_pen: int = bonuses.get("curse_move_penalty", 0)
 
-	# Apply MetaProgression permanent stat bonuses
-	var meta: Node = get_node_or_null("/root/MetaProgression")
-	if meta:
-		var hp_bonus:   int = meta.get_stat_bonus("max_hp")
-		var phys_bonus: int = meta.get_stat_bonus("physical")
-		var mag_bonus:  int = meta.get_stat_bonus("magic")
-		for unit in result:
-			if unit.unit_data and unit.unit_data.base_stats:
-				unit.unit_data.base_stats.hp       += hp_bonus
-				unit.unit_data.base_stats.physical += phys_bonus
-				unit.unit_data.base_stats.magic    += mag_bonus
-			if move_pen != 0:
-				unit.unit_data.base_stats.movement = max(1, unit.unit_data.base_stats.movement + move_pen)
+	# Permanent progression is included in shared stats before initialization.
+	for unit in result:
+		if move_pen != 0:
+			unit.unit_data.base_stats.move = maxi(1, unit.unit_data.base_stats.move + move_pen)
 
 	# Apply authored story burdens explicitly. These are not ordinary curses:
 	# the player should feel the narrative cost even if curse aggregation changes.
@@ -705,7 +687,7 @@ func _spawn_player_units() -> Array[Unit]:
 		for unit in result:
 			var reg: Dictionary = gs.unit_registry.get(unit.unit_id, {})
 			if not reg.is_empty():
-				unit.hp = reg.get("current_hp", unit.hp)
+				unit.hp = clampi(int(reg.get("current_hp", unit.hp)), 0, unit.unit_data.base_stats.hp)
 				unit.mp = reg.get("current_mp", unit.mp)
 				unit.temper = reg.get("current_temper", unit.temper)
 				unit.ether = reg.get("current_ether", unit.ether)
@@ -825,25 +807,18 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	stats.hp = hp;  stats.mp = mp;  stats.move = move;  stats.jump = jump
 	stats.speed = speed;  stats.physical = physical;  stats.magic = magic
 	stats.max_temper = max_temper;  stats.max_ether = max_ether
-	if faction == "player":
-		var gs := get_node_or_null("/root/GameState")
-		if gs:
-			var bonuses := JobTreeData.compute_stat_bonuses(gs.unit_registry.get(id, {}).get("job_jp", {}))
-			stats.hp += int(bonuses.max_hp)
-			stats.physical += int(bonuses.physical)
-			stats.magic += int(bonuses.magic)
-			stats.speed += int(bonuses.speed)
-			# Progression may slow a mobile actor, never remove all future turns.
-			# Preserve explicit nonpositive configured-speed behavior.
-			if speed > 0:
-				stats.speed = maxi(1, stats.speed)
-			stats.max_temper += int(bonuses.max_temper)
-			stats.max_ether += int(bonuses.max_ether)
 	stats.attack_range_min = atk_range_min
 	stats.attack_range_max = atk_range_max
+	if faction == "player" and CharacterStats.BASE.has(id):
+		var shared := GameState.get_character_stats(id, {}, {"hp": hp, "mp": mp, "move": move, "jump": jump, "speed": speed, "physical": physical, "magic": magic, "max_temper": max_temper, "max_ether": max_ether, "attack_range_min": atk_range_min, "attack_range_max": atk_range_max})
+		for key in shared:
+			if key != "level":
+				stats.set(key, shared[key])
 
 	var data := UnitData.new()
 	data.id = id;  data.display_name = uname;  data.faction = faction
+	if faction == "player":
+		data.base_job_id = str(GameState.unit_registry.get(id, {}).get("current_job_id", "squire"))
 	data.base_stats = stats
 	data.abilities = _to_string_array(abilities)
 	data.elemental_affinities = affinities
@@ -875,3 +850,10 @@ func _to_string_array(values: Array) -> Array[String]:
 	for value in values:
 		result.append(str(value))
 	return result
+
+
+func _make_party_unit(uid: String, pos: Vector2i) -> Unit:
+	var base: Dictionary = CharacterStats.BASE[uid]
+	return _make_unit(uid, GameState.unit_registry.get(uid, {}).get("display_name", uid.capitalize()), "player", pos,
+		base.hp, base.mp, base.move, base.jump, base.speed, base.physical, base.magic, base.max_temper, base.max_ether,
+		GameState.get_all_abilities(uid), {}, base.attack_range_min, base.attack_range_max)

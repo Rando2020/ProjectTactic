@@ -73,6 +73,7 @@ var run_jp_earned:        int   = 0
 ##   learnable_abilities: Array[String],  (legacy metadata; query current job instead)
 ## }
 var unit_registry: Dictionary = {}
+var gear_inventory: Array = EquipmentRules.starter_items()
 
 
 func _ready() -> void:
@@ -81,6 +82,7 @@ func _ready() -> void:
 
 
 func _init_defaults() -> void:
+	gear_inventory = EquipmentRules.starter_items()
 	# Zane  Arcanist path  Resonant
 	_reg("zane", "Zane",
 		["fireball", "thunderstrike", "void_pulse"],
@@ -378,6 +380,7 @@ func serialize_state() -> Dictionary:
 		"unit_job_jp":      unit_job_jp,
 		"unit_equipped":    unit_equipped,
 		"unit_equipment":   unit_equipment,
+		"gear_inventory": gear_inventory.duplicate(true),
 		"vow_progress":     vow_progress.duplicate(),
 		"sigil_progress":   sigil_progress.duplicate(),
 	}
@@ -452,6 +455,7 @@ func restore_state(data: Dictionary) -> bool:
 	var saved_job_jp:    Dictionary = data.get("unit_job_jp", {})
 	var saved_equipped:  Dictionary = data.get("unit_equipped", {})
 	var saved_equipment: Dictionary = data.get("unit_equipment", {})
+	gear_inventory = data.get("gear_inventory", EquipmentRules.starter_items()).duplicate(true)
 	var saved_vow_progress: Variant = data.get("vow_progress", {})
 	var saved_sigil_progress: Variant = data.get("sigil_progress", {})
 	vow_progress = {}
@@ -638,3 +642,55 @@ func choose_practice_job(job_id: String) -> bool:
 	practice_session.checkpoint["unit_resources"] = resources
 	practice_session["state"] = "loading"
 	return _restore_practice_checkpoint()
+
+
+func get_owned_equipment() -> Array:
+	var items: Array = gear_inventory.duplicate(true)
+	for item in run_inventory:
+		if item is Dictionary and EquipmentRules.find_item(items, str(item.get("id", ""))).is_empty():
+			items.append(item.duplicate(true))
+	return items
+
+func equipment_owner(item_id: String) -> String:
+	for uid in unit_registry:
+		if item_id in unit_registry[uid].get("equipment", {}).values():
+			return str(uid)
+	return ""
+
+func get_character_stats(uid: String, equipment_override: Dictionary = {}, configured: Dictionary = {}) -> Dictionary:
+	var reg: Dictionary = unit_registry.get(uid, {}).duplicate(true)
+	if not equipment_override.is_empty():
+		reg["equipment"] = equipment_override
+	var permanent: Dictionary = {}
+	var meta := get_node_or_null("/root/MetaProgression")
+	if meta:
+		permanent = {"hp": meta.get_stat_bonus("max_hp"), "physical": meta.get_stat_bonus("physical"), "magic": meta.get_stat_bonus("magic")}
+	return CharacterStats.calculate(uid, reg, get_owned_equipment(), permanent, configured)
+
+func equip_item(uid: String, item_id: String, slot: String) -> bool:
+	if not unit_registry.has(uid) or not EquipmentRules.SLOTS.has(slot):
+		return false
+	var item := EquipmentRules.find_item(get_owned_equipment(), item_id)
+	if item.is_empty() or EquipmentRules.slot_for(item) != slot or not EquipmentRules.supported(item):
+		return false
+	var owner := equipment_owner(item_id)
+	if not owner.is_empty() and owner != uid:
+		return false
+	unit_registry[uid]["equipment"][slot] = item_id
+	_clamp_character_resources(uid)
+	save()
+	return true
+
+func unequip_item(uid: String, slot: String) -> bool:
+	if not unit_registry.has(uid) or not EquipmentRules.SLOTS.has(slot):
+		return false
+	unit_registry[uid]["equipment"][slot] = ""
+	_clamp_character_resources(uid)
+	save()
+	return true
+
+func _clamp_character_resources(uid: String) -> void:
+	var stats := get_character_stats(uid)
+	for pair in [["current_hp", "hp"], ["current_mp", "mp"], ["current_temper", "max_temper"], ["current_ether", "max_ether"]]:
+		if unit_registry[uid].has(pair[0]):
+			unit_registry[uid][pair[0]] = clampi(int(unit_registry[uid][pair[0]]), 0, int(stats[pair[1]]))
