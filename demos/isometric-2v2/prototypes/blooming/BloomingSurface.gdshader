@@ -3,6 +3,10 @@ render_mode unshaded, cull_disabled;
 uniform sampler2D atlas : source_color, filter_linear_mipmap;
 uniform int surface = 0;
 uniform float soil_floor_y = 0.;
+uniform int contact_count = 0;
+// World x/z, support y, and compact radius. Empty defaults preserve the base art.
+uniform vec4 contact_points[16];
+uniform float contact_strength : hint_range(0., .18) = .18;
 varying vec3 pos;
 varying vec3 face;
 void vertex(){
@@ -53,6 +57,18 @@ void fragment(){
 		color=paint(vec2(.5), (top?p:side)*.12)*(top?1.:.72);
 	}else{
 		color=paint(vec2(0,.5),(top?p:side)*.19)*(top?vec3(.98):vec3(.74,.70,.84));
+	}
+	if(face.y>.5 && surface<2){
+		float contact=0.;
+		for(int i=0;i<16;i++){
+			if(i>=contact_count) break;
+			vec4 point=contact_points[i];
+			if(abs(pos.y-point.z)<.015){
+				float distance=length(pos.xz-point.xy)/max(point.w,.001);
+				contact=max(contact,1.-smoothstep(.15,1.,distance));
+			}
+		}
+		color*=1.-clamp(contact_strength,0.,.18)*contact;
 	}
 	ALBEDO=color;
 }

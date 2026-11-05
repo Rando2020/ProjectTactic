@@ -33,6 +33,7 @@ jobs:
           godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/blooming_ground/ContractTest.tscn
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/blooming_contact/ContractTest.tscn
           # Test.tscn is the retired 1v1 title-route contract, not the 2v2 scene.
           # Legacy main-game practice-route failures are documented in the QA note.
           for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn; do
@@ -63,6 +64,20 @@ jobs:
           test -s build/combat-ui/ground/after-movement-highlights.png
           test -s build/combat-ui/ground/before-overview.png
           test -s build/combat-ui/ground/before-movement-highlights.png
+      - name: Verify prop contact shading
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/combat-ui/contact
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_contact/RenderedTest.tscn -- --capture-dir="$PWD/build/combat-ui/contact" 2>&1 | tee build/combat-ui/contact-renderer.log
+          for label in before after; do
+            args=()
+            [ "$label" != before ] || args+=(--without-contacts)
+            XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_contact/Capture.tscn -- --capture-dir="$PWD/build/combat-ui/contact" --label="$label" "${args[@]}" 2>&1 | tee "build/combat-ui/contact-$label.log"
+            for view in overview movement-highlights front-cypress left-column upper-cypress; do
+              test -s "build/combat-ui/contact/$label-$view.png"
+            done
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

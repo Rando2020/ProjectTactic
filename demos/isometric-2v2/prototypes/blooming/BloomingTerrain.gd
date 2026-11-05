@@ -3,7 +3,10 @@ extends PracticeTerrain3D
 ## Gameplay remains entirely in TacticalGrid. All picking uses rendered tread tops.
 const Map = preload("res://prototypes/blooming/BloomingMap.gd")
 const ART := "res://assets/environments/blooming-ruins-v2/"
+const CONTACT_RADII := {"cypress":.45,"column":.48,"ruined-pier":.55,"broken-column":.48,"pots":.48}
+const MAX_CONTACTS := 16
 var decoration_nodes: Array[Sprite2D] = []
+var contact_points := PackedVector4Array()
 var occluded_unit_ids: Array[String] = []
 var _materials: Dictionary = {}
 var _regions: Dictionary = {}
@@ -20,7 +23,21 @@ func configure(p_grid: TacticalGrid) -> void:
    _regions[key]["file"] = asset.file
  super.configure(p_grid)
  _add_garden()
+ _sync_contacts()
  set_process(true)
+
+func rebuild() -> void:
+ super.rebuild()
+ _sync_contacts()
+
+func _sync_contacts() -> void:
+ assert(contact_points.size()<=MAX_CONTACTS,"Contact shader capacity exceeded")
+ var packed:=contact_points.duplicate()
+ packed.resize(MAX_CONTACTS)
+ for material: ShaderMaterial in _materials.values():
+  material.set_shader_parameter("contact_count",contact_points.size())
+  material.set_shader_parameter("contact_points",packed)
+ if is_instance_valid(_viewport):_viewport.render_target_update_mode=SubViewport.UPDATE_ONCE
 
 func projected_point(cell: Vector2, height: float = NAN) -> Vector2:
  if is_nan(height): height = grid._height_at(Vector2i(cell.round()))
@@ -113,6 +130,10 @@ func _decorate(key: String, cell: Vector2, pixel_height: float, anchor_height: f
  sprite.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR
  grid.unit_layer.add_child(sprite)
  decoration_nodes.append(sprite)
+ if CONTACT_RADII.has(key):
+  var height: float=grid._height_at(Vector2i(cell.round())) if is_nan(anchor_height) else anchor_height
+  var support:=_visual_root.to_global(Vector3(cell.x*2,BASE_TILE_TOP_Y+height*MODEL_HEIGHT_STEP,cell.y*2))
+  contact_points.append(Vector4(support.x,support.z,support.y,CONTACT_RADII[key]))
 
 func _add_garden() -> void:
  _decorate("arch",Vector2(7,.1),210)

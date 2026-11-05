@@ -1,0 +1,78 @@
+{
+	"checks": 9,
+	"failures": [],
+	"results": [
+		{
+			"center": "(12.0, 0.0, 13.0)",
+			"different_pixels": 0,
+			"expected_difference": false,
+			"extent": 2.0,
+			"max_channel_error": 0.0,
+			"name": "zero-contact-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 3776,
+			"excessive": 0,
+			"expect_darkening": true,
+			"max_channel_error": 0.160784304141998,
+			"name": "lower-contact-visible"
+		},
+		{
+			"brightened": 0,
+			"changed": 3801,
+			"excessive": 0,
+			"expect_darkening": true,
+			"max_channel_error": 0.168627440929413,
+			"name": "upper-contact-visible"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "outside-footprint-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "wrong-height-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "side-face-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "underside-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "stair-material-identical"
+		},
+		{
+			"brightened": 0,
+			"changed": 0,
+			"excessive": 0,
+			"expect_darkening": false,
+			"max_channel_error": 0.0,
+			"name": "overlap-not-additive"
+		}
+	]
+}

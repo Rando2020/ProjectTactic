@@ -1,0 +1,13 @@
+{
+  "overview_changed_pixels": 1856,
+  "reference_background_color": [
+    9,
+    14,
+    19
+  ],
+  "background_pixels": 510249,
+  "changed_background_pixels": 0,
+  "ui_right_rail_changed_pixels": 0,
+  "ui_footer_changed_pixels": 0,
+  "before_after_tactical_state_identical": true
+}
