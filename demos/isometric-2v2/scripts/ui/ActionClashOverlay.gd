@@ -39,6 +39,8 @@ func _build() -> void:
 	_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_card.custom_minimum_size = BASE_SIZE
 	_card.size = BASE_SIZE
+	# Reset before child layout so neither card nor portraits retain a stale height.
+	_card.pre_sort_children.connect(func() -> void: _card.size = BASE_SIZE)
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(0.045, 0.06, 0.09, 0.94)
 	bg.border_color = Color(0.8, 0.66, 0.42, 0.85)
@@ -173,7 +175,10 @@ func _resize() -> void:
 	if not is_instance_valid(_card):
 		return
 	var viewport_size := get_viewport().get_visible_rect().size
-	var rect := banner_rect(viewport_size, UISettings.shared().effective_scale(viewport_size), _tier)
+	var ui_factor: float = UISettings.shared().effective_scale(viewport_size)
+	# Reserve title width only for enlarged text; keep standard-size name wrapping.
+	_action_name.get_parent().custom_minimum_size.x = 240 if ui_factor > 1.0 else 190
+	var rect := banner_rect(viewport_size, ui_factor, _tier)
 	_card.scale = Vector2.ONE * (rect.size.x / BASE_SIZE.x)
 	_card.position = rect.position
 
