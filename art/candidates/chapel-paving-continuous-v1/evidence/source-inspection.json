@@ -1,0 +1,29 @@
+{
+  "source": "source/chapel-paving-continuous-v1.png",
+  "sha256": "35967a6cfa7639469110a25e60799573fd5459d47720633ccb8b928eae88576c",
+  "size": [
+    1254,
+    1254
+  ],
+  "mode": "RGB",
+  "mean_rgb": [
+    238.077,
+    201.543,
+    168.628
+  ],
+  "wrap_mean_absolute_channel_difference_8bit": {
+    "left_right": 6.094365,
+    "top_bottom": 7.66773
+  },
+  "interior_adjacent_pixel_difference_8bit": {
+    "x": 4.954581,
+    "y": 5.688031
+  },
+  "wrap_to_interior_ratio": {
+    "x": 1.230046,
+    "y": 1.348046
+  },
+  "exact_boundary_match": false,
+  "interpretation": "Diagnostic statistics only. Low average edge difference does not prove joint continuity or invisible seams. Not certified seamless.",
+  "status": "candidate; no runtime integration or visual acceptance"
+}

@@ -1,0 +1,33 @@
+{
+  "asset_id": "chapel-paving-continuous-v1",
+  "status": "candidate_pending_display_backed_wrap_review",
+  "runtime_accepted": false,
+  "runtime_integrated": false,
+  "generation_tool": "built-in image_gen",
+  "generation_date": "2026-11-07",
+  "source_file": "source/chapel-paving-continuous-v1.png",
+  "source_sha256": "35967a6cfa7639469110a25e60799573fd5459d47720633ccb8b928eae88576c",
+  "source_size": [1254, 1254],
+  "mode": "RGB",
+  "reference_url": "https://github.com/Rando2020/ProjectTactic/blob/e2c0b6a457f1332c98b56afef808268631fcfee6/demos/isometric-2v2/assets/environments/blooming-ruins-v2/surfaces.png",
+  "reference_sha256": "51d5ee51f24d8b88dd410e8371650940c7ab44745fe6cb4053d84961792d17a1",
+  "reference_use": "actual pixels inspected and supplied as style/material input; upper-left paving quadrant",
+  "pixel_edits_after_generation": "none",
+  "proposed_mapping": {
+    "image_type": "orthographic top-down diffuse color map",
+    "tile_projection_px": [128, 64],
+    "height_step_px": 32,
+    "world_units_per_cell": 2,
+    "cells_per_image_axis": 4,
+    "uv_space": "continuous ground world x/z; separate future sampler required",
+    "collision": "none; gameplay geometry remains authoritative"
+  },
+  "seamless_certified": false,
+  "geometry_diagnostic": "135 loader and projection assertions; not production geometry or rendered acceptance",
+  "limits": [
+    "No native rendered proof: display/browser sockets unavailable in execution environment.",
+    "Boundary statistics do not prove stone-joint continuity or invisible wrap seams.",
+    "Current Blooming shader uses procedural joints from coping quadrant; this image is not a drop-in four-quadrant replacement.",
+    "No production material, map, existing PR or deployment changed."
+  ]
+}
