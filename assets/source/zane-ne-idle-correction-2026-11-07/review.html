@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zane NE correction: unapproved character candidate</title>
+<style>
+  :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background:#11151e; color:#e6e9ed; }
+  body { margin:auto; max-width:1200px; padding:24px; }
+  h1 { margin:0; font-size:30px; } h2 { font-size:21px; margin:28px 0 12px; }
+  p { max-width:84ch; } .muted { color:#b2bac6; } .tag { color:#ffce71; font-weight:700; }
+  button, select { font:inherit; background:#263143; color:white; padding:8px 14px; border:1px solid #55647b; border-radius:7px; }
+  button:focus-visible,select:focus-visible { outline:3px solid #f5be62; }
+  .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .two { grid-template-columns:repeat(2,1fr); }
+  figure { margin:0; background:#1c2431; border:1px solid #374456; border-radius:8px; overflow:hidden; }
+  figcaption { padding:10px 12px; }
+  .stage { position:relative; overflow:hidden; background:var(--bg,#273441); }
+  .stage::after { content:""; position:absolute; bottom:26px; border-top:1px dashed #bc8e56; width:100%; }
+  .stage img { position:absolute; max-width:none; }
+  body[data-bg=light] .stage { background:#eee6d7; }
+  body[data-bg=check] .stage { background:repeating-conic-gradient(#86909a 0% 25%, #d0d4d9 0% 50%) 0/24px 24px; }
+  .cycle { max-width:300px; }
+  a { color:#acd2ff; }
+  @media(max-width:700px) { .row { grid-template-columns:repeat(2,1fr); } body { padding:16px; } }
+  @media(max-width:440px) { .two { grid-template-columns:1fr; } }
+</style>
+<body data-bg="dark">
+<p class="tag">SOURCE REVIEW ONLY · NOT APPROVED FOR GAMEPLAY</p>
+<h1>Zane's northeast idle, corrected</h1>
+<p>One newly generated sprite lowers the northeast sword into a relaxed idle. Three earlier views are retained for comparison. This page is a browser art review, not an engine capture or new animation.</p>
+<div class="controls"><label for="bg">Review backdrop</label><select id="bg"><option value="dark">Dark</option><option value="light">Light</option><option value="check">Transparency checker</option></select></div>
+<h2>Targeted correction</h2><div id="comparison" class="row two"></div>
+<h2>Existing four-direction family, with new NE candidate</h2><div id="large" class="row"></div>
+<h2>85-pixel visible silhouette comparison</h2><p class="muted">Same approximate review height and baseline. These are not calibrated ground-plane pivots.</p><div id="small" class="row"></div>
+<h2>Directional switching</h2><div class="controls"><button id="toggle" type="button">Start switching</button><span id="direction">SE</span></div><div id="cycle" class="cycle"></div>
+<h2>Acceptance still needed</h2>
+<ul><li>Sword hand and major pauldron side are preserved; the new sword angle is lowered.</li><li>Coat, scarf and pouch detail, plus turn-angle consistency, still need visual approval.</li><li>New PNG is RGBA with 80.1664% fully transparent pixels. One border pixel has alpha 1/255; faint alpha noise is preserved.</li><li>No walk, attack, cast, hit or defeat animation is supplied. No gameplay art is replaced.</li></ul>
+<p><a href="README.md">Full review notes</a> · <a href="validation.json">Measured validation</a> · <a href="output/zane-ne-lowered-sword-candidate-v02.png" download>Download new NE PNG</a></p>
+<script>
+const views = [
+ {id:'SE', src:'references/zane-se-approved-reference.png', bounds:[192,103,1017,1167], anchor:[650,1167], caption:'SE · approved original'},
+ {id:'SW', src:'references/zane-sw-candidate.png', bounds:[252,118,975,1141], anchor:[625,1141], caption:'SW · existing unapproved candidate'},
+ {id:'NE', src:'output/zane-ne-lowered-sword-candidate-v02.png', bounds:[317,99,974,1113], anchor:[580,1113], caption:'NE · NEW lowered-sword candidate'},
+ {id:'NW', src:'references/zane-nw-candidate.png', bounds:[450,184,979,1025], anchor:[655,1025], caption:'NW · existing unapproved candidate'}
+];
+const oldNE = {id:'NE-old', src:'references/zane-ne-candidate.png', bounds:[310,101,1126,1084], anchor:[600,1084], caption:'NE · previous raised-sword candidate'};
+function makeView(v, height) {
+ const figure = document.createElement('figure'); const stage = document.createElement('div');
+ stage.className = 'stage'; stage.style.height = `${height + 64}px`;
+ const scale = height / (v.bounds[3] - v.bounds[1]); const img = document.createElement('img');
+ img.src = v.src; img.alt = v.caption; img.width = 1254; img.height = 1254;
+ img.style.width = `${1254 * scale}px`; img.style.height = `${1254 * scale}px`;
+ img.style.left = `calc(50% - ${v.anchor[0] * scale}px)`;
+ img.style.top = `${height + 38 - v.anchor[1] * scale}px`;
+ stage.append(img); const caption = document.createElement('figcaption'); caption.textContent=v.caption;
+ figure.append(stage, caption); return figure;
+}
+document.querySelector('#comparison').append(makeView(oldNE,360),makeView(views[2],360));
+views.forEach(v=>{document.querySelector('#large').append(makeView(v,260));document.querySelector('#small').append(makeView(v,85));});
+document.querySelector('#cycle').append(makeView(views[0],120));
+document.querySelector('#bg').addEventListener('change',e=>document.body.dataset.bg=e.target.value);
+let timer = null, idx=0;
+document.querySelector('#toggle').addEventListener('click',e=>{
+ if(timer){clearInterval(timer);timer=null;e.target.textContent='Start switching';return;}
+ e.target.textContent='Pause switching';
+ timer=setInterval(()=>{idx=(idx+1)%views.length;document.querySelector('#cycle').replaceChildren(makeView(views[idx],120));document.querySelector('#direction').textContent=views[idx].id;},1400);
+});
+</script>
+</body>
+</html>

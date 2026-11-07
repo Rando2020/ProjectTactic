@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "candidate_accepted": false,
+  "production_ready": false,
+  "files": [
+    {
+      "file": "references/zane-se-approved-reference.png",
+      "sha256": "d299d45c28f164620beee1d88871edea780ce4ad3c4873f1bea86735b64ab236",
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alpha_zero_pixels": 1186108,
+      "alpha_zero_percent": 75.4274,
+      "alpha_255_pixels": 451,
+      "alpha_1_to_254_pixels": 385957,
+      "bounds_alpha_ge_128": [
+        192,
+        103,
+        1017,
+        1167
+      ],
+      "nonzero_border_pixels": 23,
+      "maximum_border_alpha": 1,
+      "visible_border_clipping": false
+    },
+    {
+      "file": "references/zane-sw-candidate.png",
+      "sha256": "cb19662628e53dc09075739cd021205453795e9c117d8fb531f0be9320a7e457",
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alpha_zero_pixels": 1285591,
+      "alpha_zero_percent": 81.7538,
+      "alpha_255_pixels": 511,
+      "alpha_1_to_254_pixels": 286414,
+      "bounds_alpha_ge_128": [
+        252,
+        118,
+        975,
+        1141
+      ],
+      "nonzero_border_pixels": 8,
+      "maximum_border_alpha": 1,
+      "visible_border_clipping": false
+    },
+    {
+      "file": "references/zane-ne-candidate.png",
+      "sha256": "f8a512493aa5b013574a99ce1575e50ebfcd3e5b06bc71d9a3cbfeab21468836",
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alpha_zero_pixels": 1273214,
+      "alpha_zero_percent": 80.9667,
+      "alpha_255_pixels": 437,
+      "alpha_1_to_254_pixels": 298865,
+      "bounds_alpha_ge_128": [
+        310,
+        101,
+        1126,
+        1084
+      ],
+      "nonzero_border_pixels": 0,
+      "maximum_border_alpha": 0,
+      "visible_border_clipping": false
+    },
+    {
+      "file": "references/zane-nw-candidate.png",
+      "sha256": "34611d7e1190ab06df24cd229bd7850e10651cf3dabb286163bec5ef899d73db",
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alpha_zero_pixels": 1353968,
+      "alpha_zero_percent": 86.102,
+      "alpha_255_pixels": 137,
+      "alpha_1_to_254_pixels": 218411,
+      "bounds_alpha_ge_128": [
+        450,
+        184,
+        979,
+        1025
+      ],
+      "nonzero_border_pixels": 0,
+      "maximum_border_alpha": 0,
+      "visible_border_clipping": false
+    },
+    {
+      "file": "output/zane-ne-lowered-sword-candidate-v02.png",
+      "sha256": "07f9d08356739d5ac3a0084f216e8c988abf5889d295da8127fb1e0ce94c63b8",
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alpha_zero_pixels": 1260629,
+      "alpha_zero_percent": 80.1664,
+      "alpha_255_pixels": 511,
+      "alpha_1_to_254_pixels": 311376,
+      "bounds_alpha_ge_128": [
+        317,
+        99,
+        974,
+        1113
+      ],
+      "nonzero_border_pixels": 1,
+      "maximum_border_alpha": 1,
+      "visible_border_clipping": false
+    }
+  ],
+  "limitations": [
+    "Real transparency is verified; this is not a fake checkerboard or opaque background.",
+    "The new candidate has one very faint nonzero border pixel; these were preserved and not silently repaired.",
+    "The original approved front and old SW also contain faint alpha outside their primary silhouettes.",
+    "Technical pass does not approve costume, pose, anatomy, real gameplay scale, animation, or calibrated boot pivots.",
+    "No runtime, PR, merge, deployment, or existing asset was modified."
+  ]
+}
