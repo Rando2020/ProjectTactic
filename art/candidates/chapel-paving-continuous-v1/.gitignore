@@ -1,0 +1,5 @@
+.godot/
+*.import
+*.uid
+proof/browser-profile/
+evidence/xorg*
