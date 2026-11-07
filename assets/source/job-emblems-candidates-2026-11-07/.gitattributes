@@ -1,0 +1,3 @@
+# Source-only candidate PNGs are ordinary Git blobs for reproducible reviews.
+# This override applies only inside this self-contained candidate directory.
+*.png -filter -diff -merge -text
