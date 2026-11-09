@@ -120,15 +120,21 @@ class CourtyardSmoke:
         nav = self.cdp.command('Page.navigate', {'url': production_url})
         assert not nav.get('errorText'), nav
         deadline = time.monotonic() + self.timeout
+        readiness = """(() => {
+         const c = document.querySelector('canvas'), s = document.getElementById('status');
+         return {url: location.href, ready: document.readyState === 'complete' &&
+             !!c && c.width > 0 && c.height > 0 && (!s || getComputedStyle(s).visibility === 'hidden'
+             || getComputedStyle(s).display === 'none')};
+        })()"""
         while time.monotonic() < deadline:
-            ready = self.cdp.evaluate("""(() => {
-             const c = document.querySelector('canvas'), s = document.getElementById('status');
-             return !!c && c.width > 0 && c.height > 0 && (!s || getComputedStyle(s).visibility === 'hidden'
-                 || getComputedStyle(s).display === 'none');
-            })()""")
+            state = self.cdp.evaluate(readiness)
             assert not self.cdp.errors, 'Browser errors in production package'
-            if ready and self.cdp.evaluate('location.href') == production_url:
+            if state['ready'] and state['url'] == production_url:
                 time.sleep(2)
+                settled = self.cdp.evaluate(readiness)
+                assert not self.cdp.errors, 'Browser errors during production settle'
+                if not settled['ready'] or settled['url'] != production_url:
+                    continue
                 assert self.cdp.evaluate('typeof window.__courtyardQA') == 'undefined', 'Observer leaked into production'
                 self.screenshot('courtyard-production-package')
                 assert not self.cdp.errors, 'Browser errors during production settle or capture'
