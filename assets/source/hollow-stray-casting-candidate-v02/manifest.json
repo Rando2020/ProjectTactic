@@ -1,0 +1,25 @@
+{
+  "asset_id": "enemy-hollow-stray-sw-cast-candidate-v02",
+  "gameplay_id": "storm_imp",
+  "status": "candidate-review-only",
+  "approved": false,
+  "date": "2026-11-09",
+  "generation_tool": "built-in image_gen",
+  "direction": "screen-down-left / southwest",
+  "identity": "Existing Hollow Stray, not the unchosen horned alternative",
+  "source_size": [1254, 1254],
+  "runtime_reference_canvas": [128, 128],
+  "runtime_reference_anchor": [64, 124],
+  "shared_source_anchor": [695, 1204],
+  "shared_source_scale": 0.1014370245,
+  "recommended_display_canvas_px": 95,
+  "poses": [
+    {"id": "idle", "file": "originals/enemy-hollow-stray-sw-idle-candidate-v02.png", "hold_ms": 1000},
+    {"id": "windup", "file": "originals/enemy-hollow-stray-sw-cast-windup-candidate-v02.png", "hold_ms": 260},
+    {"id": "release", "file": "originals/enemy-hollow-stray-sw-cast-release-candidate-v02.png", "hold_ms": 180, "spell_release_event": true},
+    {"id": "recover", "file": "originals/enemy-hollow-stray-sw-idle-candidate-v02.png", "hold_ms": 560}
+  ],
+  "timing_status": "Review timing only. Three distinct poses; not a production tweened animation.",
+  "alpha_policy": "Preserve generated source RGBA unchanged. Sparse alpha=1 pixels reach source edges; do not derive pivots from nonzero alpha bounds.",
+  "production_remaining": ["Identity and art approval", "Edge-alpha cleanup decision", "Remaining directions and actions", "Inter-frame cloth/shape cleanup", "Actual gameplay integration and acceptance"]
+}

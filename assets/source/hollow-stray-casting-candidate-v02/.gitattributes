@@ -1,0 +1,6 @@
+# Keep these small candidate PNG sources available as actual Git blobs.
+# No changes to filtering outside this source-candidate folder.
+originals/enemy-hollow-stray-sw-cast-release-candidate-v02.png -filter -diff -merge -text
+originals/enemy-hollow-stray-sw-cast-windup-candidate-v02.png -filter -diff -merge -text
+originals/enemy-hollow-stray-sw-idle-candidate-v02.png -filter -diff -merge -text
+originals/reference-hollow-stray-v01.png -filter -diff -merge -text
