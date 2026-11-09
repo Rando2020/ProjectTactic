@@ -1,0 +1,51 @@
+name: Joinable courtyard walls
+on:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/prototypes/blooming/walls/**'
+      - 'demos/isometric-2v2/tests/blooming_walls/**'
+      - '.github/workflows/joinable-courtyard-walls.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wall-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hydrate standalone assets
+        run: |
+          git lfs fetch --include='demos/isometric-2v2/**' --exclude='' origin HEAD
+          git lfs checkout 'demos/isometric-2v2/**'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Import and test geometric wall contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/wall-evidence
+          godot --headless --path demos/isometric-2v2 --import
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path demos/isometric-2v2 res://tests/blooming_walls/ContractTest.tscn 2>&1 | tee build/wall-evidence/contracts.log
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path demos/isometric-2v2 res://tests/blooming_walls/ActorDepthTest.tscn 2>&1 | tee build/wall-evidence/actor-depth.log
+      - name: Capture actual courtyard before and after
+        shell: bash
+        run: |
+          set -euo pipefail
+          for label in before after; do
+            args=()
+            [ "$label" != before ] || args+=(--baseline-walls)
+            XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_walls/Capture.tscn -- --capture-dir="$PWD/build/wall-evidence" --label="$label" "${args[@]}" 2>&1 | tee "build/wall-evidence/$label.log"
+            for view in overview center-joins left-stairs right-corner movement-highlights; do
+              test -s "build/wall-evidence/$label-$view.png"
+            done
+          done
+          cmp build/wall-evidence/before-state.json build/wall-evidence/after-state.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joinable-courtyard-wall-evidence
+          path: build/wall-evidence/
