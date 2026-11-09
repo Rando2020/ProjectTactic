@@ -1,0 +1,441 @@
+{
+  "status": "candidate; exact crops verified; engine alignment not yet validated",
+  "ability": "dark-breath",
+  "semantics": "Single target damage + Poison 3 turns; NOT cone/AoE",
+  "composition": [
+    "shared_tier1",
+    "dark-breath"
+  ],
+  "shared_cast_library_id": "libfile_e927ec6d904481918094779513344bf5",
+  "shared_cast_source_sha256": "d62c3f8908220e775b4dd3425ceb4eddf9d1468ca782d23f88e0f91569fb4f4d",
+  "source_sha256": "cc757093fe194fd1c4805023fc3840d8e8e2ae509cd3696b5d0597e71282aadf",
+  "timing_policy": "presentation suggestion only; no new charge, cost, or turn delay rules",
+  "anchor_policy": "Hand-estimated semantic anchors; virtual ground = body center +120 source pixels. Use body_center_px for chest anchoring. No drawn ground plane. Validate against actual unit height. Directional action points upper-right (-45deg screen); rotate projectile only.",
+  "alpha_policy": "Unmodified exact rectangular source pixels including faint alpha<=1 fringes. No thresholding, repainting, resampling or particle deletion in frames.",
+  "frames": [
+    {
+      "order": 1,
+      "module": "shared_tier1",
+      "module_frame": 1,
+      "phase": "casting",
+      "file": "frames/shared_tier1-01.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "anchor_px": [
+        320,
+        551
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "cac24329882ecff3d820f3dcc5a29b024dfe0da9d8e4e52b6b71a0cd3d4a43e6"
+    },
+    {
+      "order": 2,
+      "module": "shared_tier1",
+      "module_frame": 2,
+      "phase": "casting",
+      "file": "frames/shared_tier1-02.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "anchor_px": [
+        311,
+        552
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "55212630d6c8de85ced9529ae0285ab4b879ab6fc3a3b1df7e33ca87150defff"
+    },
+    {
+      "order": 3,
+      "module": "shared_tier1",
+      "module_frame": 3,
+      "phase": "casting",
+      "file": "frames/shared_tier1-03.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "anchor_px": [
+        320,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "2063adb7d048ba975eadcbff80adc18d4f51fda8536c9eeb1eddf6485dee9f44"
+    },
+    {
+      "order": 4,
+      "module": "shared_tier1",
+      "module_frame": 4,
+      "phase": "casting",
+      "file": "frames/shared_tier1-04.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "anchor_px": [
+        313,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "61f989824c9752b6edb1688c0fd6b9d2e2ddc8463bec2a56b26e556a06d250da"
+    },
+    {
+      "order": 5,
+      "module": "dark-breath",
+      "module_frame": 1,
+      "phase": "formation",
+      "file": "frames/dark-breath-01.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        0,
+        0,
+        405,
+        310
+      ],
+      "anchor_px": [
+        240,
+        310
+      ],
+      "body_center_px": [
+        240,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "780e5a1eb0c67ffc1c4eed2f5667e0a04b99e0fbcd01e5011fcc71d663f38e40",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 16918
+    },
+    {
+      "order": 6,
+      "module": "dark-breath",
+      "module_frame": 2,
+      "phase": "formation",
+      "file": "frames/dark-breath-02.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        405,
+        0,
+        805,
+        310
+      ],
+      "anchor_px": [
+        215,
+        310
+      ],
+      "body_center_px": [
+        215,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "65bdac2ce7982d34fde498bc9c665ec2473919c98f89ff05bacd1605c274c529",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 29398
+    },
+    {
+      "order": 7,
+      "module": "dark-breath",
+      "module_frame": 3,
+      "phase": "formation",
+      "file": "frames/dark-breath-03.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        805,
+        0,
+        1230,
+        310
+      ],
+      "anchor_px": [
+        220,
+        310
+      ],
+      "body_center_px": [
+        220,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "147e92287cccc3da70085b792c463eef7a544cda813b141dbdcce25c87f00f90",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 25203
+    },
+    {
+      "order": 8,
+      "module": "dark-breath",
+      "module_frame": 4,
+      "phase": "action",
+      "file": "frames/dark-breath-04.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        0,
+        310,
+        405,
+        615
+      ],
+      "anchor_px": [
+        355,
+        110
+      ],
+      "body_center_px": [
+        355,
+        110
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "dbe7695bc48e029948833e633434f92f0aeb9cb9fb63ba87c16f675e008ef86e",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 25932
+    },
+    {
+      "order": 9,
+      "module": "dark-breath",
+      "module_frame": 5,
+      "phase": "action",
+      "file": "frames/dark-breath-05.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        405,
+        310,
+        805,
+        615
+      ],
+      "anchor_px": [
+        320,
+        110
+      ],
+      "body_center_px": [
+        320,
+        110
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "dda9bb1ad051323d9a44772e448523ca9bddbb0726a9287b365567ad367a4b10",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 25969
+    },
+    {
+      "order": 10,
+      "module": "dark-breath",
+      "module_frame": 6,
+      "phase": "action",
+      "file": "frames/dark-breath-06.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        805,
+        310,
+        1230,
+        615
+      ],
+      "anchor_px": [
+        305,
+        100
+      ],
+      "body_center_px": [
+        305,
+        100
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "a0f3ba8e857af81255f431c667d2a6ea2c546e986d0603f198bfae770e569f00",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 25634
+    },
+    {
+      "order": 11,
+      "module": "dark-breath",
+      "module_frame": 7,
+      "phase": "collision",
+      "file": "frames/dark-breath-07.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        0,
+        615,
+        405,
+        950
+      ],
+      "anchor_px": [
+        240,
+        295
+      ],
+      "body_center_px": [
+        240,
+        175
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "84468088e496cbb7ea3992d86fe1e92563d95e62baabb838448ba458b9902382",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 20454
+    },
+    {
+      "order": 12,
+      "module": "dark-breath",
+      "module_frame": 8,
+      "phase": "collision",
+      "file": "frames/dark-breath-08.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        405,
+        615,
+        805,
+        950
+      ],
+      "anchor_px": [
+        215,
+        295
+      ],
+      "body_center_px": [
+        215,
+        175
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "1fe65994b2f1dba4d753c36b3049ac29ce1358a6b7cd05be389ee5b0011b6042",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 35506
+    },
+    {
+      "order": 13,
+      "module": "dark-breath",
+      "module_frame": 9,
+      "phase": "collision",
+      "file": "frames/dark-breath-09.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        805,
+        615,
+        1230,
+        950
+      ],
+      "anchor_px": [
+        220,
+        295
+      ],
+      "body_center_px": [
+        220,
+        175
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "a5c872667afca6eb44de0ae52a4045cb23ddd677c8c9e52ae528375436c8864d",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 22590
+    },
+    {
+      "order": 14,
+      "module": "dark-breath",
+      "module_frame": 10,
+      "phase": "dissipation",
+      "file": "frames/dark-breath-10.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        0,
+        950,
+        405,
+        1278
+      ],
+      "anchor_px": [
+        240,
+        270
+      ],
+      "body_center_px": [
+        240,
+        150
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "6ac6d3a49a66a3cf84c348aa366d122aeaa979f8e8ff8eaee32b3b93aabd9d76",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 19487
+    },
+    {
+      "order": 15,
+      "module": "dark-breath",
+      "module_frame": 11,
+      "phase": "dissipation",
+      "file": "frames/dark-breath-11.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        405,
+        950,
+        805,
+        1278
+      ],
+      "anchor_px": [
+        215,
+        270
+      ],
+      "body_center_px": [
+        215,
+        150
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "a1faa957d7c258f267d00564c01d1db4cd6f2bf912de84783c6307745a11485f",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 13469
+    },
+    {
+      "order": 16,
+      "module": "dark-breath",
+      "module_frame": 12,
+      "phase": "dissipation",
+      "file": "frames/dark-breath-12.png",
+      "source": "originals/dark-breath-v1.png",
+      "crop": [
+        805,
+        950,
+        1230,
+        1278
+      ],
+      "anchor_px": [
+        220,
+        270
+      ],
+      "body_center_px": [
+        220,
+        150
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "7f0e6ed36f76495cd178a2023d6763cd72eb7074d62748b110f6de90c8143a8c",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 5437
+    }
+  ]
+}

@@ -18,7 +18,13 @@ env:
   GODOT_VERSION: "4.6.3"
 
 jobs:
+  courtyard:
+    uses: ./.github/workflows/courtyard-web.yml
+    permissions:
+      contents: read
+
   build:
+    needs: courtyard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +53,23 @@ jobs:
           include-templates: true
       - name: Validate, export, and check playable Web package
         run: python tools/export_pages_web.py dist/tactics
+
+      - name: Include independently validated courtyard without replacing campaign
+        uses: actions/download-artifact@v4
+        with:
+          name: courtyard-web
+          path: dist/courtyard
+
+      - name: Verify courtyard artifact matches this release commit
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          info = json.loads(Path('dist/courtyard/build-info.json').read_text())
+          assert info['source_commit'] == os.environ['GITHUB_SHA'], 'Courtyard artifact commit mismatch'
+          assert info['scene'] == 'res://prototypes/blooming/BloomingBattle.tscn'
+          PY
+          node tools/check_web_package.mjs dist/courtyard
 
       - uses: actions/upload-pages-artifact@v3
         with:

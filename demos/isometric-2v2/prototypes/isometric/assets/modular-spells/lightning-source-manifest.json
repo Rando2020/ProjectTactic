@@ -1,0 +1,368 @@
+{
+  "status": "visual candidate; not engine validated",
+  "composition": [
+    "shared_tier1",
+    "lightning"
+  ],
+  "schema_extensible": true,
+  "tiers_not_hardcoded": true,
+  "frame_count_is_this_candidate_only": 16,
+  "shared_cast_source_sha256": "d62c3f8908220e775b4dd3425ceb4eddf9d1468ca782d23f88e0f91569fb4f4d",
+  "alpha_policy": "Exact variable rectangular crops; no thresholding or repainting. Artwork did not follow uniform row sizing; explicit crop coordinates are required. Split rows and columns alpha <=1.",
+  "anchor_policy": "Hand-estimated common semantic ground anchor; preview proposals, verify in engine.",
+  "timing_policy": "Suggested visual-review timing only, not original author timing or gameplay charge mechanics.",
+  "frames": [
+    {
+      "order": 1,
+      "module": "shared_tier1",
+      "module_frame": 1,
+      "phase": "casting",
+      "file": "frames/shared_tier1-01.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "anchor_px": [
+        320,
+        551
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "cac24329882ecff3d820f3dcc5a29b024dfe0da9d8e4e52b6b71a0cd3d4a43e6"
+    },
+    {
+      "order": 2,
+      "module": "shared_tier1",
+      "module_frame": 2,
+      "phase": "casting",
+      "file": "frames/shared_tier1-02.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "anchor_px": [
+        311,
+        552
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "55212630d6c8de85ced9529ae0285ab4b879ab6fc3a3b1df7e33ca87150defff"
+    },
+    {
+      "order": 3,
+      "module": "shared_tier1",
+      "module_frame": 3,
+      "phase": "casting",
+      "file": "frames/shared_tier1-03.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "anchor_px": [
+        320,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "2063adb7d048ba975eadcbff80adc18d4f51fda8536c9eeb1eddf6485dee9f44"
+    },
+    {
+      "order": 4,
+      "module": "shared_tier1",
+      "module_frame": 4,
+      "phase": "casting",
+      "file": "frames/shared_tier1-04.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "anchor_px": [
+        313,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "61f989824c9752b6edb1688c0fd6b9d2e2ddc8463bec2a56b26e556a06d250da"
+    },
+    {
+      "order": 5,
+      "module": "lightning",
+      "module_frame": 1,
+      "phase": "formation",
+      "file": "frames/lightning-01.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        0,
+        0,
+        362,
+        375
+      ],
+      "anchor_px": [
+        198,
+        328
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 110,
+      "preview_scale": 1,
+      "sha256": "19fc31263730b131cbbe649be050c2bffacd4cfb858ce13394656d4b40a12082"
+    },
+    {
+      "order": 6,
+      "module": "lightning",
+      "module_frame": 2,
+      "phase": "formation",
+      "file": "frames/lightning-02.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        362,
+        0,
+        724,
+        375
+      ],
+      "anchor_px": [
+        185,
+        328
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 90,
+      "preview_scale": 1,
+      "sha256": "34f71e8138928b5c6f2b0f29cab05564f5acf0326e78c948ee67e8121e294c03"
+    },
+    {
+      "order": 7,
+      "module": "lightning",
+      "module_frame": 3,
+      "phase": "formation",
+      "file": "frames/lightning-03.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        724,
+        0,
+        1086,
+        375
+      ],
+      "anchor_px": [
+        179,
+        328
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 70,
+      "preview_scale": 1,
+      "sha256": "f3f061cc60366f7166844b57e280aa6967d634d78a85de364e37bad641f591e4"
+    },
+    {
+      "order": 8,
+      "module": "lightning",
+      "module_frame": 4,
+      "phase": "action",
+      "file": "frames/lightning-04.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        0,
+        375,
+        362,
+        752
+      ],
+      "anchor_px": [
+        198,
+        335
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 55,
+      "preview_scale": 1,
+      "sha256": "521ffee724a0b37e9ce38788aec2069bd528b907c2500de759de87733f81c4d2"
+    },
+    {
+      "order": 9,
+      "module": "lightning",
+      "module_frame": 5,
+      "phase": "action",
+      "file": "frames/lightning-05.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        362,
+        375,
+        724,
+        752
+      ],
+      "anchor_px": [
+        185,
+        335
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 45,
+      "preview_scale": 1,
+      "sha256": "849f0381a9669e2df6120a42a851bbb453fd7bf277a4056eee98adf7dd01c358"
+    },
+    {
+      "order": 10,
+      "module": "lightning",
+      "module_frame": 6,
+      "phase": "action",
+      "file": "frames/lightning-06.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        724,
+        375,
+        1086,
+        752
+      ],
+      "anchor_px": [
+        179,
+        335
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 55,
+      "preview_scale": 1,
+      "sha256": "0e22b2ee5b144aa343c10f892c0c210d1fc6a36d961efe03a730658c6366163b"
+    },
+    {
+      "order": 11,
+      "module": "lightning",
+      "module_frame": 7,
+      "phase": "collision",
+      "file": "frames/lightning-07.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        0,
+        752,
+        362,
+        1144
+      ],
+      "anchor_px": [
+        198,
+        295
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 60,
+      "preview_scale": 1,
+      "sha256": "d9ec0610e1cf5966595ab361fab613ae62f376f906d53bd126c041a479d23c6e"
+    },
+    {
+      "order": 12,
+      "module": "lightning",
+      "module_frame": 8,
+      "phase": "collision",
+      "file": "frames/lightning-08.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        362,
+        752,
+        724,
+        1144
+      ],
+      "anchor_px": [
+        185,
+        295
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 85,
+      "preview_scale": 1,
+      "sha256": "834919d5153dabb0b3669dc1d1ffe224e9418c4a730360a71d53cac7a5234fe8"
+    },
+    {
+      "order": 13,
+      "module": "lightning",
+      "module_frame": 9,
+      "phase": "collision",
+      "file": "frames/lightning-09.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        724,
+        752,
+        1086,
+        1144
+      ],
+      "anchor_px": [
+        179,
+        295
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 90,
+      "preview_scale": 1,
+      "sha256": "dbfce69380773794683c4f7f0e1d817c413368f973fa4c757507cc81045cbbe4"
+    },
+    {
+      "order": 14,
+      "module": "lightning",
+      "module_frame": 10,
+      "phase": "dissipation",
+      "file": "frames/lightning-10.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        0,
+        1144,
+        362,
+        1448
+      ],
+      "anchor_px": [
+        198,
+        216
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 110,
+      "preview_scale": 1,
+      "sha256": "4b72c400ca38d3c869c8ac4a33f0a8a3430f46cc4ac7135dfff26718015636fc"
+    },
+    {
+      "order": 15,
+      "module": "lightning",
+      "module_frame": 11,
+      "phase": "dissipation",
+      "file": "frames/lightning-11.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        362,
+        1144,
+        724,
+        1448
+      ],
+      "anchor_px": [
+        185,
+        216
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 120,
+      "preview_scale": 1,
+      "sha256": "f1d1af769ec23e0cd71dda8302b3edadcd626face0fc434afeddf3ffbc5ec5de"
+    },
+    {
+      "order": 16,
+      "module": "lightning",
+      "module_frame": 12,
+      "phase": "dissipation",
+      "file": "frames/lightning-12.png",
+      "source": "originals/lightning-specific-12-v2.png",
+      "crop": [
+        724,
+        1144,
+        1086,
+        1448
+      ],
+      "anchor_px": [
+        179,
+        216
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 150,
+      "preview_scale": 1,
+      "sha256": "de9c2eafe261e6a7474a362e87e902ec7aa2b9ed669ebd2e07698b1c7fa5d9cc"
+    }
+  ]
+}

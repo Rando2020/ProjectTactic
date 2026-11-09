@@ -1,0 +1,2 @@
+# Hydrated standalone demo assets work without LFS.
+* -filter !diff !merge !text

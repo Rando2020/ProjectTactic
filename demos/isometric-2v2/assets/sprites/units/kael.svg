@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Ground shadow -->
+  <ellipse cx="32" cy="60" rx="16" ry="4" fill="#00000060"/>
+
+  <!-- === GREAT AXE === -->
+  <rect x="47" y="14" width="4" height="34" rx="1" fill="#6a4c1a" stroke="#1a1a2e" stroke-width="1"/>
+  <polygon points="44,8 58,13 58,26 44,30" fill="#9090a8" stroke="#1a1a2e" stroke-width="1.2"/>
+  <polygon points="46,11 56,15 56,25 46,28" fill="#c8c8e0"/>
+  <!-- axe shine -->
+  <line x1="47" y1="12" x2="52" y2="24" stroke="#e8e8f8" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- === TOWER SHIELD === -->
+  <rect x="7" y="18" width="14" height="24" rx="3" fill="#2a3325" stroke="#1a1a2e" stroke-width="1.4"/>
+  <rect x="9" y="20" width="10" height="20" rx="2" fill="#3a4435"/>
+  <line x1="14" y1="21" x2="14" y2="38" stroke="#4a5545" stroke-width="2"/>
+  <line x1="10" y1="29" x2="18" y2="29" stroke="#4a5545" stroke-width="2"/>
+  <circle cx="14" cy="29" r="3.5" fill="#cc8800" stroke="#1a1a2e" stroke-width="0.8"/>
+
+  <!-- === LEGS === -->
+  <rect x="19" y="44" width="12" height="14" rx="2" fill="#253040" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="33" y="44" width="12" height="14" rx="2" fill="#253040" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- knee guards -->
+  <rect x="19" y="44" width="12" height="5" rx="1" fill="#354050" stroke="#1a1a2e" stroke-width="0.8"/>
+  <rect x="33" y="44" width="12" height="5" rx="1" fill="#354050" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- sabatons -->
+  <rect x="17" y="53" width="15" height="7" rx="2" fill="#151e28" stroke="#1a1a2e" stroke-width="1"/>
+  <rect x="32" y="53" width="15" height="7" rx="2" fill="#151e28" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- === BODY (heavy plate) === -->
+  <rect x="17" y="23" width="29" height="22" rx="2" fill="#2a3848" stroke="#1a1a2e" stroke-width="1.5"/>
+  <!-- highlight side -->
+  <rect x="18" y="24" width="13" height="15" rx="1" fill="#3a4858" opacity="0.8"/>
+  <!-- shadow side -->
+  <rect x="31" y="24" width="14" height="15" rx="1" fill="#1a2838" opacity="0.7"/>
+  <!-- armor ridges -->
+  <rect x="17" y="28" width="29" height="2" rx="1" fill="#3a4858"/>
+  <rect x="17" y="34" width="29" height="2" rx="1" fill="#3a4858"/>
+  <!-- belt -->
+  <rect x="17" y="42" width="29" height="4" rx="1" fill="#1a2838" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- pauldrons (massive) -->
+  <rect x="9"  y="21" width="12" height="10" rx="4" fill="#3a4858" stroke="#1a1a2e" stroke-width="1.3"/>
+  <rect x="43" y="21" width="12" height="10" rx="4" fill="#3a4858" stroke="#1a1a2e" stroke-width="1.3"/>
+  <!-- gorget -->
+  <rect x="24" y="19" width="15" height="7" rx="3" fill="#3a4858" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- === HEAD (full plate helm, chibi) === -->
+  <rect x="18" y="4" width="27" height="20" rx="4" fill="#2a3848" stroke="#1a1a2e" stroke-width="1.5"/>
+  <!-- highlight -->
+  <rect x="19" y="5" width="13" height="14" rx="3" fill="#3a4858" opacity="0.7"/>
+  <!-- crest -->
+  <rect x="24" y="2" width="15" height="5" rx="2" fill="#cc8800" stroke="#1a1a2e" stroke-width="0.8"/>
+  <rect x="26" y="0" width="11" height="4" rx="1" fill="#ffaa00" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- face plate -->
+  <rect x="20" y="14" width="23" height="9" rx="2" fill="#1a2535" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- eye slits (orange glow) -->
+  <rect x="22" y="16" width="7" height="2.5" rx="1" fill="#ff8800"/>
+  <rect x="34" y="16" width="7" height="2.5" rx="1" fill="#ff8800"/>
+  <!-- glow effect -->
+  <rect x="22" y="16" width="7" height="2.5" rx="1" fill="#ffcc44" opacity="0.5"/>
+  <rect x="34" y="16" width="7" height="2.5" rx="1" fill="#ffcc44" opacity="0.5"/>
+  <!-- chin guard -->
+  <rect x="22" y="22" width="19" height="3" rx="1" fill="#2a3848" stroke="#1a1a2e" stroke-width="0.8"/>
+</svg>

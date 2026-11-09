@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Ground shadow -->
+  <ellipse cx="32" cy="61" rx="13" ry="3.5" fill="#00000055"/>
+
+  <!-- === TAIL === -->
+  <path d="M 41 52 Q 52 47 50 39 Q 56 34 52 28" stroke="#4400aa" stroke-width="4.5"
+    fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="52,28 56,23 59,29 54,32" fill="#5511bb" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- === LIGHTNING AURA === -->
+  <!-- left -->
+  <polygon points="17,40 9,27 16,33 11,18 20,27 17,13 25,29"
+    fill="#ffdd00" opacity="0.50" stroke="none"/>
+  <!-- right -->
+  <polygon points="47,40 55,27 48,33 53,18 44,27 47,13 39,29"
+    fill="#ffdd00" opacity="0.50" stroke="none"/>
+
+  <!-- === WINGS === -->
+  <polygon points="20,34 6,16 12,14 20,27 24,22" fill="#6611bb" stroke="#1a1a2e" stroke-width="1.2" opacity="0.92"/>
+  <polygon points="14,24 7,17 12,19" fill="#8833dd" opacity="0.65"/>
+  <polygon points="44,34 58,16 52,14 44,27 40,22" fill="#6611bb" stroke="#1a1a2e" stroke-width="1.2" opacity="0.92"/>
+  <polygon points="50,24 57,17 52,19" fill="#8833dd" opacity="0.65"/>
+  <!-- wing membranes -->
+  <line x1="20" y1="34" x2="8"  y2="17" stroke="#4400aa" stroke-width="1.5"/>
+  <line x1="20" y1="34" x2="13" y2="15" stroke="#4400aa" stroke-width="1"/>
+  <line x1="44" y1="34" x2="56" y2="17" stroke="#4400aa" stroke-width="1.5"/>
+  <line x1="44" y1="34" x2="51" y2="15" stroke="#4400aa" stroke-width="1"/>
+
+  <!-- === BODY === -->
+  <ellipse cx="32" cy="43" rx="14" ry="15" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.4"/>
+  <ellipse cx="32" cy="43" rx="10" ry="11" fill="#5511bb"/>
+  <!-- belly highlight -->
+  <ellipse cx="30" cy="41" rx="7" ry="8" fill="#6622cc" opacity="0.6"/>
+  <!-- belly lightning bolt -->
+  <polygon points="30,31 27,42 32,38 29,52 35,39 31,43 35,31"
+    fill="#ffdd00" opacity="0.95" stroke="#cc9900" stroke-width="0.5"/>
+
+  <!-- === ARMS === -->
+  <rect x="13" y="37" width="10" height="6" rx="3" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="41" y="37" width="10" height="6" rx="3" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- clawed hands -->
+  <polygon points="10,41 5,38 7,43 12,44" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+  <polygon points="10,43 5,48 9,49 13,44" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+  <polygon points="54,41 59,38 57,43 52,44" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+  <polygon points="54,43 59,48 55,49 51,44" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+
+  <!-- === LEGS === -->
+  <rect x="23" y="54" width="9" height="8" rx="2" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="32" y="54" width="9" height="8" rx="2" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- foot claws -->
+  <polygon points="23,60 18,63 21,64 25,61" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+  <polygon points="41,60 46,63 43,64 39,61" fill="#330088" stroke="#1a1a2e" stroke-width="0.8"/>
+
+  <!-- === NECK === -->
+  <rect x="26" y="26" width="12" height="12" rx="4" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.2"/>
+
+  <!-- === HEAD (chibi large) === -->
+  <ellipse cx="32" cy="19" rx="15" ry="13" fill="#4400aa" stroke="#1a1a2e" stroke-width="1.5"/>
+  <ellipse cx="32" cy="18" rx="12" ry="10" fill="#5511bb"/>
+  <!-- forehead highlight -->
+  <ellipse cx="28" cy="13" rx="7" ry="5" fill="#6622cc" opacity="0.55"/>
+
+  <!-- === LIGHTNING HORNS === -->
+  <polygon points="20,13 17,4 22,8 19,0 27,11" fill="#ffdd00" stroke="#cc9900" stroke-width="0.8"/>
+  <polygon points="18,4 20,0 23,3 21,7"         fill="#ffee88" opacity="0.8"/>
+  <polygon points="44,13 47,4 42,8 45,0 37,11" fill="#ffdd00" stroke="#cc9900" stroke-width="0.8"/>
+  <polygon points="46,4 44,0 41,3 43,7"         fill="#ffee88" opacity="0.8"/>
+
+  <!-- === EARS === -->
+  <polygon points="19,18 13,11 20,14" fill="#5511bb" stroke="#1a1a2e" stroke-width="1"/>
+  <polygon points="45,18 51,11 44,14" fill="#5511bb" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- === EYES (electric gold) === -->
+  <circle cx="25" cy="18" r="6" fill="#aa6600" stroke="#1a1a2e" stroke-width="1"/>
+  <circle cx="39" cy="18" r="6" fill="#aa6600" stroke="#1a1a2e" stroke-width="1"/>
+  <circle cx="25" cy="18" r="4" fill="#ffcc00"/>
+  <circle cx="39" cy="18" r="4" fill="#ffcc00"/>
+  <circle cx="25" cy="18" r="2" fill="#ff9900"/>
+  <circle cx="39" cy="18" r="2" fill="#ff9900"/>
+  <circle cx="24" cy="17" r="1" fill="#ffffff"/>
+  <circle cx="38" cy="17" r="1" fill="#ffffff"/>
+
+  <!-- === GRIN === -->
+  <path d="M 24 25 Q 32 30 40 25" stroke="#220066" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <rect x="26" y="25" width="3.5" height="4" rx="1" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.5"/>
+  <rect x="31" y="25" width="3.5" height="4" rx="1" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.5"/>
+  <rect x="36" y="25" width="3.5" height="4" rx="1" fill="#eeeeee" stroke="#aaaaaa" stroke-width="0.5"/>
+</svg>

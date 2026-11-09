@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Ground shadow -->
+  <ellipse cx="32" cy="60" rx="12" ry="3" fill="#00000050"/>
+
+  <!-- === STAFF (behind body) === -->
+  <rect x="46" y="8" width="3.5" height="44" rx="1" fill="#7a4e1a" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- Orb -->
+  <circle cx="47" cy="9" r="7" fill="#4400bb" stroke="#1a1a2e" stroke-width="1.2"/>
+  <circle cx="47" cy="9" r="5" fill="#7722ee"/>
+  <circle cx="44.5" cy="7" r="2.5" fill="#bb66ff" opacity="0.8"/>
+  <circle cx="47" cy="9" r="7" fill="none" stroke="#cc88ff" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- === ROBE / LOWER BODY === -->
+  <rect x="18" y="30" width="26" height="26" rx="5" fill="#6622aa" stroke="#1a1a2e" stroke-width="1.4"/>
+  <!-- highlight side -->
+  <rect x="19" y="31" width="12" height="18" rx="3" fill="#7733bb" opacity="0.7"/>
+  <!-- shadow side -->
+  <rect x="31" y="31" width="12" height="18" rx="3" fill="#4411aa" opacity="0.6"/>
+  <!-- trim bottom -->
+  <rect x="18" y="51" width="26" height="4" rx="2" fill="#cc88ff" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- trim belt -->
+  <rect x="18" y="30" width="26" height="4" rx="2" fill="#cc88ff" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- hem detail -->
+  <rect x="21" y="52" width="4" height="3" rx="1" fill="#aa55ee"/>
+  <rect x="28" y="52" width="4" height="3" rx="1" fill="#aa55ee"/>
+  <rect x="35" y="52" width="4" height="3" rx="1" fill="#aa55ee"/>
+
+  <!-- === SLEEVES === -->
+  <rect x="9"  y="28" width="11" height="16" rx="4" fill="#6622aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="43" y="28" width="10" height="14" rx="4" fill="#6622aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- hands -->
+  <circle cx="12" cy="44" r="4.5" fill="#f5c880" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- casting sparkle -->
+  <circle cx="9"  cy="42" r="2" fill="#cc88ff" opacity="0.8"/>
+  <circle cx="7"  cy="46" r="1.2" fill="#ffaaff" opacity="0.7"/>
+
+  <!-- === UPPER BODY === -->
+  <rect x="20" y="20" width="22" height="12" rx="2" fill="#7733bb" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- brooch -->
+  <circle cx="31" cy="26" r="3.5" fill="#ffcc00" stroke="#1a1a2e" stroke-width="0.8"/>
+  <circle cx="31" cy="26" r="1.5" fill="#ff9900"/>
+
+  <!-- === HEAD (chibi large) === -->
+  <rect x="27" y="16" width="8" height="6" rx="2" fill="#f5c880" stroke="#1a1a2e" stroke-width="1"/>
+  <rect x="19" y="3" width="24" height="18" rx="5" fill="#f5c880" stroke="#1a1a2e" stroke-width="1.4"/>
+  <!-- hair (dark purple) -->
+  <rect x="19" y="3" width="24" height="7" rx="5" fill="#330055" stroke="#1a1a2e" stroke-width="1"/>
+  <rect x="17" y="6" width="4" height="12" rx="2" fill="#330055" stroke="#1a1a2e" stroke-width="0.8"/>
+  <rect x="41" y="6" width="4" height="12" rx="2" fill="#330055" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- hat -->
+  <rect x="16" y="6" width="30" height="5" rx="2" fill="#4411aa" stroke="#1a1a2e" stroke-width="1.2"/>
+  <polygon points="25,6 39,6 35,0 29,0" fill="#5522bb" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- star on hat -->
+  <polygon points="32,1 33,3.5 36,3.5 33.8,5 34.8,7.5 32,6 29.2,7.5 30.2,5 28,3.5 31,3.5"
+    fill="#ffdd00" stroke="#cc8800" stroke-width="0.5"/>
+  <!-- cheeks -->
+  <circle cx="23" cy="14" r="2.5" fill="#e8a870" opacity="0.5"/>
+  <circle cx="40" cy="14" r="2.5" fill="#e8a870" opacity="0.5"/>
+  <!-- eyes -->
+  <ellipse cx="26.5" cy="12" rx="3" ry="3" fill="#220044"/>
+  <ellipse cx="36.5" cy="12" rx="3" ry="3" fill="#220044"/>
+  <circle cx="26" cy="11" r="1.2" fill="#cc44ff"/>
+  <circle cx="36" cy="11" r="1.2" fill="#cc44ff"/>
+  <circle cx="25.5" cy="10.5" r="0.8" fill="#ffffff"/>
+  <circle cx="35.5" cy="10.5" r="0.8" fill="#ffffff"/>
+  <!-- mouth smile -->
+  <path d="M 27 17 Q 31.5 19.5 36 17" stroke="#c07048" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+</svg>

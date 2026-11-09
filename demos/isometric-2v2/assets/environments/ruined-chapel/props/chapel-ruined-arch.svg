@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="184" height="216" viewBox="0 0 184 216">
+<!-- Standalone ruined gothic chapel arch. Transparent opening maintains the tactical sightline. -->
+<path d="M17 209 167 209 167 216 17 216Z" fill="#252c30" opacity=".48"/>
+<path d="M19 206 19 78 37 49 53 32 65 29 81 53 92 68 103 47 119 24 137 42 150 72 164 78 164 207 135 207 136 90 128 72 117 63 105 75 92 104 79 76 66 66 56 75 49 90 48 206Z" fill="#4d5356"/>
+<path d="M22 78 39 45 55 28 67 31 79 52 91 69 100 50 116 26 136 39 154 71 161 80 146 84 137 61 120 45 107 63 93 91 78 63 63 45 51 52 36 80Z" fill="#a29a87" stroke="#3a434a" stroke-width="3"/>
+<path d="M19 204 18 86 48 86 48 204Z" fill="#797469" stroke="#40474a" stroke-width="2"/>
+<path d="M135 204 135 87 164 84 163 204Z" fill="#817d70" stroke="#3d4648" stroke-width="2"/>
+<path d="M20 95 46 96 M20 124 46 126 M21 151 46 154 M20 180 47 181 M135 107 162 105 M136 137 162 135 M137 166 161 166 M135 189 162 187" stroke="#393f40" stroke-width="2" opacity=".8"/>
+<path d="M23 104 28 118 23 133 M42 135 35 149 M139 119 145 132 139 149 M158 169 153 180" stroke="#d7c4a4" stroke-width="1.4" opacity=".65" fill="none"/>
+<path d="M31 48 48 37 57 36 M117 31 132 42 144 63" stroke="#d5c4a3" stroke-width="3" opacity=".53" fill="none"/>
+<path d="M26 204 26 84 40 62 51 45 M158 201 158 91 143 67" stroke="#252c35" stroke-width="2" opacity=".6" fill="none"/>
+<path d="M8 207 57 207 57 216 8 216Z M128 207 175 207 175 216 128 216Z" fill="#484d4b" stroke="#30383b"/>
+<path d="M10 202 55 202 57 210 8 210Z M128 202 175 202 175 210 128 210Z" fill="#b0a18a" stroke="#40494b"/>
+<path d="M20 177 28 180 M137 151 143 148 M43 74 48 71" stroke="#485e48" stroke-width="5" opacity=".45"/>
+<path d="M46 26 49 19 58 20 62 29 M118 24 127 13 135 22" fill="#646966" stroke="#393f40" stroke-width="2"/>
+</svg>
