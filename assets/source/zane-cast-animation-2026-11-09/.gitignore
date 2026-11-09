@@ -1,0 +1,5 @@
+.godot/
+.runtime/
+__pycache__/
+animation/frame-sequence/
+animation/review-once.mp4

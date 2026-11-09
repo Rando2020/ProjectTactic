@@ -1,0 +1,19 @@
+{
+  "apng_frames": 100,
+  "apng_duration_ms": 2000.0,
+  "apng_size": [
+    1254,
+    1254
+  ],
+  "apng_rgba_pixel_equality_to_sources": "100/100 exact",
+  "source_images": 5,
+  "mp4_frames": 300,
+  "mp4_duration_s": 6,
+  "mp4_resolution": [
+    1280,
+    720
+  ],
+  "release_event_ms_from_cast_start": 280,
+  "engine_capture": false,
+  "visual_acceptance": false
+}
