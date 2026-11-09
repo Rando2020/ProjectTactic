@@ -50,6 +50,20 @@ jobs:
             XDG_DATA_HOME="$(mktemp -d)" timeout 180 godot --headless --path "$project" "res://$scene" 2>&1 | tee "$log"
             if grep -E 'SCRIPT ERROR:|FAIL:' "$log"; then exit 1; fi
           done
+      - name: Preserve integrated ground and contact renderer regressions
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/courtyard-evidence/ground build/courtyard-evidence/contact
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_ground/RenderedGroundTest.tscn -- --capture-dir="$PWD/build/courtyard-evidence/ground" 2>&1 | tee build/courtyard-evidence/ground-renderer.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_contact/RenderedTest.tscn -- --capture-dir="$PWD/build/courtyard-evidence/contact" 2>&1 | tee build/courtyard-evidence/contact-renderer.log
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path, count in [('ground/render-tests.json', 13), ('contact/contact-render-tests.json', 9)]:
+              result = json.loads((Path('build/courtyard-evidence') / path).read_text())
+              assert result['checks'] == count and not result['failures'], result
+          PY
       - name: Export fresh production and isolated browser QA packages
         run: python tools/export_courtyard_web.py build/courtyard --qa-directory build/courtyard-qa
       - name: Install browser driver dependency

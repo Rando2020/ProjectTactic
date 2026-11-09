@@ -205,7 +205,7 @@ func _process(_delta: float) -> void:
 
 func _refresh_appearance_control() -> void:
 	if not is_instance_valid(_bloom_skin_toggle): return
-	_bloom_skin_toggle.text = "Characters: %s ↔" % ("Compact" if bool(GameState.practice_session.get("compact_skins",true)) else "Original")
+	_bloom_skin_toggle.text = "Characters: %s" % ("Compact" if bool(GameState.practice_session.get("compact_skins",true)) else "Original")
 	_bloom_skin_toggle.disabled = battle_manager != null and battle_manager.is_resolving_action
 
 func _build_compact_forecast() -> void:
@@ -282,10 +282,23 @@ func _layout_persistent_hud() -> void:
 	_bloom_rail_toggle.size = Vector2(viewport.x-rail_x-8,44 * factor)
 	_bloom_objective_panel.position = Vector2(12,12)
 	_bloom_objective_panel.size = Vector2(minf(300 * factor,area.size.x*0.45),96 * factor)
-	_bloom_turn_strip.position = Vector2(maxf(_bloom_objective_panel.get_rect().end.x+12,(area.size.x-320)*0.5),12)
-	_bloom_turn_strip.size = Vector2(320,78)
-	if _bloom_turn_strip.position.x + 320 > area.end.x-12:
-		_bloom_turn_strip.position.x = area.end.x-332
+	# Reserve the complete current-turn label, including its target marker, at
+	# the selected type size. Fixed 60px cards clipped NOW to NO in Web/native.
+	var strip_width := 20.0 # Four existing 5px gaps.
+	for index in _turn_rows.size():
+		var row: Dictionary = _turn_rows[index]
+		var card_width := 60.0
+		if index == 0:
+			var label: Label = row.when
+			var text_width := label.get_theme_font("font").get_string_size("NOW •",HORIZONTAL_ALIGNMENT_LEFT,-1,label.get_theme_font_size("font_size")).x
+			var style: StyleBox = row.panel.get_theme_stylebox("panel")
+			card_width = maxf(card_width,ceilf(text_width+style.get_content_margin(SIDE_LEFT)+style.get_content_margin(SIDE_RIGHT)))
+		row.panel.custom_minimum_size.x = card_width
+		strip_width += card_width
+	_bloom_turn_strip.position = Vector2(maxf(_bloom_objective_panel.get_rect().end.x+12,(area.size.x-strip_width)*0.5),12)
+	_bloom_turn_strip.size = Vector2(strip_width,78)
+	if _bloom_turn_strip.position.x + strip_width > area.end.x-12:
+		_bloom_turn_strip.position.x = area.end.x-strip_width-12
 	_bloom_active_panel.size = Vector2(330 * factor, maxf(160 * factor, _bloom_active_panel.get_combined_minimum_size().y))
 	_bloom_active_panel.position = Vector2(12,viewport.y-_bloom_active_panel.size.y-12)
 	_bloom_hint.position = Vector2(12, _bloom_objective_panel.get_rect().end.y+8)

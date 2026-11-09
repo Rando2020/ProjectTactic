@@ -15,6 +15,11 @@ the expected commit before calling a release live.
   `e2c0b6a457f1332c98b56afef808268631fcfee6`, relative to #103.
 - No other root gameplay changes or historical feature-branch dependencies.
 - No new wall, paving, character animation or emblem candidates are enabled.
+- Actual first Web captures exposed an unavailable arrow glyph on the appearance
+  toggle and a clipped current-turn label. The toggle now uses ordinary text;
+  the current-turn card reserves its full scaled label plus target marker without
+  reducing the accessibility font size. An 82-check layout regression covers
+  repeated size changes and targeted/non-targeted states.
 
 Existing PR branches are untouched. This is an integration snapshot, not a claim
 that all stacked PRs were merged or that every asset has been approved.
@@ -27,7 +32,8 @@ directory. Only that copy launches `BloomingBattle.tscn` and uses the isolated
 first, checked for QA instrumentation, packaged and integrity-checked. A separate
 QA package adds a read-only observer. Source projects are never rewritten.
 
-The reusable `Courtyard Web release gate` runs supported native contracts,
+The reusable `Courtyard Web release gate` runs supported native contracts and the
+existing 13 ground/9 contact native-renderer pixel regressions,
 exports both packages with Godot 4.6.3, and exercises actual Chrome keyboard/mouse
 input: settings, move targeting, review/cancel, mouse confirmation, resource
 preservation, and 1920/1366 layouts. It also loads the uninstrumented production
