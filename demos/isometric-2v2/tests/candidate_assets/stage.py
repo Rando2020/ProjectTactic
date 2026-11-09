@@ -19,6 +19,14 @@ s=p.read_text()
 old='res://prototypes/isometric/Unit.gd'
 if s.count(old)!=1: raise SystemExit('Unexpected actor scene; staging refused.')
 p.write_text(s.replace(old,'res://tests/candidate_assets/CandidateUnit.gd'))
+# Append review-only overrides to the staged HUD instead of introducing an
+# extra inheritance level (Godot rejects the inherited selection signature).
+p=dest/'prototypes/blooming/BloomingHUD.gd'
+s=p.read_text()
+old='func _refresh_appearance_control() -> void:'
+if s.count(old)!=1: raise SystemExit('Unexpected HUD appearance hook; staging refused.')
+s=s.replace(old,'func _refresh_baseline_appearance_control() -> void:')
+p.write_text(s+'\n'+(fixtures/'CandidateHUD.gdinc').read_text())
 p=dest/'project.godot'
 s=p.read_text().replace('ProjectTactic-IsometricProof','ProjectTactic-CandidateReview')
 p.write_text(s)

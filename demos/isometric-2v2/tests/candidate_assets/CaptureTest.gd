@@ -19,10 +19,17 @@ func run() -> void:
  add_child(battle)
  await get_tree().create_timer(1.0).timeout
  var banner := Label.new()
- banner.text = 'CANDIDATE ART REVIEW • posed capture, not gameplay acceptance • old art retained for missing facings'
- banner.position = Vector2(20,10)
- banner.add_theme_font_size_override('font_size',18)
+ banner.text = 'CANDIDATE REVIEW | Posed engine capture\nMissing facings use old art. Not gameplay or art approval.'
+ banner.position = Vector2(380,get_viewport().get_visible_rect().size.y - 56)
+ banner.add_theme_font_size_override('font_size',16)
+ banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
  battle.battle_ui.add_child(banner)
+ await get_tree().process_frame
+ var bounds := banner.get_global_rect()
+ if not get_viewport().get_visible_rect().encloses(bounds) or bounds.intersects(battle.battle_ui._bloom_active_panel.get_global_rect()) or bounds.intersects(battle.battle_ui._bloom_objective_panel.get_global_rect()):
+  printerr('FAIL: candidate disclaimer overlaps HUD or viewport')
+  get_tree().quit(1)
+  return
  for direction in ['N','E','S','W']:
   for unit in battle.battle_manager.units.values(): unit.set_facing(direction)
   await capture('candidate-idle-' + direction)
@@ -36,5 +43,12 @@ func run() -> void:
   await capture('candidate-cast-' + pose)
  zane.reset_melee_pose()
  enemy.reset_melee_pose()
+ battle.queue_free()
+ await get_tree().process_frame
+ for voice in get_node('/root/AudioSettings').get_children():
+  if voice is AudioStreamPlayer:
+   voice.stop()
+   voice.stream = null
+ await get_tree().create_timer(0.5).timeout
  print('Candidate graphical captures: 6 saved')
  get_tree().quit()

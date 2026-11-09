@@ -1,0 +1,8 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+FAIL: candidate setting is truthful and cannot fake a skin switch
+FAIL: zane portrait uses candidate source
+FAIL: kael portrait uses candidate source
+FAIL: storm_imp portrait uses candidate source
+FAIL: storm_imp forecast portrait matches candidate identity
+Candidate battle: 108 checks, 5 failures

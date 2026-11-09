@@ -19,6 +19,17 @@ func run() -> void:
   print('Candidate battle: %d checks, %d failures' % [checks,failures])
   get_tree().quit(1)
   return
+ var ui = battle.battle_ui
+ check(ui._bloom_skin_toggle.text == 'Candidate art (review)' and ui._bloom_skin_toggle.disabled, 'candidate setting is truthful and cannot fake a skin switch')
+ for role in ['zane','kael','storm_imp']:
+  var portrait: Texture2D = ui._framed_portrait(role)
+  check(portrait is AtlasTexture and '/candidate_assets/sources/' in portrait.atlas.resource_path, role + ' portrait uses candidate source')
+  if portrait is AtlasTexture:
+   check(Rect2(Vector2.ZERO,portrait.atlas.get_size()).encloses(portrait.region), role + ' portrait crop fits source')
+  var preview := TextureRect.new()
+  ui._set_preview_portrait(preview,AssetRegistry.get_character_portrait_candidates(role)[0])
+  check(preview.texture == portrait, role + ' forecast portrait matches candidate identity')
+  preview.free()
  for id in ['zane','kael','Enemy_1']:
   var unit = battle.battle_manager.units[id]
   var before = [unit.grid_pos,unit.hp,unit.mp]
