@@ -1,0 +1,10 @@
+config_version=5
+[application]
+config/name="Kael directional candidate review"
+run/main_scene="res://Review.tscn"
+[display]
+window/size/viewport_width=1440
+window/size/viewport_height=900
+[rendering]
+renderer/rendering_method="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false

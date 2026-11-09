@@ -1,0 +1,70 @@
+[
+  {
+    "direction": "se",
+    "canvas": [
+      1199,
+      1312
+    ],
+    "mode": "RGBA",
+    "alpha_zero_fraction": 0.6974657488964381,
+    "alpha_opaque_fraction": 0.0003858652535649627,
+    "bounds_alpha_ge_16": [
+      110,
+      42,
+      1046,
+      1263
+    ],
+    "max_border_alpha": 1
+  },
+  {
+    "direction": "sw",
+    "canvas": [
+      1199,
+      1312
+    ],
+    "mode": "RGBA",
+    "alpha_zero_fraction": 0.7174214029984336,
+    "alpha_opaque_fraction": 0.0002110498586220224,
+    "bounds_alpha_ge_16": [
+      128,
+      38,
+      890,
+      1272
+    ],
+    "max_border_alpha": 1
+  },
+  {
+    "direction": "ne",
+    "canvas": [
+      1199,
+      1312
+    ],
+    "mode": "RGBA",
+    "alpha_zero_fraction": 0.7381742153013691,
+    "alpha_opaque_fraction": 0.0006986258874265139,
+    "bounds_alpha_ge_16": [
+      231,
+      32,
+      1021,
+      1239
+    ],
+    "max_border_alpha": 1
+  },
+  {
+    "direction": "nw",
+    "canvas": [
+      1199,
+      1312
+    ],
+    "mode": "RGBA",
+    "alpha_zero_fraction": 0.7338140015053195,
+    "alpha_opaque_fraction": 0.0005231748001383266,
+    "bounds_alpha_ge_16": [
+      302,
+      31,
+      1005,
+      1264
+    ],
+    "max_border_alpha": 1
+  }
+]

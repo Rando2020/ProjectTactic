@@ -1,0 +1,6 @@
+.godot/
+.runtime/
+reference/
+*.import
+*.uid
+qa/xorg.log*
