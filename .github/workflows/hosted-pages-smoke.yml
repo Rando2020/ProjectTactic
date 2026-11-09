@@ -1,0 +1,51 @@
+name: Hosted Pages smoke
+
+on:
+  pull_request:
+    paths:
+      - 'tools/browser_hosted_smoke.py'
+      - 'tools/test_browser_hosted_smoke.py'
+      - '.github/workflows/hosted-pages-smoke.yml'
+  workflow_run:
+    workflows: ['Deploy to GitHub Pages']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha || github.event.pull_request.base.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test hosted verification contracts
+        run: python -m unittest discover -s tools -p test_browser_hosted_smoke.py
+      - run: python -m pip install websocket-client
+      - name: Capture real hosted campaign and courtyard
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/hosted-evidence
+          browser_pid=''
+          trap 'if [ -n "$browser_pid" ]; then kill "$browser_pid" 2>/dev/null || true; wait "$browser_pid" 2>/dev/null || true; fi' EXIT
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1920,1080 \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
+            --remote-allow-origins='http://localhost:9222' \
+            --user-data-dir="$(mktemp -d /tmp/hosted-chrome.XXXXXX)" \
+            about:blank >build/hosted-evidence/chrome.log 2>&1 &
+          browser_pid=$!
+          python tools/browser_hosted_smoke.py --expected-commit "$EXPECTED_COMMIT" --output build/hosted-evidence
+      - name: Upload hosted evidence for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-pages-evidence
+          path: build/hosted-evidence/
+          if-no-files-found: warn
