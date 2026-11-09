@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Ground shadow -->
+  <ellipse cx="32" cy="60" rx="14" ry="3.5" fill="#00000055"/>
+
+  <!-- === BOW (held left, behind body) === -->
+  <!-- bow limb top -->
+  <path d="M 14 8 Q 8 18 12 30" stroke="#7a5520" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <!-- bow limb bottom -->
+  <path d="M 12 30 Q 8 42 14 52" stroke="#7a5520" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <!-- bowstring -->
+  <line x1="14" y1="8" x2="14" y2="52" stroke="#d4c4a0" stroke-width="1.2" opacity="0.9"/>
+  <!-- arrow nocked on string -->
+  <line x1="14" y1="30" x2="36" y2="28" stroke="#c8aa70" stroke-width="1.5"/>
+  <polygon points="36,28 32,25 32,31" fill="#c8aa70"/>
+  <!-- fletching -->
+  <polygon points="14,30 10,26 13,28" fill="#cc4444" opacity="0.85"/>
+  <polygon points="14,30 10,34 13,32" fill="#cc4444" opacity="0.85"/>
+
+  <!-- === LEGS === -->
+  <rect x="20" y="44" width="10" height="13" rx="2" fill="#2a5a22" stroke="#1a1a2e" stroke-width="1.2"/>
+  <rect x="33" y="44" width="10" height="13" rx="2" fill="#2a5a22" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- boots -->
+  <rect x="18" y="53" width="13" height="7" rx="2" fill="#3d2510" stroke="#1a1a2e" stroke-width="1"/>
+  <rect x="32" y="53" width="13" height="7" rx="2" fill="#3d2510" stroke="#1a1a2e" stroke-width="1"/>
+
+  <!-- === BODY (leather/ranger) === -->
+  <rect x="19" y="24" width="25" height="21" rx="2" fill="#3a7030" stroke="#1a1a2e" stroke-width="1.4"/>
+  <!-- chest highlight -->
+  <rect x="20" y="25" width="11" height="13" rx="1" fill="#4a8840" opacity="0.65"/>
+  <!-- shadow side -->
+  <rect x="31" y="25" width="12" height="13" rx="1" fill="#2a5822" opacity="0.55"/>
+  <!-- belt -->
+  <rect x="19" y="41" width="25" height="4" rx="1" fill="#8b6010" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- quiver (right side) -->
+  <rect x="42" y="22" width="6" height="22" rx="2" fill="#6b4010" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- arrow shafts in quiver -->
+  <line x1="44" y1="22" x2="44" y2="18" stroke="#c8aa70" stroke-width="1.2"/>
+  <line x1="46" y1="22" x2="46" y2="17" stroke="#c8aa70" stroke-width="1.2"/>
+  <!-- shoulders (pauldrons, lighter) -->
+  <rect x="13" y="22" width="8" height="6" rx="3" fill="#4a8840" stroke="#1a1a2e" stroke-width="1.1"/>
+  <rect x="42" y="22" width="8" height="6" rx="3" fill="#4a8840" stroke="#1a1a2e" stroke-width="1.1"/>
+
+  <!-- === HEAD (chibi) === -->
+  <!-- neck skin -->
+  <rect x="27" y="16" width="9" height="6" rx="2" fill="#f5c880" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- head base -->
+  <rect x="19" y="4" width="25" height="18" rx="4" fill="#f5c880" stroke="#1a1a2e" stroke-width="1.4"/>
+  <!-- hair (teal/dark) -->
+  <rect x="19" y="4" width="25" height="6" rx="4" fill="#2a6060" stroke="#1a1a2e" stroke-width="1"/>
+  <!-- side hair strands -->
+  <rect x="17" y="8" width="4" height="10" rx="2" fill="#2a6060" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- cheeks -->
+  <circle cx="22" cy="15" r="2.5" fill="#e8a870" opacity="0.6"/>
+  <circle cx="41" cy="15" r="2.5" fill="#e8a870" opacity="0.6"/>
+  <!-- eyes (focused, slightly narrowed) -->
+  <ellipse cx="26" cy="13" rx="3" ry="2" fill="#1a1a2e"/>
+  <ellipse cx="37" cy="13" rx="3" ry="2" fill="#1a1a2e"/>
+  <circle cx="25.5" cy="12.5" r="1" fill="#ffffff"/>
+  <circle cx="36.5" cy="12.5" r="1" fill="#ffffff"/>
+  <!-- eyebrows (angled — determined look) -->
+  <rect x="23" y="9" width="6" height="1.5" rx="1" fill="#1a5050" transform="rotate(-8,26,9.75)"/>
+  <rect x="34" y="9" width="6" height="1.5" rx="1" fill="#1a5050" transform="rotate(8,37,9.75)"/>
+  <!-- mouth (slight smirk) -->
+  <path d="M 29 18 Q 33 20.5 36 18.5" stroke="#c07048" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- ranger hood brim -->
+  <rect x="19" y="4" width="25" height="3" rx="2" fill="#1e4848" stroke="#1a1a2e" stroke-width="0.8"/>
+</svg>

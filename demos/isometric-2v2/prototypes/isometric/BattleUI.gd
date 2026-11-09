@@ -1,0 +1,433 @@
+extends BattleUI
+## Compact proof-only layout; reuses every real command/resource/forecast handler.
+var _proof_skills_panel: PanelContainer
+var _proof_skills_scroll: ScrollContainer
+var _selection: Node
+var _turn_portraits: VBoxContainer
+var _turn_rows: Array[Dictionary] = []
+var _battlefield_labels: Node2D
+var _portrait_cache: Dictionary = {}
+# Read-only forecast identity links; never alter CT or reorder projected turns.
+var _preview_affected: Dictionary = {}
+var _preview_primary := ""
+var _preview_connection_label: Label
+var _preview_intent_label: Label
+var _preview_scroll: ScrollContainer
+var _forecast_content: Control
+
+func _build_ui() -> void:
+	super._build_ui()
+	if not is_instance_valid(_chapel_command_panel):
+		_build_chapel_command_dock()
+	_loadout_panel.hide()
+	_temper_label.hide()
+	_ether_label.hide()
+	_mission_label.hide()
+	_tile_info_label.hide()
+	for label in _log_labels:
+		label.hide()
+	for child in _right_panel_root.get_children():
+		if child is HSeparator or child is TextureRect:
+			child.hide()
+		if child is Label and (child.text in ["ACTIVE UNIT", "YOUR NEXT ACTION", "RECENT ACTIONS"] or child.text.begins_with("TURN ORDER")):
+			child.hide()
+	# Replace the buried text-only grid with a visible portrait queue.
+	_timeline_labels[0].get_parent().get_parent().hide()
+	_build_turn_portraits()
+	_cancel_btn.reparent(_chapel_command_buttons)
+	_cancel_btn.text = "Cancel  [Esc]"
+	_cancel_btn.custom_minimum_size = Vector2(190, 56)
+	_preview_panel.reparent(self)
+	_preview_panel.custom_minimum_size = Vector2.ZERO
+	_preview_mode_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_preview_note_label.max_lines_visible = 4
+	_preview_note_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for portrait in [_preview_actor_portrait, _preview_target_portrait]:
+		portrait.custom_minimum_size = Vector2(88,104)
+		portrait.get_parent().custom_minimum_size = Vector2(90,106)
+		portrait.get_parent().size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_active_portrait.custom_minimum_size = Vector2(64, 92)
+	_preview_panel.resized.connect(_layout_forecast)
+	_preview_panel.minimum_size_changed.connect(_layout_forecast)
+	var forecast_root := _preview_panel.get_child(0)
+	_preview_connection_label = Label.new()
+	_preview_connection_label.name = "AffectedTargets"
+	_preview_connection_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_preview_connection_label.add_theme_color_override("font_color", Color("ddbc79"))
+	forecast_root.add_child(_preview_connection_label)
+	_preview_intent_label = Label.new()
+	_preview_intent_label.name = "TargetCurrentIntent"
+	_preview_intent_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_preview_intent_label.add_theme_color_override("font_color", Color("f2a394"))
+	forecast_root.add_child(_preview_intent_label)
+	_forecast_content = forecast_root
+	_forecast_content.minimum_size_changed.connect(func() -> void: _layout_forecast.call_deferred())
+	_preview_scroll = ScrollContainer.new()
+	_preview_scroll.follow_focus = true
+	_preview_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_preview_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_preview_panel.add_child(_preview_scroll)
+	forecast_root.reparent(_preview_scroll)
+	forecast_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_chapel_command_panel.custom_minimum_size.x = 220
+	for command in [_move_btn, _attack_btn, _ability_btn, _wait_btn, _cancel_btn]:
+		command.custom_minimum_size = Vector2(190,56)
+		command.add_theme_font_size_override("font_size", 22)
+	_proof_skills_panel = PanelContainer.new()
+	_proof_skills_panel.theme = _right_panel_root.theme
+	_proof_skills_panel.custom_minimum_size = Vector2.ZERO
+	add_child(_proof_skills_panel)
+	_proof_skills_scroll = ScrollContainer.new()
+	_proof_skills_scroll.follow_focus = true
+	_proof_skills_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_proof_skills_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_proof_skills_panel.add_child(_proof_skills_scroll)
+	_ability_panel.reparent(_proof_skills_scroll)
+	_ability_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_proof_skills_panel.hide()
+	for label in find_children("*", "Label", true, false):
+		label.add_theme_font_size_override("font_size", maxi(22, label.get_theme_font_size("font_size")))
+
+func _layout_persistent_hud() -> void:
+	if not is_instance_valid(_right_panel_scroll): return
+	var viewport := get_viewport().get_visible_rect().size
+	var width := minf(400, viewport.x * 0.28)
+	var height := minf(790, viewport.y - 40)
+	_right_panel_bg.position = Vector2(viewport.x - width - 20, 20)
+	_right_panel_bg.size = Vector2(width, height)
+	_right_panel_scroll.position = _right_panel_bg.position + Vector2(12,12)
+	_right_panel_scroll.size = Vector2(width - 24, height - 24)
+	_right_panel_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_layout_chapel_command_dock()
+	_layout_forecast()
+	_layout_skills()
+	if get_parent().has_method("_frame_battlefield_camera"):
+		get_parent().call_deferred("_frame_battlefield_camera")
+
+func _layout_forecast() -> void:
+	if not is_instance_valid(_preview_panel): return
+	var viewport := get_viewport().get_visible_rect().size
+	if not is_instance_valid(_forecast_content): return
+	var margin := 12.0
+	var top := minf(190, viewport.y * 0.35)
+	var style := _preview_panel.get_theme_stylebox("panel")
+	var inset := style.get_minimum_size() if style else Vector2.ZERO
+	_preview_panel.size = Vector2(minf(500, viewport.x - margin * 2), minf(_forecast_content.get_combined_minimum_size().y + inset.y + 18, viewport.y - top - margin))
+	_preview_panel.position = Vector2(margin, top)
+
+func _on_action_preview_changed(preview: Dictionary) -> void:
+	super._on_action_preview_changed(preview)
+	var is_move := str(preview.get("mode", "")) == "Move"
+	for field in [_preview_amount_label, _preview_hit_label, _preview_crit_label]:
+		field.visible = not is_move
+	if is_move:
+		_preview_actor_label.text = "UNIT\n%s" % str(preview.get("actor", ""))
+		_preview_target_label.text = "DESTINATION\n%s" % str(preview.get("target", ""))
+		_preview_note_label.text = "%s · %s · %s\n%s" % [str(preview.get("status_preview", "")), str(preview.get("range_label", "")), str(preview.get("height_label", "")), str(preview.get("note", ""))]
+	_clear_preview_connections()
+	if not preview.is_empty() and bool(preview.get("visible", false)):
+		_preview_primary = str(preview.get("target_id", ""))
+		for affected in preview.get("affected_targets", []):
+			var id := str(affected.get("unit_id", ""))
+			if not id.is_empty(): _preview_affected[id] = affected.duplicate(true)
+		if not _preview_primary.is_empty() and not _preview_affected.has(_preview_primary):
+			_preview_affected[_preview_primary] = {"role":"primary"}
+		if battle_manager and not _preview_primary.is_empty():
+			var target = battle_manager.units.get(_preview_primary)
+			if is_instance_valid(target):
+				_preview_target_portrait.texture = _framed_portrait(target.unit_data.id)
+		var secondary: Array[String] = []
+		for id in _preview_affected:
+			if id == _preview_primary: continue
+			var affected: Dictionary = _preview_affected[id]
+			var summary := "%s · %s" % [str(affected.get("role", "affected")).to_upper(), str(affected.get("target_name", id))]
+			if affected.has("hp_before"):
+				summary += " · HP %d → %d" % [int(affected.hp_before), int(affected.get("hp_after", affected.hp_before))]
+			var status := str(affected.get("status_preview", ""))
+			if not status.is_empty(): summary += " · " + status
+			secondary.append(summary)
+		_preview_connection_label.text = "\n".join(secondary)
+		if not _preview_affected.is_empty():
+			if not secondary.is_empty(): _preview_connection_label.text += "\n"
+			_preview_connection_label.text += "Targets outlined in turn order · no timing change"
+		var intent: Dictionary = preview.get("target_intent", {})
+		if not intent.is_empty():
+			_preview_intent_label.text = "CURRENT PLAN · may change\n%s → %s" % [str(intent.get("action", "Hold")), str(intent.get("target", "—"))]
+		_preview_connection_label.visible = not _preview_connection_label.text.is_empty()
+		_preview_intent_label.visible = not _preview_intent_label.text.is_empty()
+		_refresh_preview_connections()
+	for portrait in [_preview_actor_portrait, _preview_target_portrait]:
+		portrait.get_parent().visible = portrait.texture != null
+	if not preview.is_empty():
+		_preview_mode_label.text = "FORECAST · Select skill to review" if battle_manager and battle_manager.active_command == "ability" else "FORECAST · Select highlighted tile to review"
+		_preview_note_label.tooltip_text = _preview_note_label.text
+	_layout_forecast()
+
+func _on_action_state_changed(can_move: bool, can_act: bool, has_pending: bool) -> void:
+	super._on_action_state_changed(can_move, can_act, has_pending)
+	if battle_manager and (battle_manager.active_command.is_empty() or battle_manager.is_resolving_action):
+		_preview_panel.hide()
+		_clear_preview_connections()
+	if _selection: _selection.refresh.call_deferred()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _selection and _selection.handle_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	# Shortcuts are only available after explicitly selecting the active ally.
+	if _selection and _selection.can_command() and not _selection.is_targeting():
+		super._unhandled_input(event)
+
+func _layout_skills() -> void:
+	if not is_instance_valid(_proof_skills_panel): return
+	var viewport := get_viewport().get_visible_rect().size
+	var margin := 12.0
+	# Measure the list independently: the scroll viewport must never inherit its
+	# full minimum height. Keep Back outside the scroll so cancellation is reachable.
+	var back := _chapel_command_panel.get_rect()
+	var available_bottom := viewport.y - margin
+	if _chapel_command_panel.visible and battle_manager and battle_manager.active_command == "ability":
+		available_bottom = minf(available_bottom, back.position.y - margin)
+	var available_height := maxf(60, available_bottom - margin)
+	var content := _ability_panel.get_combined_minimum_size()
+	var style := _proof_skills_panel.get_theme_stylebox("panel")
+	var inset := style.get_minimum_size() if style else Vector2.ZERO
+	var width := minf(maxf(350, content.x + inset.x + 20), viewport.x - margin * 2)
+	var height := minf(content.y + inset.y + 20, available_height)
+	_proof_skills_panel.size = Vector2(width, height)
+	var x := back.end.x + margin
+	if x + width > viewport.x - margin: x = margin
+	_proof_skills_panel.position = Vector2(clampf(x, margin, maxf(margin, viewport.x - width - margin)),
+		clampf(back.position.y, margin, maxf(margin, available_bottom - height)))
+
+func _on_ability_panel_visibility_changed() -> void:
+	if is_instance_valid(_proof_skills_panel):
+		_proof_skills_panel.visible = _ability_panel.visible
+	_layout_skills()
+
+func _on_ability_mode_started(usable_ids: Array) -> void:
+	super._on_ability_mode_started(usable_ids)
+	_proof_skills_scroll.scroll_vertical = 0
+	_proof_skills_scroll.scroll_horizontal = 0
+	for label in _ability_panel.find_children("*", "Label", true, false):
+		label.add_theme_font_size_override("font_size", maxi(20, label.get_theme_font_size("font_size")))
+	var index := 0
+	for row in _ability_list.get_children():
+		if not row is Button or row.is_queued_for_deletion(): continue
+		row.custom_minimum_size.y = 66
+		if index < usable_ids.size():
+			var ability := AbilityDB.get_ability(str(usable_ids[index]))
+			var preview_skill := func() -> void:
+				if not battle_manager or battle_manager.active_command != "ability": return
+				var actor = battle_manager.units.get(battle_manager.active_unit_id)
+				if is_instance_valid(actor) and AbilityDB.get_range(ability).y == 0:
+					battle_manager.action_preview_changed.emit(battle_manager._ability_preview_for_tile(actor.grid_pos, ability))
+				else:
+					battle_manager.action_preview_changed.emit({})
+			row.mouse_entered.connect(preview_skill)
+			row.focus_entered.connect(preview_skill)
+		index += 1
+	_layout_skills()
+	if _selection:
+		_selection.refresh.call_deferred()
+		if _ability_list.get_child_count() > 0:
+			_ability_list.get_child(0).grab_focus.call_deferred()
+
+func _make_selection_controller():
+	return preload("res://prototypes/isometric/SelectionController.gd").new()
+
+func setup(manager: BattleManager) -> void:
+	super.setup(manager)
+	_battlefield_labels = preload("res://prototypes/isometric/BattlefieldLabels.gd").new()
+	add_child(_battlefield_labels)
+	_battlefield_labels.setup(self,manager)
+	_selection = _make_selection_controller()
+	add_child(_selection)
+	_selection.setup(self, manager)
+
+func _layout_chapel_command_dock() -> void:
+	if _selection:
+		_selection.layout_popup()
+	else:
+		super._layout_chapel_command_dock()
+
+func _on_move() -> void:
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	super._on_move()
+	_selection.refresh()
+
+func _on_attack() -> void:
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	super._on_attack()
+	_selection.refresh()
+
+func _on_ability() -> void:
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	super._on_ability()
+	_selection.refresh()
+
+func _on_wait() -> void:
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review(): return
+	_selection.begin_wait()
+
+func _select_ability(ability_id: String) -> void:
+	if _selection: _selection.select_skill(ability_id)
+
+func _on_confirm() -> void:
+	if _selection: _selection.confirm_review()
+
+func _on_cancel() -> void:
+	if _selection: _selection.go_back()
+
+# The scheduler projection starts AFTER the active turn has consumed its CT.
+# Keep NOW separate; never label the first future turn as the current actor.
+func _build_turn_portraits() -> void:
+	_turn_portraits = VBoxContainer.new()
+	_turn_portraits.name = "PortraitTurnOrder"
+	_turn_portraits.add_theme_constant_override("separation", 5)
+	_right_panel_root.add_child(_turn_portraits)
+	_right_panel_root.move_child(_turn_portraits, 0)
+	var title := Label.new()
+	title.text = "TURN ORDER"
+	title.add_theme_font_size_override("font_size", 22)
+	_turn_portraits.add_child(title)
+	for i in 5:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size.y = 66
+		_turn_portraits.add_child(panel)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("20212a")
+		style.border_color = Color("ddbc79") if i == 0 else Color("625743")
+		style.set_border_width_all(2 if i == 0 else 1)
+		style.set_content_margin_all(5)
+		style.set_corner_radius_all(5)
+		panel.add_theme_stylebox_override("panel", style)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		panel.add_child(row)
+		var portrait := TextureRect.new()
+		portrait.custom_minimum_size = Vector2(48, 56)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(portrait)
+		var copy := VBoxContainer.new()
+		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(copy)
+		var who := Label.new()
+		who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		who.add_theme_font_size_override("font_size", 22)
+		copy.add_child(who)
+		var when := Label.new()
+		when.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		when.add_theme_font_size_override("font_size", 18)
+		copy.add_child(when)
+		_turn_rows.append({"panel":panel, "portrait":portrait, "who":who, "when":when, "unit_id":""})
+
+func _refresh_turn_portraits() -> void:
+	if not battle_manager or not is_instance_valid(_turn_portraits): return
+	var entries: Array = []
+	var active: Unit = battle_manager.units.get(battle_manager.active_unit_id)
+	if is_instance_valid(active) and active.hp > 0:
+		entries.append({"unit_id":active.unit_id, "display_name":active.display_name, "team":active.team, "now":true})
+	for entry in battle_manager.turn_order.get_projected_order(4):
+		entries.append(entry)
+	for i in _turn_rows.size():
+		var row: Dictionary = _turn_rows[i]
+		row.panel.visible = i < entries.size()
+		row.unit_id = ""
+		if i >= entries.size(): continue
+		var entry: Dictionary = entries[i]
+		row.unit_id = entry.unit_id
+		var unit: Unit = battle_manager.units.get(entry.unit_id)
+		row.portrait.texture = _framed_portrait(unit.unit_data.id) if is_instance_valid(unit) else null
+		row.who.text = entry.display_name
+		var side := "ALLY" if entry.team == "player" else "ENEMY"
+		row.when.text = ("NOW" if entry.get("now", false) else "NEXT %d" % (i if entries[0].get("now", false) else i + 1)) + "  ·  " + side
+		row.when.add_theme_color_override("font_color", Color("9cdbeb") if entry.team == "player" else Color("f2a394"))
+		row.base_when = row.when.text
+		row.panel.tooltip_text = row.who.text + " · " + row.when.text
+	_refresh_preview_connections()
+
+func _clear_preview_connections() -> void:
+	_preview_affected.clear()
+	_preview_primary = ""
+	if is_instance_valid(_preview_connection_label):
+		_preview_connection_label.text = ""
+		_preview_connection_label.hide()
+	if is_instance_valid(_preview_intent_label):
+		_preview_intent_label.text = ""
+		_preview_intent_label.hide()
+	_refresh_preview_connections()
+
+func _refresh_preview_connections() -> void:
+	if battle_manager and not _preview_primary.is_empty():
+		var target = battle_manager.units.get(_preview_primary)
+		if not is_instance_valid(target) or target.hp <= 0:
+			_preview_primary = ""
+			_preview_affected.clear()
+			_preview_panel.hide()
+			_preview_connection_label.text = ""
+			_preview_intent_label.text = ""
+	for i in _turn_rows.size():
+		var row: Dictionary = _turn_rows[i]
+		var affected := _preview_affected.has(str(row.unit_id))
+		var style := row.panel.get_theme_stylebox("panel") as StyleBoxFlat
+		style.border_color = Color("ffe19a") if affected else (Color("ddbc79") if i == 0 else Color("625743"))
+		style.set_border_width_all(3 if affected else (2 if i == 0 else 1))
+		style.bg_color = Color("3b3040") if affected else Color("20212a")
+		row.panel.set_meta("preview_affected", affected)
+		# Keep the scheduler slot prefix intact even for repeated future portraits.
+		var base_label := str(row.get("base_when", row.when.text))
+		row.when.text = base_label
+		if affected:
+			var role: String = str(_preview_affected[row.unit_id].get("role", "affected")).to_upper()
+			if row.unit_id == _preview_primary: role = "TARGET"
+			row.when.text += "  ·  " + role
+		row.panel.tooltip_text = row.who.text + " · " + row.when.text
+
+func _on_timeline_updated(ordered_units: Array) -> void:
+	super._on_timeline_updated(ordered_units)
+	# tick_until_ready emits just before manager changes active identity.
+	_refresh_turn_portraits.call_deferred()
+
+func _on_turn_started(unit_id: String, team: String) -> void:
+	super._on_turn_started(unit_id, team)
+	_clear_preview_connections()
+	var unit = battle_manager.units.get(unit_id)
+	if is_instance_valid(unit): _active_portrait.texture = _framed_portrait(unit.unit_data.id)
+	_refresh_turn_portraits()
+
+func _framed_portrait(id: String) -> Texture2D:
+	if bool(GameState.practice_session.get("compact_skins", true)) and id in ["zane", "kael"]:
+		var role := "mage" if id == "zane" else "swordsman"
+		return load("res://prototypes/isometric/assets/character-sets/compact/frames/%s/portrait.png" % role)
+	if _portrait_cache.has(id): return _portrait_cache[id]
+	var texture := AssetRegistry.load_first_texture(AssetRegistry.get_character_portrait_candidates(id))
+	# UI atlas crops preserve every source pixel/file; these frame head and shoulders,
+	# rather than shrinking a complete battlefield actor into a portrait slot.
+	var regions := {"kael":Rect2(35,2,62,72), "storm_imp":Rect2(33,2,62,72), "void_cultist":Rect2(33,2,62,72)}
+	if texture and regions.has(id):
+		var framed := AtlasTexture.new()
+		framed.atlas = texture
+		framed.region = regions[id]
+		framed.filter_clip = true
+		texture = framed
+	_portrait_cache[id] = texture
+	return texture
+
+# Forecast columns must use the same appearance as battlefield and turn portraits.
+func _set_preview_portrait(rect: TextureRect, path: String) -> void:
+	for id in ["zane", "kael"]:
+		var role := "mage" if id == "zane" else "swordsman"
+		if path in AssetRegistry.get_character_portrait_candidates(id) or path.contains("compact/frames/%s/portrait.png" % role):
+			rect.set_meta("skin_character_id", id)
+			rect.texture = _framed_portrait(id)
+			rect.flip_h = false
+			return
+	rect.set_meta("skin_character_id", "")
+	super._set_preview_portrait(rect, path)
+
+func refresh_skin_portraits() -> void:
+	for rect in [_preview_actor_portrait, _preview_target_portrait]:
+		if is_instance_valid(rect) and not str(rect.get_meta("skin_character_id", "")).is_empty():
+			rect.texture = _framed_portrait(str(rect.get_meta("skin_character_id")))

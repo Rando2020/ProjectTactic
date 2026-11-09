@@ -1,0 +1,58 @@
+{
+  "poses": [
+    {
+      "state": "anticipation",
+      "file": "character-vanguard-anticipation-v01.png",
+      "sha256": "97c207deab1cd270475ac696ec23003fc07cba6e40c6857cd9cf5bcb597bcb54",
+      "canvas": [
+        1280,
+        1280
+      ],
+      "foot_anchor_px": [
+        656,
+        1155
+      ],
+      "body_height_px": 930,
+      "weapon_grip_px": [
+        400,
+        260
+      ],
+      "local_body_display_height": 76,
+      "reference": "character-vanguard-idle-v01.png",
+      "generator": "OpenAI built-in image_gen",
+      "date": "2026-10-23",
+      "integration": "Unit.set_melee_pose; VFX anticipation; BattleManager permitted contact; ActionLifecycle finish/cancel restores idle"
+    },
+    {
+      "state": "contact",
+      "file": "character-vanguard-contact-v01.png",
+      "sha256": "5933e6c1f0e98bbc79a980019fe39ac9915d121d7c836f91eb8064544fd4a368",
+      "canvas": [
+        1280,
+        1280
+      ],
+      "foot_anchor_px": [
+        625,
+        1145
+      ],
+      "body_height_px": 980,
+      "weapon_grip_px": [
+        715,
+        635
+      ],
+      "local_body_display_height": 76,
+      "reference": "character-vanguard-idle-v01.png",
+      "generator": "OpenAI built-in image_gen",
+      "date": "2026-10-23",
+      "integration": "Unit.set_melee_pose; VFX anticipation; BattleManager permitted contact; ActionLifecycle finish/cancel restores idle"
+    }
+  ],
+  "notes": [
+    "Source images preserved with alpha; imported by Godot.",
+    "Calibrated body-height normalization avoids sword-dependent zoom. Existing Unit HP scale still applies.",
+    "Weapon grip is descriptive metadata, not an additional damage/effect origin.",
+    "Fixed right-facing view only. No mirrored equipment.",
+    "Anticipation generated from original idle; contact generated from anticipation plus idle.",
+    "Static size inspection passed; in-game browser timing/layering acceptance remains pending."
+  ]
+}

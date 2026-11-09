@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>Mystery sigil</title>
+  <defs>
+    <radialGradient id="field" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </radialGradient>
+  </defs>
+  
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#6b5b8a" stroke-width="2"></circle>
+  
+  <circle cx="32" cy="32" r="27.5" fill="url(#field)"></circle>
+  
+  <circle cx="32" cy="32" r="25" fill="none" stroke="#6b5b8a" stroke-width="0.6" opacity="0.5"></circle>
+  
+  <g color="#a585ff" fill="currentColor">
+    <path d="M32 18 c-5.6 0 -9 3.2 -9 7.5 c0 2.4 1.2 4.3 3.6 5.4 l0 0 c2 1 2.8 1.9 2.8 3.4 l0 5 l5.2 0 l0 -5 c0 -2.8 -1.2 -4.4 -3.6 -5.6 c-1.6 -0.8 -2.4 -1.5 -2.4 -3.0 c0 -1.8 1.6 -3.2 3.4 -3.2 c1.8 0 3.2 1.4 3.2 3.2 l5.2 0 c0 -4.2 -3.4 -7.7 -8.4 -7.7 z" stroke="none"></path>
+    <circle cx="32" cy="44.5" r="2.4"></circle>
+  </g>
+</svg>

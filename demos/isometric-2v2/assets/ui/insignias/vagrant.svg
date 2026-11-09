@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Vagrant insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-vagrant" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#3d3530"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-vagrant)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#3d3530" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#8a7e6a"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M22 36 Q22 18 32 18 Q42 18 42 36 L42 46 L22 46 Z" stroke-width="1.8" stroke-linejoin="round"></path>
+      
+      <path d="M26 32 Q32 36 38 32" stroke-width="1" opacity="0.6"></path>
+      
+      <line x1="14" y1="50" x2="34" y2="50" stroke-width="1.6"></line>
+      <path d="M34 50 L30 48 L30 52 Z" fill="currentColor" stroke="none"></path>
+      <line x1="14" y1="50" x2="12" y2="48" stroke-width="1.2"></line>
+    </g></g>
+</svg>

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 72" width="72" height="72">
+  <title>Monk insignia</title>
+  <defs>
+    <linearGradient id="shield-bg-monk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1610"></stop>
+      <stop offset="100%" stop-color="#08090d"></stop>
+    </linearGradient>
+  </defs>
+  
+  <path d="M8 6 L56 6 L56 36 Q56 56 32 66 Q8 56 8 36 Z" fill="#6a4a1a"></path>
+  
+  <path d="M11 9 L53 9 L53 36 Q53 54 32 62.5 Q11 54 11 36 Z" fill="url(#shield-bg-monk)"></path>
+  
+  <path d="M13 11 L51 11 L51 36 Q51 53 32 60 Q13 53 13 36 Z" fill="none" stroke="#6a4a1a" stroke-width="0.6" opacity="0.55"></path>
+  
+  <g color="#b8860b"><g stroke="currentColor" fill="none" stroke-linecap="round">
+      
+      <path d="M22 32 Q22 26 28 26 L36 26 Q42 26 42 32 L42 44 Q42 48 38 48 L26 48 Q22 48 22 44 Z" stroke-width="1.8" stroke-linejoin="round"></path>
+      
+      <line x1="26" y1="34" x2="38" y2="34" stroke-width="0.8" opacity="0.7"></line>
+      <line x1="26" y1="40" x2="38" y2="40" stroke-width="0.8" opacity="0.7"></line>
+      
+      <circle cx="20" cy="46" r="1.4" fill="currentColor" stroke="none"></circle>
+      <circle cx="22" cy="51" r="1.4" fill="currentColor" stroke="none"></circle>
+      <circle cx="28" cy="54" r="1.4" fill="currentColor" stroke="none"></circle>
+      <circle cx="36" cy="54" r="1.4" fill="currentColor" stroke="none"></circle>
+      <circle cx="42" cy="51" r="1.4" fill="currentColor" stroke="none"></circle>
+      <circle cx="44" cy="46" r="1.4" fill="currentColor" stroke="none"></circle>
+    </g></g>
+</svg>

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "profile_id": "zane_impact_v1",
+  "model": "res://assets/3d/characters/zane_impact_v1/zane_impact_v1.glb",
+  "model_sha256": "669244b98a1ba99dde3996b3b4834fb142081fe5d1661e5f2be5e748529e4a90",
+  "baseline_sha256": "9f0ce05497200bcd20ca9b37ca502f008862744887b8fbdf56ec82a147eb66c5",
+  "authoring_fps": 24,
+  "changed_clips": [
+    "walk",
+    "slash",
+    "cast"
+  ],
+  "unchanged_clips": [
+    "idle",
+    "thrust",
+    "heavy",
+    "hit",
+    "recovery",
+    "defeat"
+  ],
+  "source_markers": {
+    "slash_load": 0.375,
+    "slash_contact": 0.625,
+    "cast_load": 0.4583333333333333,
+    "cast_release": 0.875,
+    "cast_recoil": 1.125
+  },
+  "marker_frames": {
+    "slash_load": 10,
+    "slash_contact": 16,
+    "cast_load": 12,
+    "cast_release": 22,
+    "cast_recoil": 28
+  },
+  "runtime": {
+    "prepare": 0.2,
+    "snap": 0.04,
+    "travel": 0.22,
+    "recovery": 0.22,
+    "walk_speed_px_s": 180.0,
+    "walk_min": 0.5,
+    "walk_max": 1.0,
+    "walk_settle": 0.1
+  },
+  "walk_contacts": [
+    0.0,
+    0.5
+  ],
+  "cast_socket": "Kael_v2_cast_socket",
+  "clip_durations": {
+    "idle": 1.4583333730697632,
+    "slash": 1.4583333730697632,
+    "thrust": 1.4583333730697632,
+    "heavy": 1.7083333730697632,
+    "cast": 1.7083333730697632,
+    "hit": 1.2083333730697632,
+    "recovery": 1.2083333730697632,
+    "walk": 1.0,
+    "defeat": 2.0
+  },
+  "compatibility_report_sha256": "bafe8adb27ad96d9bf9d2ce00505fa1bace00dbb92b79c344fc0f7b1d1d753b5",
+  "forward_axis": "+Z",
+  "root_motion": "in_place",
+  "gait_calibration": {
+    "method": "exported foot-origin stance excursion, average L/R, orthographic projection",
+    "world_step": 0.60845434,
+    "world_stride": 1.21690867,
+    "step_canvas_px": {
+      "N": 21.2704761,
+      "E": 20.33279232,
+      "S": 20.33279232,
+      "W": 21.2704761
+    },
+    "camera_size": 3.2,
+    "camera_pitch_degrees": 30.0,
+    "camera_yaw_degrees": 45.0,
+    "display_size": 138.24,
+    "stance_source_frames": [
+      1,
+      13
+    ]
+  }
+}

@@ -1,0 +1,441 @@
+{
+  "status": "candidate; exact crops verified; engine alignment not yet validated",
+  "ability": "void-pulse",
+  "semantics": "Single target damage + Silence 2 turns",
+  "composition": [
+    "shared_tier1",
+    "void-pulse"
+  ],
+  "shared_cast_library_id": "libfile_e927ec6d904481918094779513344bf5",
+  "shared_cast_source_sha256": "d62c3f8908220e775b4dd3425ceb4eddf9d1468ca782d23f88e0f91569fb4f4d",
+  "source_sha256": "cdb10ebba14b3b00d42b2bc84aaa5f55f1d92a4ca8149c26d28aa4a4ec658ea7",
+  "timing_policy": "presentation suggestion only; no new charge, cost, or turn delay rules",
+  "anchor_policy": "Hand-estimated semantic anchors; virtual ground = body center +120 source pixels. Use body_center_px for chest anchoring. No drawn ground plane. Validate against actual unit height. Directional action points upper-right (-45deg screen); rotate projectile only.",
+  "alpha_policy": "Unmodified exact rectangular source pixels including faint alpha<=1 fringes. No thresholding, repainting, resampling or particle deletion in frames.",
+  "frames": [
+    {
+      "order": 1,
+      "module": "shared_tier1",
+      "module_frame": 1,
+      "phase": "casting",
+      "file": "frames/shared_tier1-01.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "anchor_px": [
+        320,
+        551
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "cac24329882ecff3d820f3dcc5a29b024dfe0da9d8e4e52b6b71a0cd3d4a43e6"
+    },
+    {
+      "order": 2,
+      "module": "shared_tier1",
+      "module_frame": 2,
+      "phase": "casting",
+      "file": "frames/shared_tier1-02.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "anchor_px": [
+        311,
+        552
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "55212630d6c8de85ced9529ae0285ab4b879ab6fc3a3b1df7e33ca87150defff"
+    },
+    {
+      "order": 3,
+      "module": "shared_tier1",
+      "module_frame": 3,
+      "phase": "casting",
+      "file": "frames/shared_tier1-03.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "anchor_px": [
+        320,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "2063adb7d048ba975eadcbff80adc18d4f51fda8536c9eeb1eddf6485dee9f44"
+    },
+    {
+      "order": 4,
+      "module": "shared_tier1",
+      "module_frame": 4,
+      "phase": "casting",
+      "file": "frames/shared_tier1-04.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "anchor_px": [
+        313,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "61f989824c9752b6edb1688c0fd6b9d2e2ddc8463bec2a56b26e556a06d250da"
+    },
+    {
+      "order": 5,
+      "module": "void-pulse",
+      "module_frame": 1,
+      "phase": "formation",
+      "file": "frames/void-pulse-01.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        0,
+        0,
+        405,
+        320
+      ],
+      "anchor_px": [
+        237,
+        310
+      ],
+      "body_center_px": [
+        237,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "a270351a7be735d7c80d2b0fc3526d4336e58dda1966f3946dd572293b2a5651",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 50878
+    },
+    {
+      "order": 6,
+      "module": "void-pulse",
+      "module_frame": 2,
+      "phase": "formation",
+      "file": "frames/void-pulse-02.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        405,
+        0,
+        835,
+        320
+      ],
+      "anchor_px": [
+        232,
+        310
+      ],
+      "body_center_px": [
+        232,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "74e433cc59904d3e45bdca286223122ae89c733a77720a801d8b66a0b6451908",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 42745
+    },
+    {
+      "order": 7,
+      "module": "void-pulse",
+      "module_frame": 3,
+      "phase": "formation",
+      "file": "frames/void-pulse-03.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        835,
+        0,
+        1261,
+        320
+      ],
+      "anchor_px": [
+        210,
+        310
+      ],
+      "body_center_px": [
+        210,
+        190
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "4ab38c445ff3c5b12ad8a726dd69b8158ef91f4624b18e37a56ad00b122b99ed",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 34225
+    },
+    {
+      "order": 8,
+      "module": "void-pulse",
+      "module_frame": 4,
+      "phase": "action",
+      "file": "frames/void-pulse-04.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        0,
+        320,
+        405,
+        620
+      ],
+      "anchor_px": [
+        325,
+        130
+      ],
+      "body_center_px": [
+        325,
+        130
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "83f7af548db642f678e35334de231a723553f7f69dedf1b1b13302f461096160",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 36554
+    },
+    {
+      "order": 9,
+      "module": "void-pulse",
+      "module_frame": 5,
+      "phase": "action",
+      "file": "frames/void-pulse-05.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        405,
+        320,
+        835,
+        620
+      ],
+      "anchor_px": [
+        315,
+        130
+      ],
+      "body_center_px": [
+        315,
+        130
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "a8cb695af909c382ddf84045952c59e6cfb4eb8e2bbc769622b1eb25692112a3",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 41943
+    },
+    {
+      "order": 10,
+      "module": "void-pulse",
+      "module_frame": 6,
+      "phase": "action",
+      "file": "frames/void-pulse-06.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        835,
+        320,
+        1261,
+        620
+      ],
+      "anchor_px": [
+        290,
+        130
+      ],
+      "body_center_px": [
+        290,
+        130
+      ],
+      "anchor_role": "projectile_head",
+      "anchor_mode": "projectile",
+      "suggested_duration_ms": 90,
+      "sha256": "084c7f25d881d2e73bf634933a7b8936aa7f4656a6c3d384a020909c503d6025",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 37309
+    },
+    {
+      "order": 11,
+      "module": "void-pulse",
+      "module_frame": 7,
+      "phase": "collision",
+      "file": "frames/void-pulse-07.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        0,
+        620,
+        405,
+        940
+      ],
+      "anchor_px": [
+        237,
+        285
+      ],
+      "body_center_px": [
+        237,
+        165
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "e3d73813bb8fe6ab7b2771f36558f6c9f6b8e7ce74608f9d375217cf66017b50",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 39831
+    },
+    {
+      "order": 12,
+      "module": "void-pulse",
+      "module_frame": 8,
+      "phase": "collision",
+      "file": "frames/void-pulse-08.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        405,
+        620,
+        835,
+        940
+      ],
+      "anchor_px": [
+        232,
+        285
+      ],
+      "body_center_px": [
+        232,
+        165
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "fb396b7c0b6989bd7c3425507c124e5d01b72db3c77a9c3a8747975d9c2e50ea",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 74012
+    },
+    {
+      "order": 13,
+      "module": "void-pulse",
+      "module_frame": 9,
+      "phase": "collision",
+      "file": "frames/void-pulse-09.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        835,
+        620,
+        1261,
+        940
+      ],
+      "anchor_px": [
+        210,
+        285
+      ],
+      "body_center_px": [
+        210,
+        165
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 105,
+      "sha256": "5ad7e8997b77888515dabefad12a009ac7bf67d9c4a20fa486e56ea78de03806",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 65808
+    },
+    {
+      "order": 14,
+      "module": "void-pulse",
+      "module_frame": 10,
+      "phase": "dissipation",
+      "file": "frames/void-pulse-10.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        0,
+        940,
+        405,
+        1247
+      ],
+      "anchor_px": [
+        237,
+        260
+      ],
+      "body_center_px": [
+        237,
+        140
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "4f0cc309f5a36b03b20386dd0834e09f9a2e706861edbb7ac250c1d689267dfa",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 57962
+    },
+    {
+      "order": 15,
+      "module": "void-pulse",
+      "module_frame": 11,
+      "phase": "dissipation",
+      "file": "frames/void-pulse-11.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        405,
+        940,
+        835,
+        1247
+      ],
+      "anchor_px": [
+        232,
+        260
+      ],
+      "body_center_px": [
+        232,
+        140
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "7fe8bf5f0106873a67e57e0ec660885fbdc165f9bc0babf545048b112fbff25e",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 42907
+    },
+    {
+      "order": 16,
+      "module": "void-pulse",
+      "module_frame": 12,
+      "phase": "dissipation",
+      "file": "frames/void-pulse-12.png",
+      "source": "originals/void-pulse-v1.png",
+      "crop": [
+        835,
+        940,
+        1261,
+        1247
+      ],
+      "anchor_px": [
+        210,
+        260
+      ],
+      "body_center_px": [
+        210,
+        140
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "target",
+      "suggested_duration_ms": 110,
+      "sha256": "4d6a15b83e16cacaf41e1cfa9d927e3229bcf0553119f601eae266ad29871889",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 16632
+    }
+  ]
+}

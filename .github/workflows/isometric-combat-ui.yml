@@ -1,0 +1,58 @@
+name: Isometric combat UI
+on:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/**'
+      - '.github/workflows/isometric-combat-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combat-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hydrate standalone runtime assets
+        run: |
+          git lfs fetch --include='demos/isometric-2v2/**' --exclude='' origin HEAD
+          git lfs checkout 'demos/isometric-2v2/**'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Import standalone project
+        run: godot --headless --path demos/isometric-2v2 --import
+      - name: Validate scripts and current 2v2 UI contracts
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/combat-ui/logs
+          project="$PWD/demos/isometric-2v2"
+          godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/test_action_clash_readability.tscn
+          # Test.tscn is the retired 1v1 title-route contract, not the 2v2 scene.
+          # Legacy main-game practice-route failures are documented in the QA note.
+          for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn; do
+            [ "$(basename "$file")" = Test.tscn ] && continue
+            scene="${file#"$project"/}"
+            log="build/combat-ui/logs/$(echo "$scene" | tr / _)".log
+            XDG_DATA_HOME="$(mktemp -d)" timeout 180 godot --headless --path "$project" "res://$scene" 2>&1 | tee "$log"
+            if grep -E 'SCRIPT ERROR:|FAIL:' "$log"; then exit 1; fi
+          done
+      - name: Capture actual rendered Blooming UI
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/combat-ui/captures
+          XDG_DATA_HOME="$(mktemp -d)" xvfb-run -a godot --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_hud/CombatFlowTest.tscn -- --capture-dir="$PWD/build/combat-ui/captures" 2>&1 | tee build/combat-ui/capture.log
+          test -s build/combat-ui/captures/enemy-inspection.png
+          test -s build/combat-ui/captures/move-review.png
+          test -s build/combat-ui/captures/wait-facing.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blooming-combat-ui-evidence
+          path: build/combat-ui/

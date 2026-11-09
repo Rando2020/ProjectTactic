@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Void Cultist — chibi evil mage, purple-robed, glowing orb -->
+
+  <!-- Shadow beneath feet -->
+  <ellipse cx="32" cy="60" rx="10" ry="3" fill="#1a1a2e" opacity="0.45"/>
+
+  <!-- Robe body — dark purple, cel-shaded -->
+  <!-- Main robe shape -->
+  <polygon points="18,28 46,28 50,62 14,62" fill="#3a1a5e" stroke="#1a1a2e" stroke-width="1.2" stroke-linejoin="round"/>
+  <!-- Left (lit) side of robe -->
+  <polygon points="18,28 30,28 27,62 14,62" fill="#4a2275" opacity="0.85"/>
+  <!-- Right (shadow) side of robe -->
+  <polygon points="30,28 46,28 50,62 27,62" fill="#2a0d48" opacity="0.85"/>
+  <!-- Robe centre trim line -->
+  <line x1="32" y1="28" x2="32" y2="62" stroke="#5b2d8a" stroke-width="1.0" opacity="0.6"/>
+  <!-- Robe hem decorative edge -->
+  <polyline points="14,62 17,58 21,61 25,58 29,61 33,58 37,61 41,58 45,61 50,62" fill="none" stroke="#6a35a0" stroke-width="0.9" opacity="0.7"/>
+
+  <!-- Sleeves -->
+  <!-- Left sleeve (lit) -->
+  <polygon points="18,28 10,38 12,44 22,36 22,28" fill="#4a2275" stroke="#1a1a2e" stroke-width="1.2" stroke-linejoin="round"/>
+  <polygon points="18,28 22,28 22,36 12,44 10,38" fill="#5c2e8e" opacity="0.5"/>
+  <!-- Right sleeve (shadow) -->
+  <polygon points="46,28 54,38 52,44 42,36 42,28" fill="#2a0d48" stroke="#1a1a2e" stroke-width="1.2" stroke-linejoin="round"/>
+
+  <!-- Hood — large, covering top of head -->
+  <ellipse cx="32" cy="20" rx="17" ry="16" fill="#2a0d48" stroke="#1a1a2e" stroke-width="1.2"/>
+  <!-- Hood left highlight (lit side) -->
+  <ellipse cx="26" cy="18" rx="9" ry="10" fill="#3d1668" opacity="0.55"/>
+  <!-- Hood inner shadow (depth) -->
+  <ellipse cx="34" cy="21" rx="11" ry="10" fill="#1a0835" opacity="0.6"/>
+  <!-- Hood tip shadow at top -->
+  <ellipse cx="32" cy="9" rx="7" ry="5" fill="#120520" opacity="0.5"/>
+
+  <!-- Face in hood shadow — pale/grey skin -->
+  <ellipse cx="32" cy="24" rx="9" ry="8" fill="#c8bfd8" stroke="#1a1a2e" stroke-width="0.8"/>
+  <!-- Face shadow on right side -->
+  <ellipse cx="36" cy="24" rx="5" ry="7" fill="#9a8fab" opacity="0.5"/>
+  <!-- Face highlight on left -->
+  <ellipse cx="28" cy="23" rx="4" ry="4" fill="#e0d8ee" opacity="0.4"/>
+
+  <!-- Glowing purple eyes -->
+  <ellipse cx="27" cy="23" rx="2.8" ry="2.2" fill="#9b30ff" stroke="#1a1a2e" stroke-width="0.6"/>
+  <ellipse cx="37" cy="23" rx="2.8" ry="2.2" fill="#9b30ff" stroke="#1a1a2e" stroke-width="0.6"/>
+  <!-- Eye inner glow -->
+  <ellipse cx="27" cy="23" rx="1.5" ry="1.2" fill="#cc88ff" opacity="0.9"/>
+  <ellipse cx="37" cy="23" rx="1.5" ry="1.2" fill="#cc88ff" opacity="0.9"/>
+  <!-- Eye glint -->
+  <circle cx="26.2" cy="22.2" r="0.7" fill="#ffffff" opacity="0.85"/>
+  <circle cx="36.2" cy="22.2" r="0.7" fill="#ffffff" opacity="0.85"/>
+
+  <!-- Void orb — weapon, held in right hand area -->
+  <!-- Orb glow halo (outer) -->
+  <circle cx="52" cy="42" r="10" fill="#4a008a" opacity="0.28"/>
+  <circle cx="52" cy="42" r="7.5" fill="#6600bb" opacity="0.35"/>
+  <!-- Orb body -->
+  <circle cx="52" cy="42" r="5.5" fill="#8800ee" stroke="#1a1a2e" stroke-width="1.1"/>
+  <!-- Orb left highlight -->
+  <circle cx="50" cy="40" r="2.8" fill="#bb55ff" opacity="0.7"/>
+  <!-- Orb specular -->
+  <circle cx="49.5" cy="39.5" r="1.2" fill="#ffffff" opacity="0.6"/>
+  <!-- Orb dark shadow right -->
+  <circle cx="54" cy="44" r="2.5" fill="#220044" opacity="0.55"/>
+
+  <!-- Floating dark particles around the orb -->
+  <circle cx="45" cy="37" r="1.4" fill="#9933cc" opacity="0.75"/>
+  <circle cx="58" cy="38" r="1.0" fill="#7700bb" opacity="0.65"/>
+  <circle cx="57" cy="47" r="1.2" fill="#aa44dd" opacity="0.6"/>
+  <circle cx="44" cy="46" r="0.9" fill="#8822cc" opacity="0.55"/>
+  <circle cx="51" cy="34" r="1.1" fill="#bb55ee" opacity="0.5"/>
+  <!-- Particle trails -->
+  <line x1="52" y1="36" x2="51" y2="32" stroke="#9933cc" stroke-width="0.8" opacity="0.4"/>
+  <line x1="55" y1="39" x2="59" y2="36" stroke="#7700bb" stroke-width="0.7" opacity="0.35"/>
+  <line x1="49" y1="45" x2="46" y2="48" stroke="#8822cc" stroke-width="0.7" opacity="0.35"/>
+
+  <!-- Staff/arm holding orb -->
+  <line x1="42" y1="36" x2="50" y2="40" stroke="#2a0d48" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="42" y1="36" x2="50" y2="40" stroke="#5b2d8a" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Robe bottom void runes (decorative) -->
+  <text x="20" y="57" font-size="5" fill="#7733aa" opacity="0.55" font-family="serif">ᚷᛟᛞ</text>
+</svg>

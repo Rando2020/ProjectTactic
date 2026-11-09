@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/modular/test_sync_cancel.gd" id="1"]
+[node name="ModularSyncCancelTest" type="Node"]
+script = ExtResource("1")

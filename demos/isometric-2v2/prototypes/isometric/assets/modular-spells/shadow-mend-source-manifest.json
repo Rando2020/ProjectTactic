@@ -1,0 +1,441 @@
+{
+  "status": "candidate; exact crops verified; engine alignment not yet validated",
+  "ability": "shadow-mend",
+  "semantics": "Self heal; no projectile",
+  "composition": [
+    "shared_tier1",
+    "shadow-mend"
+  ],
+  "shared_cast_library_id": "libfile_e927ec6d904481918094779513344bf5",
+  "shared_cast_source_sha256": "d62c3f8908220e775b4dd3425ceb4eddf9d1468ca782d23f88e0f91569fb4f4d",
+  "source_sha256": "06e336004e70d30ab8c775ccaf906c2f6e42c858f2324813f33c8fd0c0f8a073",
+  "timing_policy": "presentation suggestion only; no new charge, cost, or turn delay rules",
+  "anchor_policy": "Hand-estimated semantic anchors; virtual ground = body center +120 source pixels. Use body_center_px for chest anchoring. No drawn ground plane. Validate against actual unit height. Directional action points upper-right (-45deg screen); rotate projectile only.",
+  "alpha_policy": "Unmodified exact rectangular source pixels including faint alpha<=1 fringes. No thresholding, repainting, resampling or particle deletion in frames.",
+  "frames": [
+    {
+      "order": 1,
+      "module": "shared_tier1",
+      "module_frame": 1,
+      "phase": "casting",
+      "file": "frames/shared_tier1-01.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "anchor_px": [
+        320,
+        551
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "cac24329882ecff3d820f3dcc5a29b024dfe0da9d8e4e52b6b71a0cd3d4a43e6"
+    },
+    {
+      "order": 2,
+      "module": "shared_tier1",
+      "module_frame": 2,
+      "phase": "casting",
+      "file": "frames/shared_tier1-02.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "anchor_px": [
+        311,
+        552
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "55212630d6c8de85ced9529ae0285ab4b879ab6fc3a3b1df7e33ca87150defff"
+    },
+    {
+      "order": 3,
+      "module": "shared_tier1",
+      "module_frame": 3,
+      "phase": "casting",
+      "file": "frames/shared_tier1-03.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "anchor_px": [
+        320,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "2063adb7d048ba975eadcbff80adc18d4f51fda8536c9eeb1eddf6485dee9f44"
+    },
+    {
+      "order": 4,
+      "module": "shared_tier1",
+      "module_frame": 4,
+      "phase": "casting",
+      "file": "frames/shared_tier1-04.png",
+      "source": "originals/shared-tier1-cast-v1.png",
+      "crop": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "anchor_px": [
+        313,
+        492
+      ],
+      "anchor_role": "effect_ground",
+      "suggested_duration_ms": 140,
+      "preview_scale": 0.58,
+      "sha256": "61f989824c9752b6edb1688c0fd6b9d2e2ddc8463bec2a56b26e556a06d250da"
+    },
+    {
+      "order": 5,
+      "module": "shadow-mend",
+      "module_frame": 1,
+      "phase": "formation",
+      "file": "frames/shadow-mend-01.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        0,
+        0,
+        510,
+        275
+      ],
+      "anchor_px": [
+        325,
+        290
+      ],
+      "body_center_px": [
+        325,
+        170
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "d19750c8c5a0866e20da2316c9cb1f9b428d1f4c2fa8adc89e06465821661549",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 32940
+    },
+    {
+      "order": 6,
+      "module": "shadow-mend",
+      "module_frame": 2,
+      "phase": "formation",
+      "file": "frames/shadow-mend-02.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        510,
+        0,
+        990,
+        275
+      ],
+      "anchor_px": [
+        260,
+        290
+      ],
+      "body_center_px": [
+        260,
+        170
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "f8623c0747d8b62fe23dc3472a857640543b764ca8d10f639a28135bbdf6424f",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 42634
+    },
+    {
+      "order": 7,
+      "module": "shadow-mend",
+      "module_frame": 3,
+      "phase": "formation",
+      "file": "frames/shadow-mend-03.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        990,
+        0,
+        1536,
+        275
+      ],
+      "anchor_px": [
+        215,
+        290
+      ],
+      "body_center_px": [
+        215,
+        170
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "83909273db18a7d11918a926f5c9c254b66a6efde4dd201620fc5718115f46b4",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 41467
+    },
+    {
+      "order": 8,
+      "module": "shadow-mend",
+      "module_frame": 4,
+      "phase": "action",
+      "file": "frames/shadow-mend-04.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        0,
+        275,
+        510,
+        530
+      ],
+      "anchor_px": [
+        325,
+        265
+      ],
+      "body_center_px": [
+        325,
+        145
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "5ba04a266fdd590f99c79403f0a42b75688b79b4e47112e120264bb72de01347",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 48286
+    },
+    {
+      "order": 9,
+      "module": "shadow-mend",
+      "module_frame": 5,
+      "phase": "action",
+      "file": "frames/shadow-mend-05.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        510,
+        275,
+        990,
+        530
+      ],
+      "anchor_px": [
+        260,
+        265
+      ],
+      "body_center_px": [
+        260,
+        145
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "3329685613a0635fa8ead8e2ef34f76f42b80f77cfb83f9ecd330a2d564b2ce8",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 52375
+    },
+    {
+      "order": 10,
+      "module": "shadow-mend",
+      "module_frame": 6,
+      "phase": "action",
+      "file": "frames/shadow-mend-06.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        990,
+        275,
+        1536,
+        530
+      ],
+      "anchor_px": [
+        215,
+        265
+      ],
+      "body_center_px": [
+        215,
+        145
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 90,
+      "sha256": "ac23c603af9e4c7b66732694be5f260645279f32814cfbd8a166161372f399c2",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 41794
+    },
+    {
+      "order": 11,
+      "module": "shadow-mend",
+      "module_frame": 7,
+      "phase": "collision",
+      "file": "frames/shadow-mend-07.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        0,
+        530,
+        510,
+        776
+      ],
+      "anchor_px": [
+        325,
+        240
+      ],
+      "body_center_px": [
+        325,
+        120
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 105,
+      "sha256": "01486f42f2de08a7327759e6f71b792a852e0da67d7de2747d54ba87eaae1939",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 35928
+    },
+    {
+      "order": 12,
+      "module": "shadow-mend",
+      "module_frame": 8,
+      "phase": "collision",
+      "file": "frames/shadow-mend-08.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        510,
+        530,
+        990,
+        776
+      ],
+      "anchor_px": [
+        260,
+        240
+      ],
+      "body_center_px": [
+        260,
+        120
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 105,
+      "sha256": "b3a91bc64024f6052448ecb365fb6d4ef0dc3d7904e42344a589f76b41a7e02b",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 41944
+    },
+    {
+      "order": 13,
+      "module": "shadow-mend",
+      "module_frame": 9,
+      "phase": "collision",
+      "file": "frames/shadow-mend-09.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        990,
+        530,
+        1536,
+        776
+      ],
+      "anchor_px": [
+        215,
+        240
+      ],
+      "body_center_px": [
+        215,
+        120
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 105,
+      "sha256": "b479f14633502f00a989ebd4b99732d85a8f5c4c402f68bafaa658351d459a40",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 32111
+    },
+    {
+      "order": 14,
+      "module": "shadow-mend",
+      "module_frame": 10,
+      "phase": "dissipation",
+      "file": "frames/shadow-mend-10.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        0,
+        776,
+        510,
+        1024
+      ],
+      "anchor_px": [
+        325,
+        244
+      ],
+      "body_center_px": [
+        325,
+        124
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 110,
+      "sha256": "51725e658720264193d45b4a401ddde97e89adc0634652be9f3e2a692357de09",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 38161
+    },
+    {
+      "order": 15,
+      "module": "shadow-mend",
+      "module_frame": 11,
+      "phase": "dissipation",
+      "file": "frames/shadow-mend-11.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        510,
+        776,
+        990,
+        1024
+      ],
+      "anchor_px": [
+        260,
+        244
+      ],
+      "body_center_px": [
+        260,
+        124
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 110,
+      "sha256": "aeda4f79a58a3791830253fb7f80975b6ae28466183fe999e3f849ef19761ec7",
+      "edge_alpha_max": 1,
+      "nonzero_alpha_pixels": 30160
+    },
+    {
+      "order": 16,
+      "module": "shadow-mend",
+      "module_frame": 12,
+      "phase": "dissipation",
+      "file": "frames/shadow-mend-12.png",
+      "source": "originals/shadow-mend-v2.png",
+      "crop": [
+        990,
+        776,
+        1536,
+        1024
+      ],
+      "anchor_px": [
+        215,
+        244
+      ],
+      "body_center_px": [
+        215,
+        124
+      ],
+      "anchor_role": "virtual_ground_below_body",
+      "anchor_mode": "caster",
+      "suggested_duration_ms": 110,
+      "sha256": "070dcecbd18a3b231000c76aebd34c218be189eb5f9ad9b8160836bfcc82e91d",
+      "edge_alpha_max": 0,
+      "nonzero_alpha_pixels": 7344
+    }
+  ]
+}

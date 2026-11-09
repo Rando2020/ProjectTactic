@@ -1,0 +1,105 @@
+name: Courtyard Web release gate
+
+on:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/**'
+      - 'tools/**'
+      - 'web/**'
+      - '.github/workflows/courtyard-web.yml'
+      - '.github/workflows/deploy.yml'
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  courtyard-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: true
+      - name: Test staging and package gates
+        run: |
+          python -m unittest discover -s tools -p test_courtyard_web.py
+          node --test tools/test_web_package.mjs
+      - name: Import and test supported courtyard contracts
+        shell: bash
+        run: |
+          set -o pipefail
+          project="$PWD/demos/isometric-2v2"
+          mkdir -p build/courtyard-evidence/contracts
+          godot --headless --path "$project" --import
+          godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/test_action_clash_readability.tscn
+          for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn "$project"/tests/blooming_ground/ContractTest.tscn "$project"/tests/blooming_contact/ContractTest.tscn; do
+            # Retired 1v1 route, not the delivered 2v2 courtyard. See release notes.
+            [ "$(basename "$file")" = Test.tscn ] && continue
+            scene="${file#"$project"/}"
+            log="build/courtyard-evidence/contracts/$(echo "$scene" | tr / _)".log
+            XDG_DATA_HOME="$(mktemp -d)" timeout 180 godot --headless --path "$project" "res://$scene" 2>&1 | tee "$log"
+            if grep -E 'SCRIPT ERROR:|FAIL:' "$log"; then exit 1; fi
+          done
+      - name: Preserve integrated ground and contact renderer regressions
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/courtyard-evidence/ground build/courtyard-evidence/contact
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_ground/RenderedGroundTest.tscn -- --capture-dir="$PWD/build/courtyard-evidence/ground" 2>&1 | tee build/courtyard-evidence/ground-renderer.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_contact/RenderedTest.tscn -- --capture-dir="$PWD/build/courtyard-evidence/contact" 2>&1 | tee build/courtyard-evidence/contact-renderer.log
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path, count in [('ground/render-tests.json', 13), ('contact/contact-render-tests.json', 9)]:
+              result = json.loads((Path('build/courtyard-evidence') / path).read_text())
+              assert result['checks'] == count and not result['failures'], result
+          PY
+      - name: Export fresh production and isolated browser QA packages
+        run: python tools/export_courtyard_web.py build/courtyard --qa-directory build/courtyard-qa
+      - name: Install browser driver dependency
+        run: python -m pip install websocket-client
+      - name: Exercise actual Web input and production boot
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/courtyard-evidence/browser
+          browser_pid=''
+          server_pid=''
+          trap 'if [ -n "$browser_pid" ]; then kill "$browser_pid" 2>/dev/null || true; wait "$browser_pid" 2>/dev/null || true; fi; if [ -n "$server_pid" ]; then kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true; fi' EXIT
+          python -m http.server 8000 --bind 127.0.0.1 --directory build >build/courtyard-evidence/browser/server.log 2>&1 &
+          server_pid=$!
+          browser="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          "$browser" --headless --no-sandbox --disable-dev-shm-usage \
+            --force-device-scale-factor=1 --window-size=1920,1080 \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
+            --remote-allow-origins='http://localhost:9222' \
+            --user-data-dir="$(mktemp -d /tmp/courtyard-chrome.XXXXXX)" \
+            about:blank >build/courtyard-evidence/browser/chrome.log 2>&1 &
+          browser_pid=$!
+          python tools/browser_courtyard_smoke.py \
+            --url http://127.0.0.1:8000/courtyard-qa/index.html \
+            --production-url http://127.0.0.1:8000/courtyard/index.html \
+            --output build/courtyard-evidence/browser
+      - name: Upload accepted production package
+        uses: actions/upload-artifact@v4
+        with:
+          name: courtyard-web
+          path: build/courtyard/
+          if-no-files-found: error
+      - name: Upload validation and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: courtyard-release-evidence
+          path: build/courtyard-evidence/
+          if-no-files-found: warn

@@ -1,0 +1,240 @@
+{
+  "format_version": 1,
+  "status": "Existing basic-attack cosmetic integration; source pixels unchanged",
+  "timing_source": "Suggested presentation timings only, not source metadata or gameplay timing.",
+  "notes": [
+    "No resampling, painting, thresholding, or alpha changes. Every source cell pixel is retained, including near-transparent noise.",
+    "Anchors are visually inferred, not artist-authored. Test at battlefield scale before approval.",
+    "Haste and Delay are deferred; assets do not implement charge or turn-order mechanics."
+  ],
+  "effects": {
+    "impact": {
+      "source": "originals/Four-frame pixel impact sprite sheet.png",
+      "source_library_id": "libfile_98546c95305881918b64e43be846a949",
+      "source_sha256": "b6d760d78db7944f50cc9318000729e77478f8f0023132359b33fdcc5f014176",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "frame_size": [
+        1024,
+        1024
+      ],
+      "frame_order": "row-major TL, TR, BL, BR; inferred",
+      "anchor_basis": "Manually inspected burst origin (not debris bounding box).",
+      "priority": "next existing melee/hit presentation",
+      "frames": [
+        {
+          "file": "frames/impact/01.png",
+          "sha256": "3e81c7d4e7f74173c9ce352fc5054f0d88ade9f0fe32ac50dd14f97ef4a8520d",
+          "source_rect_xyxy": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "source_anchor_xy": [
+            349,
+            350
+          ],
+          "paste_offset_xy": [
+            163,
+            162
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 60,
+          "source_cell_edge_alpha_max": 1
+        },
+        {
+          "file": "frames/impact/02.png",
+          "sha256": "eee7d5243ad61d20b4cd82dea62cb481fd1a5a1a5e0b73f917e1e710f7200c2a",
+          "source_rect_xyxy": [
+            627,
+            0,
+            1254,
+            627
+          ],
+          "source_anchor_xy": [
+            920,
+            350
+          ],
+          "paste_offset_xy": [
+            219,
+            162
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 70,
+          "source_cell_edge_alpha_max": 1
+        },
+        {
+          "file": "frames/impact/03.png",
+          "sha256": "d25fdf4c307e7e71a24e8feea4a7bb086af3613760984a7f78f01cb5f4d52904",
+          "source_rect_xyxy": [
+            0,
+            627,
+            627,
+            1254
+          ],
+          "source_anchor_xy": [
+            350,
+            930
+          ],
+          "paste_offset_xy": [
+            162,
+            209
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 80,
+          "source_cell_edge_alpha_max": 1
+        },
+        {
+          "file": "frames/impact/04.png",
+          "sha256": "8c0388c2a512fc7d1bb49fa5af97527323c6defae050967affa2159982bb3fe8",
+          "source_rect_xyxy": [
+            627,
+            627,
+            1254,
+            1254
+          ],
+          "source_anchor_xy": [
+            923,
+            930
+          ],
+          "paste_offset_xy": [
+            216,
+            209
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 100,
+          "source_cell_edge_alpha_max": 1
+        }
+      ]
+    },
+    "slash": {
+      "source": "originals/Golden slash arc pixel sprite sheet.png",
+      "source_library_id": "libfile_f689ed7531908191832cd31761c17e7e",
+      "source_sha256": "36c85fcb2ad1605198532bcc2d67a32bbb2f19e8114ee4899de0d98bed4a22f4",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "frame_size": [
+        1024,
+        1024
+      ],
+      "frame_order": "row-major TL, TR, BL, BR; inferred",
+      "anchor_basis": "Fixed nominal cell-center swing pivot; provisional, not hand position.",
+      "priority": "next existing melee/hit presentation",
+      "frames": [
+        {
+          "file": "frames/slash/01.png",
+          "sha256": "dbfc4906c00083a7e5cdc3d62bdb38fe95ef9501ba01cbb7690043688f8ed02d",
+          "source_rect_xyxy": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "source_anchor_xy": [
+            314,
+            314
+          ],
+          "paste_offset_xy": [
+            198,
+            198
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 50,
+          "source_cell_edge_alpha_max": 1
+        },
+        {
+          "file": "frames/slash/02.png",
+          "sha256": "78d3afb308fe9b0673706d83e127556865bbf7b7ff52595414b247306a724146",
+          "source_rect_xyxy": [
+            627,
+            0,
+            1254,
+            627
+          ],
+          "source_anchor_xy": [
+            941,
+            314
+          ],
+          "paste_offset_xy": [
+            198,
+            198
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 65,
+          "source_cell_edge_alpha_max": 1
+        },
+        {
+          "file": "frames/slash/03.png",
+          "sha256": "13bd9db15cd68d6ec926c5bd9638a96c0ed7ac8973fdfe44011b50e4dad57076",
+          "source_rect_xyxy": [
+            0,
+            627,
+            627,
+            1254
+          ],
+          "source_anchor_xy": [
+            314,
+            941
+          ],
+          "paste_offset_xy": [
+            198,
+            198
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 65,
+          "source_cell_edge_alpha_max": 2
+        },
+        {
+          "file": "frames/slash/04.png",
+          "sha256": "cdb47250f2c00bd29d2a1daba3b51776c990620240fdacc85007bebfdb980443",
+          "source_rect_xyxy": [
+            627,
+            627,
+            1254,
+            1254
+          ],
+          "source_anchor_xy": [
+            941,
+            941
+          ],
+          "paste_offset_xy": [
+            198,
+            198
+          ],
+          "pivot_xy": [
+            512,
+            512
+          ],
+          "suggested_duration_ms": 80,
+          "source_cell_edge_alpha_max": 1
+        }
+      ]
+    }
+  }
+}
