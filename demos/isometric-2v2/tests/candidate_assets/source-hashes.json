@@ -1,0 +1,77 @@
+[
+  {
+    "file": "images/kael-idle-se-candidate.png",
+    "role": "kael",
+    "sha256": "cbcdf15a8256dab8e204e466ae2c6403568120daf30bcc6cd779af2513697b30"
+  },
+  {
+    "file": "images/kael-idle-nw-candidate.png",
+    "role": "kael",
+    "sha256": "c07e3dfb72bf815149844022dd88de7604a45c6b8663ee408972ae275209a276"
+  },
+  {
+    "file": "images/kael-idle-ne-candidate.png",
+    "role": "kael",
+    "sha256": "75cab6f5ce022fef5b8f168b154ceb4265f7b58593578def6bd537fca871d2ac"
+  },
+  {
+    "file": "images/kael-idle-sw-candidate.png",
+    "role": "kael",
+    "sha256": "6780ed6bdd9f076c88d14d765835f4ce0f0e1b3454780c7553f0db1f159d8516"
+  },
+  {
+    "file": "images/cast-windup-se.png",
+    "role": "zane",
+    "sha256": "6711ca3b19ee4720b0816b9a493f6733878066109d062bdcf24ffc296f47efa8"
+  },
+  {
+    "file": "images/cast-release-se.png",
+    "role": "zane",
+    "sha256": "6e4798ddb1a5385feb78dd67495134d09dfdc1a68573c1a99fc37d00645d7fb8"
+  },
+  {
+    "file": "images/cast-lift-se.png",
+    "role": "zane",
+    "sha256": "efbab071a19a4be7ee55067f6d61001e87d91cbf3e253c4a8f4462ed0e753d7e"
+  },
+  {
+    "file": "images/nw.png",
+    "role": "zane",
+    "sha256": "34611d7e1190ab06df24cd229bd7850e10651cf3dabb286163bec5ef899d73db"
+  },
+  {
+    "file": "images/se.png",
+    "role": "zane",
+    "sha256": "d299d45c28f164620beee1d88871edea780ce4ad3c4873f1bea86735b64ab236"
+  },
+  {
+    "file": "images/sw.png",
+    "role": "zane",
+    "sha256": "cb19662628e53dc09075739cd021205453795e9c117d8fb531f0be9320a7e457"
+  },
+  {
+    "file": "images/ne.png",
+    "role": "zane",
+    "sha256": "07f9d08356739d5ac3a0084f216e8c988abf5889d295da8127fb1e0ce94c63b8"
+  },
+  {
+    "file": "images/cast-extend-se.png",
+    "role": "zane",
+    "sha256": "dddf92d698ccf3d2a3291060943d387eb741365b48b6e94212bb0047f9839af4"
+  },
+  {
+    "file": "originals/enemy-hollow-stray-sw-cast-release-candidate-v02.png",
+    "role": "storm_imp",
+    "sha256": "05abc6ab9453ece74d578bdc7e05ca156751330bff7cd0f7432a365c5c17554f"
+  },
+  {
+    "file": "originals/enemy-hollow-stray-sw-cast-windup-candidate-v02.png",
+    "role": "storm_imp",
+    "sha256": "94b22cd896caab08bd8ac1d9b16268965d9b91ba0ea98274852180a9ba4b8d7f"
+  },
+  {
+    "file": "originals/enemy-hollow-stray-sw-idle-candidate-v02.png",
+    "role": "storm_imp",
+    "sha256": "09b7f988ec06729df06501a0191465a203e105a52f9dda8c6d503c3eebd0c361"
+  }
+]

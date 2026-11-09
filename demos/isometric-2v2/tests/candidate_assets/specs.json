@@ -1,0 +1,136 @@
+{
+  "kael": {
+    "se": {
+      "file": "sources/kael/kael-idle-se-candidate.png",
+      "scale": 0.07131011608623548,
+      "pivot": [
+        590,
+        1248
+      ]
+    },
+    "sw": {
+      "file": "sources/kael/kael-idle-sw-candidate.png",
+      "scale": 0.07257383966244725,
+      "pivot": [
+        601,
+        1223
+      ]
+    },
+    "ne": {
+      "file": "sources/kael/kael-idle-ne-candidate.png",
+      "scale": 0.07363013698630137,
+      "pivot": [
+        545,
+        1200
+      ]
+    },
+    "nw": {
+      "file": "sources/kael/kael-idle-nw-candidate.png",
+      "scale": 0.07178631051752922,
+      "pivot": [
+        538,
+        1229
+      ]
+    }
+  },
+  "zane": {
+    "se": {
+      "file": "sources/zane/se.png",
+      "scale": 0.07988721804511278,
+      "pivot": [
+        666,
+        1118
+      ]
+    },
+    "sw": {
+      "file": "sources/zane/sw.png",
+      "scale": 0.08308895405669599,
+      "pivot": [
+        599,
+        1066
+      ]
+    },
+    "ne": {
+      "file": "sources/zane/ne.png",
+      "scale": 0.08382642998027613,
+      "pivot": [
+        553,
+        1081
+      ]
+    },
+    "nw": {
+      "file": "sources/zane/nw.png",
+      "scale": 0.10107015457788347,
+      "pivot": [
+        641,
+        986
+      ]
+    },
+    "cast-lift-se": {
+      "file": "sources/zane/cast-lift-se.png",
+      "scale": 0.07988721804511278,
+      "pivot": [
+        666,
+        1118
+      ]
+    },
+    "cast-extend-se": {
+      "file": "sources/zane/cast-extend-se.png",
+      "scale": 0.07988721804511278,
+      "pivot": [
+        666,
+        1118
+      ]
+    },
+    "cast-windup-se": {
+      "file": "sources/zane/cast-windup-se.png",
+      "scale": 0.07988721804511278,
+      "pivot": [
+        666,
+        1118
+      ]
+    },
+    "cast-release-se": {
+      "file": "sources/zane/cast-release-se.png",
+      "scale": 0.07988721804511278,
+      "pivot": [
+        666,
+        1118
+      ]
+    }
+  },
+  "storm_imp": {
+    "idle": {
+      "file": "sources/storm_imp/enemy-hollow-stray-sw-idle-candidate-v02.png",
+      "scale": 0.07528529162109375,
+      "pivot": [
+        695,
+        1204
+      ]
+    },
+    "windup": {
+      "file": "sources/storm_imp/enemy-hollow-stray-sw-cast-windup-candidate-v02.png",
+      "scale": 0.07528529162109375,
+      "pivot": [
+        695,
+        1204
+      ]
+    },
+    "release": {
+      "file": "sources/storm_imp/enemy-hollow-stray-sw-cast-release-candidate-v02.png",
+      "scale": 0.07528529162109375,
+      "pivot": [
+        695,
+        1204
+      ]
+    },
+    "recover": {
+      "file": "sources/storm_imp/enemy-hollow-stray-sw-idle-candidate-v02.png",
+      "scale": 0.07528529162109375,
+      "pivot": [
+        695,
+        1204
+      ]
+    }
+  }
+}

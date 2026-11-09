@@ -1,0 +1,16 @@
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for local
+_XSERVTransOpen: transport open failed for local/09c8f746c100:109
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for local
+_XSERVTransSocketOpenCOTSServer: Unable to open socket for unix
+_XSERVTransOpen: transport open failed for unix/09c8f746c100:109
+_XSERVTransMakeAllCOTSServerListeners: failed to open listener for unix
+(EE) 
+Fatal server error:
+(EE) Cannot establish any listening sockets - Make sure an X server isn't already running(EE) 
+(EE) 
+Please consult the The X.Org Foundation support 
+	 at http://wiki.x.org
+ for help. 
+(EE) Please also check the log file at "/workspace/scratch/ccbd55cd809f/candidate-battle-test-20261109/evidence/xorg.log" for additional information.
+(EE) 
+(EE) Server terminated with error (1). Closing log file.

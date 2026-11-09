@@ -1,0 +1,33 @@
+## Review-only presentation. Source crops do not alter artwork or gameplay.
+const CANDIDATE_PORTRAITS := {
+	'zane': ['sources/zane/se.png', Rect2(405,65,490,570)],
+	'kael': ['sources/kael/kael-idle-se-candidate.png', Rect2(405,15,490,570)],
+	'storm_imp': ['sources/storm_imp/enemy-hollow-stray-sw-idle-candidate-v02.png', Rect2(370,10,470,550)]
+}
+var _candidate_portraits: Dictionary = {}
+
+func _refresh_appearance_control() -> void:
+	if not is_instance_valid(_bloom_skin_toggle): return
+	_bloom_skin_toggle.text = 'Candidate art (review)'
+	_bloom_skin_toggle.disabled = true
+	_bloom_skin_toggle.tooltip_text = 'Review staging only. Kael: four idle views. Zane: SE cast. Hollow: SW only; other facings use original art.'
+
+func _framed_portrait(id: String) -> Texture2D:
+	if not CANDIDATE_PORTRAITS.has(id): return super._framed_portrait(id)
+	if not _candidate_portraits.has(id):
+		var spec: Array = CANDIDATE_PORTRAITS[id]
+		var framed := AtlasTexture.new()
+		framed.atlas = load('res://tests/candidate_assets/' + str(spec[0]))
+		framed.region = spec[1]
+		framed.filter_clip = true
+		_candidate_portraits[id] = framed
+	return _candidate_portraits[id]
+
+func _set_preview_portrait(rect: TextureRect, path: String) -> void:
+	for id in CANDIDATE_PORTRAITS:
+		if path in AssetRegistry.get_character_portrait_candidates(id):
+			rect.set_meta('skin_character_id',id)
+			rect.texture = _framed_portrait(id)
+			rect.flip_h = false
+			return
+	super._set_preview_portrait(rect,path)
