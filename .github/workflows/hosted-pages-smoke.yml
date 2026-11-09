@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'tools/browser_hosted_smoke.py'
+      - 'tools/browser_courtyard_smoke.py'
+      - 'tools/test_courtyard_web.py'
       - 'tools/test_browser_hosted_smoke.py'
       - '.github/workflows/hosted-pages-smoke.yml'
   workflow_run:
@@ -23,7 +25,7 @@ jobs:
       EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha || github.event.pull_request.base.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
-      - run: python -m pip install websocket-client
+      - run: python -m pip install Pillow websocket-client numpy==2.3.5
       - name: Test all Python tool contracts
         run: python -m unittest discover -s tools -p 'test_*.py'
       - name: Capture real hosted campaign and courtyard

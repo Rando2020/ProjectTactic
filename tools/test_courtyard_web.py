@@ -118,9 +118,8 @@ class CourtyardWebTests(unittest.TestCase):
         class LateErrorCDP:
             errors = []
             def evaluate(self, expression):
-                if expression == 'location.href': return 'http://localhost/courtyard/index.html'
                 if 'typeof window.__courtyardQA' in expression: return 'undefined'
-                return True
+                return {'url': 'http://localhost/courtyard/index.html', 'ready': True}
             def command(self, method, params):
                 if method == 'Page.captureScreenshot':
                     self.errors.append({'late_script_error': 'WebGL failure after loader hid'})
