@@ -1,0 +1,59 @@
+name: Candidate asset battle review
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/tests/candidate_assets/**'
+      - '.github/workflows/candidate-assets-review.yml'
+permissions:
+  contents: read
+jobs:
+  candidate-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hydrate existing standalone assets
+        run: |
+          git lfs fetch --include='demos/isometric-2v2/**' --exclude='' origin HEAD
+          git lfs checkout 'demos/isometric-2v2/**'
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Stage opt-in review without changing original project
+        run: python demos/isometric-2v2/tests/candidate_assets/stage.py "$RUNNER_TEMP/candidate-project"
+      - name: Import and test candidate battle
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/candidate-data
+          XDG_CONFIG_HOME: ${{ runner.temp }}/candidate-config
+          XDG_CACHE_HOME: ${{ runner.temp }}/candidate-cache
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          godot --headless --editor --path "$RUNNER_TEMP/candidate-project" --import >evidence/import.log 2>&1
+          for scene in CandidateTest FullMatchTest; do
+            timeout 180 godot --headless --path "$RUNNER_TEMP/candidate-project" "res://tests/candidate_assets/$scene.tscn" 2>&1 | tee "evidence/$scene.log"
+            ! grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' "evidence/$scene.log"
+          done
+          grep -q 'Candidate battle: .* checks, 0 failures' evidence/CandidateTest.log
+          grep -q 'Courtyard full match: .* checks, 0 failures' evidence/FullMatchTest.log
+      - name: Capture real graphical Godot scene
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}/candidate-capture-data
+          XDG_CONFIG_HOME: ${{ runner.temp }}/candidate-config
+          XDG_CACHE_HOME: ${{ runner.temp }}/candidate-cache
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          set -euo pipefail
+          xvfb-run -a timeout 120 godot --path "$RUNNER_TEMP/candidate-project" --rendering-method gl_compatibility --audio-driver Dummy --resolution 1600x900 res://tests/candidate_assets/CaptureTest.tscn 2>&1 | tee evidence/capture.log
+          ! grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' evidence/capture.log
+          grep -q 'Candidate graphical captures: 6 saved' evidence/capture.log
+          find "$XDG_DATA_HOME" -name 'candidate-*.png' -exec cp {} evidence/ \;
+          test "$(find evidence -name 'candidate-*.png' | wc -l)" -eq 6
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-battle-review
+          path: evidence/
