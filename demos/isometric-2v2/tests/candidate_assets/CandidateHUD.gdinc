@@ -10,7 +10,7 @@ func _refresh_appearance_control() -> void:
 	if not is_instance_valid(_bloom_skin_toggle): return
 	_bloom_skin_toggle.text = 'Candidate art (review)'
 	_bloom_skin_toggle.disabled = true
-	_bloom_skin_toggle.tooltip_text = 'Review staging only. Kael: four idle views. Zane: SE cast. Hollow: SW only; other facings use original art.'
+	_bloom_skin_toggle.tooltip_text = 'Review staging only. Kael: four idle views. Zane: SE cast. Hollow: four idle views; SW cast only.'
 
 func _framed_portrait(id: String) -> Texture2D:
 	if not CANDIDATE_PORTRAITS.has(id): return super._framed_portrait(id)

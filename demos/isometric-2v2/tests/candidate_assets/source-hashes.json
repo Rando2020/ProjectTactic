@@ -73,5 +73,20 @@
     "file": "originals/enemy-hollow-stray-sw-idle-candidate-v02.png",
     "role": "storm_imp",
     "sha256": "09b7f988ec06729df06501a0191465a203e105a52f9dda8c6d503c3eebd0c361"
+  },
+  {
+    "file": "hollow-idle-se-candidate.png",
+    "role": "storm_imp",
+    "sha256": "381e73c88f0ff98a83ebde383511f7932065c5a669426b500204fe0904870d25"
+  },
+  {
+    "file": "hollow-idle-ne-candidate.png",
+    "role": "storm_imp",
+    "sha256": "7cc18fee477a1d10fe49355d94349daeb838077a5356882143af6f4fb2dd329f"
+  },
+  {
+    "file": "hollow-idle-nw-candidate.png",
+    "role": "storm_imp",
+    "sha256": "527ecf2ae6a2fcd17205d1c1b50778d0e06dfba3a47e2622efd21208834eaeaf"
   }
 ]

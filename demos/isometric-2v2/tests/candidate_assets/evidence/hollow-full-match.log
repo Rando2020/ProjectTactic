@@ -1,0 +1,5 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+Candidate textures observed in live match: ["res://tests/candidate_assets/sources/zane/se.png", "res://tests/candidate_assets/sources/kael/kael-idle-ne-candidate.png", "res://tests/candidate_assets/sources/storm_imp/enemy-hollow-stray-sw-idle-candidate-v02.png", "res://tests/candidate_assets/sources/zane/cast-windup-se.png", "res://tests/candidate_assets/sources/zane/cast-release-se.png", "res://tests/candidate_assets/sources/storm_imp/enemy-hollow-stray-sw-cast-windup-candidate-v02.png", "res://tests/candidate_assets/sources/storm_imp/enemy-hollow-stray-sw-cast-release-candidate-v02.png", "res://tests/candidate_assets/sources/storm_imp/hollow-idle-nw-candidate.png", "res://tests/candidate_assets/sources/kael/kael-idle-se-candidate.png", "res://tests/candidate_assets/sources/zane/ne.png"]
+Courtyard match evidence: seed=20261109 decisions=11 casts=2 turns={ "zane": 4, "Enemy_1": 1, "Enemy_2": 3, "kael": 2 } moves={ "zane": 3, "Enemy_2": 1, "kael": 2 } actions={ "zane": 4, "Enemy_1": 1, "Enemy_2": 2 } defeated=["Enemy_1", "Enemy_2"] replays=1
+Courtyard full match: 99 checks, 0 failures
