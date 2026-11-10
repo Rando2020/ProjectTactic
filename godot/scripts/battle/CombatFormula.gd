@@ -271,7 +271,6 @@ static func elemental_affinity(target: Unit, element: String, mods: Dictionary =
 
 static func affinity_label(affinity: float) -> String:
 	if affinity == 0.0: return "Immune"
-	if affinity < 0.5: return "Absorbs"
 	if affinity < 1.0: return "Resists"
 	if affinity >= 2.0: return "Very weak"
 	if affinity > 1.0: return "Weak"
