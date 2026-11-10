@@ -91,8 +91,24 @@ func settle() -> void:
 		if not manager.is_resolving_action:return
 		await get_tree().create_timer(0.02).timeout
 	check(false,"action settles")
+func open_ability_menu(id: String) -> void:
+	var ui = battle.battle_ui
+	# Reopen through the same Back stack a player uses after cancelling review.
+	if ui._selection.has_review(): ui._selection.go_back()
+	if ui._selection.is_targeting(): ui._selection.go_back()
+	var ability := AbilityDB.get_ability(id)
+	if ability.get("command_category", "skills") == "magic":
+		ui._on_magic()
+		var school := str(ability.get("magic_school", ""))
+		for button in ui._ability_list.get_children():
+			if button is Button and not button.is_queued_for_deletion() and str(button.get_meta("magic_school", "")) == school:
+				button.pressed.emit()
+				return
+		check(false, id + " has a real selectable school")
+	else:
+		ui._on_ability()
 func stage(id: String, target: Unit) -> void:
-	manager.select_command("ability")
+	open_ability_menu(id)
 	var found := false
 	for button in battle.battle_ui._ability_list.get_children():
 		if not button is Button or button.is_queued_for_deletion():continue
@@ -102,13 +118,13 @@ func stage(id: String, target: Unit) -> void:
 				found=true
 				break
 		if found:break
-	check(found,id+" selected from its real Skills button")
+	check(found,id+" selected from its real category/school button")
 	battle.battle_ui._selection.set_cursor(target.grid_pos)
 	battle.battle_ui._selection.activate_cursor()
 func haste_case() -> void:
 	fixture("zane")
-	manager.select_command("ability")
-	await capture("zane-skills")
+	open_ability_menu("haste")
+	await capture("zane-time-magic")
 	var caster: Unit=manager.units.zane
 	var target: Unit=manager.units.kael
 	var speed:=target.get_effective_speed()
@@ -128,6 +144,7 @@ func haste_case() -> void:
 	await capture("haste-applied")
 	target.end_turn()
 	manager.active_unit_has_acted=false
+	manager._emit_action_state() # Controlled next-action fixture must notify the real HUD.
 	stage("haste",caster)
 	check(not battle.battle_ui._selection.has_review(),"Haste cannot self target")
 	manager.cancel_pending_action()

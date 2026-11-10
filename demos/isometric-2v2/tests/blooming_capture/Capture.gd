@@ -67,9 +67,16 @@ func run() -> void:
 	await get_tree().create_timer(0.3).timeout
 	if manager.units.zane.grid_pos != Vector2i(4,8): fail("Real approach movement did not complete"); finish(); return
 	ui._selection.select_unit("zane")
-	ui._ability_btn.pressed.emit()
+	ui._magic_btn.pressed.emit()
 	await get_tree().create_timer(0.5).timeout
-	await capture("03_skills")
+	await capture("03_magic_schools")
+	var black_button: Button
+	for button in ui._ability_list.get_children():
+		if button is Button and str(button.get_meta("magic_school", "")) == "black": black_button = button
+	if not black_button: fail("Actual Black Magic school not found"); finish(); return
+	black_button.pressed.emit()
+	await get_tree().create_timer(0.5).timeout
+	await capture("03_black_magic")
 	var fire_button: Button
 	var fire_name := str(AbilityDB.get_ability("fire").get("display_name","fire"))
 	for button in ui._ability_list.get_children():

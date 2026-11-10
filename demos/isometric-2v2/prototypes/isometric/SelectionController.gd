@@ -218,10 +218,7 @@ func go_back() -> void:
 		if self_review:
 			ui._ability_panel.show()
 			manager.action_preview_changed.emit({})
-			for button in ui._ability_list.get_children():
-				if button is Button and not button.disabled and not button.is_queued_for_deletion():
-					button.grab_focus.call_deferred()
-					break
+			ui.call_deferred("_focus_first_ability")
 		elif is_targeting():
 			manager._on_tile_hovered(cursor_cell)
 		refresh()

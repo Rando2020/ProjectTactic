@@ -230,8 +230,15 @@ func _on_ability_mode_started(usable_ids: Array) -> void:
 	_layout_skills()
 	if _selection:
 		_selection.refresh.call_deferred()
-		if _ability_list.get_child_count() > 0:
-			_ability_list.get_child(0).grab_focus.call_deferred()
+		_focus_first_ability.call_deferred()
+
+func _focus_first_ability() -> void:
+	# Resolve the current row after navigation settles, not a detached old row.
+	if not _ability_panel.is_visible_in_tree() or not battle_manager or battle_manager.active_command != "ability": return
+	for button in _ability_list.get_children():
+		if button is Button and not button.disabled and not button.is_queued_for_deletion():
+			button.grab_focus()
+			return
 
 func _make_selection_controller():
 	return preload("res://prototypes/isometric/SelectionController.gd").new()

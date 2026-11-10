@@ -31,6 +31,7 @@ jobs:
       - name: Test staging and package gates
         run: |
           python -m unittest discover -s tools -p test_courtyard_web.py
+          python -m unittest discover -s tools -p test_browser_courtyard_commands.py
           node --test tools/test_web_package.mjs
       - name: Import and test supported courtyard contracts
         shell: bash
@@ -68,7 +69,7 @@ jobs:
         run: python tools/export_courtyard_web.py build/courtyard --qa-directory build/courtyard-qa
       - name: Install browser driver dependency
         run: python -m pip install websocket-client
-      - name: Exercise actual Web input and production boot
+      - name: Exercise Web Magic schools, Skills, Back navigation and production boot
         shell: bash
         run: |
           set -o pipefail
@@ -90,6 +91,9 @@ jobs:
             --url http://127.0.0.1:8000/courtyard-qa/index.html \
             --production-url http://127.0.0.1:8000/courtyard/index.html \
             --output build/courtyard-evidence/browser
+          for image in courtyard-magic-schools-1920 courtyard-black-magic-1920 courtyard-time-magic-1920 courtyard-haste-review-1920 courtyard-magic-back-complete-1920 courtyard-magic-schools-1366 courtyard-black-magic-1366 courtyard-time-magic-1366 courtyard-haste-review-1366 courtyard-magic-back-complete-1366 courtyard-kael-commands-1366 courtyard-kael-skills-1366 courtyard-defend-review-1366; do
+            test -s "build/courtyard-evidence/browser/$image.png"
+          done
       - name: Upload accepted production package
         uses: actions/upload-artifact@v4
         with:

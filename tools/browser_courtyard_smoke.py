@@ -29,6 +29,32 @@ def assert_moved(before, after, destination):
         assert after[field] == before[field], f'Movement unexpectedly changed {field}'
 
 
+def assert_command_menu(state, category, school, entries):
+    assert state['selected'] == state['unit']['id'], 'Menu is not owned by the active selected hero'
+    assert state['command'] == 'ability' and state['menu_visible'], 'Ability menu is not open'
+    assert state['category'] == category and state['school'] == school, 'Wrong category or school'
+    field = 'magic_school' if category == 'magic' and not school else 'ability_id'
+    other = 'ability_id' if field == 'magic_school' else 'magic_school'
+    rows = state['entries']
+    assert all(row['visible'] and not row.get(other) for row in rows), 'Mixed or hidden menu rows'
+    actual = [row.get(field) for row in rows]
+    assert len(actual) == len(set(actual)) and set(actual) == set(entries), f'Wrong {category}/{school} entries: {actual}'
+
+
+def menu_entry(state, field, value):
+    matches = [entry for entry in state['entries'] if entry.get(field) == value]
+    assert len(matches) == 1, f'Expected one {field}={value} button'
+    assert matches[0]['visible'] and not matches[0]['disabled'], f'{value} is hidden or disabled'
+    return matches[0]
+
+
+def assert_commands(state, *, magic, skills):
+    assert not state['command'] and not state['menu_visible'] and not state['review'], 'Commands did not reopen'
+    for name, enabled in [('magic', magic), ('skills', skills)]:
+        button = state['buttons'][name]
+        assert button['visible'] and button['disabled'] == (not enabled), f'Wrong {name} command availability'
+
+
 class CourtyardSmoke:
     def __init__(self, cdp, output, timeout):
         self.cdp, self.output, self.timeout = cdp, output, timeout
@@ -43,7 +69,7 @@ class CourtyardSmoke:
             if envelope:
                 self.latest = envelope
                 state = envelope['state']
-                assert state['schema'] == 1, 'Unexpected courtyard observer schema'
+                assert state['schema'] == 2, 'Unexpected courtyard observer schema'
                 geometry_ready = canvas_size is None or [envelope['canvas']['width'], envelope['canvas']['height']] == list(canvas_size)
                 if state['frame'] > after + 1 and geometry_ready and predicate(state):
                     return envelope
@@ -66,6 +92,110 @@ class CourtyardSmoke:
         self.cdp.command('Input.dispatchKeyEvent', {'type': 'keyDown', **event})
         time.sleep(0.08)
         self.cdp.command('Input.dispatchKeyEvent', {'type': 'keyUp', **event})
+
+    def click_button(self, envelope, button):
+        self.cdp.click(*button_point(button, envelope['state']['viewport'], envelope['canvas']))
+
+    def wait_menu(self, category, school, entries, after):
+        envelope = self.wait(f'{category}/{school} menu', lambda s: s['menu_visible']
+                             and s['command'] == 'ability' and s['category'] == category
+                             and s['school'] == school, after)
+        assert_command_menu(envelope['state'], category, school, entries)
+        return envelope
+
+    def back(self, envelope, predicate, *, mouse=False):
+        if mouse:
+            self.click_button(envelope, envelope['state']['buttons']['back'])
+        else:
+            self.key('Escape', keycode=27)
+        result = self.wait('one Back navigation step', predicate, envelope['state']['frame'])
+        assert_unchanged(envelope['state']['unit'], result['state']['unit'])
+        return result
+
+    def check_magic_hierarchy(self, commands, size):
+        """Use only browser input, including the complete review-to-command Back chain."""
+        baseline = commands['state']['unit']
+        assert_commands(commands['state'], magic=True, skills=False)
+        self.checkpoint(f'courtyard-zane-commands-{size}', commands)
+        # The empty category cannot be opened even via its keyboard shortcut.
+        self.key('s', 'KeyS', 83)
+        disabled = self.wait('empty Skills ignored', lambda s: not s['command'], commands['state']['frame'])
+        assert_commands(disabled['state'], magic=True, skills=False)
+        self.key('g', 'KeyG', 71)
+        schools = self.wait_menu('magic', '', ['black', 'time'], disabled['state']['frame'])
+        self.checkpoint(f'courtyard-magic-schools-{size}', schools)
+        assert schools['state']['focus'].get('magic_school') == 'black', 'School keyboard focus is missing'
+        self.key('Enter', keycode=13)
+        black = self.wait_menu('magic', 'black', ['fire', 'thunderstrike', 'void_pulse'], schools['state']['frame'])
+        self.checkpoint(f'courtyard-black-magic-{size}', black)
+        schools = self.back(black, lambda s: s['menu_visible'] and s['school'] == '', mouse=True)
+        assert_command_menu(schools['state'], 'magic', '', ['black', 'time'])
+        assert schools['state']['focus'].get('magic_school') == 'black', 'Back lost the originating school focus'
+        self.key('Tab', keycode=9)
+        focused = self.wait('Time school keyboard focus', lambda s: s['focus'].get('magic_school') == 'time', schools['state']['frame'])
+        self.key('Enter', keycode=13)
+        time_magic = self.wait_menu('magic', 'time', ['haste'], focused['state']['frame'])
+        self.checkpoint(f'courtyard-time-magic-{size}', time_magic)
+        self.click_button(time_magic, menu_entry(time_magic['state'], 'ability_id', 'haste'))
+        targeting = self.wait('Haste targeting', lambda s: s['command'] == 'ability_target'
+                              and s['ability_id'] == 'haste' and not s['review'], time_magic['state']['frame'])
+        # Mouse navigation can move the board cursor. Aim at the other ally with real
+        # arrow keys rather than invoking a game method through JavaScript.
+        ally = targeting['state']['units']['kael']
+        assert ally['hp'] > 0 and ally['team'] == 'player', 'Haste target is not a living ally'
+        for axis, positive, negative in [(0, ('ArrowRight', 39), ('ArrowLeft', 37)),
+                                         (1, ('ArrowDown', 40), ('ArrowUp', 38))]:
+            delta = ally['position'][axis] - targeting['state']['cursor'][axis]
+            key, code = positive if delta > 0 else negative
+            for _ in range(abs(delta)):
+                self.key(key, keycode=code)
+        on_ally = self.wait('Haste cursor on Kael', lambda s: s['cursor'] == ally['position'],
+                             targeting['state']['frame'])
+        self.key('Enter', keycode=13)
+        review = self.wait('Haste review', lambda s: s['review'] and s['ability_id'] == 'haste', on_ally['state']['frame'])
+        assert_unchanged(baseline, review['state']['unit'])
+        self.checkpoint(f'courtyard-haste-review-{size}', review)
+        targeting = self.back(review, lambda s: not s['review'] and s['command'] == 'ability_target')
+        leaf = self.back(targeting, lambda s: s['command'] == 'ability' and s['menu_visible'], mouse=True)
+        assert_command_menu(leaf['state'], 'magic', 'time', ['haste'])
+        assert leaf['state']['focus'].get('ability_id') == 'haste', 'Back lost the originating spell focus'
+        schools = self.back(leaf, lambda s: s['menu_visible'] and s['school'] == '')
+        assert_command_menu(schools['state'], 'magic', '', ['black', 'time'])
+        commands = self.back(schools, lambda s: not s['command'] and not s['menu_visible'], mouse=True)
+        assert_commands(commands['state'], magic=True, skills=False)
+        assert_unchanged(baseline, commands['state']['unit'])
+        self.checkpoint(f'courtyard-magic-back-complete-{size}', commands)
+        return commands
+
+    def check_kael_skills(self, commands):
+        # Advance via the real Wait/facing controls. Never replace the active unit,
+        # grant abilities, change CT, or add a test hero in the observer.
+        self.key('w', 'KeyW', 87)
+        facing = self.wait('Zane Wait facing', lambda s: s['waiting_facing'], commands['state']['frame'])
+        self.click_button(facing, facing['state']['confirm'])
+        kael = self.wait('Kael natural turn', lambda s: s['phase'] == 'PLAYER_TURN'
+                         and s['unit']['id'] == 'kael' and not s['resolving'], facing['state']['frame'])
+        self.key('Enter', keycode=13)
+        selected = self.wait('Kael selected', lambda s: s['selected'] == 'kael', kael['state']['frame'])
+        assert_commands(selected['state'], magic=False, skills=True)
+        self.checkpoint('courtyard-kael-commands-1366', selected)
+        self.key('g', 'KeyG', 71)
+        disabled = self.wait('empty Magic ignored', lambda s: not s['command'], selected['state']['frame'])
+        assert_commands(disabled['state'], magic=False, skills=True)
+        self.key('s', 'KeyS', 83)
+        skills = ['mighty_strike', 'defend', 'delay_strike', 'heavy_slash']
+        menu = self.wait_menu('skills', '', skills, disabled['state']['frame'])
+        assert_unchanged(selected['state']['unit'], menu['state']['unit'])
+        self.checkpoint('courtyard-kael-skills-1366', menu)
+        self.click_button(menu, menu_entry(menu['state'], 'ability_id', 'defend'))
+        review = self.wait('Defend review', lambda s: s['review'], menu['state']['frame'])
+        assert_unchanged(selected['state']['unit'], review['state']['unit'])
+        self.checkpoint('courtyard-defend-review-1366', review)
+        menu = self.back(review, lambda s: not s['review'] and s['menu_visible'])
+        assert_command_menu(menu['state'], 'skills', '', skills)
+        commands = self.back(menu, lambda s: not s['command'] and not s['menu_visible'], mouse=True)
+        assert_commands(commands['state'], magic=False, skills=True)
+        assert_unchanged(selected['state']['unit'], commands['state']['unit'])
 
     def run(self, url, production_url):
         for domain in ('Page', 'Runtime', 'Log'):
@@ -90,6 +220,7 @@ class CourtyardSmoke:
         assert_unchanged(state['unit'], closed['state']['unit'])
         self.key('Enter', keycode=13)
         selected = self.wait('Zane selected', lambda s: s['selected'] == 'zane', closed['state']['frame'])
+        selected = self.check_magic_hierarchy(selected, 1920)
         self.key('m', 'KeyM', 77)
         aiming = self.wait('Move targeting', lambda s: s['command'] == 'move', selected['state']['frame'])
         self.key('ArrowRight', keycode=39)
@@ -113,6 +244,11 @@ class CourtyardSmoke:
         compact = self.wait('compact viewport', lambda s: True, moved['state']['frame'], (1366, 768))
         assert_unchanged(moved['state']['unit'], compact['state']['unit'])
         self.checkpoint('courtyard-compact-1366', compact)
+        if not compact['state']['selected']:
+            self.key('Enter', keycode=13)
+            compact = self.wait('Zane reselected', lambda s: s['selected'] == 'zane', compact['state']['frame'])
+        commands = self.check_magic_hierarchy(compact, 1366)
+        self.check_kael_skills(commands)
         # Load the actual public package too, with no test observer present.
         self.check_production(production_url)
 
@@ -153,7 +289,10 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     report = {'status': 'failed', 'coverage': ['settings open/close', 'move review/cancel',
-              'mouse confirmation', 'resource-preserving movement', '1366/1920 layouts', 'production package boot']}
+              'mouse confirmation', 'resource-preserving movement', '1366/1920 layouts',
+              'Magic/Skills categories and disabled empty categories', 'Black/Time schools and hidden empty White',
+              'owned spell and skill leaves', 'Haste review/target/leaf/schools/commands Back chain',
+              'Kael natural turn and Defend review/cancel', 'production package boot']}
     connection = cdp = smoke = None
     try:
         import websocket

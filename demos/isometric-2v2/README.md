@@ -2,11 +2,11 @@
 
 Open this folder's `project.godot` in **Godot 4.6.3**, let imports finish, then press **F5**. No source-generation step or LFS download is required for this folder.
 
-Zane and Kael fight a Storm Imp and a Void Cultist on a compact painted chapel battlefield. Move, Attack, Skills and Wait use the existing tactical combat rules. Defeat both enemies to win; Replay Fight restores all four fighters. Saves use the separate `ProjectTactic-IsometricProof` namespace.
+Zane and Kael fight a Storm Imp and a Void Cultist on a compact painted chapel battlefield. Move, Attack, Magic, Skills and Wait use the existing tactical combat rules. Defeat both enemies to win; Replay Fight restores all four fighters. Saves use the separate `ProjectTactic-IsometricProof` namespace.
 
 ## Controls
 
-Click/tap a unit or move the visible cursor with arrow keys and press Enter. Selecting the active ally opens Move, Attack, Skills and Wait beside that unit. Other allies and enemies can be inspected but cannot act out of turn. In the menu, use Up/Down and Enter, or click/tap a command. During targeting, arrows move the cursor and Enter or click/tap commits a legal tile. Esc, right-click or Back cancels targeting and returns to the menu; another Back closes selection. M/A/S/W shortcuts work only after selecting the active ally. Touch uses Godot's mouse emulation through the same GUI-safe input path. Zane's Fire costs 12 MP. Each ally acts when its initiative turn arrives.
+Click/tap a unit or move the visible cursor with arrow keys and press Enter. Selecting the active ally opens Move, Attack, Magic, Skills and Wait beside that unit. Other allies and enemies can be inspected but cannot act out of turn. In the menu, use Up/Down and Enter, or click/tap a command. During targeting, arrows move the cursor and Enter or click/tap commits a legal tile. Esc, right-click or Back cancels targeting and returns to the menu; another Back closes selection. M/A/G/S/W shortcuts work only after selecting the active ally. Touch uses Godot's mouse emulation through the same GUI-safe input path. Zane's Fire costs 12 MP. Each ally acts when its initiative turn arrives.
 
 Cursor: cream corner brackets. Selected unit: gold diamond. Active turn: blue/red glow. Targeting controls move out of the battlefield so the menu cannot cover destination tiles.
 
@@ -148,3 +148,30 @@ Aim along a cardinal grid edge to set attack facing. A spear may aim at either o
 These are **test assignments, not final class restrictions or balance**. Each target uses the existing physical damage, accuracy and critical rules, without weapon stat bonuses. Swapping is free before acting, including after moving, but unavailable during an action, after acting or on another unit's turn. Changing weapons cancels pending targeting/review. Replay starts both heroes with Sword. Weapon sprites do not change. Campaign gear, saved ownership, skills, enemies and hero count are unchanged.
 
 Focused coverage: `godot --headless --path demos/isometric-2v2 res://tests/blooming_weapons/WeaponTest.tscn`. This positions existing combatants in controlled fixtures, then exercises the actual menus, confirmation, multi-target damage, counter behavior, auto targeting and supported UI scales. It is not full-match browser or physical-touch acceptance. The `Courtyard test weapons` workflow also captures the real loadout, spear review and greatsword review screens.
+
+## Magic schools and Skills
+
+Select **Magic [G]** to choose a school, then a spell. **Skills [S]** opens physical
+and special techniques directly. Zane currently has Black Magic (Fire, Thunderstrike,
+Void Pulse) and Time Magic (Haste); Kael has Mighty Strike, Defend, Delay Strike and
+Heavy Slash under Skills. These labels are provisional, editable ability metadata,
+not permanent class restrictions. A hero may have multiple schools, including White
+Magic whenever Cure, Protect or another existing White Magic ability is in their
+current battle loadout. This change does not teach any new abilities.
+
+Only schools containing this hero's known abilities appear. Empty Magic/Skills
+commands stay visible but disabled with explanatory tooltips. Low-MP or silenced
+abilities stay listed with their costs and an unavailable reason. A school remains
+inspectable even when all its spells are unavailable. Unknown saved IDs and the
+Fireball alias are projected without rewriting saved ownership.
+
+Back / Esc / right-click / gamepad B walks outward: review → targeting → spell list
+→ schools → commands → deselect. Self-target reviews return straight to their list.
+Use arrows or D-pad to navigate, Enter/Space or gamepad A to select/confirm, or the
+existing mouse/touch controls. Long lists scroll with focus. Existing target review,
+combat costs, initiative and save format are unchanged. The campaign UI is unchanged.
+
+Focused native coverage: `res://tests/blooming_commands/CommandMenuTest.tscn`.
+The Courtyard hero skills workflow captures actual-engine menus; the Courtyard Web
+release gate also exercises real browser menu inputs and captures screenshots.
+These fixtures do not claim physical-controller, physical-phone or audible testing.

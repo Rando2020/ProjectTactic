@@ -94,8 +94,17 @@ func run() -> void:
   check(ui._bloom_hint.text.contains("Fixed courtyard"),"Q/E gives explicit fixed-camera feedback")
   check(manager.active_unit_id==initial_turn and ui._selection.selected_id==selected_before,"Q/E preserves turn and selection")
   check(manager.units[initial_turn].grid_pos==position_before and manager.units[initial_turn].mp==mp_before,"Q/E does not move or spend resources")
- ui._on_ability()
- manager.select_ability("fire")
+ ui._magic_btn.pressed.emit()
+ var black_button:Button
+ for button in ui._ability_list.get_children():
+  if button is Button and str(button.get_meta("magic_school", "")) == "black":black_button=button
+ check(black_button!=null,"Magic exposes Black Magic school")
+ if black_button:black_button.pressed.emit()
+ var fire_button:Button
+ for button in ui._ability_list.get_children():
+  if button is Button and str(button.get_meta("ability_id", "")) == "fire":fire_button=button
+ check(fire_button!=null,"Black Magic exposes Fire leaf")
+ if fire_button:fire_button.pressed.emit()
  ui._selection.go_back()
  check(get_viewport().gui_get_focus_owner()!=ui._wait_btn,"cancel focus never poised on Wait")
  check(manager.units[initial_turn].mp==mp_before and not manager.active_unit_has_acted,"menu cancel preserves MP/action")
