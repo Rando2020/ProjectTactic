@@ -1,0 +1,80 @@
+{
+  "tile_size_m": 2,
+  "height_step_m": 1,
+  "source_axis": "Z up",
+  "export_axis": "Y up",
+  "assets": [
+    {
+      "id": "grass_flowers",
+      "file": "models/grass_flowers.glb",
+      "reference": "sheet01_01_terrain_1061x829.png",
+      "triangles": 1044,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        0.6599271297454834
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    },
+    {
+      "id": "stone",
+      "file": "models/stone.glb",
+      "reference": "sheet01_09_terrain_328x259.png",
+      "triangles": 220,
+      "dimensions_blender": [
+        2.0,
+        2.0,
+        0.3199999928474426
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    },
+    {
+      "id": "high_ground",
+      "file": "models/high_ground.glb",
+      "reference": "sheet01_03_terrain_644x567.png",
+      "triangles": 88,
+      "dimensions_blender": [
+        1.9800000190734863,
+        1.9800000190734863,
+        1.159999966621399
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    },
+    {
+      "id": "ruin_wall",
+      "file": "models/ruin_wall.glb",
+      "reference": "sheet02_03_terrain_739x705.png",
+      "triangles": 264,
+      "dimensions_blender": [
+        1.988959550857544,
+        0.555614173412323,
+        0.7999999523162842
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    },
+    {
+      "id": "flower_clump",
+      "file": "models/flower_clump.glb",
+      "reference": "sheet02_12_prop_214x204.png",
+      "triangles": 324,
+      "dimensions_blender": [
+        0.4371111989021301,
+        0.4389328956604004,
+        0.3948614299297333
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    },
+    {
+      "id": "stairs",
+      "file": "models/stairs.glb",
+      "reference": "inferred transition; no original stair reference",
+      "triangles": 176,
+      "dimensions_blender": [
+        1.9800000190734863,
+        2.030423641204834,
+        1.0
+      ],
+      "pivot": "cell center, walking plane z=0; raised geometry top z=1"
+    }
+  ]
+}

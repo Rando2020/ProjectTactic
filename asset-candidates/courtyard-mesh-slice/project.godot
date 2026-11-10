@@ -1,0 +1,9 @@
+config_version=5
+[application]
+config/name="Courtyard — textured mesh section"
+run/main_scene="res://preview.tscn"
+[display]
+window/size/viewport_width=1400
+window/size/viewport_height=1100
+[rendering]
+renderer/rendering_method="gl_compatibility"

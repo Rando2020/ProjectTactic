@@ -1,0 +1,29 @@
+{
+  "units": "meters",
+  "source_up": "Z",
+  "export_up": "Y",
+  "objects": [
+    {
+      "name": "Painted limestone",
+      "triangles": 10426
+    },
+    {
+      "name": "Ochre earth",
+      "triangles": 3096
+    },
+    {
+      "name": "Olive leaves",
+      "triangles": 2560
+    },
+    {
+      "name": "Lilac petals",
+      "triangles": 14400
+    },
+    {
+      "name": "Flower stems",
+      "triangles": 1152
+    }
+  ],
+  "collision": false,
+  "texture": "AI-generated limestone base color, sRGB; multiplied with authored vertex tint"
+}
