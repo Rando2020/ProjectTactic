@@ -42,6 +42,8 @@ func _attack_preview_for_tile(aim: Vector2i) -> Dictionary:
 	forecast["target_portrait"]=_portrait_path(primary)
 	forecast=_with_target_context(_with_position_context(forecast,actor,primary),actor,primary)
 	forecast["ability_name"]=Patterns.LABELS[test_weapon_id(actor.unit_id)]
+	forecast["jp_gain"]=0
+	forecast["weapon_area"]=Patterns.footprint(test_weapon_id(actor.unit_id),actor.grid_pos,aim,tactical_grid.tiles)
 	forecast["note"]="TEST weapon · enemies only · %d target(s) · aim %d,%d. Existing damage per target; not balanced." % [recipients.size(),aim.x,aim.y]
 	var affected: Array[Dictionary]=[]
 	var counter_names: Array[String]=[]
@@ -51,6 +53,8 @@ func _attack_preview_for_tile(aim: Vector2i) -> Dictionary:
 		affected.append({"unit_id":target.unit_id,"target_name":target.display_name,"hp_before":one.hp_before,"hp_after":one.hp_after,"max_hp":one.max_hp,"damage":one.damage,"hit_pct":one.hit_pct,"status_preview":one.get("status_preview",""),"can_counter":one.get("can_counter",false),"role":"primary" if target==primary else "weapon area"})
 	forecast["can_counter"]=not counter_names.is_empty()
 	if not counter_names.is_empty():forecast["note"]+=" Counter possible: "+", ".join(counter_names)+"."
+	forecast["weapon_summary"]="Targets: "+", ".join(recipients.map(func(unit):return unit.display_name))+"\nEnemies only"
+	if not counter_names.is_empty():forecast["weapon_summary"]+=" · Counter possible: "+", ".join(counter_names)
 	forecast["affected_targets"]=affected
 	return forecast
 func _on_tile_hovered(aim: Vector2i) -> void:

@@ -98,6 +98,7 @@ func run() -> void:
 	var far_forecast: Dictionary=manager._attack_preview_for_tile(other.grid_pos)
 	check(bool(far_forecast.get("can_counter",false)),"far spear aim still warns about near collateral counter")
 	selection.activate_cursor()
+	check(battle.battle_ui._preview_note_label.text.contains("Storm Imp") and battle.battle_ui._preview_note_label.text.contains("Void Cultist"),"first-page weapon summary names all actual recipients")
 	await capture("spear-review")
 	selection.go_back()
 	check(resources()==before and not manager.active_unit_has_acted,"cancel preserves action and all resources")
@@ -126,6 +127,8 @@ func run() -> void:
 	check(other.hp==before.Enemy_2[0] and other.temper==before.Enemy_2[2],"sword cannot damage the second enemy in line")
 	# Controlled turn-state/position probe, not a claim of full-match manual input.
 	manager.active_unit_id="kael";manager.active_unit_has_acted=false;manager.active_unit_has_moved=false
+	manager.turn_started.emit("kael","player")
+	await get_tree().create_timer(1.5).timeout
 	pose(kael,Vector2i(4,8));pose(zane,Vector2i(4,7));pose(enemy,Vector2i(3,7));pose(other,Vector2i(5,7))
 	selection.select_unit("kael")
 	check(manager.equip_test_weapon("kael","greatsword"),"Kael equips greatsword")
@@ -139,6 +142,13 @@ func run() -> void:
 	check(not manager._attack_preview_for_tile(Vector2i(4,7)).is_empty(),"empty greatsword center legal when row contains enemies")
 	check(manager._attack_preview_for_tile(Vector2i(5,7)).is_empty(),"diagonal occupied tile cannot choose ambiguous facing")
 	selection.set_cursor(Vector2i(4,7));selection.activate_cursor()
+	check(not battle.battle_ui._preview_crit_label.text.contains("JP"),"test weapon forecast does not promise unearned progression")
+	for frame in 5:await get_tree().process_frame
+	var grid=battle.tactical_grid
+	for cell in grid.aoe_preview_tiles:
+		var center: Vector2=grid.get_global_transform_with_canvas()*grid._grid_to_local(cell)
+		var half: Vector2=Vector2(grid.tile_size)*grid.get_global_transform_with_canvas().get_scale()*0.5
+		check(not battle.battle_ui._preview_panel.get_rect().intersects(Rect2(center-half,half*2)),"forecast leaves highlighted weapon cell visible %s" % cell)
 	await capture("greatsword-review")
 	before=resources();resolved.clear();seed(17)
 	selection.confirm_review();selection.confirm_review();await settle()

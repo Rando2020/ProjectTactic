@@ -4,6 +4,7 @@ const Patterns = preload("res://prototypes/blooming/weapons/WeaponPatterns.gd")
 var _weapon_row: GridContainer
 var _weapon_buttons: Array[Button] = []
 var _weapon_help: Label
+var _weapon_area: Array = []
 func _build_ui() -> void:
 	super._build_ui()
 	_weapon_help=Label.new()
@@ -57,3 +58,30 @@ func _refresh_test_weapons() -> void:
 		button.disabled=battle_manager.active_unit_has_acted or weapon==current
 		widest_label=maxf(widest_label,button.get_theme_font("font").get_string_size(button.text,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x+24)
 	_weapon_row.columns=1 if _chapel_command_panel.size.x<widest_label*2+29 else 2
+
+func _on_action_preview_changed(preview: Dictionary) -> void:
+	_weapon_area=preview.get("weapon_area",[])
+	super._on_action_preview_changed(preview)
+	if not preview.has("weapon_summary"):return
+	# Keep primary HP/hit/crit above the complete recipient and counter summary.
+	# The inherited detailed formula stays available in the tooltip.
+	_preview_note_label.tooltip_text=_preview_note_label.text
+	_preview_note_label.text=str(preview.weapon_summary)
+	_preview_crit_label.text=_preview_crit_label.text.replace("  +0 JP","").replace("+0 JP","")
+	_layout_forecast()
+func _layout_forecast() -> void:
+	super._layout_forecast()
+	if _weapon_area.is_empty() or not battle_manager or not is_instance_valid(_preview_panel):return
+	var grid:=battle_manager.tactical_grid
+	var transform:=grid.get_global_transform_with_canvas()
+	var half:=Vector2(grid.tile_size)*transform.get_scale().abs()*0.5
+	var footprint:=Rect2()
+	for cell: Vector2i in _weapon_area:
+		var center: Vector2=transform*grid._grid_to_local(cell)
+		var tile_rect:=Rect2(center-half,half*2)
+		footprint=tile_rect if footprint.size==Vector2.ZERO else footprint.merge(tile_rect)
+	# Prefer the upper empty margin when the lower forecast would compete with
+	# nearby melee cells. Keep the normal placement if upper targets are there.
+	var upper:=Rect2(Vector2(12,_bloom_content_top()),_preview_panel.size)
+	if not upper.intersects(footprint.grow(8)):
+		_preview_panel.position=upper.position
