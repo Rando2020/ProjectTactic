@@ -20,6 +20,7 @@ const DIM := Color(0.58, 0.50, 0.38)
 var _button_box: VBoxContainer
 var _status_label: Label
 var _buttons: Array[Button] = []
+var _motion_button: Button
 var _pulse: float = 0.0
 
 
@@ -91,6 +92,8 @@ func _build_ui() -> void:
 	_add_menu_button("Illustrated Chapel / Play 2.5D Battle", _on_illustrated_chapel_pressed)
 	_add_menu_button("How to Play", _on_load_pressed)
 	_add_menu_button("Music On / Off", _on_options_pressed)
+	_add_menu_button(_motion_label(), _on_motion_pressed)
+	_motion_button = _buttons[-1]
 	_add_menu_button("Credits", _on_credits_pressed)
 	UISettings.shared().add_selector(_button_box)
 	_status_label = _make_label("Descent autosaves between encounters. Practice rewards are temporary; refreshing exits practice.", 18, TEXT, HORIZONTAL_ALIGNMENT_CENTER)
@@ -144,6 +147,18 @@ func _on_continue_pressed() -> void:
 func _on_load_pressed() -> void:
 	_play_confirm()
 	_set_status("Deploy your party, then select a route. On your turn: M = Move, A = Attack, S = Ability, W = Wait. Hover for a forecast; click a highlighted tile to act. Move and act once each. Defeat all enemies to earn JP and unlock jobs.")
+
+
+func _motion_label() -> String:
+	return "Screen Motion: Reduced" if UISettings.shared().reduced_motion else "Screen Motion: Full"
+
+
+func _on_motion_pressed() -> void:
+	_play_confirm()
+	var settings = UISettings.shared()
+	settings.set_reduced_motion(not settings.reduced_motion)
+	_motion_button.text = _motion_label()
+	_set_status("Reduced motion: no screen shake or hit knockback, shorter hit-freeze." if settings.reduced_motion else "Full motion: screen shake, knockback and hit-freeze on impacts.")
 
 
 func _on_options_pressed() -> void:
