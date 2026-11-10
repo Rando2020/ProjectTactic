@@ -61,10 +61,8 @@ func _ready() -> void:
 func _load_items() -> void:
 	_items.clear()
 	var gs: Node = get_node_or_null("/root/GameState")
-	if gs and gs.get("active_run") != null:
-		var run = gs.active_run
-		if run.get("inventory") != null:
-			_items = run.inventory.duplicate()
+	if gs:
+		_items = gs.get_owned_equipment()
 	# Also pull any pending loot from RunManager
 	var rm: Node = get_node_or_null("/root/RunManager")
 	if rm and rm.get("pending_loot") != null:
@@ -340,6 +338,10 @@ func _item_card(item: Dictionary) -> PanelContainer:
 			af_lbl.add_theme_color_override("font_color", r_col.lerp(_FG2, 0.4))
 			box.add_child(af_lbl)
 
+	var manage := Button.new()
+	manage.text = "Manage equipment"
+	manage.pressed.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/CharacterScreen.tscn"))
+	box.add_child(manage)
 	return pc
 
 #  FILTER
