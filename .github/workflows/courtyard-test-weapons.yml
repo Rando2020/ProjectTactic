@@ -1,0 +1,42 @@
+name: Courtyard test weapons
+on:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/**'
+      - '.github/workflows/courtyard-test-weapons.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  weapons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Import and verify actual weapon controls and damage
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/weapon-evidence
+          godot --headless --path demos/isometric-2v2 --import 2>&1 | tee build/weapon-evidence/import.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' build/weapon-evidence/import.log; then exit 1; fi
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_weapons/WeaponTest.tscn 2>&1 | tee build/weapon-evidence/native.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/weapon-evidence/native.log; then exit 1; fi
+      - name: Capture real loadout and area previews
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_weapons/WeaponTest.tscn -- --capture-dir="$PWD/build/weapon-evidence" 2>&1 | tee build/weapon-evidence/rendered.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/weapon-evidence/rendered.log; then exit 1; fi
+          for image in loadout-controls kael-loadout spear-review greatsword-review; do test -s "build/weapon-evidence/$image.png"; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: courtyard-test-weapons-evidence
+          path: build/weapon-evidence/
+          if-no-files-found: error
