@@ -78,6 +78,7 @@ func run() -> void:
 	selection.select_unit("zane")
 	battle.battle_ui._refresh_test_weapons()
 	check(battle.battle_ui._weapon_buttons[0].is_visible_in_tree() and battle.battle_ui._weapon_buttons[1].is_visible_in_tree(),"two actual weapon controls visible for active hero")
+	check(battle.battle_ui._weapon_buttons[0].text.begins_with("[x] "),"selected weapon uses portable ASCII marker for Web font fallback")
 	await capture("loadout-controls")
 	check(not manager.equip_test_weapon("kael","greatsword"),"cannot equip inactive ally")
 	check(not manager.equip_test_weapon("zane","greatsword"),"cannot equip weapon outside hero pair")

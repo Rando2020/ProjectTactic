@@ -20,9 +20,16 @@ func _create_illustrated_chapel_map() -> MapData:
 
 func _spawn_player_units() -> Array[Unit]:
  var result: Array[Unit]=[]
- result.append(_make_unit("zane","Zane","player",Vector2i(3,8),320,90,4,2,8,42,48,80,110,GameState.get_all_abilities("zane")))
- result.append(_make_unit("kael","Kael","player",Vector2i(2,9),380,55,4,2,6,55,32,110,70,GameState.get_all_abilities("kael")))
+ result.append(_make_unit("zane","Zane","player",Vector2i(3,8),320,90,4,2,8,42,48,80,110,_test_skills("zane",["haste"])))
+ result.append(_make_unit("kael","Kael","player",Vector2i(2,9),380,55,4,2,6,55,32,110,70,_test_skills("kael",["delay_strike","heavy_slash"])))
  for unit in result:unit.set_facing("N")
+ return result
+
+## A battle-local projection: never teach, equip or save test skills.
+func _test_skills(id: String, extras: Array) -> Array[String]:
+ var result := GameState.get_all_abilities(id)
+ for ability in extras:
+  if ability not in result:result.append(ability)
  return result
 
 func _spawn_enemy_units() -> Array[Unit]:

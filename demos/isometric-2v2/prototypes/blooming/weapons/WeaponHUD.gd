@@ -53,7 +53,7 @@ func _refresh_test_weapons() -> void:
 		button.visible=index<options.size()
 		if index>=options.size():continue
 		var weapon: String=options[index]
-		button.text=("✓ " if weapon==current else "")+Patterns.LABELS[weapon]
+		button.text=("[x] " if weapon==current else "")+Patterns.LABELS[weapon]
 		button.tooltip_text=button.text+". Provisional test loadout; no art or stat bonus."
 		button.disabled=battle_manager.active_unit_has_acted or weapon==current
 		widest_label=maxf(widest_label,button.get_theme_font("font").get_string_size(button.text,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x+24)

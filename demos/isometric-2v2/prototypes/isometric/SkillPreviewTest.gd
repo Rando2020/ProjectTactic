@@ -110,5 +110,9 @@ func run() -> void:
 	target.hp = 0
 	ui._refresh_turn_portraits()
 	check(not ui._preview_panel.visible, "defeat clears stale primary forecast")
+	# Drain the last UI confirmation voice before terminating the audio server.
+	battle.queue_free()
+	await get_tree().process_frame
+	await get_tree().create_timer(0.8).timeout
 	print("SkillPreviewTest: %d checks, %d failures" % [checks,failures])
 	get_tree().quit(1 if failures else 0)
