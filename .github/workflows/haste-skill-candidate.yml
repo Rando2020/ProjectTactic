@@ -1,0 +1,57 @@
+name: Haste skill candidate
+on:
+  pull_request:
+    paths:
+      - 'skill-candidates/haste-20261110/**'
+      - '.github/workflows/haste-skill-candidate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-skill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: true
+      - name: Stage isolated copy and verify actual gameplay
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/haste-evidence
+          python -m unittest discover -s skill-candidates/haste-20261110/tests -p 'test_*.py'
+          python skill-candidates/haste-20261110/stage.py "$RUNNER_TEMP/haste-candidate"
+          godot --headless --path "$RUNNER_TEMP/haste-candidate" --import
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 godot --headless --path "$RUNNER_TEMP/haste-candidate" res://candidate_skills/tests/SkillTest.tscn 2>&1 | tee build/haste-evidence/native.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/haste-evidence/native.log; then exit 1; fi
+      - name: Capture actual rendered skill flow
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path "$RUNNER_TEMP/haste-candidate" --rendering-method gl_compatibility res://candidate_skills/tests/SkillTest.tscn -- --capture-dir="$PWD/build/haste-evidence" 2>&1 | tee build/haste-evidence/rendered.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/haste-evidence/rendered.log; then exit 1; fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('build/haste-evidence/evidence.json').read_text())
+          assert not data['failures'] and len(data['captures']) == 4 and data['normal_time_scale'] == 1.0, data
+          PY
+      - name: Export review-only Web package
+        run: |
+          mkdir -p build/haste-review-web
+          godot --headless --path "$RUNNER_TEMP/haste-candidate" --export-release Web "$PWD/build/haste-review-web/index.html"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: haste-skill-review-evidence
+          path: build/haste-evidence/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: haste-skill-review-web
+          path: build/haste-review-web/
+          if-no-files-found: error
