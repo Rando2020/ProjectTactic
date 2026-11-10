@@ -36,7 +36,7 @@ class BloomingSelection extends "res://prototypes/isometric/SelectionController.
 					button.grab_focus()
 					break
 
-func _make_selection_controller() -> Node:
+func _make_selection_controller():
 	return BloomingSelection.new()
 
 func _surface() -> StyleBoxFlat:
