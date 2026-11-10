@@ -149,7 +149,12 @@ func run() -> void:
 		var center: Vector2=grid.get_global_transform_with_canvas()*grid._grid_to_local(cell)
 		var half: Vector2=Vector2(grid.tile_size)*grid.get_global_transform_with_canvas().get_scale()*0.5
 		check(not battle.battle_ui._preview_panel.get_rect().intersects(Rect2(center-half,half*2)),"forecast leaves highlighted weapon cell visible %s" % cell)
+	for node in battle.battle_ui._preview_panel.find_children("*","Control",true,false):
+		if node.is_visible_in_tree():print("RECT ",node.get_class()," ",node.name," ",node.get_global_rect()," ",node.text if node is Label else "")
 	await capture("greatsword-review")
+	if not capture_dir.is_empty():
+		await get_tree().create_timer(0.75).timeout
+		await capture("greatsword-settled")
 	before=resources();resolved.clear();seed(17)
 	selection.confirm_review();selection.confirm_review();await settle()
 	check(resolved.size()==2,"greatsword commits both enemies once from empty center")
