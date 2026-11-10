@@ -157,6 +157,10 @@ func run() -> void:
  check(GameState.unit_registry==original_registry,"candidate never changes saved skill ownership")
  var save_after := FileAccess.get_file_as_bytes(GameState.SAVE_PATH) if FileAccess.file_exists(GameState.SAVE_PATH) else PackedByteArray()
  check(save_before==save_after,"save bytes unchanged")
+ # Rendered battles start music; allow the inherited audio stop/stream clear
+ # to reach the audio thread before shutting down the test process.
+ await get_tree().create_timer(0.2).timeout
+ await get_tree().process_frame
  finish()
 func finish() -> void:
  if not capture_dir.is_empty():
