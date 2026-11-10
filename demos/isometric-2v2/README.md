@@ -135,3 +135,16 @@ not final balance. Existing Fire remains the three-tile fan with its `fireball` 
 Run `godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSkillsTest.tscn`.
 The workflow `Courtyard hero skills` also captures actual-engine preview screenshots.
 Native fixture tests are not browser, physical-phone, full-match or audio acceptance.
+
+## Provisional courtyard test weapons
+
+In the Blooming courtyard, select the active hero to see two test loadout buttons:
+
+- **Zane:** Sword (one adjacent tile) or Spear (first two tiles in a straight line).
+- **Kael:** Sword (one adjacent tile) or Greatsword (three tiles across directly in front).
+
+Aim along a cardinal grid edge to set attack facing. A spear may aim at either of its two cells. A greatsword may aim at an empty or allied center when an enemy occupies a side cell. Orange tiles are legal aim directions; the red overlay is the complete hit area. The forecast lists actual enemy recipients and warns about possible counters, including collateral counters. Allies in the area are safe. Walls and map edges clip the pattern; a wall stops a spear.
+
+These are **test assignments, not final class restrictions or balance**. Each target uses the existing physical damage, accuracy and critical rules, without weapon stat bonuses. Swapping is free before acting, including after moving, but unavailable during an action, after acting or on another unit's turn. Changing weapons cancels pending targeting/review. Replay starts both heroes with Sword. Weapon sprites do not change. Campaign gear, saved ownership, skills, enemies and hero count are unchanged.
+
+Focused coverage: `godot --headless --path demos/isometric-2v2 res://tests/blooming_weapons/WeaponTest.tscn`. This positions existing combatants in controlled fixtures, then exercises the actual menus, confirmation, multi-target damage, counter behavior, auto targeting and supported UI scales. It is not full-match browser or physical-touch acceptance. The `Courtyard test weapons` workflow also captures the real loadout, spear review and greatsword review screens.

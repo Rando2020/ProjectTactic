@@ -93,11 +93,22 @@ func settle() -> void:
 	check(false,"action settles")
 func stage(id: String, target: Unit) -> void:
 	manager.select_command("ability")
-	manager.select_ability(id)
+	var found := false
+	for button in battle.battle_ui._ability_list.get_children():
+		if not button is Button or button.is_queued_for_deletion():continue
+		for label in button.find_children("*","Label",true,false):
+			if label.text==AbilityDB.get_ability(id).display_name:
+				button.pressed.emit()
+				found=true
+				break
+		if found:break
+	check(found,id+" selected from its real Skills button")
 	battle.battle_ui._selection.set_cursor(target.grid_pos)
 	battle.battle_ui._selection.activate_cursor()
 func haste_case() -> void:
 	fixture("zane")
+	manager.select_command("ability")
+	await capture("zane-skills")
 	var caster: Unit=manager.units.zane
 	var target: Unit=manager.units.kael
 	var speed:=target.get_effective_speed()
@@ -128,6 +139,9 @@ func haste_case() -> void:
 	check(not target.has_status("haste") and target.get_effective_speed()==speed,"Haste expires after three target end turns")
 func strike_case(id: String) -> void:
 	fixture("kael")
+	if id=="delay_strike":
+		manager.select_command("ability")
+		await capture("kael-skills")
 	var caster: Unit=manager.units.kael
 	var target: Unit=manager.units.Enemy_1
 	var ability:=AbilityDB.get_ability(id)
@@ -239,6 +253,8 @@ func defeat_cases() -> void:
 		await boot()
 func capture(label: String) -> void:
 	if capture_dir.is_empty():return
+	# Allow the preceding controlled action's nonblocking banner to retire.
+	await get_tree().create_timer(1.5).timeout
 	for i in 5:await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	check(get_viewport().get_texture().get_image().save_png(capture_dir.path_join(label+".png"))==OK,"capture "+label)

@@ -1,5 +1,5 @@
-extends BattleManager
-## Opt-in courtyard navigation only. Combat, movement prices and retreat are unchanged.
+extends "res://prototypes/blooming/weapons/WeaponBattleManager.gd"
+## Courtyard navigation layered on provisional test weapons. Movement prices are unchanged.
 ## Manhattan distance cannot guide an actor around the courtyard retaining wall.
 func _best_reachable_tile(unit: Unit, target: Unit, maximize_distance: bool) -> Vector2i:
  if maximize_distance:return super._best_reachable_tile(unit,target,true)
