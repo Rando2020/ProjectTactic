@@ -25,14 +25,15 @@ jobs:
           mkdir -p build/haste-evidence
           python -m unittest discover -s skill-candidates/haste-20261110/tests -p 'test_*.py'
           python skill-candidates/haste-20261110/stage.py "$RUNNER_TEMP/haste-candidate"
-          godot --headless --path "$RUNNER_TEMP/haste-candidate" --import
+          godot --headless --path "$RUNNER_TEMP/haste-candidate" --import 2>&1 | tee build/haste-evidence/import.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' build/haste-evidence/import.log; then exit 1; fi
           XDG_DATA_HOME="$(mktemp -d)" timeout 180 godot --headless --path "$RUNNER_TEMP/haste-candidate" res://candidate_skills/tests/SkillTest.tscn 2>&1 | tee build/haste-evidence/native.log
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/haste-evidence/native.log; then exit 1; fi
       - name: Capture actual rendered skill flow
         shell: bash
         run: |
           set -o pipefail
-          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path "$RUNNER_TEMP/haste-candidate" --rendering-method gl_compatibility res://candidate_skills/tests/SkillTest.tscn -- --capture-dir="$PWD/build/haste-evidence" 2>&1 | tee build/haste-evidence/rendered.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --verbose --audio-driver Dummy --path "$RUNNER_TEMP/haste-candidate" --rendering-method gl_compatibility res://candidate_skills/tests/SkillTest.tscn -- --capture-dir="$PWD/build/haste-evidence" 2>&1 | tee build/haste-evidence/rendered.log
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/haste-evidence/rendered.log; then exit 1; fi
           python - <<'PY'
           import json

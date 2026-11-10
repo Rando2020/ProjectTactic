@@ -1,24 +1,32 @@
 extends Node2D
 ## Two draw regions of ONE unchanged source PNG, not authored animation frames.
 ## Rear passes behind the actor; front stays around its boots. No global overlay.
-const TEXTURE := preload("res://candidate_skills/haste-aura.png")
+const TEXTURE_PATH := "res://candidate_skills/haste-aura.png"
 const PIVOT := Vector2(887, 554)
 const SPLIT_Y := 554.0
 const WORLD_SCALE := 0.10
 const DURATION := 1.1
 var reduced_motion := false
 var elapsed := 0.0
+var aura_texture: Texture2D
 func _ready() -> void:
+ # Autoload scripts parse before new PNG imports on a clean checkout.
+ # Resolve the texture only when the effect is instantiated during gameplay.
+ aura_texture = load(TEXTURE_PATH) as Texture2D
+ if aura_texture == null:
+  push_error("Haste candidate texture could not be loaded")
+  queue_free()
+  return
  var unit := get_parent() as Unit
  if unit and is_instance_valid(unit.visual): z_index = unit.visual.z_index
- var size := TEXTURE.get_size()
+ var size := aura_texture.get_size()
  _layer("Rear", Rect2(0, 0, size.x, SPLIT_Y), -1)
  _layer("Front", Rect2(0, SPLIT_Y, size.x, size.y - SPLIT_Y), 1)
  _sample(0.0)
 func _layer(label: String, region: Rect2, depth: int) -> void:
  var sprite := Sprite2D.new()
  sprite.name = label
- sprite.texture = TEXTURE
+ sprite.texture = aura_texture
  sprite.region_enabled = true
  sprite.region_rect = region
  sprite.region_filter_clip_enabled = true
