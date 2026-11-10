@@ -1,0 +1,63 @@
+{
+  "sw": {
+    "visible_bounds_alpha16": [
+      291,
+      25,
+      991,
+      1202
+    ],
+    "body_height_px": 88.61078823802734,
+    "pivot": [
+      695,
+      1204
+    ],
+    "scale": 0.07528529162109375,
+    "fully_transparent_fraction": 0.757415504834291
+  },
+  "se": {
+    "visible_bounds_alpha16": [
+      286,
+      22,
+      930,
+      1210
+    ],
+    "body_height_px": 88.61078823802734,
+    "pivot": [
+      608,
+      1212
+    ],
+    "scale": 0.0745882055875651,
+    "fully_transparent_fraction": 0.7641785520783254
+  },
+  "ne": {
+    "visible_bounds_alpha16": [
+      269,
+      19,
+      988,
+      1190
+    ],
+    "body_height_px": 88.61078823802734,
+    "pivot": [
+      587,
+      1192
+    ],
+    "scale": 0.0756710403399038,
+    "fully_transparent_fraction": 0.7518079307301165
+  },
+  "nw": {
+    "visible_bounds_alpha16": [
+      331,
+      15,
+      891,
+      1187
+    ],
+    "body_height_px": 88.61078823802734,
+    "pivot": [
+      603,
+      1189
+    ],
+    "scale": 0.07560647460582537,
+    "fully_transparent_fraction": 0.7789682267143864
+  }
+}
+Hollow source geometry: 36 checks, 0 failures

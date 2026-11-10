@@ -11,7 +11,7 @@ func candidate_spec() -> Dictionary:
  var role: String = unit_data.id
  var direction: String = {'N':'ne','E':'se','S':'sw','W':'nw'}.get(_view_facing(facing),'')
  if role == 'storm_imp':
-  if direction != 'sw': return {}
+  if direction != 'sw': return _candidate_specs[role].get('idle-' + direction,{})
   return _candidate_specs[role].get(candidate_pose,{})
  if role not in ['kael','zane']: return {}
  var key := direction

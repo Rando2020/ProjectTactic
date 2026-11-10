@@ -19,7 +19,7 @@ func run() -> void:
  add_child(battle)
  await get_tree().create_timer(1.0).timeout
  var banner := Label.new()
- banner.text = 'CANDIDATE REVIEW | Posed engine capture\nMissing facings use old art. Not gameplay or art approval.'
+ banner.text = 'CANDIDATE REVIEW | Posed engine capture\nHollow: four idle views, SW cast only. Not art approval.'
  banner.position = Vector2(battle.battle_ui._bloom_active_panel.get_global_rect().end.x + 24,get_viewport().get_visible_rect().size.y - 56)
  banner.add_theme_font_size_override('font_size',16)
  banner.mouse_filter = Control.MOUSE_FILTER_IGNORE

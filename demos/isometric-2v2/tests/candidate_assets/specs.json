@@ -131,6 +131,30 @@
         695,
         1204
       ]
+    },
+    "idle-se": {
+      "file": "sources/storm_imp/hollow-idle-se-candidate.png",
+      "scale": 0.0745882055875651,
+      "pivot": [
+        608,
+        1212
+      ]
+    },
+    "idle-ne": {
+      "file": "sources/storm_imp/hollow-idle-ne-candidate.png",
+      "scale": 0.0756710403399038,
+      "pivot": [
+        587,
+        1192
+      ]
+    },
+    "idle-nw": {
+      "file": "sources/storm_imp/hollow-idle-nw-candidate.png",
+      "scale": 0.07560647460582537,
+      "pivot": [
+        603,
+        1189
+      ]
     }
   }
 }

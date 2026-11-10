@@ -1,0 +1,55 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+
+FAIL: rotation 0/N renders hollow-idle-ne-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 0/E renders hollow-idle-se-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 0/W renders hollow-idle-nw-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 1/N renders hollow-idle-se-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 1/S renders hollow-idle-nw-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 1/W renders hollow-idle-ne-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 2/E renders hollow-idle-nw-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 2/S renders hollow-idle-ne-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 2/W renders hollow-idle-se-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 3/N renders hollow-idle-nw-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 3/E renders hollow-idle-ne-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: rotation 3/S renders hollow-idle-se-candidate.png
+FAIL: candidate is foot-pivoted at tile origin
+FAIL: unsupported cast keeps correctly facing idle
+FAIL: cancel restores correct idle
+FAIL: turning out of release restores new idle
+FAIL: turning out of release restores new idle
+FAIL: turning out of release restores new idle
+FAIL: restored optional facing returns to candidate
+Hollow directions: 108 checks, 52 failures

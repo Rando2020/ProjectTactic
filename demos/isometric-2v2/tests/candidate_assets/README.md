@@ -10,20 +10,21 @@ From the repository root:
 python demos/isometric-2v2/tests/candidate_assets/stage.py /tmp/projecttactic-candidate-review
 godot --headless --editor --path /tmp/projecttactic-candidate-review --import
 godot --headless --path /tmp/projecttactic-candidate-review res://tests/candidate_assets/CandidateTest.tscn
+godot --headless --path /tmp/projecttactic-candidate-review res://tests/candidate_assets/HollowDirectionTest.tscn
 godot --headless --path /tmp/projecttactic-candidate-review res://tests/candidate_assets/FullMatchTest.tscn
 godot --path /tmp/projecttactic-candidate-review res://prototypes/blooming/BloomingBattle.tscn
 ```
 
-Use fresh XDG data/config/cache directories for automated tests. To make six real engine-rendered **posed diagnostic** captures, run `res://tests/candidate_assets/CaptureTest.tscn` with a graphical renderer. That test refuses headless rendering. These are not screenshots of a manual playthrough. The candidate-review workflow runs staging, both contracts and graphical captures; its uploaded artifact needs visual inspection before acceptance.
+Use fresh XDG data/config/cache directories for automated tests. To make six real engine-rendered **posed diagnostic** captures, run `res://tests/candidate_assets/CaptureTest.tscn` with a graphical renderer. That test refuses headless rendering. These are not screenshots of a manual playthrough. The candidate-review workflow runs staging, all three contracts and graphical captures; its uploaded artifact needs visual inspection before acceptance.
 
 ## Art and behavior
 
 - Kael: four independent idle directions from [#117](https://github.com/Rando2020/ProjectTactic/pull/117), with original body-height scales and foot pivots. No mirrored equipment. No candidate walk/melee animation exists, so procedural action presentation remains.
 - Zane: four idle directions plus SE windup/release from [#118](https://github.com/Rando2020/ProjectTactic/pull/118). The source pack's lift/extend PNGs are retained, but this first integration maps only the engine's anticipation and release hooks. **It is not the standalone seven-segment 760ms animation.** Existing engine presentation timing remains authoritative.
-- Hollow Stray (`storm_imp`): SW idle/windup/release from [#114](https://github.com/Rando2020/ProjectTactic/pull/114), with shared source anchor and 95px reference-canvas scaling. Other facings restore original artwork and transforms rather than mirror or invent missing art. This intentional identity/style switch is visible and not production-ready.
+- Hollow Stray (`storm_imp`): retained SW idle/windup/release from [#114](https://github.com/Rando2020/ProjectTactic/pull/114), plus independently generated NE/SE/NW idle candidates. All four idle directions now use the same identity. New source scales match the retained SW visible height (88.61px); per-view manual pivots keep the visible foot baseline within 0.16px of the origin. Cast poses still exist only for SW. If an optional idle row is absent, original artwork/transforms remain the defensive fallback. See [four-direction review](hollow-directions/README.md).
 - Void Cultist stays unchanged. Portrait rail, active-unit and forecast portraits use crops of the actual candidate sources. The appearance setting is disabled and labeled Candidate art (review), because this staging mode does not implement skin switching. Void Cultist portraits remain unchanged.
 - Logical N/E/S/W maps to screen NE/SE/SW/NW. Cast hooks are supported only for actual SE Zane or SW Hollow art. Unsupported casts retain idle art and existing generic effects.
-- All source bytes are unchanged. `source-hashes.json` is checked before staging. This fixture does not approve the art, clean edge alpha, fix inter-frame drift, or include proposed Ascended emblems or reconstructed Fire assets.
+- Existing source bytes are unchanged; the three new idle PNGs are added non-destructively. `source-hashes.json` is checked before staging. This fixture does not approve the art, clean edge alpha, fix inter-frame drift, or include proposed Ascended emblems or reconstructed Fire assets.
 
 ## Local engine evidence (2026-11-09)
 
