@@ -82,6 +82,20 @@ const ABILITIES: Dictionary = {
 		"target_type":  "enemy",
 		"jp_cost":      100,
 	},
+	# Provisional courtyard test skills. CT shifts affect one upcoming action,
+	# not speed/status duration. These are not granted to campaign saves.
+	"delay_strike": {
+		"display_name": "Delay Strike", "spell_type": "physical", "vfx_mode": "slash",
+		"mp_cost": 8, "range": 1, "base_power": 100, "target_type": "enemy",
+		"target_ct_delay": 30,
+		"description": "On hit, delay the surviving target's next action by 30 CT. No Slow status.",
+	},
+	"heavy_slash": {
+		"display_name": "Heavy Slash", "spell_type": "physical", "vfx_mode": "slash",
+		"mp_cost": 12, "range": 1, "base_power": 190, "target_type": "enemy",
+		"self_ct_delay": 30,
+		"description": "A powerful single-target hit. Your next action is delayed by 30 CT, even on a miss.",
+	},
 	#  Learnable player abilities
 	"fira": {
 		"display_name": "Fira",

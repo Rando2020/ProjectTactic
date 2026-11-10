@@ -106,3 +106,32 @@ audio device. Runtime asset hashes/crop verification are in the modular-spells f
 Spell art is enlarged using occupied content bounds, with a visible0.64s caster buildup (cosmetic only, not turn charge). Channel/release/contact cues are distinct. Web audio bus creation preserves the Master→output route; user volume settings remain respected.
 
 Q/E or the visible rotation buttons now switch the painted view to the existing rotatable stone comparison and turn it. The view label explains the switch; Return to painted restores the artwork. This does not make painted artwork itself rotatable.
+
+
+## Existing-hero test skills (provisional balance)
+
+The courtyard gives **Zane** Haste in addition to Fire, Thunderstrike and Void Pulse.
+It gives **Kael** Delay Strike and Heavy Slash in addition to Mighty Strike and Defend.
+These additions live only on each spawned battle unit; they do not teach, equip or
+save new abilities in the campaign. No heroes, enemy AI or weapon footprints change.
+
+- Haste: 10 MP, another ally within 1–3 tiles, 1.5× speed until three target end-turn
+  ticks. It does not stack or refresh an already-active Haste. Existing gold speed
+  streaks and H status indicator are used; no unapproved painted candidate art.
+- Delay Strike: 8 MP, one adjacent enemy, 100 physical power. A successful hit reduces
+  a surviving target's CT by 30, delaying its next action. A miss or defeated target
+  gets no CT effect. This is not Slow: speed is unchanged.
+- Heavy Slash: 12 MP, one adjacent enemy, 190 physical power. After execution Kael's
+  own CT is reduced by 30, including on a miss. This is a damage/recovery tradeoff,
+  not the Greatsword's three-cell basic attack.
+
+CT reaches 100 for an action and is consumed when a unit becomes active. Negative
+CT is valid recovery debt. Timing forecasts state the exact conditional effect;
+contact labels and the combat log report actual delays, then the real turn strip
+refreshes. Cancelling review/anticipation does not spend MP or shift CT. Replay
+creates fresh units with no delay debt or Haste. Costs/powers/30 CT are test values,
+not final balance. Existing Fire remains the three-tile fan with its `fireball` alias.
+
+Run `godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSkillsTest.tscn`.
+The workflow `Courtyard hero skills` also captures actual-engine preview screenshots.
+Native fixture tests are not browser, physical-phone, full-match or audio acceptance.

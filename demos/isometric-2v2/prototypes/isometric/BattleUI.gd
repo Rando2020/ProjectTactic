@@ -149,7 +149,7 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 		_preview_connection_label.text = "\n".join(secondary)
 		if not _preview_affected.is_empty():
 			if not secondary.is_empty(): _preview_connection_label.text += "\n"
-			_preview_connection_label.text += "Targets outlined in turn order · no timing change"
+			_preview_connection_label.text += "Targets outlined · timing changes after execution" if preview.get("changes_timing",false) else "Targets outlined in turn order · no timing change"
 		var intent: Dictionary = preview.get("target_intent", {})
 		if not intent.is_empty():
 			_preview_intent_label.text = "CURRENT PLAN · may change\n%s → %s" % [str(intent.get("action", "Hold")), str(intent.get("target", "—"))]

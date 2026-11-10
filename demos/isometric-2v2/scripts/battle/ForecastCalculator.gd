@@ -126,6 +126,14 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	if affinity > 1.0:
 		jp += int(4 * bonuses.get("jp_multiplier", 1.0))
 	var aoe_r: int = int(ability.get("aoe_radius", 0))
+	var timing_note := ""
+	if int(ability.get("target_ct_delay", 0)) > 0:
+		timing_note = "On hit: target next action delayed by %d CT (if it survives)." % int(ability.target_ct_delay)
+	if int(ability.get("self_ct_delay", 0)) > 0:
+		timing_note = "Your next action delayed by %d CT, even on a miss." % int(ability.self_ct_delay)
+	if ability.get("id", "") == "haste":
+		timing_note = "Ally speed x1.5 for 3 target turns. Cannot target yourself. Does not stack or refresh while active."
+
 
 	return {
 		"visible":        true,
@@ -153,6 +161,8 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		"formula_explain": formula.get("explain", []),
 		"modifier_breakdown": _compact_breakdown(formula, _run_damage_notes("heal" if is_heal else spell_type, bonuses)),
 		"status_preview": status_text,
+		"note": timing_note,
+		"changes_timing": not timing_note.is_empty(),
 		"aoe_note":       ("%d-tile radius" % aoe_r) if aoe_r > 0 else "",
 		"jp_gain":        jp,
 		"mp_cost":        mp_cost,
@@ -160,7 +170,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		"actor_name":     caster.display_name,
 		"target_name":    target.display_name,
 		"flank_label":    "",
-		"can_counter":    false,
+		"can_counter":    spell_type == "physical" and not is_buff and str(ability.get("vfx_mode", "slash")) != "arrow" and _can_counter(caster, target),
 	}
 
 

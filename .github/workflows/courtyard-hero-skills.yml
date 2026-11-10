@@ -1,0 +1,46 @@
+name: Courtyard hero skills
+on:
+  pull_request:
+    paths:
+      - 'demos/isometric-2v2/**'
+      - '.github/workflows/courtyard-hero-skills.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: '4.6.3'
+          use-dotnet: false
+          include-templates: false
+      - name: Import and verify actual hero skill mechanics and lifecycle
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p build/skill-evidence
+          godot --headless --path demos/isometric-2v2 --import 2>&1 | tee build/skill-evidence/import.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' build/skill-evidence/import.log; then exit 1; fi
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSkillsTest.tscn 2>&1 | tee build/skill-evidence/native.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/native.log; then exit 1; fi
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroKOTest.tscn 2>&1 | tee build/skill-evidence/ko.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/ko.log; then exit 1; fi
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSaveLoadoutTest.tscn 2>&1 | tee build/skill-evidence/save.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/save.log; then exit 1; fi
+      - name: Capture real skill targeting and delay previews
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_skills/HeroSkillsTest.tscn -- --capture-dir="$PWD/build/skill-evidence" 2>&1 | tee build/skill-evidence/rendered.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/rendered.log; then exit 1; fi
+          for image in haste-review haste-applied delay_strike-review heavy_slash-review; do test -s "build/skill-evidence/$image.png"; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: courtyard-hero-skills-evidence
+          path: build/skill-evidence/
+          if-no-files-found: error

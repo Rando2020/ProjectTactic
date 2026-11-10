@@ -1173,6 +1173,7 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		var se_data: Dictionary = ability.get("status_effect", {})
 		if not se_data.is_empty() and (not status_requires_hit or not result.get("missed", false)):
 			result["status_applied"] = _try_apply_status(target, se_data)
+		_apply_ability_turn_delay(caster, target, ability, result)
 		if not skip_setup: _present_action_outcomes([_presentation_record(target,result)])
 		# JP award for physical ability
 		if not skip_setup:
@@ -1209,6 +1210,24 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		spell_result["status_applied"] = _try_apply_status(target, se_data2)
 	if not skip_setup: _present_action_outcomes([_presentation_record(target,spell_result)])
 	return {"executed": true, "outcome": spell_result}
+
+
+## Apply only authored one-action CT costs after the real contact result.
+func _apply_ability_turn_delay(caster: Unit, target: Unit, ability: Dictionary, outcome: Dictionary) -> void:
+	# Contact owns this mutation. A miss never delays the target; Heavy Slash's
+	# recovery commitment applies even on a miss. Dead units have no next action.
+	var target_delay := maxi(0, int(ability.get("target_ct_delay", 0)))
+	var self_delay := maxi(0, int(ability.get("self_ct_delay", 0)))
+	if target_delay > 0 and not outcome.get("missed", false) and is_instance_valid(target) and target.hp > 0:
+		target.ct -= target_delay
+		outcome["target_ct_delay"] = target_delay
+		log_message.emit("%s: next action delayed by %d CT." % [target.display_name, target_delay])
+	if self_delay > 0 and is_instance_valid(caster) and caster.hp > 0:
+		caster.ct -= self_delay
+		outcome["self_ct_delay"] = self_delay
+		log_message.emit("%s: next action delayed by %d CT." % [caster.display_name, self_delay])
+	if outcome.has("target_ct_delay") or outcome.has("self_ct_delay"):
+		turn_order.timeline_updated.emit(turn_order.get_projected_order())
 
 
 ## Pure presentation of authoritative direct outcomes; never infer damage from power.
@@ -1840,7 +1859,7 @@ func _finish_player_action() -> void:
 	for candidate in units.values():
 		if is_instance_valid(candidate) and candidate.team == "enemy" and candidate.hp > 0:
 			enemy_alive = true
-	if active_unit_has_moved or not enemy_alive or auto_battle_enabled:
+	if not _living_unit(active_unit_id) or active_unit_has_moved or not enemy_alive or auto_battle_enabled:
 		_end_player_turn()
 	else:
 		active_command = ""
@@ -2534,7 +2553,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	is_resolving_action = true
 	_emit_action_state()
 	var canonical := AbilityDB.canonical_id(ability_id)
-	if canonical == "mighty_strike": kind = "slash"
+	if canonical in ["mighty_strike", "delay_strike", "heavy_slash"]: kind = "slash"
 	# AoE admission remains tile-based; its banner may still identify the primary.
 	if target == null: target = _unit_at_pos(destination)
 	# A read-only portrait accent is dispatched only after the existing lifecycle
@@ -2565,7 +2584,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 		})
 	_action_presentation_context = {}
 	var authored_fire := canonical == "fire" and bool(GameState.practice_session.get("isolated_isometric", false))
-	var authored_melee := (kind == "slash" and canonical.is_empty() or canonical == "mighty_strike") and bool(GameState.practice_session.get("isolated_isometric", false))
+	var authored_melee := (kind == "slash" and canonical.is_empty() or canonical in ["mighty_strike", "delay_strike", "heavy_slash"]) and bool(GameState.practice_session.get("isolated_isometric", false))
 	var authored_spell := canonical in ["thunderstrike", "void_pulse", "dark_breath", "shadow_mend", "defend"] and bool(GameState.practice_session.get("isolated_isometric", false))
 	if authored_melee: kind = "slash"
 	if authored_fire or authored_melee or authored_spell or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):

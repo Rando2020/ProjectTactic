@@ -1450,7 +1450,8 @@ func _on_action_preview_changed(preview: Dictionary) -> void:
 		detail_notes.append(_compact_forecast_breakdown(modifier_breakdown, 9))
 	var note: String = str(preview.get("note", ""))
 	if not note.is_empty():
-		detail_notes.append(note)
+		if preview.get("changes_timing", false): critical_notes.push_front(note)
+		else: detail_notes.append(note)
 
 	var notes: Array[String] = critical_notes + tactical_notes + detail_notes
 	_preview_note_label.text = " | ".join(notes)
