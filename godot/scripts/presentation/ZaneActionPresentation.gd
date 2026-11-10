@@ -4,6 +4,7 @@ extends Node2D
 signal cue_started(cue_id: String)
 signal phase_presented(phase: String)
 
+const FireballSprite := preload("res://scripts/vfx/FireballSprite.gd")
 const Audio := preload("res://scripts/presentation/ZaneImpactAudio.gd")
 const OutcomeLayout := preload("res://scripts/presentation/ZaneOutcomeLayout.gd")
 const REACTION_META := &"zane_impact_reaction"
@@ -54,7 +55,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	var fire := str(context.ability_id) == "fire"
 	if fire:
 		actor.set_cast_pose("anticipation")
-		_charge = _disc(5, Color(1,0.48,0.12,0.85), "charge")
+		_charge = _fire_sprite(0, 4, 0.20, 36.0, "charge")
 		_charge.position = to_local(actor.cast_origin_world())
 	else:
 		actor.set_melee_pose("anticipation")
@@ -73,11 +74,12 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	if fire:
 		# Same-frame cast release sampling updates the actual imported socket.
 		actor.set_cast_pose("release")
-		_projectile = _disc(5, Color(1,0.87,0.36), "projectile")
+		_projectile = _fire_sprite(4, 4, 0.22, 42.0, "projectile")
 		_projectile.material = _hot_core_material()
 		_projectile.position = to_local(actor.cast_origin_world())
 		var destination := _grid_point(context.destination) + Vector2(0,-30)
 		_flight_direction = (destination - _projectile.position).normalized()
+		_projectile.rotation = _flight_direction.angle() + PI / 4.0
 		_trail = _line(PackedVector2Array([_projectile.position,_projectile.position]),Color(1,0.38,0.07,0.7),4,"trail")
 		var taper := Curve.new()
 		taper.add_point(Vector2(0,0))
@@ -263,6 +265,13 @@ func _blade_trail() -> void:
 
 func _recipient_accent(tile: Vector2i, fire: bool) -> void:
 	var p := _grid_point(tile)+Vector2(0,-25)
+	if fire:
+		var burst := FireballSprite.new()
+		burst.configure(8, 8, 0.50, 84.0)
+		_own(burst, "fire_impact")
+		burst.position = _grid_point(tile)
+		_fade(burst, 0.50)
+		return
 	var accent := _line(PackedVector2Array([p+Vector2(-7,6),p,p+Vector2(7,-6)]),Color(1,0.52,0.13) if fire else Color(1,0.91,0.70),2,"recipient_accent")
 	_fade(accent,0.18)
 
@@ -359,6 +368,14 @@ func _grid_point(tile: Vector2i) -> Vector2:
 		var grid = manager.tactical_grid
 		return to_local(grid.to_global(grid._unit_foot_pos(tile)))
 	return Vector2.ZERO
+
+func _fire_sprite(first: int, count: int, duration: float, width: float, role: String) -> Polygon2D:
+	# Keep the existing socket-tracked owner and its lifecycle metadata.
+	var anchor := _disc(0.0, Color.TRANSPARENT, role)
+	var sprite := FireballSprite.new()
+	sprite.configure(first, count, duration, width)
+	anchor.add_child(sprite)
+	return anchor
 
 func _disc(radius: float, color: Color, role: String) -> Polygon2D:
 	var polygon := Polygon2D.new()
