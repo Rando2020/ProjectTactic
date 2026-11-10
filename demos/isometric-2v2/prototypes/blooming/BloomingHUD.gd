@@ -14,6 +14,13 @@ var _bloom_hint: Label
 var _bloom_ready := false
 var _bloom_move_forecast := false
 var _bloom_last_area := Rect2()
+var _magic_btn: Button
+var _command_category := "skills"
+var _magic_school := ""
+var _menu_usable: Array[String] = []
+var _menu_focus := ""
+var _menu_actor := ""
+var _menu_scroll_pending := false
 
 class BloomingSelection extends "res://prototypes/isometric/SelectionController.gd":
 	func layout_popup() -> void:
@@ -22,19 +29,41 @@ class BloomingSelection extends "res://prototypes/isometric/SelectionController.
 		super.refresh()
 		if is_instance_valid(_header): _header.visible = not can_command()
 		if is_instance_valid(_inspect): _inspect.visible = not can_command()
+		ui._refresh_ability_commands()
 		if is_instance_valid(_help):
+			if manager.active_command == "ability" and not has_review():
+				_help.text = "%s · %s · Back / Esc to return" % [unit_name(), ui._menu_heading()]
 			_help.hide()
 			ui._bloom_hint.text = _help.text
+	func unit_name() -> String:
+		var actor := manager._living_unit(selected_id)
+		return actor.display_name if actor else ""
 	func go_back() -> void:
+		if manager.is_resolving_action: return
+		if not has_review() and not _waiting_facing and ui._back_ability_menu(): return
 		super.go_back()
-		# Never leave Enter poised to end the turn after cancelling a target.
-		if can_command():
+		# Self reviews reopen their leaf list; never steal that focus for Wait.
+		if can_command() and manager.active_command.is_empty():
 			var focus := ui.get_viewport().gui_get_focus_owner()
 			if focus: focus.release_focus()
 			for button: Button in [ui._move_btn, ui._attack_btn, ui._ability_btn]:
 				if button.visible and not button.disabled:
 					button.grab_focus()
 					break
+
+	func handle_input(event: InputEvent) -> bool:
+		# Native GUI handles focused menu navigation. These unhandled buttons also
+		# cover board selection/targeting and Cancel when no control owns focus.
+		if event is InputEventJoypadButton and event.pressed:
+			var keys := {JOY_BUTTON_A: KEY_ENTER, JOY_BUTTON_B: KEY_ESCAPE,
+				JOY_BUTTON_DPAD_UP: KEY_UP, JOY_BUTTON_DPAD_DOWN: KEY_DOWN,
+				JOY_BUTTON_DPAD_LEFT: KEY_LEFT, JOY_BUTTON_DPAD_RIGHT: KEY_RIGHT}
+			if keys.has(event.button_index):
+				var key := InputEventKey.new()
+				key.keycode = keys[event.button_index]
+				key.pressed = true
+				return super.handle_input(key)
+		return super.handle_input(event)
 
 func _make_selection_controller():
 	return BloomingSelection.new()
@@ -132,6 +161,10 @@ func _build_ui() -> void:
 	_compact_label(_bloom_hint,15)
 	add_child(_bloom_hint)
 
+	_magic_btn = Button.new()
+	_magic_btn.name = "MagicCommand"
+	_magic_btn.pressed.connect(_on_magic)
+	_chapel_command_buttons.add_child(_magic_btn)
 	_bloom_command_row = GridContainer.new()
 	_bloom_command_row.columns = 4
 	_bloom_command_row.name = "BloomingCommands"
@@ -140,14 +173,14 @@ func _build_ui() -> void:
 	_chapel_command_panel.custom_minimum_size = Vector2.ZERO
 	_chapel_command_panel.add_theme_stylebox_override("panel",_surface())
 	var index := 0
-	for button: Button in [_move_btn,_attack_btn,_ability_btn,_wait_btn]:
+	for button: Button in [_move_btn,_attack_btn,_magic_btn,_ability_btn,_wait_btn]:
 		button.reparent(_bloom_command_row)
-		button.text = ["Move","Attack","Skills","Wait"][index]
+		button.text = ["Move","Attack","Magic","Skills","Wait"][index]
 		button.custom_minimum_size = Vector2(86,52)
 		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.add_theme_font_size_override("font_size",17)
 		button.icon = null
-		var icon_path := "res://assets/environments/blooming-ruins-v2/%s.svg" % ["move","attack","skill","wait"][index]
+		var icon_path := "res://assets/environments/blooming-ruins-v2/%s.svg" % ["move","attack","skill","skill","wait"][index]
 		if ResourceLoader.exists(icon_path): button.icon = load(icon_path)
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width",22)
@@ -197,6 +230,7 @@ func _build_ui() -> void:
 	# Re-anchor the bottom band after those measurements settle.
 	for content in [_bloom_active_panel, _bloom_objective_panel, _chapel_command_buttons]:
 		content.minimum_size_changed.connect(func(): _layout_persistent_hud.call_deferred())
+	_proof_skills_scroll.resized.connect(func(): _ensure_menu_focus_visible.call_deferred())
 	_bloom_ready = true
 	_layout_persistent_hud()
 
@@ -321,8 +355,8 @@ func _layout_bloom_commands() -> void:
 	var x := maxf(minimum_x,(area.size.x-width)*0.5)
 	var factor: float = UISettings.shared().effective_scale(get_viewport().get_visible_rect().size)
 	# Wrap the real buttons, rather than letting their minimum widths overflow.
-	_bloom_command_row.columns = 2 if width < 540 * factor else 4
-	for button: Button in [_move_btn,_attack_btn,_ability_btn,_wait_btn]:
+	_bloom_command_row.columns = 5 if width >= 590 * factor else (3 if width >= 345 * factor else 2)
+	for button: Button in [_move_btn,_attack_btn,_magic_btn,_ability_btn,_wait_btn]:
 		button.custom_minimum_size.x = 0
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var height := maxf(108 * factor, _chapel_command_buttons.get_combined_minimum_size().y + 16)
@@ -403,6 +437,10 @@ func _on_battle_started(display_name: String, objective: String) -> void:
 	_mission_label.text = "THE BLOOMING RUINS"
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G:
+		if _selection and _selection.can_command() and not _selection.is_targeting():
+			_press_if_ready(_magic_btn, _on_magic)
+		return
 	# Escape keeps backing out of combat first. From the unselected board it
 	# reaches the existing settings panel instead of becoming a dead key.
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -418,3 +456,204 @@ func _toggle_settings_overlay() -> void:
 		# Blooming's persistent HUD is created after the inherited overlay.
 		# Keep the modal above it so clicks cannot reach combat controls.
 		move_child(_settings_overlay, get_child_count() - 1)
+
+func _active_ability_catalog() -> Dictionary:
+	if not battle_manager: return AbilityCommands.catalog([])
+	var actor := battle_manager._living_unit(battle_manager.active_unit_id)
+	return AbilityCommands.catalog(actor.unit_data.abilities if actor else [])
+
+func _refresh_command_buttons() -> void:
+	super._refresh_command_buttons()
+	_refresh_ability_commands()
+
+func _refresh_ability_commands() -> void:
+	if not is_instance_valid(_magic_btn) or not battle_manager: return
+	if _menu_actor != battle_manager.active_unit_id:
+		_menu_actor = battle_manager.active_unit_id
+		_command_category = "skills"
+		_magic_school = ""
+		_menu_focus = ""
+	var commands := _active_ability_catalog()
+	var blocked := not _is_player_turn or not _can_act_now or _has_pending_action or battle_manager.is_resolving_action
+	_magic_btn.disabled = blocked or commands.schools.is_empty()
+	_ability_btn.disabled = blocked or commands.skills.is_empty()
+	_magic_btn.visible = _ability_btn.visible
+	_magic_btn.tooltip_text = "No magic in this hero's current abilities" if commands.schools.is_empty() else "Magic [G]: choose a school, then a spell"
+	_ability_btn.tooltip_text = "No skills in this hero's current abilities" if commands.skills.is_empty() else "Skills [S]: physical and special techniques"
+
+func _on_magic() -> void:
+	_open_ability_category("magic")
+
+func _on_ability() -> void:
+	_open_ability_category("skills")
+
+func _open_ability_category(category: String) -> void:
+	if not _selection or not _selection.can_command() or _selection._waiting_facing or _selection.has_review() or _selection.is_targeting(): return
+	_refresh_ability_commands()
+	if (category == "magic" and _magic_btn.disabled) or (category == "skills" and _ability_btn.disabled): return
+	_command_category = category
+	_magic_school = ""
+	_menu_focus = ""
+	_play_sfx("ui_confirm")
+	battle_manager.select_command("ability")
+	_selection.refresh()
+
+func _menu_heading() -> String:
+	if _command_category != "magic": return "Skills"
+	return "Magic > " + AbilityCommands.school_label(_magic_school) if not _magic_school.is_empty() else "Magic > Choose a school"
+
+func _on_ability_mode_started(usable_ids: Array) -> void:
+	_menu_usable = AbilityDB.canonical_ids(usable_ids)
+	_render_ability_menu()
+
+func _clear_ability_rows() -> void:
+	for child in _ability_list.get_children():
+		_ability_list.remove_child(child)
+		child.queue_free()
+
+func _render_ability_menu() -> void:
+	if not battle_manager or battle_manager.active_command != "ability": return
+	_clear_ability_rows()
+	battle_manager.action_preview_changed.emit({})
+	var commands := _active_ability_catalog()
+	var leaf_ids: Array = commands.skills if _command_category == "skills" else []
+	if _command_category == "magic":
+		var chosen := false
+		for school in commands.schools:
+			if school.id == _magic_school:
+				leaf_ids = school.abilities
+				chosen = true
+		# A changed loadout cannot strand an empty or unknown school.
+		if not chosen: _magic_school = ""
+	if _command_category == "magic" and _magic_school.is_empty():
+		for school in commands.schools:
+			var button := Button.new()
+			button.text = "%s  (%d)  >" % [school.label, school.abilities.size()]
+			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			button.custom_minimum_size = Vector2(0, 60)
+			button.add_theme_font_size_override("font_size", 20)
+			button.set_meta("magic_school", school.id)
+			button.tooltip_text = "Choose %s spells" % school.label
+			button.pressed.connect(_open_magic_school.bind(str(school.id)))
+			_ability_list.add_child(button)
+	else:
+		# Keep the existing rich spell rows, costs, shape labels and self forecast.
+		# Availability is projected separately so low MP never erases a school.
+		if not leaf_ids.is_empty(): super._on_ability_mode_started(leaf_ids)
+		var index := 0
+		for button in _ability_list.get_children():
+			if not button is Button or button.is_queued_for_deletion(): continue
+			var id: String = str(leaf_ids[index])
+			index += 1
+			button.set_meta("ability_id", id)
+			button.disabled = id not in _menu_usable
+			if button.disabled:
+				var ability := AbilityDB.get_ability(id)
+				var actor := battle_manager._living_unit(battle_manager.active_unit_id)
+				var reason := "Unavailable now"
+				if actor and not battle_manager._silence_allows_ability(actor, ability): reason = "Silenced"
+				elif actor and actor.mp < int(ability.get("mp_cost", 0)): reason = "Not enough MP"
+				button.tooltip_text = reason
+				var status := Label.new()
+				status.text = reason
+				status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				status.add_theme_color_override("font_color", Color("e9b7a1"))
+				button.get_child(0).get_child(1).add_child(status)
+	if _ability_list.get_child_count() == 0:
+		var empty := Label.new()
+		empty.text = "No magic available" if _command_category == "magic" else "No skills available"
+		_ability_list.add_child(empty)
+	var heading: Label = _ability_panel.get_child(0)
+	heading.text = _menu_heading()
+	heading.add_theme_font_size_override("font_size", 20)
+	_ability_panel.show()
+	_proof_skills_scroll.scroll_vertical = 0
+	_proof_skills_scroll.scroll_horizontal = 0
+	UISettings.shared().apply_tree(_ability_panel, get_viewport().get_visible_rect().size)
+	_link_ability_focus()
+	if _selection: _selection.refresh.call_deferred()
+	_focus_menu_entry.call_deferred()
+	_layout_skills.call_deferred()
+
+func _open_magic_school(id: String) -> void:
+	if not _selection or not _selection.can_command() or _selection.has_review() or battle_manager.active_command != "ability" or _command_category != "magic": return
+	for school in _active_ability_catalog().schools:
+		if school.id == id:
+			_magic_school = id
+			_menu_focus = ""
+			_play_sfx("ui_confirm")
+			_render_ability_menu()
+			return
+
+func _select_ability(ability_id: String) -> void:
+	if ability_id not in _menu_usable: return
+	_menu_focus = ability_id
+	# Presentation is canonical, while the manager validates the original unit
+	# loadout. Preserve legacy aliases without rewriting ownership in place.
+	var actor := battle_manager._living_unit(battle_manager.active_unit_id)
+	if actor:
+		for owned_id in actor.unit_data.abilities:
+			if AbilityDB.canonical_id(owned_id) == ability_id:
+				super._select_ability(owned_id)
+				return
+
+func _link_ability_focus() -> void:
+	var buttons: Array[Button] = []
+	for child in _ability_list.get_children():
+		if child is Button and not child.disabled: buttons.append(child)
+	buttons.append(_cancel_btn)
+	for index in buttons.size():
+		var button := buttons[index]
+		button.focus_neighbor_top = button.get_path_to(buttons[posmod(index - 1, buttons.size())])
+		button.focus_neighbor_bottom = button.get_path_to(buttons[(index + 1) % buttons.size()])
+		button.focus_next = button.focus_neighbor_bottom
+		button.focus_previous = button.focus_neighbor_top
+
+func _focus_first_ability() -> void:
+	_focus_menu_entry()
+
+func _focus_menu_entry() -> void:
+	if not _ability_panel.is_visible_in_tree() or not battle_manager or battle_manager.active_command != "ability": return
+	var first: Button
+	for child in _ability_list.get_children():
+		if not child is Button or child.disabled or child.is_queued_for_deletion(): continue
+		if first == null: first = child
+		if str(child.get_meta("ability_id", child.get_meta("magic_school", ""))) == _menu_focus:
+			child.grab_focus()
+			return
+	if first: first.grab_focus()
+	else: _cancel_btn.grab_focus()
+
+func _back_ability_menu() -> bool:
+	if not _selection or not _selection.can_command(): return false
+	if battle_manager.active_command == "ability_target":
+		# The authoritative manager clears target highlights/identity and rebuilds
+		# current availability; only the HUD retains the navigation breadcrumb.
+		battle_manager.select_command("ability")
+		_selection.refresh()
+		return true
+	if battle_manager.active_command != "ability": return false
+	if _command_category == "magic" and not _magic_school.is_empty():
+		_menu_focus = _magic_school
+		_magic_school = ""
+		_render_ability_menu()
+		return true
+	var return_to: Button = _magic_btn if _command_category == "magic" else _ability_btn
+	battle_manager.cancel_pending_action()
+	_ability_panel.hide()
+	_selection.refresh()
+	return_to.grab_focus()
+	return true
+
+func _ensure_menu_focus_visible() -> void:
+	# A self-cast forecast can shrink the scroll viewport after focus entered.
+	# Re-scroll only on resize, so ordinary mouse-wheel browsing is not hijacked.
+	if _menu_scroll_pending: return
+	_menu_scroll_pending = true
+	# Both the forecast and row minima settle through deferred container sorts.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_menu_scroll_pending = false
+	var focused := get_viewport().gui_get_focus_owner()
+	if _ability_panel.is_visible_in_tree() and is_instance_valid(focused) and _ability_list.is_ancestor_of(focused):
+		_proof_skills_scroll.ensure_control_visible(focused)

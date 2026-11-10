@@ -31,13 +31,22 @@ jobs:
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/ko.log; then exit 1; fi
           XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSaveLoadoutTest.tscn 2>&1 | tee build/skill-evidence/save.log
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/save.log; then exit 1; fi
+      - name: Verify nested Magic and Skills commands
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_commands/CommandMenuTest.tscn 2>&1 | tee build/skill-evidence/commands-native.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/commands-native.log; then exit 1; fi
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_commands/CommandMenuTest.tscn -- --capture-dir="$PWD/build/skill-evidence/commands" 2>&1 | tee build/skill-evidence/commands-rendered.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/commands-rendered.log; then exit 1; fi
+          for image in 01-magic-schools 02-black-magic 03-time-magic 04-skills; do test -s "build/skill-evidence/commands/$image.png"; done
       - name: Capture real skill targeting and delay previews
         shell: bash
         run: |
           set -o pipefail
           XDG_DATA_HOME="$(mktemp -d)" timeout 120 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_skills/HeroSkillsTest.tscn -- --capture-dir="$PWD/build/skill-evidence" 2>&1 | tee build/skill-evidence/rendered.log
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/rendered.log; then exit 1; fi
-          for image in zane-skills kael-skills haste-review haste-applied delay_strike-review heavy_slash-review; do test -s "build/skill-evidence/$image.png"; done
+          for image in zane-time-magic kael-skills haste-review haste-applied delay_strike-review heavy_slash-review; do test -s "build/skill-evidence/$image.png"; done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

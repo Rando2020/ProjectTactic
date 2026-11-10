@@ -3,10 +3,13 @@ extends RefCounted
 
 ## status_effect keys: id, duration, magnitude (0 = no DoT), damage_type
 ## jp_cost: JP required to learn this ability on the character screen
+## command_category / magic_school: editable courtyard menu labels only.
+## These provisional schools do not set damage type, class access or saved ownership.
 
 const ABILITIES: Dictionary = {
 	#  Player starting abilities
 	"fire": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Fire",
 		"spell_type":   "fire",
 		"mp_cost":      12,
@@ -19,6 +22,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "burn", "duration": 2, "magnitude": 0.07, "damage_type": "fire"},
 	},
 	"blizzard": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Blizzard",
 		"spell_type":   "blizzard",
 		"mp_cost":      12,
@@ -31,6 +35,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"thunder": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Thunder",
 		"spell_type":   "thunder",
 		"mp_cost":      15,
@@ -44,6 +49,7 @@ const ABILITIES: Dictionary = {
 		"chain_falloff":0.40,
 	},
 	"cure": {
+		"command_category": "magic", "magic_school": "white",
 		"display_name": "Cure",
 		"spell_type":   "cure",
 		"mp_cost":      8,
@@ -53,6 +59,7 @@ const ABILITIES: Dictionary = {
 		"jp_cost":      80,
 	},
 	"holy": {
+		"command_category": "magic", "magic_school": "white",
 		"display_name": "Holy",
 		"spell_type":   "holy",
 		"mp_cost":      24,
@@ -63,6 +70,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "blind", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"wind_slash": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Wind Slash",
 		"spell_type":   "wind",
 		"mp_cost":      10,
@@ -74,6 +82,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"mighty_strike": {
+		"command_category": "skills",
 		"display_name": "Mighty Strike",
 		"spell_type":   "physical",
 		"mp_cost":      8,
@@ -85,12 +94,14 @@ const ABILITIES: Dictionary = {
 	# Provisional courtyard test skills. CT shifts affect one upcoming action,
 	# not speed/status duration. These are not granted to campaign saves.
 	"delay_strike": {
+		"command_category": "skills",
 		"display_name": "Delay Strike", "spell_type": "physical", "vfx_mode": "slash",
 		"mp_cost": 8, "range": 1, "base_power": 100, "target_type": "enemy",
 		"target_ct_delay": 30,
 		"description": "On hit, delay the surviving target's next action by 30 CT. No Slow status.",
 	},
 	"heavy_slash": {
+		"command_category": "skills",
 		"display_name": "Heavy Slash", "spell_type": "physical", "vfx_mode": "slash",
 		"mp_cost": 12, "range": 1, "base_power": 190, "target_type": "enemy",
 		"self_ct_delay": 30,
@@ -98,6 +109,7 @@ const ABILITIES: Dictionary = {
 	},
 	#  Learnable player abilities
 	"fira": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Fira",
 		"spell_type":   "fire",
 		"mp_cost":      18,
@@ -110,6 +122,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "burn", "duration": 3, "magnitude": 0.08, "damage_type": "fire"},
 	},
 	"blizzara": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Blizzara",
 		"spell_type":   "blizzard",
 		"mp_cost":      18,
@@ -122,6 +135,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "slow", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"cura": {
+		"command_category": "magic", "magic_school": "white",
 		"display_name": "Cura",
 		"spell_type":   "cure",
 		"mp_cost":      14,
@@ -131,6 +145,7 @@ const ABILITIES: Dictionary = {
 		"jp_cost":      150,
 	},
 	"dark_blade": {
+		"command_category": "skills",
 		"display_name": "Dark Blade",
 		"spell_type":   "dark",
 		"mp_cost":      10,
@@ -141,6 +156,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "poison", "duration": 2, "magnitude": 0.06, "damage_type": "dark"},
 	},
 	"tremor": {
+		"command_category": "skills",
 		"display_name": "Tremor",
 		"spell_type":   "physical",
 		"mp_cost":      12,
@@ -153,6 +169,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "slow", "duration": 1, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"aero": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Aero",
 		"spell_type":   "wind",
 		"mp_cost":      15,
@@ -165,6 +182,7 @@ const ABILITIES: Dictionary = {
 	},
 	#  Lyra's bow abilities
 	"pin_shot": {
+		"command_category": "skills",
 		"display_name": "Pin Shot",
 		"spell_type":   "physical",
 		"mp_cost":      0,
@@ -177,6 +195,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "slow", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"aimed_shot": {
+		"command_category": "skills",
 		"display_name": "Aimed Shot",
 		"spell_type":   "physical",
 		"mp_cost":      6,
@@ -188,6 +207,7 @@ const ABILITIES: Dictionary = {
 		"vfx_mode":     "arrow",
 	},
 	"eagle_eye": {
+		"command_category": "skills",
 		"display_name": "Eagle Eye",
 		"spell_type":   "physical",
 		"mp_cost":      10,
@@ -200,6 +220,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "blind", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"scatter_shot": {
+		"command_category": "skills",
 		"display_name": "Scatter Shot",
 		"spell_type":   "physical",
 		"mp_cost":      14,
@@ -214,6 +235,7 @@ const ABILITIES: Dictionary = {
 	},
 	#  Buff / support abilities
 	"haste": {
+		"command_category": "magic", "magic_school": "time",
 		"display_name": "Haste",
 		"spell_type":   "buff",
 		"mp_cost":      10,
@@ -224,6 +246,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "haste", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"protect": {
+		"command_category": "magic", "magic_school": "white",
 		"display_name": "Protect",
 		"spell_type":   "buff",
 		"mp_cost":      8,
@@ -234,6 +257,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "protect", "duration": 3, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"firaga": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Firaga",
 		"spell_type":   "fire",
 		"mp_cost":      26,
@@ -248,6 +272,7 @@ const ABILITIES: Dictionary = {
 	},
 	#  Enemy abilities
 	"dark_breath": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Dark Breath",
 		"spell_type":   "dark",
 		"mp_cost":      18,
@@ -258,6 +283,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "poison", "duration": 3, "magnitude": 0.06, "damage_type": "dark"},
 	},
 	"thunderstrike": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Thunderstrike",
 		"spell_type":   "thunder",
 		"mp_cost":      14,
@@ -271,6 +297,7 @@ const ABILITIES: Dictionary = {
 		"chain_falloff":0.40,
 	},
 	"void_pulse": {
+		"command_category": "magic", "magic_school": "black",
 		"display_name": "Void Pulse",
 		"spell_type":   "dark",
 		"mp_cost":      12,
@@ -281,6 +308,7 @@ const ABILITIES: Dictionary = {
 		"status_effect": {"id": "silence", "duration": 2, "magnitude": 0.0, "damage_type": "pure"},
 	},
 	"shadow_mend": {
+		"command_category": "magic", "magic_school": "white",
 		"display_name": "Shadow Mend",
 		"spell_type":   "cure",
 		"mp_cost":      16,
@@ -292,6 +320,7 @@ const ABILITIES: Dictionary = {
 
 	#  Secret Skills (learned from Wanderers only)
 	"resonance_fracture": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "resonance_fracture", "display_name": "Resonance Fracture",
 		"type": "spell", "spell_type": "dark", "base_power": 90,
 		"mp_cost": 60, "range": 0,  # self-cast  erupts from the caster
@@ -301,6 +330,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "the_wandering_null",
 	},
 	"null_break": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "null_break", "display_name": "Null-Break",
 		"type": "spell", "spell_type": "dark", "base_power": 45,
 		"mp_cost": 35, "range": 2,
@@ -309,6 +339,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "void_scholar_thresh",
 	},
 	"leyline_burst": {
+		"command_category": "magic", "magic_school": "white",
 		"id": "leyline_burst", "display_name": "Leyline Burst",
 		"type": "spell", "spell_type": "holy", "base_power": 55,
 		"mp_cost": 40, "range": 3, "aoe_radius": 1,
@@ -317,6 +348,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "archive_mage_volant",
 	},
 	"last_rites": {
+		"command_category": "magic", "magic_school": "white",
 		"id": "last_rites", "display_name": "Last Rites",
 		"type": "spell", "spell_type": "buff", "base_power": 0,
 		"mp_cost": 30, "range": 4,
@@ -325,6 +357,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "chaplain_aldis",
 	},
 	"blaze_counter": {
+		"command_category": "skills",
 		"id": "blaze_counter", "display_name": "Blaze Counter",
 		"type": "spell", "spell_type": "fire", "base_power": 50,
 		"mp_cost": 0, "range": 1,
@@ -333,6 +366,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "ember_knight_solara",
 	},
 	"sunder_armor": {
+		"command_category": "skills",
 		"id": "sunder_armor", "display_name": "Sunder Armor",
 		"type": "spell", "spell_type": "physical", "base_power": 30,
 		"mp_cost": 20, "range": 1,
@@ -341,6 +375,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "iron_duelist_garek",
 	},
 	"arc_counter": {
+		"command_category": "skills",
 		"id": "arc_counter", "display_name": "Arc Counter",
 		"type": "spell", "spell_type": "thunder", "base_power": 40,
 		"mp_cost": 0, "range": 1,
@@ -349,6 +384,7 @@ const ABILITIES: Dictionary = {
 		"secret": true, "teacher": "storm_duelist_kira",
 	},
 	"dark_echo": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "dark_echo", "display_name": "Dark Echo",
 		"type": "spell", "spell_type": "dark", "base_power": 60,
 		"mp_cost": 25, "range": 3,
@@ -357,6 +393,7 @@ const ABILITIES: Dictionary = {
 	},
 	#  Void Anchor
 	"void_anchor_pulse": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "void_anchor_pulse", "display_name": "Void Pulse",
 		"type": "spell", "spell_type": "dark", "base_power": 0,
 		"mp_cost": 0, "range": 2, "aoe_radius": 2,
@@ -369,6 +406,7 @@ const ABILITIES: Dictionary = {
 
 	# Squire / Warder
 	"defend": {
+		"command_category": "skills",
 		"id": "defend", "display_name": "Defend",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 0, "range": 0,
@@ -376,6 +414,7 @@ const ABILITIES: Dictionary = {
 		"description": "Brace  take 50% less damage until your next turn.",
 	},
 	"cover_ally": {
+		"command_category": "skills",
 		"id": "cover_ally", "display_name": "Cover",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 0, "range": 2,
@@ -383,6 +422,7 @@ const ABILITIES: Dictionary = {
 		"description": "Take hits directed at an adjacent ally until your next turn.",
 	},
 	"iron_wall": {
+		"command_category": "skills",
 		"id": "iron_wall", "display_name": "Iron Wall",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 10, "range": 0,
@@ -390,12 +430,14 @@ const ABILITIES: Dictionary = {
 		"description": "Shield stance for 2 turns. Take 40% less damage. Cannot act.",
 	},
 	"retribution": {
+		"command_category": "skills",
 		"id": "retribution", "display_name": "Retribution",
 		"type": "attack", "spell_type": "physical", "base_power": 70,
 		"mp_cost": 15, "range": 1,
 		"description": "A fierce counter-blow. Deals +50% bonus damage if used after being hit.",
 	},
 	"rally": {
+		"command_category": "skills",
 		"id": "rally", "display_name": "Rally",
 		"type": "buff", "spell_type": "holy", "base_power": 0,
 		"mp_cost": 20, "range": 3,
@@ -405,24 +447,28 @@ const ABILITIES: Dictionary = {
 
 	# Scout
 	"long_shot": {
+		"command_category": "skills",
 		"id": "long_shot", "display_name": "Long Shot",
 		"type": "attack", "spell_type": "physical", "base_power": 60,
 		"mp_cost": 0, "range": 5, "attack_range_min": 3, "attack_range_max": 5,
 		"description": "Precise arrow from extreme range (3-5 tiles). Can't be used at melee range.",
 	},
 	"rain_of_arrows": {
+		"command_category": "skills",
 		"id": "rain_of_arrows", "display_name": "Rain of Arrows",
 		"type": "attack", "spell_type": "physical", "base_power": 40,
 		"mp_cost": 20, "range": 4, "aoe_radius": 1,
 		"description": "Fires into a 3x3 area  40 power to all units in range. Friendly fire possible.",
 	},
 	"quickstep": {
+		"command_category": "skills",
 		"id": "quickstep", "display_name": "Quickstep",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
 		"mp_cost": 5, "range": 0,
 		"description": "After moving, spend your action and 5 MP to move once more. Cannot attack or use another ability this turn.",
 	},
 	"smoke_screen": {
+		"command_category": "skills",
 		"id": "smoke_screen", "display_name": "Smoke Screen",
 		"type": "spell", "spell_type": "wind", "base_power": 0,
 		"mp_cost": 15, "range": 3, "aoe_radius": 1,
@@ -432,6 +478,7 @@ const ABILITIES: Dictionary = {
 
 	# Luminary
 	"luminous_barrier": {
+		"command_category": "magic", "magic_school": "white",
 		"id": "luminous_barrier", "display_name": "Luminous Barrier",
 		"type": "buff", "spell_type": "holy", "base_power": 0,
 		"mp_cost": 25, "range": 3,
@@ -439,12 +486,14 @@ const ABILITIES: Dictionary = {
 		"description": "Grants target a 60-HP absorb shield that lasts 2 turns.",
 	},
 	"mass_cure": {
+		"command_category": "magic", "magic_school": "white",
 		"id": "mass_cure", "display_name": "Mass Cure",
 		"type": "heal", "spell_type": "holy", "base_power": 60,
 		"mp_cost": 40, "range": 3, "aoe_radius": 2,
 		"description": "Heals all allies within a 55 area for 60 power.",
 	},
 	"consecrate": {
+		"command_category": "magic", "magic_school": "white",
 		"id": "consecrate", "display_name": "Consecrate",
 		"type": "spell", "spell_type": "holy", "base_power": 55,
 		"mp_cost": 30, "range": 4,
@@ -454,6 +503,7 @@ const ABILITIES: Dictionary = {
 
 	# Shadow
 	"shadow_step": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "shadow_step", "display_name": "Shadow Step",
 		"type": "buff", "spell_type": "dark", "base_power": 0,
 		"mp_cost": 10, "range": 4,
@@ -461,6 +511,7 @@ const ABILITIES: Dictionary = {
 		"description": "Teleport to any unoccupied tile within 4 tiles and gain Invisible (1t).",
 	},
 	"expose_weakness": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "expose_weakness", "display_name": "Expose Weakness",
 		"type": "spell", "spell_type": "dark", "base_power": 25,
 		"mp_cost": 12, "range": 2,
@@ -468,6 +519,7 @@ const ABILITIES: Dictionary = {
 		"description": "25 dark damage and applies Exposed (2t)  target takes 25% more damage.",
 	},
 	"vanish": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "vanish", "display_name": "Vanish",
 		"type": "buff", "spell_type": "dark", "base_power": 0,
 		"mp_cost": 8, "range": 0,
@@ -477,12 +529,14 @@ const ABILITIES: Dictionary = {
 
 	# Resonant
 	"elemental_convergence": {
+		"command_category": "magic", "magic_school": "arcane",
 		"id": "elemental_convergence", "display_name": "Elemental Convergence",
 		"type": "spell", "spell_type": "resonance", "base_power": 65,
 		"mp_cost": 45, "range": 4,
 		"description": "Deals 65 damage of the element the target is weakest to. Auto-selects element.",
 	},
 	"chain_resonance": {
+		"command_category": "magic", "magic_school": "arcane",
 		"id": "chain_resonance", "display_name": "Chain Resonance",
 		"type": "spell", "spell_type": "thunder", "base_power": 40,
 		"mp_cost": 30, "range": 3,
@@ -493,6 +547,7 @@ const ABILITIES: Dictionary = {
 		"description": "40 thunder. Chain arcs to ALL enemies within reach  minimal falloff.",
 	},
 	"eidolon_drive": {
+		"command_category": "magic", "magic_school": "arcane",
 		"id": "eidolon_drive", "display_name": "Eidolon Drive",
 		"type": "spell", "spell_type": "resonance", "base_power": 100,
 		"mp_cost": 70, "range": 3,
@@ -501,6 +556,7 @@ const ABILITIES: Dictionary = {
 
 	# Void Knight
 	"void_shield": {
+		"command_category": "magic", "magic_school": "black",
 		"id": "void_shield", "display_name": "Void Shield",
 		"type": "buff", "spell_type": "dark", "base_power": 0,
 		"mp_cost": 20, "range": 0,
@@ -508,6 +564,7 @@ const ABILITIES: Dictionary = {
 		"description": "80-HP void absorb shield for 2 turns. Absorbed damage restores Ether.",
 	},
 	"anchor_strike": {
+		"command_category": "skills",
 		"id": "anchor_strike", "display_name": "Anchor Strike",
 		"type": "attack", "spell_type": "dark", "base_power": 85,
 		"mp_cost": 25, "range": 1,

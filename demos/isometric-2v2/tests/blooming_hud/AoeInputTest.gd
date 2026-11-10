@@ -49,14 +49,22 @@ func run() -> void:
 	await frames(20)
 	var actor = manager.units["zane"]
 	await key(KEY_ENTER)
-	await key(KEY_S)
-	check(manager.active_command == "ability", "real shortcut opens Skills")
+	await key(KEY_G)
+	check(manager.active_command == "ability", "real shortcut opens Magic")
+	var black: Button
+	for button in ui._ability_list.get_children():
+		if button is Button and str(button.get_meta("magic_school", "")) == "black": black = button
+	check(is_instance_valid(black), "Magic contains Black Magic school")
+	if not is_instance_valid(black):
+		get_tree().quit(1)
+		return
+	await click(black.get_global_rect().get_center())
 	var fire: Button
 	for button in ui._ability_list.get_children():
 		if button is Button:
 			for label in button.find_children("*", "Label", true, false):
 				if label.text == "Fire": fire = button
-	check(is_instance_valid(fire), "Skills contains named Fire button")
+	check(is_instance_valid(fire), "Black Magic contains named Fire button")
 	if not is_instance_valid(fire):
 		get_tree().quit(1)
 		return
