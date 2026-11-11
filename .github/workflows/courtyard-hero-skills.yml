@@ -31,6 +31,28 @@ jobs:
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/ko.log; then exit 1; fi
           XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/HeroSaveLoadoutTest.tscn 2>&1 | tee build/skill-evidence/save.log
           if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/save.log; then exit 1; fi
+      - name: Verify actual skill audio and casting effects
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 --script res://tests/modular/test_skill_audio.gd 2>&1 | tee build/skill-evidence/skill-audio.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/modular/test_support_visuals.tscn 2>&1 | tee build/skill-evidence/support-visuals.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/modular/test_support_runtime.tscn 2>&1 | tee build/skill-evidence/support-runtime.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/SkillFeedbackTest.tscn 2>&1 | tee build/skill-evidence/skill-feedback.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_skills/SkillFeedbackTest.tscn -- --capture-dir="$PWD/build/skill-evidence/feedback" 2>&1 | tee build/skill-evidence/skill-feedback-rendered.log
+          for id in haste defend; do
+            test -s "build/skill-evidence/feedback/$id-casting.png"
+            test -s "build/skill-evidence/feedback/$id-support.png"
+          done
+          for id in mighty_strike delay_strike heavy_slash; do
+            test -s "build/skill-evidence/feedback/$id-charge.png"
+            test -s "build/skill-evidence/feedback/$id-impact.png"
+          done
+          for id in thunderstrike void_pulse; do
+            test -s "build/skill-evidence/feedback/$id-casting.png"
+            test -s "build/skill-evidence/feedback/$id-impact.png"
+          done
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/skill-audio.log build/skill-evidence/support-*.log build/skill-evidence/skill-feedback*.log; then exit 1; fi
       - name: Verify nested Magic and Skills commands
         shell: bash
         run: |

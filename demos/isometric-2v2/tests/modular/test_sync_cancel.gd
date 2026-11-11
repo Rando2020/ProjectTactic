@@ -12,7 +12,7 @@ func run() -> void:
 	check(await manager._execute_aoe_ability(manager.units.zane,manager.units.Enemy_1.grid_pos,AbilityDB.get_ability("thunderstrike")),"admitted contact still resolves authoritative result")
 	check(not get_tree().paused,"synchronous impact cancel cannot apply stale hit-pause")
 	check(is_zero_approx(battle._zane_kick_remaining),"synchronous impact cancel cannot apply stale kick")
-	check(not cues.has("modular_contact"),"synchronous impact cancel cannot emit late contact cue")
+	check(not cues.has("thunderstrike_contact"),"synchronous impact cancel cannot emit late contact cue")
 	VFX.child_entered_tree.disconnect(callback)
 	get_tree().paused = false
 	await manager._recover_action()
@@ -23,7 +23,7 @@ func run() -> void:
 	var cue_callback := func(node: Node):
 		if node.has_signal("cue_started"):
 			node.cue_started.connect(func(cue: String):
-				if cue=="modular_contact": manager.action_lifecycle.cancel()
+				if cue=="thunderstrike_contact": manager.action_lifecycle.cancel()
 			)
 	VFX.child_entered_tree.connect(cue_callback)
 	check(await manager._execute_aoe_ability(manager.units.zane,manager.units.Enemy_1.grid_pos,AbilityDB.get_ability("thunderstrike")),"contact cue cancellation preserves admitted resolution")

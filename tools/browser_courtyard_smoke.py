@@ -55,6 +55,38 @@ def assert_commands(state, *, magic, skills):
         assert button['visible'] and button['disabled'] == (not enabled), f'Wrong {name} command availability'
 
 
+def assert_support_cast(before, after, ability):
+    caster, status, cost = ('zane', 'haste', 10) if ability == 'haste' else ('kael', 'defending', 0)
+    assert after['units'][caster]['mp'] == before['units'][caster]['mp'] - cost, 'Incorrect cast MP cost'
+    assert status not in before['units']['kael']['statuses'], 'Support status already present before cast'
+    assert status in after['units']['kael']['statuses'], 'Confirmed support status missing'
+    for unit in before['units']:
+        for field in ('hp', 'position'):
+            assert before['units'][unit][field] == after['units'][unit][field], f'Support cast changed {unit} {field}'
+    events = after['events'][len(before['events']):]
+    events = [e for e in events if e['ability_id'] == ability and e['actor_id'] == caster]
+    expected = [('phase', 'casting'), ('cue', ability + '_charge'), ('phase', 'formation'),
+                ('phase', 'action'), ('cue', ability + '_release'), ('phase', 'support'), ('cue', ability + '_heal')]
+    assert [(e['kind'], e['name']) for e in events] == expected, 'Missing or reordered cast phases/cues'
+    assert len({e['action_key'] for e in events}) == 1, 'Evidence came from different actions'
+    for event in events:
+        if event['kind'] == 'cue':
+            assert event['voices'], 'Cue has no audio voice'
+            voice = event['voices'][-1]
+            assert voice['playing'] and voice['bus'] == 'FX' and voice['stream'], 'Cue has no playing FX voice'
+        else:
+            role = 'spell_tail' if event['name'] == 'support' else 'spell_sheet_' + event['name']
+            assert role in event['effects'], 'Presentation phase has no visible spell effect'
+            stage = 'collision' if event['name'] == 'support' else event['name']
+            assert any(v['stage'] == stage and v['available'] for v in event['visuals']), 'Spell stage is not drawable'
+    # Courtyard uses 2D actors (rig3d=false). Animation evidence comes from the
+    # actual procedural glyph's progress, not an imagined skeletal casting pose.
+    samples = after['animation_samples'][len(before['animation_samples']):]
+    for stage in ('casting', 'formation', 'action'):
+        assert any(s['action_key'] == events[0]['action_key'] and s['stage'] == stage
+                   and s['available'] and 0 < s['progress'] <= 1 for s in samples), f'{stage} glyph did not animate'
+
+
 class CourtyardSmoke:
     def __init__(self, cdp, output, timeout):
         self.cdp, self.output, self.timeout = cdp, output, timeout
@@ -69,7 +101,7 @@ class CourtyardSmoke:
             if envelope:
                 self.latest = envelope
                 state = envelope['state']
-                assert state['schema'] == 2, 'Unexpected courtyard observer schema'
+                assert state['schema'] == 3, 'Unexpected courtyard observer schema'
                 geometry_ready = canvas_size is None or [envelope['canvas']['width'], envelope['canvas']['height']] == list(canvas_size)
                 if state['frame'] > after + 1 and geometry_ready and predicate(state):
                     return envelope
@@ -167,14 +199,34 @@ class CourtyardSmoke:
         self.checkpoint(f'courtyard-magic-back-complete-{size}', commands)
         return commands
 
+    def cast_haste(self, commands):
+        self.key('g', 'KeyG', 71)
+        schools = self.wait_menu('magic', '', ['black', 'time'], commands['state']['frame'])
+        self.click_button(schools, menu_entry(schools['state'], 'magic_school', 'time'))
+        menu = self.wait_menu('magic', 'time', ['haste'], schools['state']['frame'])
+        self.click_button(menu, menu_entry(menu['state'], 'ability_id', 'haste'))
+        targeting = self.wait('Haste cast targeting', lambda s: s['command'] == 'ability_target', menu['state']['frame'])
+        destination = targeting['state']['units']['kael']['position']
+        for axis, positive, negative in [(0, ('ArrowRight', 39), ('ArrowLeft', 37)),
+                                         (1, ('ArrowDown', 40), ('ArrowUp', 38))]:
+            delta = destination[axis] - targeting['state']['cursor'][axis]
+            key, code = positive if delta > 0 else negative
+            for _ in range(abs(delta)):
+                self.key(key, keycode=code)
+        aimed = self.wait('Haste aimed at Kael', lambda s: s['cursor'] == destination, targeting['state']['frame'])
+        self.key('Enter', keycode=13)
+        review = self.wait('Haste cast review', lambda s: s['review'], aimed['state']['frame'])
+        self.click_button(review, review['state']['confirm'])
+        cast = self.wait('Haste resolved', lambda s: not s['resolving'] and 'haste' in s['units']['kael']['statuses'], review['state']['frame'])
+        assert_support_cast(review['state'], cast['state'], 'haste')
+        self.checkpoint('courtyard-haste-cast-1366', cast)
+        return cast
+
     def check_kael_skills(self, commands):
-        # Advance via the real Wait/facing controls. Never replace the active unit,
-        # grant abilities, change CT, or add a test hero in the observer.
-        self.key('w', 'KeyW', 87)
-        facing = self.wait('Zane Wait facing', lambda s: s['waiting_facing'], commands['state']['frame'])
-        self.click_button(facing, facing['state']['confirm'])
+        # Zane has moved and cast: normal action completion advances the turn.
+        # Never replace the active unit, grant abilities, or change CT.
         kael = self.wait('Kael natural turn', lambda s: s['phase'] == 'PLAYER_TURN'
-                         and s['unit']['id'] == 'kael' and not s['resolving'], facing['state']['frame'])
+                         and s['unit']['id'] == 'kael' and not s['resolving'], commands['state']['frame'])
         self.key('Enter', keycode=13)
         selected = self.wait('Kael selected', lambda s: s['selected'] == 'kael', kael['state']['frame'])
         assert_commands(selected['state'], magic=False, skills=True)
@@ -196,6 +248,14 @@ class CourtyardSmoke:
         commands = self.back(menu, lambda s: not s['command'] and not s['menu_visible'], mouse=True)
         assert_commands(commands['state'], magic=False, skills=True)
         assert_unchanged(selected['state']['unit'], commands['state']['unit'])
+        self.key('s', 'KeyS', 83)
+        menu = self.wait_menu('skills', '', skills, commands['state']['frame'])
+        self.click_button(menu, menu_entry(menu['state'], 'ability_id', 'defend'))
+        review = self.wait('Defend cast review', lambda s: s['review'], menu['state']['frame'])
+        self.click_button(review, review['state']['confirm'])
+        cast = self.wait('Defend resolved', lambda s: not s['resolving'] and 'defending' in s['units']['kael']['statuses'], review['state']['frame'])
+        assert_support_cast(review['state'], cast['state'], 'defend')
+        self.checkpoint('courtyard-defend-cast-1366', cast)
 
     def run(self, url, production_url):
         for domain in ('Page', 'Runtime', 'Log'):
@@ -248,7 +308,7 @@ class CourtyardSmoke:
             self.key('Enter', keycode=13)
             compact = self.wait('Zane reselected', lambda s: s['selected'] == 'zane', compact['state']['frame'])
         commands = self.check_magic_hierarchy(compact, 1366)
-        self.check_kael_skills(commands)
+        self.check_kael_skills(self.cast_haste(commands))
         # Load the actual public package too, with no test observer present.
         self.check_production(production_url)
 
@@ -292,7 +352,8 @@ def main():
               'mouse confirmation', 'resource-preserving movement', '1366/1920 layouts',
               'Magic/Skills categories and disabled empty categories', 'Black/Time schools and hidden empty White',
               'owned spell and skill leaves', 'Haste review/target/leaf/schools/commands Back chain',
-              'Kael natural turn and Defend review/cancel', 'production package boot']}
+              'Haste cast on Kael: MP/status/animated-glyph/FX audio',
+              'Kael natural turn and Defend review/cancel/cast: status/animated-glyph/FX audio', 'production package boot']}
     connection = cdp = smoke = None
     try:
         import websocket

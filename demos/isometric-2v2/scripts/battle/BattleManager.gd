@@ -2585,7 +2585,7 @@ func _present_action(actor: Unit, destination: Vector2i, kind: String, target: U
 	_action_presentation_context = {}
 	var authored_fire := canonical == "fire" and bool(GameState.practice_session.get("isolated_isometric", false))
 	var authored_melee := (kind == "slash" and canonical.is_empty() or canonical in ["mighty_strike", "delay_strike", "heavy_slash"]) and bool(GameState.practice_session.get("isolated_isometric", false))
-	var authored_spell := canonical in ["thunderstrike", "void_pulse", "dark_breath", "shadow_mend", "defend"] and bool(GameState.practice_session.get("isolated_isometric", false))
+	var authored_spell := canonical in ["thunderstrike", "void_pulse", "dark_breath", "shadow_mend", "defend", "haste"] and bool(GameState.practice_session.get("isolated_isometric", false))
 	if authored_melee: kind = "slash"
 	if authored_fire or authored_melee or authored_spell or (actor.has_zane_impact_presentation() and ((kind == "slash" and canonical.is_empty()) or canonical == "fire")):
 		var footprint: Array[Vector2i] = []
