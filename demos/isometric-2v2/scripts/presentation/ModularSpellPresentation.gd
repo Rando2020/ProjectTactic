@@ -225,6 +225,21 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 		var juice := get_node_or_null("/root/BattleJuiceEffects")
 		if juice != null: juice.trigger_pause(45)
 
+func _outcome_hud_rects() -> Array[Rect2]:
+	var result := super._outcome_hud_rects()
+	var manager = _manager.get_ref() if _manager != null else null
+	if not is_instance_valid(manager): return result
+	var ui = manager.get_parent().get("battle_ui")
+	if not is_instance_valid(ui) or not "_battlefield_labels" in ui: return result
+	var labels = ui._battlefield_labels
+	if not is_instance_valid(labels): return result
+	# The courtyard's names live in a screen-space Node2D, not on each unit or
+	# in a top-level HUD Control. Reserve them before placing floating results.
+	for badge in labels.rows.values():
+		if not is_instance_valid(badge) or not badge.is_visible_in_tree(): continue
+		result.append(badge.get_global_transform_with_canvas() * Rect2(Vector2.ZERO,badge.size))
+	return result
+
 func _number(text: String, color: Color) -> Label:
 	var label := super._number(text,color)
 	label.add_theme_font_size_override("font_size",28)

@@ -25,6 +25,8 @@ Godot 4.6.3 headless, writable XDG directories:
 
 ## Render evidence still required
 
-No local rendered screenshots are claimed. There is no display or Xvfb; a temporary Xorg dummy-display startup failed to create its listening sockets, including an approved escalation attempt. Headless execution proves runtime behavior but not appearance.
+No local rendered screenshots are claimed. There is no display or Xvfb; a temporary Xorg dummy-display startup failed to create its listening sockets, on this workspace. Headless execution proves runtime behavior but not appearance.
 
 The support runtime test accepts `--capture-dir=/absolute/path` under a real render-enabled display, records intermediate casting/formation/action/collision/dissipation PNGs, and fails if capture mode produces no frames. Use that path in rendered CI for final visual review on the actual battlefield.
+
+Rendered CI on 445325a passed 115 skill checks and produced all 14 requested action PNGs. Review exposed support text behind screen-space name badges; the follow-up reserves those exact badge bounds before placing modular spell outcomes, with a failing-first overlap regression. Final screenshots and Web acceptance must be rechecked on that follow-up commit.

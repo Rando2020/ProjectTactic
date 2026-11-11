@@ -12,6 +12,7 @@ func observe(node: Node) -> void:
 	if node.has_signal("phase_presented"):
 		node.phase_presented.connect(func(phase: String):
 			record_effects(node)
+			if phase == "support": check_support_readability(node)
 			if phase in ["casting", "charge", "support", "impact"]:
 				capture_action(active_test + "-" + phase)
 		)
@@ -21,6 +22,15 @@ func observe(node: Node) -> void:
 				if is_instance_valid(voice) and voice.playing and voice.stream is AudioStreamWAV:
 					emitted_pcm[id] = voice.stream.data.hex_encode().sha256_text()
 		)
+
+func check_support_readability(owner: Node) -> void:
+	for fx in owner._fx:
+		if not is_instance_valid(fx) or not fx is Label or str(fx.get_meta("zane_effect_role", "")) != "outcome": continue
+		var bounds: Rect2 = fx.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, fx.get_combined_minimum_size())
+		for badge in battle.battle_ui._battlefield_labels.rows.values():
+			if not is_instance_valid(badge) or not badge.is_visible_in_tree(): continue
+			var badge_bounds: Rect2 = badge.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, badge.size)
+			check(not bounds.intersects(badge_bounds), active_test + " result stays clear of " + badge.text + " name badge")
 
 func capture_action(label: String) -> void:
 	if capture_dir.is_empty() or screenshot_stages.has(label): return
