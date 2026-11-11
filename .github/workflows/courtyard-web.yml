@@ -70,7 +70,7 @@ jobs:
           PY
       - name: Export fresh production and isolated browser QA packages
         run: python tools/export_courtyard_web.py build/courtyard --qa-directory build/courtyard-qa
-      - name: Verify and capture detailed status portraits from the production pack
+      - name: Verify and capture detailed status and timeline portraits from the production pack
         shell: bash
         run: |
           set -o pipefail
@@ -88,7 +88,7 @@ jobs:
           Path('build/status-render.pck').write_bytes(raw)
           PY
           XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --main-pack "$PWD/build/status-render.pck" --rendering-method gl_compatibility res://tests/blooming_capture/StatusPortraitCapture.tscn -- --capture-dir="$PWD/build/courtyard-evidence/status-portraits" 2>&1 | tee build/courtyard-evidence/status-portrait-renderer.log
-          for image in zane-status-1920 zane-status-1366 zane-status-960 zane-status-mobile-landscape-844 kael-status-1920 kael-status-original-1920; do
+          for image in zane-status-1920 zane-status-1366 zane-status-960 zane-status-mobile-landscape-844 kael-status-1920 kael-status-original-1920 timeline-target-markers-1920; do
             test -s "build/courtyard-evidence/status-portraits/$image.png"
           done
       - name: Install browser driver dependency

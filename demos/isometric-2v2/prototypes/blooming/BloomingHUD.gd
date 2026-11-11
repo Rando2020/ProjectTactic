@@ -7,7 +7,7 @@ var _bloom_active_panel: PanelContainer
 var _bloom_portrait_frame: PanelContainer
 var _status_portrait_cache: Dictionary = {}
 # Detailed counterparts of the approved Compact class skins, not new identities.
-# Keep source sheets untouched; the status card alone uses these bust crops.
+# Keep source sheets untouched; status and timeline share these bust crops.
 const STATUS_ART := {
 	"zane": {"role":"mage", "region":Rect2(280,0,250,320)},
 	"kael": {"role":"swordsman", "region":Rect2(270,0,250,320)},
@@ -121,12 +121,15 @@ func _build_ui() -> void:
 	for row in _turn_rows:
 		row.panel.reparent(_bloom_turn_strip)
 		row.panel.custom_minimum_size = Vector2(60,78)
-		row.portrait.reparent(row.panel)
+		var portrait_column := VBoxContainer.new()
+		portrait_column.add_theme_constant_override("separation",2)
+		row.panel.add_child(portrait_column)
+		row.portrait.reparent(portrait_column)
 		# Keep old text container alive for authoritative queue and forecast updates.
 		row.who.get_parent().get_parent().hide()
-		row.portrait.custom_minimum_size = Vector2(48,56)
+		row.portrait.custom_minimum_size = Vector2(48,62)
 		row.portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.when.reparent(row.panel)
+		row.when.reparent(portrait_column)
 		row.when.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 		row.when.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_compact_label(row.when,12)
@@ -335,21 +338,20 @@ func _layout_persistent_hud() -> void:
 	_bloom_rail_toggle.size = Vector2(viewport.x-rail_x-8,44 * factor)
 	_bloom_objective_panel.position = Vector2(12,12)
 	_bloom_objective_panel.size = Vector2(minf(300 * factor,area.size.x*0.45),96 * factor)
-	# Reserve the complete current-turn label, including its target marker, at
-	# the selected type size. Fixed 60px cards clipped NOW to NO in Web/native.
-	var strip_width := 20.0 # Four existing 5px gaps.
-	for index in _turn_rows.size():
-		var row: Dictionary = _turn_rows[index]
-		var card_width := 60.0
-		if index == 0:
-			var label: Label = row.when
-			var text_width := label.get_theme_font("font").get_string_size("NOW •",HORIZONTAL_ALIGNMENT_LEFT,-1,label.get_theme_font_size("font_size")).x
-			var style: StyleBox = row.panel.get_theme_stylebox("panel")
-			card_width = maxf(card_width,ceilf(text_width+style.get_content_margin(SIDE_LEFT)+style.get_content_margin(SIDE_RIGHT)))
-		row.panel.custom_minimum_size.x = card_width
-		strip_width += card_width
+	# One shared size reserves NOW + the forecast marker for every slot. Active
+	# and affected borders still differ, but cannot resize a card or hide text.
+	var card_width := 60.0 * factor
+	for row in _turn_rows:
+		var label: Label = row.when
+		var text_width := label.get_theme_font("font").get_string_size("NOW •",HORIZONTAL_ALIGNMENT_LEFT,-1,label.get_theme_font_size("font_size")).x
+		var style: StyleBox = row.panel.get_theme_stylebox("panel")
+		card_width = maxf(card_width,ceilf(text_width+style.get_content_margin(SIDE_LEFT)+style.get_content_margin(SIDE_RIGHT)))
+	for row in _turn_rows:
+		row.panel.custom_minimum_size = Vector2(card_width,96 * factor)
+		row.portrait.custom_minimum_size = Vector2(48,62) * factor
+	var strip_width := card_width * _turn_rows.size() + 5.0 * (_turn_rows.size()-1)
 	_bloom_turn_strip.position = Vector2(maxf(_bloom_objective_panel.get_rect().end.x+12,(area.size.x-strip_width)*0.5),12)
-	_bloom_turn_strip.size = Vector2(strip_width,78)
+	_bloom_turn_strip.size = Vector2(strip_width,96 * factor)
 	if _bloom_turn_strip.position.x + strip_width > area.end.x-12:
 		_bloom_turn_strip.position.x = area.end.x-strip_width-12
 	_active_portrait.custom_minimum_size = Vector2(112,144) * factor
@@ -465,6 +467,14 @@ func _status_portrait(id: String) -> Texture2D:
 	_status_portrait_cache[id] = portrait
 	return portrait
 
+func _refresh_turn_portraits() -> void:
+	super._refresh_turn_portraits()
+	if not battle_manager: return
+	for row in _turn_rows:
+		var unit = battle_manager.units.get(str(row.unit_id))
+		row.portrait.texture = _status_portrait(unit.unit_data.id) if is_instance_valid(unit) else null
+		row.portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+
 func _refresh_status_portrait() -> void:
 	if not battle_manager or not is_instance_valid(_active_portrait): return
 	var unit = battle_manager.units.get(battle_manager.active_unit_id)
@@ -477,6 +487,7 @@ func _on_turn_started(unit_id: String, team: String) -> void:
 
 func refresh_skin_portraits() -> void:
 	super.refresh_skin_portraits()
+	_refresh_turn_portraits()
 	_refresh_status_portrait()
 
 func _on_battle_started(display_name: String, objective: String) -> void:
