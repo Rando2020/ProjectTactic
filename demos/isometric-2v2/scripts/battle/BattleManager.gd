@@ -376,7 +376,7 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		details["modifier_breakdown"] = _intent_formula_breakdown(formula, spell_type)
 	elif kind == "heal":
 		var bonuses: Dictionary = RunBonusesUtil.for_current_run()
-		var heal_formula := CombatFormula.calculate_heal(target, int(ability.get("base_power", 100)), int(bonuses.get("heal_bonus", 0)))
+		var heal_formula := CombatFormula.calculate_heal(target, int(ability.get("base_power", 100)), int(bonuses.get("heal_bonus", 0)), unit)
 		details["damage"] = -int(heal_formula.get("heal", 0))
 		details["target_hp_after"] = int(heal_formula["hp_after"])
 	return details

@@ -84,7 +84,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 	var should_counter := false
 	if not is_counter and vfx_mode != "arrow" and target.hp > 0:
 		var dist: int = abs(attacker.grid_pos.x - target.grid_pos.x) + abs(attacker.grid_pos.y - target.grid_pos.y)
-		if dist <= target.unit_data.base_stats.attack_range_max and randf() < 0.25:
+		if dist <= target.unit_data.base_stats.attack_range_max and randf() < CombatFormula.counter_chance(target):
 			should_counter = true
 
 	var result := {
@@ -187,9 +187,9 @@ func resolve_spell(caster: Unit, target: Unit,
 	return result
 
 
-func resolve_heal(_caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
+func resolve_heal(caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
-	var formula := CombatFormula.calculate_heal(target, heal_amount, int(bonuses.get("heal_bonus", 0)))
+	var formula := CombatFormula.calculate_heal(target, heal_amount, int(bonuses.get("heal_bonus", 0)), caster)
 	var before_hp := target.hp
 	target.heal(int(formula["heal"]))
 	heal_amount = target.hp - before_hp

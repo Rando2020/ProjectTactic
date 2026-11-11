@@ -821,6 +821,7 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 				abilities: Array = [],
 				affinities: Dictionary = {},
 				atk_range_min: int = 1, atk_range_max: int = 1) -> Unit:
+	var mastery: Dictionary = {}
 	var stats := UnitStats.new()
 	stats.hp = hp;  stats.mp = mp;  stats.move = move;  stats.jump = jump
 	stats.speed = speed;  stats.physical = physical;  stats.magic = magic
@@ -828,7 +829,10 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	if faction == "player":
 		var gs := get_node_or_null("/root/GameState")
 		if gs:
-			var bonuses := JobTreeData.compute_stat_bonuses(gs.unit_registry.get(id, {}).get("job_jp", {}))
+			var history: Dictionary = gs.unit_registry.get(id, {}).get("job_jp", {})
+			var bonuses := JobTreeData.compute_stat_bonuses(history)
+			mastery = JobTreeData.runtime_mastery_bonuses(history)
+			stats.move += int(mastery.move_bonus)
 			stats.hp += int(bonuses.max_hp)
 			stats.physical += int(bonuses.physical)
 			stats.magic += int(bonuses.magic)
@@ -860,6 +864,7 @@ func _make_unit(id: String, uname: String, faction: String, pos: Vector2i,
 	unit.grid_pos = pos
 	unit.team = faction
 	unit._initialize_from_data(data)
+	unit.job_mastery = mastery
 	unit.set_meta("archetype_id", id)
 	if faction == "enemy":
 		_enemy_instance_seq += 1

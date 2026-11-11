@@ -44,6 +44,7 @@ jobs:
           godot --headless --path "$project" --script res://tests/validate_all_scripts.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" --script res://prototypes/isometric/SelectionGuiTest.gd
           XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/test_action_clash_readability.tscn
+          XDG_DATA_HOME="$(mktemp -d)" godot --headless --path "$project" res://tests/test_job_mastery.tscn
           for file in "$project"/prototypes/isometric/*Test.tscn "$project"/prototypes/blooming/*Test.tscn "$project"/tests/blooming/*.tscn "$project"/tests/blooming_hud/*.tscn "$project"/tests/blooming_ground/ContractTest.tscn "$project"/tests/blooming_contact/ContractTest.tscn; do
             # Retired 1v1 route, not the delivered 2v2 courtyard. See release notes.
             [ "$(basename "$file")" = Test.tscn ] && continue

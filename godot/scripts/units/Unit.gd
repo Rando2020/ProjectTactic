@@ -32,6 +32,8 @@ var is_defeated: bool = false
 
 var statuses: Array[StatusEffect] = []
 var current_job_id: String
+## Earned mastery snapshot for this battle. Never persisted or granted by class ID.
+var job_mastery: Dictionary = {}
 
 var _hp_bar: ColorRect
 var _body_rect: ColorRect

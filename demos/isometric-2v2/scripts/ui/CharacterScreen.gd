@@ -523,6 +523,7 @@ func _stats_for(uid: String) -> Dictionary:
 	var base: Dictionary = BASE_STATS.get(uid, {}).duplicate()
 	var reg := _get_reg(uid)
 	var bonuses := JobTreeData.compute_stat_bonuses(reg.get("job_jp", {}))
+	base["move"] = int(base.get("move", 0)) + int(JobTreeData.runtime_mastery_bonuses(reg.get("job_jp", {})).move_bonus)
 	base["hp"] = int(base.get("hp", 1)) + int(bonuses.get("max_hp", 0))
 	base["mp"] = int(base.get("mp", 1)) + int(bonuses.get("max_ether", 0))
 	base["physical"] = int(base.get("physical", 0)) + int(bonuses.get("physical", 0))
