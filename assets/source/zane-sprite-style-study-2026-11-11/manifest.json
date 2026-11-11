@@ -1,0 +1,68 @@
+{
+  "study_only": true,
+  "target_visible_height": 85,
+  "reference_status": "Original approved Zane design, not a new approval of this style",
+  "registration": "Display-only normalization at alpha>=128 bounds. Foot anchor must be calibrated before any gameplay import.",
+  "sources": [
+    {
+      "file": "images/zane-approved-reference.png",
+      "sha256": "d299d45c28f164620beee1d88871edea780ce4ad3c4873f1bea86735b64ab236",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds_128": [
+        192,
+        103,
+        1017,
+        1167
+      ],
+      "transparent_pixels": 1186108,
+      "visible_pixels": 355108,
+      "opaque_pixels": 451,
+      "candidate": false,
+      "accepted_for_gameplay": false,
+      "facing": "three-quarter front, screen-right",
+      "animation_frames": 1,
+      "flip_h": false
+    },
+    {
+      "file": "images/zane-hd-compact-candidate.png",
+      "sha256": "8d812f7bc7eba64439df57d9f92650ba1fa4270de5287faccf8917393a1d61b3",
+      "width": 1086,
+      "height": 1448,
+      "alpha_bounds_128": [
+        139,
+        228,
+        909,
+        1290
+      ],
+      "transparent_pixels": 1135037,
+      "visible_pixels": 419496,
+      "opaque_pixels": 1306,
+      "candidate": true,
+      "accepted_for_gameplay": false,
+      "facing": "three-quarter front, screen-right",
+      "animation_frames": 1,
+      "flip_h": false
+    },
+    {
+      "file": "images/zane-pixel-compact-candidate.png",
+      "sha256": "3916bb9769f5afb5b573791076b15c7849f5b4d0812e17808b4f509cf628dfa6",
+      "width": 1086,
+      "height": 1448,
+      "alpha_bounds_128": [
+        139,
+        234,
+        909,
+        1287
+      ],
+      "transparent_pixels": 1131100,
+      "visible_pixels": 421198,
+      "opaque_pixels": 2047,
+      "candidate": true,
+      "accepted_for_gameplay": false,
+      "facing": "three-quarter front, screen-right",
+      "animation_frames": 1,
+      "flip_h": false
+    }
+  ]
+}

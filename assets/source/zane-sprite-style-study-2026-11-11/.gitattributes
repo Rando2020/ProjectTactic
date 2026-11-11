@@ -1,0 +1,4 @@
+# Keep this small source-only review pack self-contained; no legacy LFS dependency.
+*.png -filter -diff -merge -text
+
+*.pdf -diff -merge -text
