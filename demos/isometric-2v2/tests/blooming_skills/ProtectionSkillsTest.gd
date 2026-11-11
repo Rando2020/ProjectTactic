@@ -2,6 +2,7 @@ extends "res://tests/blooming_skills/HeroSkillsTest.gd"
 ## Real courtyard menu, review and manager commits. No replacement combat rules.
 var combat_labels: Array[Dictionary] = []
 var protection_logs: Array[String] = []
+var protection_auras: Array[Dictionary] = []
 func run() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--capture-dir="):
@@ -54,13 +55,16 @@ func locked_menu_case() -> void:
 
 func observe_label(node: Node) -> void:
 	if node is Label and node.text.begins_with("COVER:"):
-		combat_labels.append({"text":node.text, "position":node.position})
+		combat_labels.append({"text":node.text, "world_anchor":node.get_global_transform() * Vector2(30,54), "depth":canvas_depth(node)})
+	if node is ColorRect and node.get_parent() == VFX and is_instance_valid(manager):
+		protection_auras.append({"world_anchor":node.get_global_transform() * (node.size * 0.5), "depth":canvas_depth(node), "feedback_owner":manager._presentation_feedback_owner()})
 
 func fixture(actor_id: String) -> void:
 	for unit: Unit in manager.units.values():
 		unit.remove_status("covering")
 	super.fixture(actor_id)
 	combat_labels.clear()
+	protection_auras.clear()
 	protection_logs.clear()
 
 func boot() -> void:
@@ -108,7 +112,9 @@ func cover_menu_case() -> void:
 	check(protection_logs.filter(func(value): return value.contains("covers Zane")).size() == 1, "duplicate Cover confirm commits exactly once")
 	check(combat_labels.size() == 1 and combat_labels[0].text == "COVER: Kael", "generic Cover feedback identifies Kael as protector")
 	if not combat_labels.is_empty():
-		check(combat_labels[0].position.distance_to(VFX.gp(ally.grid_pos) + Vector2(-30,-54)) < 0.01, "Cover label is anchored to the protected ally")
+		check(combat_labels[0].world_anchor.distance_to(ally.global_position) < 0.01, "Cover label is anchored to the protected ally")
+		check(combat_labels[0].depth > canvas_depth(manager.tactical_grid.terrain_view) and combat_labels[0].depth > canvas_depth(ally._sprite), "Cover text renders above actual courtyard terrain and actor")
+	check_protection_aura("Cover", guard)
 	await capture("cover-applied")
 	var spell := AbilityDB.get_ability("void_pulse")
 	var forecast := ForecastCalculator.spell(enemy, ally, spell)
@@ -152,6 +158,7 @@ func iron_wall_menu_case() -> void:
 	await capture_protection_contact("iron-wall-feedback", "iron_wall")
 	await settle()
 	check(guard.mp == 190 and guard.has_status("iron_wall"), "double-confirm Iron Wall spends exactly 10 MP and applies stance")
+	check_protection_aura("Iron Wall", guard)
 	check(protection_logs.filter(func(value): return value.contains("casts Iron Wall")).size() == 1, "Iron Wall commits once")
 	ui._selection.refresh()
 	check(ui._attack_btn.disabled and ui._ability_btn.disabled and ui._magic_btn.disabled, "confirmed Iron Wall visibly blocks all action commands")
@@ -245,6 +252,8 @@ func capture_protection_contact(label: String, status_id: String) -> void:
 		if manager.units.kael.has_status(status_id): break
 		await get_tree().create_timer(0.01).timeout
 	check(manager.units.kael.has_status(status_id), label + " reaches real contact")
+	# Capture the live expanding pulse, well inside its 0.45-second lifetime.
+	await get_tree().create_timer(0.10).timeout
 	await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	check(get_viewport().get_texture().get_image().save_png(capture_dir.path_join(label + ".png")) == OK, "capture " + label)
@@ -350,3 +359,22 @@ func weapon_protection_cases() -> void:
 	battle.battle_ui._selection.refresh()
 	check(battle.battle_ui._attack_btn.disabled and not battle.battle_ui._move_btn.disabled and not battle.battle_ui._wait_btn.disabled, "weapon protection fix retains Iron Wall command gating")
 	manager.action_clash_started.disconnect(listen)
+
+func canvas_depth(item: CanvasItem) -> int:
+	var depth := 0
+	var node: Node = item
+	while is_instance_valid(node):
+		if node is CanvasItem:
+			depth += node.z_index
+			if not node.z_as_relative: break
+		elif node is CanvasLayer: break
+		node = node.get_parent()
+	return depth
+
+func check_protection_aura(skill: String, actor: Unit) -> void:
+	check(protection_auras.size() == 3, skill + " actually dispatches the three generic aura shapes")
+	var terrain_depth := canvas_depth(manager.tactical_grid.terrain_view)
+	var actor_depth := canvas_depth(actor._sprite)
+	check(protection_auras.all(func(sample): return sample.depth > terrain_depth and sample.depth > actor_depth), skill + " aura renders above actual terrain and actor")
+	check(protection_auras.all(func(sample): return sample.world_anchor.distance_to(actor.global_position) < 0.01), skill + " aura world anchor matches the real actor transform")
+	print("%s aura dispatch: %d shapes; feedback owners=%s; effect depth=%s; terrain=%d; actor=%d" % [skill, protection_auras.size(), protection_auras.map(func(sample): return str(sample.feedback_owner)), protection_auras.map(func(sample): return sample.depth), terrain_depth, actor_depth])
