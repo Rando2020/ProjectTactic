@@ -417,9 +417,9 @@ const ABILITIES: Dictionary = {
 		"command_category": "skills",
 		"id": "cover_ally", "display_name": "Cover",
 		"type": "buff", "spell_type": "physical", "base_power": 0,
-		"mp_cost": 0, "range": 2,
+		"mp_cost": 0, "range": 1,
 		"status_effect": {"id": "covering", "duration": 1, "magnitude": 1.0, "damage_type": "physical"},
-		"description": "Take hits directed at an adjacent ally until your next turn.",
+		"description": "Intercept direct hits on an adjacent ally until your next turn. Warder mastery extends range to 2. Area and ongoing damage bypass Cover.",
 	},
 	"iron_wall": {
 		"command_category": "skills",
@@ -616,8 +616,10 @@ static func get_ability(id: String) -> Dictionary:
 
 
 ## Canonical fields win over legacy attack-range aliases. Self casts keep range zero.
-static func get_range(ability: Dictionary) -> Vector2i:
+static func get_range(ability: Dictionary, caster: Unit = null) -> Vector2i:
 	var maximum := int(ability.get("range", ability.get("attack_range_max", 1)))
+	if ability.get("id", "") == "cover_ally" and caster:
+		maximum = maxi(maximum, int(caster.job_mastery.get("cover_range",0)))
 	var minimum := int(ability.get("min_range", ability.get("attack_range_min", 0 if maximum == 0 else 1)))
 	return Vector2i(minimum, maximum)
 

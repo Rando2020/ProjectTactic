@@ -53,7 +53,9 @@ const ELEMENT_LABELS: Dictionary = {
 static func calculate_physical_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
 		mods: Dictionary = {}) -> Dictionary:
+	var intended_target := target
 	var context := _context(attacker, target, tile_attacker, tile_target)
+	target = target.get_damage_recipient(attacker, bool(mods.get("allow_cover",true)))
 	var base_physical := float(_stat_value(attacker, "physical", 0))
 	var raw := base_physical * PHYSICAL_ATTACK_SCALE * float(mods.get("power_mult", 1.0))
 	if mods.has("base_power"):
@@ -68,7 +70,7 @@ static func calculate_physical_attack(attacker: Unit, target: Unit,
 	var accuracy := calculate_accuracy(DAMAGE_KIND_PHYSICAL, attacker, target, context, mods)
 	var crit := calculate_crit(attacker, target, context, mods)
 
-	return {
+	var result := {
 		"kind": DAMAGE_KIND_PHYSICAL,
 		"element": "physical",
 		"raw": int(round(raw)),
@@ -97,10 +99,13 @@ static func calculate_physical_attack(attacker: Unit, target: Unit,
 		"explain": _damage_explain("Physical", raw, attack_mult, resistance, context, 1.0, armor, accuracy, crit),
 	}
 
+	return with_damage_recipient(result,intended_target,target)
 
 static func calculate_magical_attack(caster: Unit, target: Unit,
 		spell_type: String, base_power: int,
 		mods: Dictionary = {}) -> Dictionary:
+	var intended_target := target
+	target = target.get_damage_recipient(caster, bool(mods.get("allow_cover",true)))
 	var element := normalize_element(spell_type)
 	var raw := float(_stat_value(caster, "magic", 0)) * (float(base_power) / 100.0) * SPELL_POWER_SCALE
 	var power_mult := float(mods.get("power_mult", 1.0)) * float(mods.get("damage_mult", 1.0))
@@ -115,7 +120,7 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 	# Spell resolution does not roll critical hits. Do not advertise positional crits.
 	var crit := {"crit_pct": 0, "crit_mult": 1.0}
 
-	return {
+	var result := {
 		"kind": DAMAGE_KIND_MAGICAL,
 		"element": element,
 		"raw": int(round(raw)),
@@ -143,6 +148,27 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 		"explain": _damage_explain(element_label(element), raw, power_mult, resistance, context, affinity, armor, accuracy, crit),
 	}
 
+	return with_damage_recipient(result,intended_target,target)
+
+
+## Keep recipient evidence through death callbacks and presentation without
+## holding a combatant alive. Original tile/range still determines the aim.
+static func with_damage_recipient(result: Dictionary, intended: Unit, recipient: Unit) -> Dictionary:
+	if recipient != intended:
+		result["recipient_id"] = recipient.unit_id
+		result["recipient_ref"] = weakref(recipient)
+		result["recipient_grid_pos"] = recipient.grid_pos
+		result["protected_id"] = intended.unit_id
+		result["protected_name"] = intended.display_name
+		if result.has("explain"):
+			result.explain.append("Cover: %s protects %s" % [recipient.display_name,intended.display_name])
+	return result
+
+static func outcome_recipient(intended: Unit, outcome: Dictionary) -> Unit:
+	var reference: WeakRef = outcome.get("recipient_ref")
+	if reference == null: return intended
+	var recipient = reference.get_ref()
+	return recipient as Unit if is_instance_valid(recipient) else null
 
 ## Healing power is a flat HP amount, not a percentage of caster Magic.
 ## Read-only projection: callers supply the existing run bonus; no effects or
@@ -166,10 +192,11 @@ static func calculate_heal(target: Unit, base_power: int, flat_bonus: int = 0, c
 
 ## Preserve the existing single counter roll and eligibility at the caller.
 static func counter_chance(target: Unit) -> float:
+	if target and target.has_status("iron_wall"): return 0.0
 	return clampf(0.25 + float(target.job_mastery.get("counter_chance_bonus", 0.0)) if target else 0.25, 0.0, 1.0)
 
 
-static func project_physical_armor_result(target: Unit, incoming_damage: int) -> Dictionary:
+static func project_physical_armor_result(target: Unit, incoming_damage: int, allow_iron_wall: bool = true) -> Dictionary:
 	var effective := maxi(0, incoming_damage)
 	var mastery_resist := clampf(float(target.job_mastery.get("phys_resist", 0.0)), 0.0, 1.0) if target else 0.0
 	effective = int(round(float(effective) * (1.0 - mastery_resist)))
@@ -177,6 +204,8 @@ static func project_physical_armor_result(target: Unit, incoming_damage: int) ->
 		effective = int(round(float(effective) * PROTECT_DAMAGE_MULT))
 	if target and target.has_status("defending"):
 		effective = int(round(float(effective) * 0.5))
+	if allow_iron_wall and target and target.has_status("iron_wall"):
+		effective = int(round(float(effective) * 0.6))
 	var temper := int(target.temper if target else 0)
 	var absorbed := mini(temper, int(round(float(effective) * PHYSICAL_TEMPER_ABSORB_RATIO)))
 	var hp_damage := 0
@@ -184,6 +213,7 @@ static func project_physical_armor_result(target: Unit, incoming_damage: int) ->
 		hp_damage = maxi(1, effective - int(round(float(absorbed) * ARMOR_TO_HP_REDUCTION_RATIO)))
 	return {
 		"effective_damage": effective,
+		"iron_wall": allow_iron_wall and target.has_status("iron_wall") if target else false,
 		"hp_damage": hp_damage,
 		"mastery_resist": mastery_resist,
 		"temper_damage": absorbed,
@@ -192,10 +222,12 @@ static func project_physical_armor_result(target: Unit, incoming_damage: int) ->
 	}
 
 
-static func project_magical_armor_result(target: Unit, incoming_damage: int) -> Dictionary:
+static func project_magical_armor_result(target: Unit, incoming_damage: int, allow_iron_wall: bool = true) -> Dictionary:
 	var effective := maxi(0, incoming_damage)
 	if target and target.has_status("defending"):
 		effective = int(round(float(effective) * 0.5))
+	if allow_iron_wall and target and target.has_status("iron_wall"):
+		effective = int(round(float(effective) * 0.6))
 	var ether := int(target.ether if target else 0)
 	var absorbed := mini(ether, int(round(float(effective) * MAGICAL_ETHER_ABSORB_RATIO)))
 	var hp_damage := 0
@@ -203,6 +235,7 @@ static func project_magical_armor_result(target: Unit, incoming_damage: int) -> 
 		hp_damage = maxi(1, effective - int(round(float(absorbed) * ARMOR_TO_HP_REDUCTION_RATIO)))
 	return {
 		"effective_damage": effective,
+		"iron_wall": allow_iron_wall and target.has_status("iron_wall") if target else false,
 		"hp_damage": hp_damage,
 		"ether_damage": absorbed,
 		"ether_before": ether,
@@ -359,6 +392,8 @@ static func _damage_explain(label: String, raw: float, attack_mult: float, resis
 		rows.append("%s %s" % [str(context.get("facing_label", "front")).capitalize(), _signed_percent(facing_mult - 1.0)])
 	if affinity != 1.0:
 		rows.append("%s %s" % [affinity_label(affinity), _signed_percent(affinity - 1.0)])
+	if armor.get("iron_wall", false):
+		rows.append("Iron Wall -40%")
 	if float(armor.get("mastery_resist", 0.0)) > 0.0:
 		rows.append("Warder mastery -%d%%" % int(round(float(armor.mastery_resist) * 100.0)))
 	var temper_damage := int(armor.get("temper_damage", 0))

@@ -12,7 +12,11 @@ var damage_feedback_owner: StringName = &""
 func resolve_attack(attacker: Unit, target: Unit,
 		tile_attacker: Dictionary, tile_target: Dictionary,
 		vfx_mode: String = "slash", is_counter: bool = false, mods: Dictionary = {}, feedback_owner: StringName = &"") -> Dictionary:
+	if attacker.has_status("iron_wall"):
+		return {"blocked":true, "damage":0, "hp_damage":0, "applied_hp_damage":0, "counter":false}
+	var intended_target := target
 	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_attacker, tile_target, mods)
+	target = CombatFormula.outcome_recipient(target,formula)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {
@@ -21,6 +25,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 		}
 		if feedback_owner.is_empty(): _show_miss(target)
 		else: miss_result["feedback_owner"] = feedback_owner
+		CombatFormula.with_damage_recipient(miss_result,intended_target,target)
 		combat_resolved.emit(miss_result)
 		return miss_result
 
@@ -82,7 +87,7 @@ func resolve_attack(attacker: Unit, target: Unit,
 	_apply_elite_on_hit(attacker, target, actual_hp_damage)
 
 	var should_counter := false
-	if not is_counter and vfx_mode != "arrow" and target.hp > 0:
+	if not is_counter and vfx_mode != "arrow" and target.hp > 0 and not target.has_status("iron_wall"):
 		var dist: int = abs(attacker.grid_pos.x - target.grid_pos.x) + abs(attacker.grid_pos.y - target.grid_pos.y)
 		if dist <= target.unit_data.base_stats.attack_range_max and randf() < CombatFormula.counter_chance(target):
 			should_counter = true
@@ -105,22 +110,28 @@ func resolve_attack(attacker: Unit, target: Unit,
 	if not feedback_owner.is_empty():
 		result["feedback_owner"] = feedback_owner
 		result["defeated"] = bool(dmg_result.get("defeated",false))
+	CombatFormula.with_damage_recipient(result,intended_target,target)
 	combat_resolved.emit(result)
 	return result
 
 
 func resolve_spell(caster: Unit, target: Unit,
-		spell_type: String, base_power: int, feedback_owner: StringName = &"") -> Dictionary:
+		spell_type: String, base_power: int, feedback_owner: StringName = &"", allow_cover: bool = true) -> Dictionary:
+	if caster.has_status("iron_wall"):
+		return {"blocked":true, "damage":0, "hp_damage":0, "applied_hp_damage":0}
 	if feedback_owner.is_empty(): _play_sfx("spell_cast", -2.5)
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var element := CombatFormula.normalize_element(spell_type)
 	var el_mult: float = float(bonuses["elemental_mult"].get(element, 1.0))
-	var formula := CombatFormula.calculate_magical_attack(caster, target, element, base_power, {"power_mult": el_mult})
+	var intended_target := target
+	var formula := CombatFormula.calculate_magical_attack(caster, target, element, base_power, {"power_mult": el_mult, "allow_cover":allow_cover})
+	target = CombatFormula.outcome_recipient(target,formula)
 	var hit_pct := int(formula.get("hit_pct", 100))
 	if randi_range(1, 100) > hit_pct:
 		var miss_result := {"damage":0, "hp_damage":0, "applied_hp_damage":0, "temper_damage":0, "ether_damage":0, "missed":true, "spell_type":element, "hit_pct":hit_pct}
 		if feedback_owner.is_empty(): _show_miss(target)
 		else: miss_result["feedback_owner"] = feedback_owner
+		CombatFormula.with_damage_recipient(miss_result,intended_target,target)
 		combat_resolved.emit(miss_result)
 		return miss_result
 
@@ -183,11 +194,13 @@ func resolve_spell(caster: Unit, target: Unit,
 	if not feedback_owner.is_empty():
 		result["feedback_owner"] = feedback_owner
 		result["defeated"] = bool(dmg_result.get("defeated",false))
+	CombatFormula.with_damage_recipient(result,intended_target,target)
 	combat_resolved.emit(result)
 	return result
 
 
 func resolve_heal(caster: Unit, target: Unit, heal_amount: int) -> Dictionary:
+	if caster.has_status("iron_wall"): return {"blocked":true,"healed":0}
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var formula := CombatFormula.calculate_heal(target, heal_amount, int(bonuses.get("heal_bonus", 0)), caster)
 	var before_hp := target.hp

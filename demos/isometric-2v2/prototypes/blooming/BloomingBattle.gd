@@ -21,7 +21,7 @@ func _create_illustrated_chapel_map() -> MapData:
 func _spawn_player_units() -> Array[Unit]:
  var result: Array[Unit]=[]
  result.append(_make_unit("zane","Zane","player",Vector2i(3,8),320,90,4,2,8,42,48,80,110,_test_skills("zane",["haste"])))
- result.append(_make_unit("kael","Kael","player",Vector2i(2,9),380,55,4,2,6,55,32,110,70,_test_skills("kael",["delay_strike","heavy_slash"])))
+ result.append(_make_unit("kael","Kael","player",Vector2i(2,9),380,55,4,2,6,55,32,110,70,_test_skills("kael",["delay_strike","heavy_slash","cover_ally","iron_wall"])))
  for unit in result:unit.set_facing("N")
  return result
 

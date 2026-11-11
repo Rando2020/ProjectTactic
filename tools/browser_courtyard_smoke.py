@@ -253,7 +253,7 @@ class CourtyardSmoke:
         disabled = self.wait('empty Magic ignored', lambda s: not s['command'], selected['state']['frame'])
         assert_commands(disabled['state'], magic=False, skills=True)
         self.key('s', 'KeyS', 83)
-        skills = ['mighty_strike', 'defend', 'delay_strike', 'heavy_slash']
+        skills = ['mighty_strike', 'defend', 'delay_strike', 'heavy_slash', 'cover_ally', 'iron_wall']
         menu = self.wait_menu('skills', '', skills, disabled['state']['frame'])
         assert_unchanged(selected['state']['unit'], menu['state']['unit'])
         self.checkpoint('courtyard-kael-skills-1366', menu)

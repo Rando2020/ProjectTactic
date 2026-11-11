@@ -12,7 +12,7 @@ func run() -> void:
 	for iteration in 2:
 		await boot()
 		check(manager.units.zane.unit_data.abilities == ["cure", "haste"], "custom equipped Zane choices retained without duplicate Haste")
-		check(manager.units.kael.unit_data.abilities == ["defend", "heavy_slash", "delay_strike"], "custom equipped Kael choices retained without duplicate Heavy Slash")
+		check(manager.units.kael.unit_data.abilities == ["defend", "heavy_slash", "delay_strike", "cover_ally", "iron_wall"], "custom equipped Kael choices retained without duplicate Heavy Slash")
 		check(GameState.unit_registry == registry, "full custom registry unchanged by spawning")
 		check(GameState.knows_ability("kael", "unresolved_saved_skill"), "unresolved saved ownership retained")
 		check(not GameState.knows_ability("kael", "delay_strike"), "practice-only skill never becomes owned")

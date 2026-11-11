@@ -35,7 +35,7 @@ func _preview_for_cell(cell: Vector2i) -> Dictionary:
 	return {}
 
 func select_skill(ability_id: String) -> void:
-	if not can_command() or has_review() or _waiting_facing or manager.active_command != "ability": return
+	if not can_take_action() or has_review() or _waiting_facing or manager.active_command != "ability": return
 	var ability := AbilityDB.get_ability(ability_id)
 	if ability.is_empty(): return
 	if AbilityDB.get_range(ability).y != 0 and ability.get("target_type", "enemy") != "self":
@@ -44,8 +44,10 @@ func select_skill(ability_id: String) -> void:
 		return
 	var actor := manager._living_unit(selected_id)
 	if ability_id not in actor.unit_data.abilities or actor.mp < int(ability.get("mp_cost",0)) or manager.active_unit_has_acted: return
+	var preview := manager._ability_preview_for_tile(actor.grid_pos, ability)
+	if preview.is_empty(): return
 	_review = {"actor":selected_id, "command":manager.active_command, "ability":manager.selected_ability_id, "self_ability":ability_id}
-	manager.action_preview_changed.emit(manager._ability_preview_for_tile(actor.grid_pos, ability))
+	manager.action_preview_changed.emit(preview)
 	refresh()
 	ui._confirm_btn.grab_focus.call_deferred()
 
@@ -158,6 +160,10 @@ func can_command() -> bool:
 	return manager != null and selected_id == manager.active_unit_id \
 		and manager.current_phase == BattleManager.Phase.PLAYER_TURN \
 		and not manager.is_resolving_action and manager._living_unit(selected_id) != null
+
+func can_take_action() -> bool:
+	if not can_command() or manager.active_unit_has_acted: return false
+	return not manager._living_unit(selected_id).has_status("iron_wall")
 
 func is_targeting() -> bool:
 	return manager.active_command in ["move", "attack", "ability_target"]
@@ -318,6 +324,15 @@ func refresh() -> void:
 	var unit := manager._living_unit(selected_id)
 	var active := manager._living_unit(manager.active_unit_id)
 	var busy := manager.is_resolving_action
+	# A lock can arrive after the manager emitted its last command-state signal.
+	# Reconcile the real actor before rendering or retaining an old skill review.
+	ui._can_act_now = manager.current_phase == BattleManager.Phase.PLAYER_TURN and not manager.active_unit_has_acted and active != null and not active.has_status("iron_wall")
+	ui._refresh_command_buttons()
+	if can_command() and not can_take_action() and manager.active_command in ["attack", "ability", "ability_target"]:
+		_review.clear()
+		manager.cancel_pending_action()
+		ui._ability_panel.hide()
+		ui._preview_panel.hide()
 	var target := is_targeting()
 	if has_review() and (busy or not can_command() or _review.command != manager.active_command or _review.ability != manager.selected_ability_id):
 		_review.clear()

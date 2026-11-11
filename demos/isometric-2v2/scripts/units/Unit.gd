@@ -31,6 +31,8 @@ var has_moved: bool = false
 var is_defeated: bool = false
 
 var statuses: Array[StatusEffect] = []
+var cover_guard: WeakRef
+var cover_target: WeakRef
 var current_job_id: String
 ## Earned mastery snapshot for this battle. Never persisted or granted by class ID.
 var job_mastery: Dictionary = {}
@@ -360,14 +362,14 @@ func animate_death() -> void:
 
 #  Combat
 
-func receive_damage(amount: int, damage_type: String) -> Dictionary:
+func receive_damage(amount: int, damage_type: String, allow_iron_wall: bool = true) -> Dictionary:
 	var result := {"hp_damage": 0, "applied_hp_damage": 0, "temper_damage": 0, "ether_damage": 0, "defeated": false}
 	var projection: Dictionary
 	match damage_type:
 		"physical":
-			projection = CombatFormula.project_physical_armor_result(self, amount)
+			projection = CombatFormula.project_physical_armor_result(self, amount, allow_iron_wall)
 		"magical":
-			projection = CombatFormula.project_magical_armor_result(self, amount)
+			projection = CombatFormula.project_magical_armor_result(self, amount, allow_iron_wall)
 		_:
 			projection = {"hp_damage": maxi(0, amount)}
 	result["hp_damage"] = int(projection.get("hp_damage", 0))
@@ -415,6 +417,7 @@ func apply_status(status: StatusEffect) -> void:
 
 
 func remove_status(status_id: String) -> void:
+	if status_id == "covering": _clear_cover_link()
 	statuses = statuses.filter(func(s): return s.status_id != status_id)
 	status_removed.emit(unit_id, status_id)
 	_update_status_icons()
@@ -424,9 +427,54 @@ func has_status(status_id: String) -> bool:
 	return statuses.any(func(s): return s.status_id == status_id)
 
 
+
+## Cover is battle-local and owned by the protector, never by the ally's clock.
+func can_cover_ally(target: Unit) -> bool:
+	if not is_instance_valid(target) or target == self or hp <= 0 or target.hp <= 0 or target.team != team:
+		return false
+	if has_status("covering") or has_status("iron_wall") or has_status("stun") or has_status("petrify"):
+		return false
+	var distance := absi(grid_pos.x-target.grid_pos.x) + absi(grid_pos.y-target.grid_pos.y)
+	if distance > maxi(1, int(job_mastery.get("cover_range",1))) or distance < 1:
+		return false
+	var current = target.cover_guard.get_ref() if target.cover_guard != null else null
+	return not is_instance_valid(current) or current.hp <= 0 or not current.has_status("covering")
+
+func cover_ally(target: Unit) -> bool:
+	if not can_cover_ally(target): return false
+	_clear_cover_link()
+	cover_target = weakref(target)
+	target.cover_guard = weakref(self)
+	var effect := StatusEffect.new()
+	effect.status_id = "covering"; effect.display_name = "Covering " + target.display_name
+	effect.duration = 1
+	apply_status(effect)
+	return true
+
+func _clear_cover_link() -> void:
+	var target = cover_target.get_ref() if cover_target != null else null
+	if is_instance_valid(target) and target.cover_guard != null and target.cover_guard.get_ref() == self:
+		target.cover_guard = null
+	cover_target = null
+
+## A single read-only hop. Never redirect environmental, friendly or area damage.
+func get_damage_recipient(attacker: Unit, allow_cover: bool = true) -> Unit:
+	if not allow_cover or not is_instance_valid(attacker) or attacker.team == team or hp <= 0:
+		return self
+	var protector = cover_guard.get_ref() if cover_guard != null else null
+	if not is_instance_valid(protector) or protector == self or protector.is_queued_for_deletion() or protector.hp <= 0 or protector.team != team:
+		return self
+	if not protector.has_status("covering") or protector.has_status("stun") or protector.has_status("petrify"):
+		return self
+	if protector.cover_target == null or protector.cover_target.get_ref() != self:
+		return self
+	var distance := absi(grid_pos.x-protector.grid_pos.x) + absi(grid_pos.y-protector.grid_pos.y)
+	return protector if distance <= maxi(1,int(protector.job_mastery.get("cover_range",1))) else self
+
 func tick_statuses() -> void:
 	var to_remove: Array[String] = []
 	for s in statuses:
+		if s.status_id == "covering": continue # Expires at protector begin_turn, not cast end.
 		# Damage-over-time (poison, burn)
 		if s.status_id in ["burn", "poison", "bleed"] and s.magnitude > 0.0 and hp > 0:
 			var dmg: int = max(1, int(unit_data.base_stats.hp * s.magnitude))
@@ -595,6 +643,7 @@ func set_active(is_active: bool) -> void:
 #  Turn lifecycle
 
 func begin_turn() -> void:
+	if has_status("covering"): remove_status("covering")
 	# Defend promises protection only until this unit's next turn.
 	# Clear it here so a consecutive Defend can establish a fresh waiting interval.
 	if has_status("defending"):
@@ -624,7 +673,7 @@ func get_effective_speed() -> int:
 
 
 func can_act() -> bool:
-	return not has_acted and hp > 0 and not has_status("stun") and not has_status("petrify")
+	return not has_acted and hp > 0 and not has_status("stun") and not has_status("petrify") and not has_status("iron_wall")
 
 
 func can_move() -> bool:
@@ -642,6 +691,8 @@ func _update_status_icons() -> void:
 	var status_displays := {
 		"haste": {"icon": "H", "color": Color(0.9, 0.8, 0.2, 1.0)},
 		"slow": {"icon": "S", "color": Color(0.3, 0.8, 1.0, 1.0)},
+		"covering": {"icon": "C", "color": Color(0.4, 0.85, 1.0)},
+		"iron_wall": {"icon": "W", "color": Color(0.65, 0.8, 1.0)},
 		"protect": {"icon": "P", "color": Color(0.4, 0.9, 0.7, 1.0)},
 		"stun": {"icon": "!", "color": Color(1.0, 0.9, 0.1, 1.0)},
 		"petrify": {"icon": "R", "color": Color(0.7, 0.7, 0.7, 1.0)},

@@ -33,8 +33,10 @@ const AOE_SHAPE_ICONS: Dictionary = {
 
 
 static func attack(attacker: Unit, target: Unit,
-		tile_att: Dictionary, tile_tar: Dictionary) -> Dictionary:
-	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_att, tile_tar)
+		tile_att: Dictionary, tile_tar: Dictionary, mods: Dictionary = {}) -> Dictionary:
+	var intended_target := target
+	var formula := CombatFormula.calculate_physical_attack(attacker, target, tile_att, tile_tar, mods)
+	target = CombatFormula.outcome_recipient(target,formula)
 	var dmg: int = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 	var flank_m: float = float(formula.get("flank_mult", 1.0))
 	var bonuses: Dictionary = RunBonuses.for_current_run()
@@ -43,6 +45,8 @@ static func attack(attacker: Unit, target: Unit,
 	return {
 		"visible":       true,
 		"mode":          "Attack",
+		"recipient_id": target.unit_id,
+		"note": "Cover: %s protects %s" % [target.display_name,intended_target.display_name] if target != intended_target else "",
 		"element":       "physical",
 		"element_icon":  ELEMENT_ICONS["physical"],
 		"element_color": ELEMENT_COLORS["physical"],
@@ -101,6 +105,9 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	var el_mult: float = 1.0 if is_heal else float(bonuses["elemental_mult"].get(spell_type, 1.0))
 	var boon_bonus: float = el_mult - 1.0
 
+	var intended_target := target
+	var allow_cover := not ability.has("aoe_type") and int(ability.get("aoe_radius",0)) == 0
+	if not is_heal and not is_buff: target = target.get_damage_recipient(caster,allow_cover)
 	var dmg := 0
 	var heal := 0
 	var formula: Dictionary = {}
@@ -110,10 +117,10 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	elif is_buff:
 		dmg = 0
 	elif spell_type == "physical":
-		formula = CombatFormula.calculate_physical_attack(caster, target, tile_caster, tile_target, {"base_power": base_power})
+		formula = CombatFormula.calculate_physical_attack(caster, intended_target, tile_caster, tile_target, {"base_power": base_power, "allow_cover":allow_cover})
 		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 	else:
-		formula = CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
+		formula = CombatFormula.calculate_magical_attack(caster, intended_target, spell_type, base_power, {"power_mult": el_mult, "allow_cover":allow_cover})
 		dmg = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 		if bonuses.get("brand_bonus", 0.0) > 0.0 and target.has_status("burn"):
 			dmg = int(round(float(dmg) * (1.0 + float(bonuses["brand_bonus"]))))
@@ -135,9 +142,17 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 		timing_note = "Ally speed x1.5 for 3 target turns. Cannot target yourself. Does not stack or refresh while active."
 
 
+	if target != intended_target:
+		timing_note = "Cover: %s protects %s" % [target.display_name,intended_target.display_name]
+	if ability.get("id", "") == "cover_ally":
+		timing_note = "Protect %s within %d tiles until your next turn. Direct hits only; no area or ongoing damage." % [target.display_name,AbilityDB.get_range(ability,caster).y]
+	if ability.get("id", "") == "iron_wall":
+		timing_note = "40% less physical/magical damage for two future turns. Cannot act or counter. Move/Wait allowed."
+
 	return {
 		"visible":        true,
 		"mode":           "Spell",
+		"recipient_id": target.unit_id,
 		"element":        spell_type,
 		"element_icon":   ELEMENT_ICONS.get(spell_type, "*"),
 		"element_color":  ELEMENT_COLORS.get(spell_type, Color.WHITE),
@@ -253,6 +268,6 @@ static func _max_hp(unit: Unit) -> int:
 
 
 static func _can_counter(attacker: Unit, target: Unit) -> bool:
-	if target.team != "enemy": return false
+	if target.team != "enemy" or target.has_status("iron_wall"): return false
 	var dist: int = abs(attacker.grid_pos.x - target.grid_pos.x) + abs(attacker.grid_pos.y - target.grid_pos.y)
 	return dist <= (target.unit_data.base_stats.attack_range_max if target.unit_data else 1)
