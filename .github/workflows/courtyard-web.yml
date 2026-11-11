@@ -75,7 +75,19 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p build/courtyard-evidence/status-portraits
-          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --main-pack "$PWD/build/courtyard/index.pck" --rendering-method gl_compatibility res://tests/blooming_capture/StatusPortraitCapture.tscn -- --capture-dir="$PWD/build/courtyard-evidence/status-portraits" 2>&1 | tee build/courtyard-evidence/status-portrait-renderer.log
+          # The host package stores PCK bytes in ordered parts, not index.pck.
+          # Reassemble the identical accepted bytes only for this native render.
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('build/courtyard')
+          asset = json.loads((root / 'asset-parts.json').read_text())['index.pck']
+          raw = b''.join((root / part).read_bytes() for part in asset['parts'])
+          assert len(raw) == asset['size'] and hashlib.sha256(raw).hexdigest() == asset['sha256']
+          assert raw[:4] == b'GDPC'
+          Path('build/status-render.pck').write_bytes(raw)
+          PY
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --main-pack "$PWD/build/status-render.pck" --rendering-method gl_compatibility res://tests/blooming_capture/StatusPortraitCapture.tscn -- --capture-dir="$PWD/build/courtyard-evidence/status-portraits" 2>&1 | tee build/courtyard-evidence/status-portrait-renderer.log
           for image in zane-status-1920 zane-status-1366 zane-status-960 zane-status-mobile-landscape-844 kael-status-1920 kael-status-original-1920; do
             test -s "build/courtyard-evidence/status-portraits/$image.png"
           done
