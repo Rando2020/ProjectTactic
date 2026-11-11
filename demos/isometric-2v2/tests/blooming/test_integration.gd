@@ -70,7 +70,7 @@ func run() -> void:
   check(manager.active_unit_id==initial_turn,"appearance does not spend turn")
   var active=manager.units.get(initial_turn)
   if is_instance_valid(active):
-   check(scene.battle_ui._active_portrait.texture==scene.battle_ui._framed_portrait(active.unit_data.id),"active portrait follows skin")
+   check(scene.battle_ui._active_portrait.texture==scene.battle_ui._status_portrait(active.unit_data.id),"active portrait follows skin")
  var ui=scene.battle_ui
  var original_skin:bool=GameState.practice_session.get("compact_skins",true)
  var skin_mp:int=manager.units[initial_turn].mp
