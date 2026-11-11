@@ -105,7 +105,7 @@ static func spell(caster: Unit, target: Unit, ability: Dictionary,
 	var heal := 0
 	var formula: Dictionary = {}
 	if is_heal:
-		formula = CombatFormula.calculate_heal(target, base_power, int(bonuses.get("heal_bonus", 0)))
+		formula = CombatFormula.calculate_heal(target, base_power, int(bonuses.get("heal_bonus", 0)), caster)
 		heal = int(formula.get("heal", 0))
 	elif is_buff:
 		dmg = 0

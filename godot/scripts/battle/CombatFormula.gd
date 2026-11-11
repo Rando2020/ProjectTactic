@@ -147,12 +147,15 @@ static func calculate_magical_attack(caster: Unit, target: Unit,
 ## Healing power is a flat HP amount, not a percentage of caster Magic.
 ## Read-only projection: callers supply the existing run bonus; no effects or
 ## boon consumption occur here. Match Unit.heal's existing upper HP cap.
-static func calculate_heal(target: Unit, base_power: int, flat_bonus: int = 0) -> Dictionary:
-	var amount := base_power + flat_bonus
+static func calculate_heal(target: Unit, base_power: int, flat_bonus: int = 0, caster: Unit = null) -> Dictionary:
+	var mastery_bonus := float(caster.job_mastery.get("heal_bonus_pct", 0.0)) if caster else 0.0
+	var amount := int(round(float(base_power) * (1.0 + mastery_bonus))) + flat_bonus
 	var hp_before := target.hp if target else 0
 	var hp_after := mini(hp_before + amount, _stat_value(target, "hp", hp_before)) if target else amount
 	var healed := hp_after - hp_before
 	var explain: Array[String] = ["Heal %d" % base_power]
+	if mastery_bonus > 0.0:
+		explain.append("Luminary mastery +%d%%" % int(round(mastery_bonus * 100.0)))
 	if flat_bonus != 0:
 		explain.append("Flat %+d" % flat_bonus)
 	if healed != amount:
@@ -161,8 +164,15 @@ static func calculate_heal(target: Unit, base_power: int, flat_bonus: int = 0) -
 		"heal": healed, "hp_before": hp_before, "hp_after": hp_after, "explain": explain}
 
 
+## Preserve the existing single counter roll and eligibility at the caller.
+static func counter_chance(target: Unit) -> float:
+	return clampf(0.25 + float(target.job_mastery.get("counter_chance_bonus", 0.0)) if target else 0.25, 0.0, 1.0)
+
+
 static func project_physical_armor_result(target: Unit, incoming_damage: int) -> Dictionary:
 	var effective := maxi(0, incoming_damage)
+	var mastery_resist := clampf(float(target.job_mastery.get("phys_resist", 0.0)), 0.0, 1.0) if target else 0.0
+	effective = int(round(float(effective) * (1.0 - mastery_resist)))
 	if target and target.has_status("protect"):
 		effective = int(round(float(effective) * PROTECT_DAMAGE_MULT))
 	if target and target.has_status("defending"):
@@ -175,6 +185,7 @@ static func project_physical_armor_result(target: Unit, incoming_damage: int) ->
 	return {
 		"effective_damage": effective,
 		"hp_damage": hp_damage,
+		"mastery_resist": mastery_resist,
 		"temper_damage": absorbed,
 		"temper_before": temper,
 		"temper_after": maxi(temper - absorbed, 0),
@@ -348,6 +359,8 @@ static func _damage_explain(label: String, raw: float, attack_mult: float, resis
 		rows.append("%s %s" % [str(context.get("facing_label", "front")).capitalize(), _signed_percent(facing_mult - 1.0)])
 	if affinity != 1.0:
 		rows.append("%s %s" % [affinity_label(affinity), _signed_percent(affinity - 1.0)])
+	if float(armor.get("mastery_resist", 0.0)) > 0.0:
+		rows.append("Warder mastery -%d%%" % int(round(float(armor.mastery_resist) * 100.0)))
 	var temper_damage := int(armor.get("temper_damage", 0))
 	var ether_damage := int(armor.get("ether_damage", 0))
 	if temper_damage > 0:

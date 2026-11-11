@@ -227,6 +227,17 @@ static func get_mastery_bonuses(unit_job_jp: Dictionary) -> Array[Dictionary]:
 	return mastered
 
 
+## Supported runtime effects only. Descriptive mastery promises are not all
+## implemented yet; never imply that copying the full catalog enables them.
+## Fresh projection: callers can snapshot it without changing saved JP or data.
+static func runtime_mastery_bonuses(unit_job_jp: Dictionary) -> Dictionary:
+	var totals := {"move_bonus": 0, "counter_chance_bonus": 0.0, "phys_resist": 0.0, "heal_bonus_pct": 0.0}
+	for mastery: Dictionary in get_mastery_bonuses(unit_job_jp):
+		for key: String in totals:
+			totals[key] += mastery.get(key, 0)
+	return totals
+
+
 ## All abilities a unit has unlocked through their job history.
 static func get_all_unlocked_abilities(unit_job_jp: Dictionary) -> Array[String]:
 	var abilities: Array[String] = []
