@@ -23,10 +23,12 @@ Godot 4.6.3 headless, writable XDG directories:
 
 - `tests/modular/test_presentation.tscn`: 105 checks, zero failures; authored modular frame coverage is unchanged.
 
-## Render evidence still required
+## Rendered evidence and browser gate
 
 No local rendered screenshots are claimed. There is no display or Xvfb; a temporary Xorg dummy-display startup failed to create its listening sockets, on this workspace. Headless execution proves runtime behavior but not appearance.
 
 The support runtime test accepts `--capture-dir=/absolute/path` under a real render-enabled display, records intermediate casting/formation/action/collision/dissipation PNGs, and fails if capture mode produces no frames. Use that path in rendered CI for final visual review on the actual battlefield.
 
-Rendered CI on 445325a passed 115 skill checks and produced all 14 requested action PNGs. Review exposed support text behind screen-space name badges; the follow-up reserves those exact badge bounds before placing modular spell outcomes, with a failing-first overlap regression. Final screenshots and Web acceptance must be rechecked on that follow-up commit.
+Rendered CI on 445325a passed 115 skill checks and produced all 14 requested action PNGs. Review exposed support text behind screen-space name badges; the follow-up reserves those exact badge bounds before placing modular spell outcomes, with a failing-first overlap regression. The follow-up at 6ab799d passed 123 rendered checks and produced all 14 captures; Haste and Defend result labels were visually reviewed outside the badges. Actual-menu headless coverage passed 109 checks.
+
+The first browser run on 6ab799d stopped before casting because its new fast Time-to-Haste mouse sequence used a transient menu rectangle, 110 browser pixels above the settled button. The game remained in the enabled Haste menu with unchanged MP and no presentation events or browser errors. Browser acceptance remains required after the driver waits for settled geometry. Native/rendered results do not substitute for Web acceptance, and no human listening review is claimed.

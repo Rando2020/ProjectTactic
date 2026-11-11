@@ -87,6 +87,26 @@ def assert_support_cast(before, after, ability):
                    and s['available'] and 0 < s['progress'] <= 1 for s in samples), f'{stage} glyph did not animate'
 
 
+class MenuLayoutReady:
+    """Dynamic rows become visible before Godot finishes deferred container layout."""
+    def __init__(self, category, school):
+        self.category, self.school = category, school
+        self.geometry, self.frame, self.stable_frames = None, None, 0
+
+    def __call__(self, state):
+        if not (state['menu_visible'] and state['command'] == 'ability'
+                and state['category'] == self.category and state['school'] == self.school):
+            self.geometry, self.frame, self.stable_frames = None, None, 0
+            return False
+        geometry = json.dumps([state['viewport'], state['entries'], state['buttons']], sort_keys=True)
+        if geometry != self.geometry:
+            self.geometry, self.frame, self.stable_frames = geometry, state['frame'], 1
+        elif state['frame'] != self.frame:
+            self.frame = state['frame']
+            self.stable_frames += 1
+        return self.stable_frames >= 3
+
+
 class CourtyardSmoke:
     def __init__(self, cdp, output, timeout):
         self.cdp, self.output, self.timeout = cdp, output, timeout
@@ -129,9 +149,7 @@ class CourtyardSmoke:
         self.cdp.click(*button_point(button, envelope['state']['viewport'], envelope['canvas']))
 
     def wait_menu(self, category, school, entries, after):
-        envelope = self.wait(f'{category}/{school} menu', lambda s: s['menu_visible']
-                             and s['command'] == 'ability' and s['category'] == category
-                             and s['school'] == school, after)
+        envelope = self.wait(f'{category}/{school} menu', MenuLayoutReady(category, school), after)
         assert_command_menu(envelope['state'], category, school, entries)
         return envelope
 
