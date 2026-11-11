@@ -4,6 +4,14 @@ signal rail_layout_changed
 var tester_collapsed := false
 var _bloom_objective_panel: PanelContainer
 var _bloom_active_panel: PanelContainer
+var _bloom_portrait_frame: PanelContainer
+var _status_portrait_cache: Dictionary = {}
+# Detailed counterparts of the approved Compact class skins, not new identities.
+# Keep source sheets untouched; the status card alone uses these bust crops.
+const STATUS_ART := {
+	"zane": {"role":"mage", "region":Rect2(280,0,250,320)},
+	"kael": {"role":"swordsman", "region":Rect2(270,0,250,320)},
+}
 var _bloom_turn_strip: HBoxContainer
 var _bloom_command_row: GridContainer
 var _bloom_rail_toggle: Button
@@ -128,8 +136,19 @@ func _build_ui() -> void:
 	var active := HBoxContainer.new()
 	active.add_theme_constant_override("separation",10)
 	_bloom_active_panel.add_child(active)
-	_active_portrait.reparent(active)
-	_active_portrait.custom_minimum_size = Vector2(72,100)
+	_bloom_portrait_frame = PanelContainer.new()
+	_bloom_portrait_frame.name = "DetailedStatusPortrait"
+	_bloom_portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bloom_portrait_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var portrait_style := _surface()
+	portrait_style.bg_color = Color("141b24")
+	portrait_style.set_content_margin_all(4)
+	_bloom_portrait_frame.add_theme_stylebox_override("panel",portrait_style)
+	active.add_child(_bloom_portrait_frame)
+	_active_portrait.reparent(_bloom_portrait_frame)
+	_active_portrait.custom_minimum_size = Vector2(112,144)
+	_active_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_active_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var stats := VBoxContainer.new()
 	stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	active.add_child(stats)
@@ -333,7 +352,8 @@ func _layout_persistent_hud() -> void:
 	_bloom_turn_strip.size = Vector2(strip_width,78)
 	if _bloom_turn_strip.position.x + strip_width > area.end.x-12:
 		_bloom_turn_strip.position.x = area.end.x-strip_width-12
-	_bloom_active_panel.size = Vector2(330 * factor, maxf(160 * factor, _bloom_active_panel.get_combined_minimum_size().y))
+	_active_portrait.custom_minimum_size = Vector2(112,144) * factor
+	_bloom_active_panel.size = Vector2(360 * factor, maxf(168 * factor, _bloom_active_panel.get_combined_minimum_size().y))
 	_bloom_active_panel.position = Vector2(12,viewport.y-_bloom_active_panel.size.y-12)
 	_bloom_hint.position = Vector2(12, _bloom_objective_panel.get_rect().end.y+8)
 	_bloom_hint.size = Vector2(area.size.x-24,32 * factor)
@@ -428,6 +448,36 @@ func _refresh_active_resources() -> void:
 			_bloom_mp_bar.value = unit.mp
 			_bloom_armor.text = "Armor · TMP %d / ETH %d" % [unit.temper,unit.ether]
 			_bloom_armor.visible = unit.temper > 0 or unit.ether > 0
+
+func _status_portrait(id: String) -> Texture2D:
+	if not bool(GameState.practice_session.get("compact_skins",true)) or not STATUS_ART.has(id):
+		return _framed_portrait(id)
+	if _status_portrait_cache.has(id): return _status_portrait_cache[id]
+	var art: Dictionary = STATUS_ART[id]
+	var path := "res://prototypes/isometric/assets/character-sets/painterly/originals/%s.png" % art.role
+	if not ResourceLoader.exists(path): return _framed_portrait(id)
+	var source := load(path) as Texture2D
+	if source == null: return _framed_portrait(id)
+	var portrait := AtlasTexture.new()
+	portrait.atlas = source
+	portrait.region = art.region
+	portrait.filter_clip = true
+	_status_portrait_cache[id] = portrait
+	return portrait
+
+func _refresh_status_portrait() -> void:
+	if not battle_manager or not is_instance_valid(_active_portrait): return
+	var unit = battle_manager.units.get(battle_manager.active_unit_id)
+	_active_portrait.texture = _status_portrait(unit.unit_data.id) if is_instance_valid(unit) else null
+	_active_portrait.tooltip_text = "%s · Character profile" % unit.display_name if is_instance_valid(unit) else ""
+
+func _on_turn_started(unit_id: String, team: String) -> void:
+	super._on_turn_started(unit_id,team)
+	_refresh_status_portrait()
+
+func refresh_skin_portraits() -> void:
+	super.refresh_skin_portraits()
+	_refresh_status_portrait()
 
 func _on_battle_started(display_name: String, objective: String) -> void:
 	# The persistent objective already introduces this scene. The inherited
