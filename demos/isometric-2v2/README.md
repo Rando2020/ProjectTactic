@@ -175,3 +175,25 @@ Focused native coverage: `res://tests/blooming_commands/CommandMenuTest.tscn`.
 The Courtyard hero skills workflow captures actual-engine menus; the Courtyard Web
 release gate also exercises real browser menu inputs and captures screenshots.
 These fixtures do not claim physical-controller, physical-phone or audible testing.
+
+## Skill sound and cast feedback
+
+The courtyard now sends Haste through the same ticket-owned cast lifecycle as the
+other current spells. Haste shows an animated clock/speed glyph at the caster and
+then on the recipient, with the actual status duration. Defend shows a shield
+brace and its existing **Until next turn** duration. These two support effects are
+original procedural graphics, not newly painted animation sheets. Existing Fire,
+Lightning, Void and melee artwork is retained.
+
+Current spell/skill sounds use distinct original synthesized timbres on the FX
+bus. Mighty Strike, Delay Strike and Heavy Slash retain the existing Kael poses
+with readable 0.34/0.28/0.46-second windups and matching charge cues. Cancelling a
+ticket stops its sounds and removes its effects. FX mute/volume still applies.
+No damage, MP, status, initiative, ownership or campaign rules are changed.
+
+The native `tests/blooming_skills/SkillFeedbackTest.tscn` confirms the seven current
+hero abilities through their real menu/review paths and checks active PCM voices,
+effects, one-time cost and cleanup. Support tests cover self/ally Haste, Defend,
+reduced motion and pre-contact interruption. The Web smoke now confirms Haste and
+Defend instead of only cancelling previews. PCM and playing-voice checks do not
+constitute human listening acceptance. See `docs/COURTYARD_SKILL_AUDIO.md`.

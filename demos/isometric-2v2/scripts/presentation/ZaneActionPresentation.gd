@@ -4,6 +4,8 @@ extends Node2D
 signal cue_started(cue_id: String)
 signal phase_presented(phase: String)
 
+const SkillAudio := preload("res://scripts/presentation/CourtyardSkillAudio.gd")
+const SKILL_WINDUPS := {"mighty_strike":0.34, "delay_strike":0.28, "heavy_slash":0.46}
 const Audio := preload("res://scripts/presentation/ZaneImpactAudio.gd")
 const MeleeFrames := preload("res://scripts/presentation/MeleeFrames.gd")
 const FireFrames := preload("res://scripts/presentation/FireballFrames.gd")
@@ -70,8 +72,8 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 		if not actor.set_melee_pose("anticipation") and bool(context.get("authored_melee_sheet",false)):
 			_melee_prepare(actor)
 	_phase("charge")
-	_charge_voice = _cue("fire_charge" if fire else "sword_load")
-	if not await _wait_permitted(FireFrames.CHARGE_DURATION if _authored_fire_active else 0.20):
+	_charge_voice = _action_cue("charge", "fire_charge" if fire else "sword_load")
+	if not await _wait_permitted(FireFrames.CHARGE_DURATION if _authored_fire_active else float(SKILL_WINDUPS.get(str(context.ability_id),0.20))):
 		_presenting = false
 		cancel()
 		return
@@ -81,7 +83,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	_charge = null
 	_melee_recover()
 	_phase("release")
-	_cue("fire_release" if fire else "sword_release")
+	_action_cue("release", "fire_release" if fire else "sword_release")
 	if fire:
 		# Same-frame cast release sampling updates the actual imported socket.
 		actor.set_cast_pose("release")
@@ -241,7 +243,7 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 			burst.start_tail(any_impact)
 	if any_impact:
 		_phase("impact")
-		_cue("fire_hit" if fire else "sword_hit")
+		_action_cue("contact", "fire_hit" if fire else "sword_hit")
 		if fire and not _authored_fire_active: _embers(_grid_point(context.destination)+Vector2(0,-20))
 		if not bool(context.reduced_motion):
 			var scene = _scene.get_ref() if _scene != null else null
@@ -517,6 +519,17 @@ func _tween() -> Tween:
 
 func _fade(node: CanvasItem, seconds: float) -> void:
 	_tween().tween_property(node,"modulate:a",0.0,seconds)
+
+func _action_cue(phase: String, fallback: String) -> AudioStreamPlayer:
+	# Preserve Fire/basic attacks; current techniques get their own sonic identity.
+	var id := str(context.get("ability_id", ""))
+	if not SKILL_WINDUPS.has(id): return _cue(fallback)
+	if _cancelled or not _current_ticket(): return null
+	var voice := SkillAudio.play(id, phase, self)
+	if is_instance_valid(voice):
+		_voices.append(voice)
+		cue_started.emit(id + "_" + phase)
+	return voice
 
 func _cue(id: String) -> AudioStreamPlayer:
 	var voice := Audio.play_cue(id,self)

@@ -1,7 +1,67 @@
 extends Node
 ## Read-only test instrumentation. This directory is absent from production exports.
 
+var _events: Array[Dictionary] = []
+var _animation_samples: Array[Dictionary] = []
+var _presenters: Array[WeakRef] = []
+var _sampled_stages: Dictionary = {}
+
+func _ready() -> void:
+	# node_added fires before present(), so even the first cast phase is captured.
+	get_tree().node_added.connect(_observe_node)
+
+func _observe_node(node: Node) -> void:
+	if node.has_signal("phase_presented") and node.has_signal("cue_started"):
+		_presenters.append(weakref(node))
+		node.phase_presented.connect(_record_event.bind("phase", node))
+		node.cue_started.connect(_record_event.bind("cue", node))
+
+func _record_event(value: String, kind: String, presenter: Node) -> void:
+	var context: Dictionary = presenter.context
+	var actor = presenter._actor.get_ref() if presenter._actor != null else null
+	var effects: Array[String] = []
+	var visuals: Array[Dictionary] = []
+	var voices: Array[Dictionary] = []
+	for child in presenter.get_children():
+		if child is CanvasItem and child.is_visible_in_tree() and not child.is_queued_for_deletion():
+			var role := str(child.get_meta("zane_effect_role", ""))
+			if not role.is_empty(): effects.append(role)
+			if child.has_method("available") and child.has_method("show_progress"):
+				visuals.append({"stage": str(child.stage), "available": child.available(),
+					"progress": float(child.progress) if "progress" in child else -1.0,
+					"frame_index": int(child.frame_index) if "frame_index" in child else -1})
+		if child is AudioStreamPlayer:
+			voices.append({"playing": child.playing, "bus": str(child.bus), "stream": child.stream != null})
+	var pose := ""
+	if is_instance_valid(actor) and is_instance_valid(actor._rig3d): pose = str(actor._rig3d.state)
+	_events.append({"frame": Engine.get_process_frames(), "kind": kind, "name": value,
+		"action_key": str(context.get("action_key", "")), "ability_id": str(context.get("ability_id", "")),
+		"actor_id": str(context.get("actor_id", "")), "pose": pose, "effects": effects, "visuals": visuals, "voices": voices})
+
+func _sample_animation() -> void:
+	for reference in _presenters:
+		var presenter = reference.get_ref()
+		if not is_instance_valid(presenter): continue
+		for child in presenter.get_children():
+			if not child is CanvasItem or not child.is_visible_in_tree() or child.is_queued_for_deletion(): continue
+			if not child.has_method("available") or not "progress" in child: continue
+			var key := str(presenter.context.get("action_key", ""))
+			var stage := str(child.stage)
+			var sample_key := key + ":" + stage
+			if float(child.progress) < 0.25 or _sampled_stages.has(sample_key): continue
+			_sampled_stages[sample_key] = true
+			_animation_samples.append({"action_key": key, "stage": stage, "progress": float(child.progress),
+				"available": child.available(), "frame": Engine.get_process_frames()})
+	_presenters = _presenters.filter(func(reference): return is_instance_valid(reference.get_ref()))
+
+func unit_record(member) -> Dictionary:
+	var statuses: Array[String] = []
+	for status in member.statuses: statuses.append(str(status.status_id))
+	return {"position": [member.grid_pos.x, member.grid_pos.y], "hp": member.hp,
+		"mp": member.mp, "team": member.team, "statuses": statuses}
+
 func _process(_delta: float) -> void:
+	_sample_animation()
 	if not OS.has_feature("web"):
 		return
 	var state = snapshot()
@@ -42,12 +102,12 @@ func snapshot() -> Dictionary:
 	for id in manager.units:
 		var member = manager.units[id]
 		if is_instance_valid(member):
-			units[id] = {"position": [member.grid_pos.x, member.grid_pos.y], "hp": member.hp, "team": member.team}
+			units[id] = unit_record(member)
 	var viewport: Vector2 = get_viewport().get_visible_rect().size
 	return {
-		"schema": 2, "frame": Engine.get_process_frames(), "viewport": [viewport.x, viewport.y],
+		"schema": 3, "frame": Engine.get_process_frames(), "viewport": [viewport.x, viewport.y],
 		"scene": battle.scene_file_path, "unit_count": manager.units.size(),
-		"units": units,
+		"units": units, "events": _events.duplicate(true), "animation_samples": _animation_samples.duplicate(true),
 		"phase": BattleManager.Phase.keys()[manager.current_phase], "resolving": manager.is_resolving_action,
 		"selected": selection.selected_id, "command": manager.active_command,
 		"review": selection.has_review(), "settings": ui._settings_overlay.visible,

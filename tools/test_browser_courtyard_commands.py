@@ -66,5 +66,38 @@ class CommandMenuTests(unittest.TestCase):
                 browser.assert_commands(invalid, magic=True, skills=False)
 
 
+
+class MenuLayoutReadyTests(unittest.TestCase):
+    def state(self, frame, y=778, school='time'):
+        return {'frame': frame, 'command': 'ability', 'menu_visible': True,
+                'category': 'magic', 'school': school, 'viewport': [1920, 1080],
+                'entries': [{'ability_id': 'haste', 'visible': True, 'disabled': False,
+                             'rect': [1082, y, 398, 65]}],
+                'buttons': {'back': {'rect': [442.5, 944, 624, 55]}}}
+
+    def test_transient_leaf_geometry_must_settle_before_clicking(self):
+        ready = browser.MenuLayoutReady('magic', 'time')
+        self.assertFalse(ready(self.state(10, 623)))
+        self.assertFalse(ready(self.state(11, 778)))
+        self.assertFalse(ready(self.state(12, 778)))
+        self.assertTrue(ready(self.state(13, 778)))
+
+    def test_duplicate_frame_does_not_count_as_layout_settling(self):
+        ready = browser.MenuLayoutReady('magic', 'time')
+        for _ in range(5):
+            self.assertFalse(ready(self.state(10)))
+        self.assertFalse(ready(self.state(11)))
+        self.assertTrue(ready(self.state(12)))
+
+    def test_wrong_menu_resets_stability(self):
+        ready = browser.MenuLayoutReady('magic', 'time')
+        self.assertFalse(ready(self.state(10)))
+        self.assertFalse(ready(self.state(11)))
+        self.assertFalse(ready(self.state(12, school='black')))
+        self.assertFalse(ready(self.state(13)))
+        self.assertFalse(ready(self.state(14)))
+        self.assertTrue(ready(self.state(15)))
+
+
 if __name__ == '__main__':
     unittest.main()

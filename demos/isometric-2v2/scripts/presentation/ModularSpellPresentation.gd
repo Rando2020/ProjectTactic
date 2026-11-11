@@ -1,7 +1,8 @@
 ## Per-ticket modular spell cosmetics. Only the manager applies costs/outcomes.
 extends "res://scripts/presentation/ZaneActionPresentation.gd"
 const Frames := preload("res://scripts/presentation/ModularSpellFrames.gd")
-const SpellAudio := preload("res://scripts/presentation/ModularSpellAudio.gd")
+const SupportGlyph := preload("res://scripts/presentation/SupportSpellGlyph.gd")
+const SpellAudio := preload("res://scripts/presentation/CourtyardSkillAudio.gd")
 const CAST_SECONDS := 0.64
 const FORM_SECONDS := 0.18
 const ACTION_SECONDS := 0.20
@@ -28,7 +29,7 @@ func present(actor: Unit, action_context: Dictionary, permitted: Callable) -> vo
 	var scene = manager.get_parent()
 	if is_instance_valid(scene) and scene.has_method("apply_zane_impact_kick"): _scene = weakref(scene)
 	_presenting = true
-	_support = str(context.ability_id) in ["shadow_mend","defend"]
+	_support = str(context.ability_id) in ["shadow_mend","defend","haste"]
 	_projectile_spell = str(context.ability_id) in ["void_pulse","dark_breath"]
 	actor.face_action(context.destination)
 	actor.set_cast_pose("anticipation")
@@ -68,13 +69,13 @@ func _color() -> Color:
 	match str(context.ability_id):
 		"thunderstrike": return Color(0.48,0.75,1.0,0.85)
 		"shadow_mend": return Color(0.64,1.0,0.81,0.85)
+		"haste": return Color(1.0,0.91,0.48,0.95)
 		"defend": return Color(1.0,0.82,0.40,0.85)
 		_: return Color(0.76,0.44,1.0,0.85)
 
 func _set_spell_stage(phase: String) -> void:
 	_remove_fx(_stage_sprite)
-	_stage_sprite = Frames.new()
-	_stage_sprite.configure(str(context.ability_id),"brace" if str(context.ability_id)=="defend" else phase)
+	_stage_sprite = _make_spell_effect(phase)
 	_own(_stage_sprite,"spell_sheet_"+phase)
 	_stage_sprite.position = _grid_point(_stage_ground)
 	_active_phase = phase
@@ -83,9 +84,34 @@ func _set_spell_stage(phase: String) -> void:
 	_phase(phase)
 	if _cancelled or not _current_ticket(): return
 	if not _stage_sprite.available():
-		# Non-damaging Defend intentionally uses a hollow brace ring, never a blast.
+		# Defensive fallback only; support glyphs always have drawable geometry.
 		var ring := _ring(_grid_point(_stage_ground),21.0 if _support else 15.0)
 		_fade(ring,0.28)
+
+func _make_spell_effect(phase: String) -> Sprite2D:
+	var effect: Sprite2D
+	if str(context.ability_id) in ["haste", "defend"]:
+		effect = SupportGlyph.new()
+		effect.set_reduced_motion(bool(context.get("reduced_motion", false)))
+	else:
+		effect = Frames.new()
+	effect.configure(str(context.ability_id), phase)
+	return effect
+
+func _support_result_text(result: Dictionary) -> String:
+	if bool(result.get("missed", false)): return "MISS"
+	if float(result.get("affinity", 1.0)) == 0.0: return "IMMUNE"
+	match str(context.ability_id):
+		"shadow_mend": return "+%d HP" % int(result.get("healed", 0))
+		"defend": return "GUARD\nUntil next turn"
+		"haste":
+			var status: Variant = result.get("status_applied", {})
+			if status is Dictionary and str(status.get("id", "")) == "haste":
+				var duration := int(status.get("duration", 0))
+				return "HASTE\n%d %s" % [duration, "turn" if duration == 1 else "turns"] if duration > 0 else "HASTE"
+			if status is String and status == "haste": return "HASTE"
+			return "NO STATUS"
+	return ""
 
 func _ring(p: Vector2, radius: float) -> Line2D:
 	var points := PackedVector2Array()
@@ -157,17 +183,16 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 	for record: Dictionary in records:
 		var result: Dictionary = record.outcome
 		var hp := int(result.get("applied_hp_damage",0))
-		var healed := int(result.get("healed",0))
 		var missed := bool(result.get("missed",false))
 		var immune := not missed and float(result.get("affinity",1.0)) == 0.0
-		var text := "+%d HP" % healed if _support and str(context.ability_id)=="shadow_mend" else ("GUARD\nUntil next turn" if str(context.ability_id)=="defend" else ("MISS" if missed else ("IMMUNE" if immune else ("-%d HP" % hp if hp>0 else "0 HP"))))
+		var text := _support_result_text(result) if _support else ("MISS" if missed else ("IMMUNE" if immune else ("-%d HP" % hp if hp>0 else "0 HP")))
 		for field in [["temper_damage","Temper"],["ether_damage","Ether"]]:
 			var loss := int(result.get(field[0],0))
 			if loss > 0: text += "\n-%d %s" % [loss,field[1]]
 		var status: Variant = result.get("status_applied",{})
-		if status is Dictionary and not status.is_empty() and str(context.ability_id)!="defend":
+		if status is Dictionary and not status.is_empty() and str(context.ability_id) not in ["defend","haste"]:
 			text += "\n%s · %s turns" % [str(status.get("display_name",status.get("id",""))).capitalize(),str(status.get("duration",""))]
-		elif status is String and not status.is_empty(): text += "\n"+status.capitalize()
+		elif status is String and not status.is_empty() and str(context.ability_id) not in ["defend","haste"]: text += "\n"+status.capitalize()
 		if not missed and not immune and not _support:
 			if bool(result.get("critical",false)): text += "\nCRIT"
 			var affinity := float(result.get("affinity",1.0))
@@ -175,8 +200,7 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 			elif affinity < 1.0: text += " [RESIST]"
 		numbers.append(_number(text,_color()))
 		anchors.append(_outcome_anchor(record))
-		var sprite := Frames.new()
-		sprite.configure(str(context.ability_id),"dissipation" if missed or immune else "collision")
+		var sprite := _make_spell_effect("dissipation" if missed or immune else "collision")
 		_own(sprite,"spell_tail")
 		_tails.append({"sprite":sprite,"tile":record.grid_pos,"hit":not missed and not immune})
 		sprite.position = _grid_point(record.grid_pos)
@@ -201,6 +225,21 @@ func present_outcomes(records: Array[Dictionary]) -> void:
 		var juice := get_node_or_null("/root/BattleJuiceEffects")
 		if juice != null: juice.trigger_pause(45)
 
+func _outcome_hud_rects() -> Array[Rect2]:
+	var result := super._outcome_hud_rects()
+	var manager = _manager.get_ref() if _manager != null else null
+	if not is_instance_valid(manager): return result
+	var ui = manager.get_parent().get("battle_ui")
+	if not is_instance_valid(ui) or not "_battlefield_labels" in ui: return result
+	var labels = ui._battlefield_labels
+	if not is_instance_valid(labels): return result
+	# The courtyard's names live in a screen-space Node2D, not on each unit or
+	# in a top-level HUD Control. Reserve them before placing floating results.
+	for badge in labels.rows.values():
+		if not is_instance_valid(badge) or not badge.is_visible_in_tree(): continue
+		result.append(badge.get_global_transform_with_canvas() * Rect2(Vector2.ZERO,badge.size))
+	return result
+
 func _number(text: String, color: Color) -> Label:
 	var label := super._number(text,color)
 	label.add_theme_font_size_override("font_size",28)
@@ -209,9 +248,10 @@ func _number(text: String, color: Color) -> Label:
 func _sound(kind: String) -> void:
 	# A phase observer may invalidate this ticket synchronously before a cue.
 	if _cancelled or not _current_ticket(): return
-	var voice := SpellAudio.play(kind,self)
-	if is_instance_valid(voice): _voices.append(voice)
-	cue_started.emit("modular_"+kind)
+	var voice := SpellAudio.play(str(context.ability_id),kind,self)
+	if not is_instance_valid(voice): return
+	_voices.append(voice)
+	cue_started.emit(str(context.ability_id)+"_"+kind)
 
 func finish() -> void:
 	if _cancelled or _finished: return

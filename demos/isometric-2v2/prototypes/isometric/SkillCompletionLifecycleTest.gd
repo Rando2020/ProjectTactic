@@ -73,7 +73,7 @@ func skill_case(spec: Array, enemy: bool) -> void:
 	if id == "shadow_mend":
 		check(target.hp==2000 and outcomes.size()==1 and outcomes[0].get("healed",0)==10,prefix+" reports capped actual healing")
 		check("+10 HP" in labels and "-" not in labels,prefix+" heal not presented as damage")
-		check("modular_heal" in cues and "pause" not in phases,prefix+" support feedback")
+		check("shadow_mend_heal" in cues and "pause" not in phases,prefix+" support feedback")
 	elif id=="defend":
 		check(target.hp==hp and outcomes.is_empty(),prefix+" does not damage")
 		check("GUARD" in labels,prefix+" guard callout")

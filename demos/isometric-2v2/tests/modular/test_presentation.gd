@@ -87,7 +87,7 @@ func run() -> void:
 		VFX.child_entered_tree.connect(callback)
 		check(not await manager._execute_aoe_ability(caster,target.grid_pos,AbilityDB.get_ability("thunderstrike")),"cancel %s prevents contact" % cancel_phase)
 		check(caster.mp==200 and target.hp==2000,"cancel spends and damages nothing")
-		check(not cues.has("modular_release"),"cancel before release never emits late audio")
+		check(not cues.has("thunderstrike_release"),"cancel before release never emits late audio")
 		if cancel_phase=="casting": check(cues.is_empty(),"synchronous casting cancellation emits no cue")
 		VFX.child_entered_tree.disconnect(callback)
 		await manager._recover_action()
