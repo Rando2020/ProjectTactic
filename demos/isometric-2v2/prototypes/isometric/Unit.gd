@@ -2,11 +2,66 @@ extends Unit
 ## Proof-only artwork adapter. Combat, movement and facing remain production code.
 var view_quarter := 0
 var _compact_textures: Dictionary = {}
+var _cast_rest: Transform2D
+var _cast_motion: Tween
+var _cast_active := false
+var _cast_weight := 0.0
+var _cast_side := 1.0
+
+func face_action(destination: Vector2i) -> void:
+	super.face_action(destination)
+	var direction := facing if destination == grid_pos else CombatFormula.attack_direction(destination, grid_pos)
+	_cast_side = signf(_facing_screen_direction(direction).x)
+
+func set_cast_pose(pose: String) -> bool:
+	if is_instance_valid(_rig3d): return super.set_cast_pose(pose)
+	if unit_data == null or unit_data.id not in ["zane", "kael"] or not is_instance_valid(_sprite): return false
+	if pose not in ["anticipation", "release"]: return false
+	if bool(GameState.practice_session.get("reduced_zane_motion", false)):
+		_reset_cast_motion()
+		return true
+	if not _cast_active:
+		_cast_rest = _sprite.transform
+		_cast_active = true
+		_cast_weight = 0.0
+	_tween_cast_weight(-1.0 if pose == "anticipation" else 1.0, 0.18 if pose == "anticipation" else 0.12)
+	return true
+
+func _tween_cast_weight(target: float, seconds: float) -> void:
+	if _cast_motion != null and _cast_motion.is_valid(): _cast_motion.kill()
+	_cast_motion = create_tween()
+	_cast_motion.tween_method(_apply_cast_weight, _cast_weight, target, seconds).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _apply_cast_weight(weight: float) -> void:
+	if not _cast_active or not is_instance_valid(_sprite): return
+	_cast_weight = weight
+	# Transform the unchanged painted sprite around the actor's ground origin.
+	# This is restrained procedural motion, not newly painted limb/pose frames.
+	var brace := unit_data.id == "kael"
+	var height := 1.0 + weight * (0.012 if brace else 0.025)
+	var lean := weight * _cast_side * (0.025 if brace else 0.045)
+	_sprite.transform = Transform2D(0.0, Vector2(1.0, height), lean, Vector2.ZERO) * _cast_rest
+
+func _reset_cast_motion() -> void:
+	if _cast_motion != null and _cast_motion.is_valid(): _cast_motion.kill()
+	_cast_motion = null
+	if _cast_active and is_instance_valid(_sprite): _sprite.transform = _cast_rest
+	_cast_active = false
+	_cast_weight = 0.0
+
+func recover_melee_pose() -> void:
+	if _cast_active: _tween_cast_weight(0.0, 0.18)
+	else: super.recover_melee_pose()
+
+func reset_melee_pose() -> void:
+	_reset_cast_motion()
+	super.reset_melee_pose()
 
 func uses_compact_skin() -> bool:
 	return bool(GameState.practice_session.get("compact_skins", true)) and unit_data != null and unit_data.id in ["zane", "kael"]
 
 func set_melee_pose(pose: String) -> bool:
+	_reset_cast_motion()
 	# Compact sheets contain idle directions only. Keep the same class identity
 	# during attacks and let VFXManager use its procedural anticipation fallback.
 	if uses_compact_skin():

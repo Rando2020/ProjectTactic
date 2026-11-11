@@ -197,3 +197,19 @@ effects, one-time cost and cleanup. Support tests cover self/ally Haste, Defend,
 reduced motion and pre-contact interruption. The Web smoke now confirms Haste and
 Defend instead of only cancelling previews. PCM and playing-voice checks do not
 constitute human listening acceptance. See `docs/COURTYARD_SKILL_AUDIO.md`.
+
+### Planted caster motion (2026-11-11)
+
+Zane's Fire, Thunderstrike, Void Pulse and Haste now give the existing 2D
+body sprite a short preparation, release and recovery. Kael uses a smaller brace
+for Defend. The motion keeps the sprite's ground anchor fixed and preserves the
+selected compact/original painted artwork; it does not add painted limb frames
+or a skeletal character rig. The reduced-motion option leaves the body still.
+
+The demo-only actor adapter restores the exact idle transform on normal recovery,
+cancellation and interrupted casts. Logical position, facing, costs, effects and
+combat timing are unchanged. `tests/blooming_skills/CasterMotionTest.tscn` covers
+both skins, four camera quarters, actual menu-selected casts, interrupted phases,
+KO, repeated casts and reduced motion. The hero-skills workflow also captures
+idle, anticipation and release frames for all five existing hero spells/support
+skills. Visual inspection is separate from automated transform checks.
