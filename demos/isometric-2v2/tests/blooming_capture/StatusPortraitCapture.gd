@@ -2,10 +2,19 @@ extends Node
 ## Actual rendered battle, not a composed mockup. Also runnable against exported PCK.
 var output_dir := "user://status-portraits"
 var failures := 0
+var ui
+var manager
 func frames(count: int = 6) -> void:
 	for i in count: await get_tree().process_frame
 func capture(label: String) -> void:
 	await frames()
+	var first: Control = ui._turn_rows[0].panel
+	for row in ui._turn_rows:
+		var unit = manager.units.get(str(row.unit_id))
+		if not row.panel.visible: continue
+		if not row.panel.size.is_equal_approx(first.size) or not is_instance_valid(unit) or row.portrait.texture != ui._status_portrait(unit.unit_data.id):
+			printerr("FAIL: Rendered timeline frame/identity mismatch in " + label)
+			failures += 1
 	await RenderingServer.frame_post_draw
 	if get_viewport().get_texture().get_image().save_png(output_dir.path_join(label + ".png")) != OK:
 		failures += 1
@@ -21,8 +30,8 @@ func run() -> void:
 	var battle = load("res://prototypes/blooming/BloomingBattle.tscn").instantiate()
 	add_child(battle)
 	await frames(30)
-	var ui = battle.battle_ui
-	var manager = battle.battle_manager
+	ui = battle.battle_ui
+	manager = battle.battle_manager
 	# The check matters in exports: original sheets were previously excluded.
 	for id in ["zane","kael"]:
 		if not ui._status_portrait(id) is AtlasTexture:
@@ -54,7 +63,11 @@ func run() -> void:
 	await capture("kael-status-1920")
 	battle.set_compact_skins(false)
 	await capture("kael-status-original-1920")
+	battle.set_compact_skins(true)
+	ui._preview_affected = {"kael":{"role":"target"},"Enemy_1":{"role":"affected"}}
+	ui._refresh_preview_connections()
+	await capture("timeline-target-markers-1920")
 	battle.queue_free()
 	await frames()
-	print("Status portrait capture: 6 images, %d failures" % failures)
+	print("Status and timeline portrait capture: 7 images, %d failures" % failures)
 	get_tree().quit(0 if failures == 0 else 1)
