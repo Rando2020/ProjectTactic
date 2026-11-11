@@ -13,7 +13,7 @@ XDG_DATA_HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) XDG_CACHE_HOME=$(mktemp 
   res://tests/blooming_skills/ProtectionSkillsTest.tscn
 ```
 
-Expected headless result: `Protection practice: 143 checks, 0 failures`.
+Expected headless result: `Protection practice: 145 checks, 0 failures`.
 
 For rendered review, use an available display or the CI Xvfb runner. Do not use
 `--headless` with capture mode, because the headless display has no framebuffer.
@@ -26,7 +26,7 @@ XDG_DATA_HOME=$(mktemp -d) XDG_CONFIG_HOME=$(mktemp -d) XDG_CACHE_HOME=$(mktemp 
   -- --capture-dir=/tmp/protection-practice-captures
 ```
 
-Expected rendered result: `Protection practice: 152 checks, 0 failures`.
+Expected rendered result: `Protection practice: 154 checks, 0 failures`.
 Expected frames:
 
 - `protection-skills-menu.png`: Cover and Iron Wall in Kael's real Skills menu.
@@ -55,3 +55,7 @@ global transforms and compare absolute canvas depth with the actual terrain
 composite and actor. Both skills must dispatch their three aura shapes above
 those layers; Cover text must also be above them. Rendered feedback frames still
 require visual inspection, rather than treating node existence as pixel evidence.
+
+The two-recipient weapon fixtures orient both enemies for real 100% back hits
+and assert those chances before execution. The HP and no-interception checks
+therefore do not depend on presentation timing consuming the global RNG.

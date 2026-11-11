@@ -277,7 +277,10 @@ func weapon_fixture(weapon: String, guard_inside: bool = false) -> Dictionary:
 	guard.unit_data.base_stats.attack_range_max = 3
 	guard.job_mastery = {"counter_chance_bonus":0.75}
 	aim.job_mastery = {"counter_chance_bonus":-0.25}
-	aim.set_facing("N")
+	# Every actual recipient is a guaranteed back hit. A global seed cannot
+	# stabilize a 93%/88% secondary hit across rendered presentation timing.
+	for target: Unit in [aim, guard]:
+		target.set_facing(CombatFormula.FACING_OPPOSITE[CombatFormula.attack_direction(actor.grid_pos, target.grid_pos)])
 	for unit: Unit in manager.units.values():
 		manager.tactical_grid.tiles[unit.grid_pos].height = 0
 		unit.position = manager.tactical_grid._grid_to_local(unit.grid_pos)
@@ -333,6 +336,8 @@ func weapon_protection_cases() -> void:
 		scene.guard.job_mastery = {"counter_chance_bonus":-0.25}
 		var forecast: Dictionary = manager._attack_preview_for_tile(scene.aim.grid_pos)
 		check(forecast.affected_targets.map(func(value): return value.unit_id) == ["Enemy_1", "Enemy_2"], weapon + " forecast lists both footprint recipients once despite their Cover link")
+		check(forecast.affected_targets.all(func(value): return value.hit_pct == 100), weapon + " recipient fixture guarantees both physical hits through real facing rules")
+		print("%s area hit setup: facing=%s/%s; hit chances=%s" % [weapon, scene.aim.facing, scene.guard.facing, forecast.affected_targets.map(func(value): return value.hit_pct)])
 		seed(102)
 		await manager._commit_weapon_attack(scene.aim.grid_pos)
 		var hits := outcomes.filter(func(value): return value.has("feedback_owner"))
