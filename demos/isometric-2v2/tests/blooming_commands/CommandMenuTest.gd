@@ -161,7 +161,7 @@ func menus_case() -> void:
 	check(ui._magic_btn.disabled and not ui._ability_btn.disabled, "physical loadout disables empty Magic but enables Skills")
 	ui._ability_btn.pressed.emit()
 	await frames()
-	check(leaves() == ["mighty_strike", "defend", "delay_strike", "heavy_slash"] and schools().is_empty(), "Skills opens physical actions directly without a fake school")
+	check(leaves() == ["mighty_strike", "defend", "delay_strike", "heavy_slash", "cover_ally", "iron_wall"] and schools().is_empty(), "Skills opens physical actions directly without a fake school")
 	await capture("04-skills")
 	manager.cancel_pending_action()
 	manager.select_command("ability")
@@ -187,7 +187,7 @@ func affordability_case() -> void:
 	manager.units.kael.mp = 0
 	ui._ability_btn.pressed.emit()
 	await frames()
-	check(leaves().size() == 4, "low MP keeps all known Skills visible")
+	check(leaves().size() == 6, "low MP keeps all known Skills visible")
 	check(find_leaf("defend") != null and not find_leaf("defend").disabled, "free Defend remains available at zero MP")
 
 func unit_availability_case() -> void:

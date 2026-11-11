@@ -45,6 +45,7 @@ LEGACY_CONTRACTS = [
 LEGACY_SHUTDOWN_CONTRACTS = frozenset(fixture for fixture, _ in LEGACY_CONTRACTS)
 CONTRACTS = LEGACY_CONTRACTS + [
     ('test_job_mastery.tscn', '0 failures'),
+    ('test_warder_protection.tscn', '0 failures'),
     ('test_zane_impact_rig.tscn', '0 failures'),
     ('test_zane_impact_actions.tscn', '0 failures'),
     ('test_zane_impact_showcase.tscn', '0 failures'),

@@ -573,7 +573,9 @@ func play_dark_breath(from_grid: Vector2i, to_grid: Vector2i) -> void:
 
 ## Adds a VFX node as a child and ensures it renders above everything.
 func _spawn(node: CanvasItem) -> void:
-	node.z_index = 200
+	# Absolute children must use the FX foreground, above the courtyard composite
+	# and units; the legacy depth 200 is hidden beneath its terrain at depth 500.
+	node.z_index = z_index
 	node.z_as_relative = false
 	add_child(node)
 

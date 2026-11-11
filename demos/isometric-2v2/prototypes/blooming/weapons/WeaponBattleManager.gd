@@ -32,28 +32,32 @@ func select_command(command: String) -> void:
 func _attack_preview_for_tile(aim: Vector2i) -> Dictionary:
 	var actor := _living_unit(active_unit_id)
 	if not actor or test_weapon_id(actor.unit_id).is_empty():return super._attack_preview_for_tile(aim)
-	if aim not in tactical_grid.attack_tiles:return {}
+	if actor.has_status("iron_wall") or aim not in tactical_grid.attack_tiles:return {}
 	var recipients := _weapon_targets(actor,aim)
 	if recipients.is_empty():return {}
 	var primary := _unit_at_pos(aim)
 	if primary not in recipients:primary=recipients[0]
-	var forecast := ForecastCalculator.attack(actor,primary,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(primary.grid_pos))
+	var mods := {"allow_cover":test_weapon_id(actor.unit_id)=="sword"}
+	var forecast := ForecastCalculator.attack(actor,primary,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(primary.grid_pos),mods)
+	var primary_recipient: Unit = units.get(str(forecast.get("recipient_id",primary.unit_id)),primary)
 	forecast["actor_portrait"]=_portrait_path(actor)
-	forecast["target_portrait"]=_portrait_path(primary)
+	forecast["target_portrait"]=_portrait_path(primary_recipient)
 	forecast=_with_target_context(_with_position_context(forecast,actor,primary),actor,primary)
 	forecast["ability_name"]=Patterns.LABELS[test_weapon_id(actor.unit_id)]
 	forecast["jp_gain"]=0
 	forecast["weapon_area"]=Patterns.footprint(test_weapon_id(actor.unit_id),actor.grid_pos,aim,tactical_grid.tiles)
-	forecast["note"]="TEST weapon · enemies only · %d target(s) · aim %d,%d. Existing damage per target; not balanced." % [recipients.size(),aim.x,aim.y]
+	var protection_note := str(forecast.get("note",""))
+	forecast["note"]=(protection_note+". " if not protection_note.is_empty() else "")+"TEST weapon · enemies only · %d target(s) · aim %d,%d. Existing damage per target; not balanced." % [recipients.size(),aim.x,aim.y]
 	var affected: Array[Dictionary]=[]
 	var counter_names: Array[String]=[]
 	for target: Unit in recipients:
-		var one := ForecastCalculator.attack(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos))
-		if bool(one.get("can_counter",false)):counter_names.append(target.display_name)
-		affected.append({"unit_id":target.unit_id,"target_name":target.display_name,"hp_before":one.hp_before,"hp_after":one.hp_after,"max_hp":one.max_hp,"damage":one.damage,"hit_pct":one.hit_pct,"status_preview":one.get("status_preview",""),"can_counter":one.get("can_counter",false),"role":"primary" if target==primary else "weapon area"})
+		var one := ForecastCalculator.attack(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos),mods)
+		var recipient: Unit = units.get(str(one.get("recipient_id",target.unit_id)),target)
+		if bool(one.get("can_counter",false)):counter_names.append(recipient.display_name)
+		affected.append({"unit_id":recipient.unit_id,"target_name":recipient.display_name,"hp_before":one.hp_before,"hp_after":one.hp_after,"max_hp":one.max_hp,"damage":one.damage,"hit_pct":one.hit_pct,"status_preview":one.get("status_preview",""),"can_counter":one.get("can_counter",false),"role":"primary" if target==primary else "weapon area"})
 	forecast["can_counter"]=not counter_names.is_empty()
 	if not counter_names.is_empty():forecast["note"]+=" Counter possible: "+", ".join(counter_names)+"."
-	forecast["weapon_summary"]="Targets: "+", ".join(recipients.map(func(unit):return unit.display_name))+"\nEnemies only"
+	forecast["weapon_summary"]="Targets: "+", ".join(affected.map(func(row):return row.target_name))+"\nEnemies only"
 	if not counter_names.is_empty():forecast["weapon_summary"]+=" · Counter possible: "+", ".join(counter_names)
 	forecast["affected_targets"]=affected
 	return forecast
@@ -87,13 +91,15 @@ func _commit_weapon_attack(aim: Vector2i) -> void:
 	var records: Array[Dictionary]=[]
 	var counters: Array[Unit]=[]
 	for target: Unit in _weapon_targets(actor,aim):
-		var result := combat_resolver.resolve_attack(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos),"slash",false,{},_presentation_feedback_owner())
+		var result := combat_resolver.resolve_attack(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos),"slash",false,{"allow_cover":weapon=="sword"},_presentation_feedback_owner())
 		records.append(_presentation_record(target,result))
-		log_message.emit("%s · %s → %s: %s" % [actor.display_name,weapon.capitalize(),target.display_name,"miss" if result.get("missed",false) else "%d damage" % result.get("hp_damage",0)])
-		if result.get("counter",false):counters.append(target)
+		var recipient := CombatFormula.outcome_recipient(target,result)
+		if not is_instance_valid(recipient):continue
+		log_message.emit("%s · %s → %s: %s" % [actor.display_name,weapon.capitalize(),recipient.display_name,"miss" if result.get("missed",false) else "%d damage" % result.get("hp_damage",0)])
+		if result.get("counter",false):counters.append(recipient)
 	_present_action_outcomes(records)
 	for target: Unit in counters:
-		if actor.hp>0 and target.hp>0:_execute_counter_attack(target,actor)
+		if is_instance_valid(actor) and actor.hp>0 and is_instance_valid(target) and target.hp>0:_execute_counter_attack(target,actor)
 	tactical_grid.clear_highlights()
 	active_command=""
 	active_unit_has_acted=true
@@ -103,7 +109,7 @@ func _commit_weapon_attack(aim: Vector2i) -> void:
 	else:await _finish_player_action()
 func _auto_try_attack(actor: Unit) -> bool:
 	if not actor or test_weapon_id(actor.unit_id).is_empty():return await super._auto_try_attack(actor)
-	if active_unit_has_acted:return false
+	if active_unit_has_acted or actor.has_status("iron_wall"):return false
 	select_command("attack")
 	await _timer(0.08).timeout
 	if current_phase!=Phase.PLAYER_TURN or active_unit_id!=actor.unit_id:return true
@@ -114,8 +120,10 @@ func _auto_try_attack(actor: Unit) -> bool:
 		if recipients.is_empty():continue
 		var score:=0.0
 		for target: Unit in recipients:
-			var damage:=_predict_attack_damage(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos))
-			score+=float(damage)+(1000.0 if damage>=target.hp else 0.0)
+			var formula:=CombatFormula.calculate_physical_attack(actor,target,tactical_grid.get_tile(actor.grid_pos),tactical_grid.get_tile(target.grid_pos),{"allow_cover":test_weapon_id(actor.unit_id)=="sword"})
+			var recipient:=CombatFormula.outcome_recipient(target,formula)
+			var damage:=int(formula.get("hp_damage",0))
+			score+=float(damage)+(1000.0 if is_instance_valid(recipient) and damage>=recipient.hp else 0.0)
 		if score>best_score:best_score=score;best_aim=aim
 	if best_aim==Vector2i(-1,-1):
 		cancel_pending_action()

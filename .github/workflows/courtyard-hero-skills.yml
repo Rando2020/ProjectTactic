@@ -74,6 +74,16 @@ jobs:
               test -s "build/skill-evidence/caster-motion/$ability-$phase.png"
             done
           done
+      - name: Verify protection skills and real practice feedback
+        shell: bash
+        run: |
+          set -o pipefail
+          XDG_DATA_HOME="$(mktemp -d)" timeout 120 godot --headless --path demos/isometric-2v2 res://tests/blooming_skills/ProtectionSkillsTest.tscn 2>&1 | tee build/skill-evidence/protection-native.log
+          XDG_DATA_HOME="$(mktemp -d)" timeout 180 xvfb-run -a godot --audio-driver Dummy --path demos/isometric-2v2 --rendering-method gl_compatibility res://tests/blooming_skills/ProtectionSkillsTest.tscn -- --capture-dir="$PWD/build/skill-evidence/protection" 2>&1 | tee build/skill-evidence/protection-rendered.log
+          if grep -E 'SCRIPT ERROR:|FAIL:|ERROR:' build/skill-evidence/protection-*.log; then exit 1; fi
+          for image in protection-skills-menu cover-ally-review cover-feedback cover-applied iron-wall-review iron-wall-feedback iron-wall-active; do
+            test -s "build/skill-evidence/protection/$image.png"
+          done
       - name: Capture real skill targeting and delay previews
         shell: bash
         run: |

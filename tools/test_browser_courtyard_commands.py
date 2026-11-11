@@ -35,7 +35,7 @@ class CommandMenuTests(unittest.TestCase):
             browser.assert_command_menu(mixed, 'magic', 'black', ['fire', 'thunderstrike', 'void_pulse'])
 
     def test_skill_gate_requires_exact_owned_skills_without_school_row(self):
-        skills = ['mighty_strike', 'defend', 'delay_strike', 'heavy_slash']
+        skills = ['mighty_strike', 'defend', 'delay_strike', 'heavy_slash', 'cover_ally', 'iron_wall']
         valid = self.menu(category='skills', ids=skills)
         browser.assert_command_menu(valid, 'skills', '', skills)
         valid['entries'].append({'magic_school': 'black', 'visible': True, 'disabled': False})

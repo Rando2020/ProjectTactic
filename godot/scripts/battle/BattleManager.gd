@@ -250,6 +250,8 @@ func _anchor_pulse(anchor: Unit) -> void:
 
 
 func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
+	if unit.has_status("iron_wall"):
+		return _enemy_intent(unit, "hold", null, "Iron Wall", "Shield stance: cannot act until it expires.")
 	var hp_ratio := float(unit.hp) / float(max(unit.unit_data.base_stats.hp, 1))
 	var nearest := _nearest_player(unit)
 	if not nearest:
@@ -266,7 +268,7 @@ func _evaluate_enemy_intent(unit: Unit) -> Dictionary:
 		return kill_spell
 	var kill_target := _find_kill_attack(unit)
 	if kill_target:
-		return _enemy_intent(unit, "attack", kill_target, "Finish", "Can defeat %s." % kill_target.display_name)
+		return _enemy_intent(unit, "attack", kill_target, "Finish", "Can defeat %s." % kill_target.get_damage_recipient(unit).display_name)
 	var spell_intent := _find_best_spell_intent(unit)
 	if not spell_intent.is_empty():
 		return spell_intent
@@ -288,6 +290,9 @@ func _enemy_intent(unit: Unit, kind: String, target: Unit, action_name: String, 
 	if target:
 		summary += " -> %s" % target.display_name
 	var details := _enemy_intent_details(unit, kind, target, ability, move_to)
+	if target and str(details.get("recipient_id",target.unit_id)) != target.unit_id:
+		target_name = "%s (covering %s)" % [details.recipient_name,target.display_name]
+		summary = "%s intends to %s -> %s" % [unit.display_name,action_name.to_lower(),target_name]
 
 	# Determine element for display purposes
 	var element := "physical"
@@ -347,31 +352,39 @@ func _enemy_intent_details(unit: Unit, kind: String, target: Unit, ability: Dict
 		var tile_att := tactical_grid.get_tile(attack_pos)
 		var tile_tar := tactical_grid.get_tile(target.grid_pos)
 		var formula := CombatFormula.calculate_physical_attack(unit, target, tile_att, tile_tar)
+		var recipient := CombatFormula.outcome_recipient(target,formula)
+		details["recipient_id"] = recipient.unit_id
+		details["recipient_name"] = recipient.display_name
+		details["recipient_hp_before"] = recipient.hp
 		details["damage"] = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 		details["hit_pct"] = int(formula.get("hit_pct", 88))
 		details["crit_pct"] = int(formula.get("crit_pct", 0))
-		details["target_hp_after"] = max(target.hp - int(details["damage"]), 0)
-		details["can_ko"] = int(details["damage"]) >= target.hp
+		details["target_hp_after"] = max(recipient.hp - int(details["damage"]), 0)
+		details["can_ko"] = int(details["damage"]) >= recipient.hp
 		details["affinity_label"] = str(formula.get("facing_label", "front")).capitalize()
 		details["modifier_breakdown"] = _intent_formula_breakdown(formula, "physical")
 	elif kind == "spell" and not ability.is_empty():
 		var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 		var formula := {}
 		if spell_type == "physical":
-			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
+			formula = CombatFormula.calculate_physical_attack(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100)), "allow_cover":not _ability_has_area_effect(ability)})
 		else:
 			var base_power: int = int(ability.get("base_power", 100))
 			var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 			var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
-			formula = CombatFormula.calculate_magical_attack(unit, target, spell_type, base_power, {"power_mult": el_mult})
+			formula = CombatFormula.calculate_magical_attack(unit, target, spell_type, base_power, {"power_mult": el_mult, "allow_cover":not _ability_has_area_effect(ability)})
 		details["element"] = spell_type
 		if _ability_has_area_effect(ability):
 			details["area_label"] = _ability_area_label(ability)
+		var recipient := CombatFormula.outcome_recipient(target,formula)
+		details["recipient_id"] = recipient.unit_id
+		details["recipient_name"] = recipient.display_name
+		details["recipient_hp_before"] = recipient.hp
 		details["damage"] = int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 		details["hit_pct"] = int(formula.get("hit_pct", 100))
 		details["crit_pct"] = int(formula.get("crit_pct", 0))
-		details["target_hp_after"] = max(target.hp - int(details["damage"]), 0)
-		details["can_ko"] = int(details["damage"]) >= target.hp
+		details["target_hp_after"] = max(recipient.hp - int(details["damage"]), 0)
+		details["can_ko"] = int(details["damage"]) >= recipient.hp
 		details["affinity_label"] = str(formula.get("affinity_label", ""))
 		details["modifier_breakdown"] = _intent_formula_breakdown(formula, spell_type)
 	elif kind == "heal":
@@ -387,7 +400,7 @@ func _enemy_intent_danger(kind: String, target: Unit, details: Dictionary) -> St
 		return "low"
 	if bool(details.get("can_ko", false)):
 		return "lethal"
-	if target and int(details.get("damage", 0)) >= int(ceil(float(max(target.hp, 1)) * 0.50)):
+	if target and int(details.get("damage", 0)) >= int(ceil(float(max(int(details.get("recipient_hp_before",target.hp)), 1)) * 0.50)):
 		return "high"
 	if kind == "advance":
 		return "medium"
@@ -413,7 +426,7 @@ func _ability_target_in_range(unit: Unit, target: Unit, ability: Dictionary) -> 
 	if not unit or not target:
 		return false
 	var distance := GridSystem.manhattan(unit.grid_pos, target.grid_pos)
-	var bounds := AbilityDB.get_range(ability)
+	var bounds := AbilityDB.get_range(ability,unit)
 	return distance >= bounds.x and distance <= bounds.y
 
 
@@ -519,6 +532,7 @@ func _enemy_intent_is_valid(unit: Unit, intent: Dictionary) -> bool:
 	if not unit or unit.hp <= 0:
 		return false
 	var kind: String = str(intent.get("kind", "hold"))
+	if unit.has_status("iron_wall") and kind not in ["hold", "retreat"]: return false
 	match kind:
 		"hold":
 			return true
@@ -580,6 +594,7 @@ func _enemy_move_tile_is_valid(unit: Unit, pos: Vector2i) -> bool:
 
 
 func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
+	if unit.has_status("iron_wall"): return
 	_face_toward(unit, target.grid_pos)
 	var tile_att := tactical_grid.get_tile(unit.grid_pos)
 	var tile_tar := tactical_grid.get_tile(target.grid_pos)
@@ -588,7 +603,11 @@ func _enemy_attack(unit: Unit, target: Unit, after_move: bool = false) -> void:
 	if not await _present_action(unit, target.grid_pos, attack_kind, target):
 		return
 	var result := combat_resolver.resolve_attack(unit, target, tile_att, tile_tar, attack_kind, false, {}, _presentation_feedback_owner())
+	target = CombatFormula.outcome_recipient(target,result)
 	_present_action_outcomes([_presentation_record(target,result)])
+	if not is_instance_valid(target):
+		active_unit_has_acted = true
+		return
 	active_unit_has_acted = true
 	if result.get("missed", false):
 		log_message.emit("%s attacks but misses!" % unit.display_name)
@@ -661,7 +680,8 @@ func _find_kill_attack(unit: Unit) -> Unit:
 		if GridSystem.manhattan(unit.grid_pos, target.grid_pos) > unit.unit_data.base_stats.attack_range_max:
 			continue
 		var amount := _predict_attack_damage(unit, target, tactical_grid.get_tile(unit.grid_pos), tactical_grid.get_tile(target.grid_pos))
-		if amount >= target.hp:
+		var recipient := target.get_damage_recipient(unit)
+		if amount >= recipient.hp:
 			return target
 	return null
 
@@ -684,8 +704,9 @@ func _find_kill_spell(unit: Unit) -> Dictionary:
 			if not _ability_target_in_range(unit, target, ability):
 				continue
 			var amount := _predict_spell_damage(unit, target, ability)
-			if amount >= target.hp:
-				return _enemy_intent(unit, "spell", target, ability.get("display_name", ab_id), "Can defeat %s." % target.display_name, ability)
+			var recipient := target.get_damage_recipient(unit,not _ability_has_area_effect(ability))
+			if amount >= recipient.hp:
+				return _enemy_intent(unit, "spell", target, ability.get("display_name", ab_id), "Can defeat %s." % recipient.display_name, ability)
 	return {}
 
 
@@ -778,6 +799,7 @@ func _run_auto_player_turn(unit_id: String) -> void:
 
 
 func _auto_try_attack(unit: Unit) -> bool:
+	if unit.has_status("iron_wall"): return false
 	if not unit or active_unit_has_acted:
 		return false
 	select_command("attack")
@@ -909,9 +931,10 @@ func _play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
 
 
 func _emit_action_state() -> void:
+	var actor := _living_unit(active_unit_id)
 	action_state_changed.emit(
 		current_phase == Phase.PLAYER_TURN and not active_unit_has_moved,
-		current_phase == Phase.PLAYER_TURN and not active_unit_has_acted,
+		current_phase == Phase.PLAYER_TURN and not active_unit_has_acted and actor != null and not actor.has_status("iron_wall"),
 		false
 	)
 
@@ -936,6 +959,9 @@ func select_command(command: String) -> void:
 		return
 	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
+		return
+	if command in ["attack", "ability"] and unit.has_status("iron_wall"):
+		command_hint_changed.emit("Iron Wall: choose Move or Wait until the stance expires.")
 		return
 	if command == "move" and active_unit_has_moved:
 		log_message.emit("%s has already moved." % unit.display_name)
@@ -1004,7 +1030,7 @@ func select_ability(ability_id: String) -> void:
 	var unit: Unit = _living_unit(active_unit_id)
 	if not unit:
 		return
-	if active_unit_has_acted or ability_id not in unit.unit_data.abilities:
+	if active_unit_has_acted or unit.has_status("iron_wall") or ability_id not in unit.unit_data.abilities:
 		return
 	var ability: Dictionary = AbilityDB.get_ability(ability_id)
 	if not _silence_allows_ability(unit, ability):
@@ -1021,7 +1047,7 @@ func select_ability(ability_id: String) -> void:
 	action_preview_changed.emit({})
 	_emit_action_state()
 	command_hint_changed.emit("%s: click a purple CAST tile or target." % ability.get("display_name", ability_id))
-	var bounds := AbilityDB.get_range(ability)
+	var bounds := AbilityDB.get_range(ability,unit)
 	var range_val: int = bounds.y
 	var target_type: String = ability.get("target_type", "enemy")
 	# Self-cast or range-0  resolve immediately on the caster's tile
@@ -1088,6 +1114,15 @@ func _execute_ability(caster: Unit, target: Unit, ability: Dictionary,
 	return bool(execution["executed"])
 
 
+
+## Recheck after anticipation before MP/status mutation; stale protection targets
+## are not accepted and do not waste the player's action.
+func _protection_cast_valid(caster: Unit, target: Unit, ability: Dictionary) -> bool:
+	match str(ability.get("id","")):
+		"cover_ally": return caster.can_cover_ally(target)
+		"iron_wall": return target == caster and caster.mp >= int(ability.get("mp_cost",10)) and not caster.has_status("iron_wall")
+	return true
+
 ## An executed miss/immune hit still spends the action. Outcome is the resolver's
 ## direct result, not a later net HP delta (which could include other effects).
 ## skip_setup=true leaves MP, presentation and target logging to the AoE wrapper.
@@ -1095,11 +1130,15 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		skip_setup: bool = false, source_status_requires_hit: bool = false, feedback_owner: StringName = &"") -> Dictionary:
 	if not is_instance_valid(caster) or not is_instance_valid(target) or caster.hp <= 0 or target.hp <= 0:
 		return {"executed": false, "outcome": {}}
-	if not _silence_allows_ability(caster, ability):
+	if caster.has_status("iron_wall") or not _silence_allows_ability(caster, ability):
 		return {"executed": false, "outcome": {}}
 	if ability.get("id", "") == "quickstep":
 		var accepted := await _execute_quickstep(caster, target, skip_setup)
 		return {"executed": accepted, "outcome": {}}
+	if not _protection_cast_valid(caster,target,ability):
+		return {"executed":false,"outcome":{}}
+	var aimed_pos := target.grid_pos
+	var allow_cover := not _ability_has_area_effect(ability)
 	# Long Shot's dead zone applies at admission and contact, not to AoE/chain hops.
 	var check_range: bool = not skip_setup and ability.get("id", "") == "long_shot"
 	if check_range and not _ability_target_in_range(caster, target, ability):
@@ -1110,12 +1149,15 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		if not await _present_action(caster, target.grid_pos, str(ability.get("vfx_mode", "cast")), target, str(ability.get("id",""))):
 			return {"executed": false, "outcome": {}}
 		# Revalidate after presentation: Silence may arrive after planning/admission.
-		if not _silence_allows_ability(caster, ability):
+		if caster.has_status("iron_wall") or not _silence_allows_ability(caster, ability):
 			_cancel_action_presentation()
 			return {"executed": false, "outcome": {}}
 		if check_range and not _ability_target_in_range(caster, target, ability):
 			_cancel_action_presentation()
 			return {"executed": false, "outcome": {}}
+		if not _protection_cast_valid(caster,target,ability):
+			_cancel_action_presentation()
+			return {"executed":false,"outcome":{}}
 		feedback_owner = _presentation_feedback_owner()
 		caster.mp = max(caster.mp - ability.get("mp_cost", 0), 0)
 		tactical_grid.clear_highlights()
@@ -1127,6 +1169,18 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 	var ab_name:     String = ability.get("display_name", "?")
 	# Chain falloff may round a damaging source to zero power, not status-only.
 	var status_requires_hit := source_status_requires_hit or AbilityDB.secondary_status_requires_hit(ability)
+
+	if ability.get("id", "") == "cover_ally":
+		if not caster.cover_ally(target): return {"executed":false,"outcome":{}}
+		var covered := {"status_applied":{"id":"covering","display_name":"Covering " + target.display_name,"duration":1}}
+		var effects := get_node_or_null("/root/VFX") as VFXManager
+		if effects:
+			effects.play_aura(caster.grid_pos,Color(0.45,0.8,1.0))
+			effects.play_tactical_tag(target.grid_pos,"COVER: " + caster.display_name,Color(0.45,0.8,1.0))
+		if not skip_setup:
+			log_message.emit("%s covers %s until the protector's next turn." % [caster.display_name,target.display_name])
+			_present_action_outcomes([_presentation_record(caster,covered)])
+		return {"executed":true,"outcome":covered}
 
 	#  Buff abilities (Haste, Protect, )
 	if spell_type == "buff" or ability.get("type", "") == "buff":
@@ -1158,7 +1212,11 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		var tile_c := tactical_grid.get_tile(caster.grid_pos)
 		var tile_t := tactical_grid.get_tile(target.grid_pos)
 		var ab_vfx: String = ability.get("vfx_mode", "slash")
-		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power}, feedback_owner)
+		var result := combat_resolver.resolve_attack(caster, target, tile_c, tile_t, ab_vfx, false, {"base_power": base_power, "allow_cover":allow_cover}, feedback_owner)
+		target = CombatFormula.outcome_recipient(target,result)
+		if not is_instance_valid(target):
+			if not skip_setup: _present_action_outcomes([_presentation_record(null,result)])
+			return {"executed":true,"outcome":result}
 		if not skip_setup:
 			if result.get("missed", false):
 				log_message.emit("%s swings but misses! (blind)" % caster.display_name)
@@ -1174,29 +1232,33 @@ func _execute_ability_with_result(caster: Unit, target: Unit, ability: Dictionar
 		if not skip_setup:
 			_award_jp(caster, "action_used")
 		# Volatile explosion on kill
-		if target.hp <= 0:
+		if is_instance_valid(target) and target.hp <= 0:
 			_check_volatile_explosion(target)
 			_check_boon_on_kill(caster, target)
 		return {"executed": true, "outcome": result}
 
 	#  Spell (elemental / dark / etc.)
-	var spell_result := combat_resolver.resolve_spell(caster, target, spell_type, base_power, feedback_owner)
+	var spell_result := combat_resolver.resolve_spell(caster, target, spell_type, base_power, feedback_owner, allow_cover)
+	target = CombatFormula.outcome_recipient(target,spell_result)
 	# Terrain ignite regardless of skip_setup
 	if spell_type == "fire":
-		var tgt_terrain: String = tactical_grid.get_tile(target.grid_pos).get("terrain", "")
+		var tgt_terrain: String = tactical_grid.get_tile(aimed_pos).get("terrain", "")
 		if tgt_terrain in ["grass", "road"]:
-			tactical_grid.ignite_tile(target.grid_pos)
+			tactical_grid.ignite_tile(aimed_pos)
 			if not skip_setup:
 				log_message.emit("The ground catches fire!")
 		# JP award for spell + weakness bonus
 		if not skip_setup:
 			_award_jp(caster, "action_used")
 		# On kill checks
-		if target.hp <= 0:
+		if is_instance_valid(target) and target.hp <= 0:
 			_check_volatile_explosion(target)
 			_check_boon_on_kill(caster, target)
 			if not skip_setup: _award_jp(caster, "boss_clear" if target.has_meta("is_boss") else "battle_clear")
 
+	if not is_instance_valid(target):
+		if not skip_setup: _present_action_outcomes([_presentation_record(null,spell_result)])
+		return {"executed":true,"outcome":spell_result}
 	if not skip_setup:
 		log_message.emit("%s casts %s on %s! %s" % [caster.display_name, ab_name, target.display_name, _combat_outcome_text(spell_result)])
 	# Ground/on-cast effects above are independent; only this secondary is gated.
@@ -1231,11 +1293,11 @@ static func _combat_outcome_text(outcome: Dictionary) -> String:
 ## Execute an AoE ability centred on a grid tile.
 ## Deducts MP once, logs once, then hits every valid unit in the pattern.
 func _execute_aoe_ability(caster: Unit, center: Vector2i, ability: Dictionary) -> bool:
-	if not _silence_allows_ability(caster, ability):
+	if caster.has_status("iron_wall") or not _silence_allows_ability(caster, ability):
 		return false
 	if not await _present_action(caster, center, "cast", null, str(ability.get("id",""))):
 		return false
-	if not _silence_allows_ability(caster, ability):
+	if caster.has_status("iron_wall") or not _silence_allows_ability(caster, ability):
 		_cancel_action_presentation()
 		return false
 	if center != caster.grid_pos:
@@ -1523,7 +1585,7 @@ func _check_boon_on_kill(killer: Unit, dead_unit: Unit) -> void:
 
 
 func _execute_counter_attack(counter_unit: Unit, original_attacker: Unit) -> void:
-	if not is_instance_valid(counter_unit) or counter_unit.hp <= 0:
+	if not is_instance_valid(counter_unit) or counter_unit.hp <= 0 or counter_unit.has_status("iron_wall"):
 		return
 	if not is_instance_valid(original_attacker) or original_attacker.hp <= 0:
 		return
@@ -1730,6 +1792,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 		return
 	if is_resolving_action:
 		return
+	var actor := _living_unit(active_unit_id)
+	if not actor or actor.has_status("iron_wall"): return
 	if active_command == "attack":
 		var attacker: Unit = _living_unit(active_unit_id)
 		var target:   Unit = _living_unit(unit_id)
@@ -1745,6 +1809,8 @@ func _on_unit_clicked(unit_id: String) -> void:
 			])
 			action_preview_changed.emit({})
 			return
+		var aimed_pos := target.grid_pos
+		var aimed_unit: WeakRef = weakref(target)
 		_face_toward(attacker, target.grid_pos)
 		var tile_att := tactical_grid.get_tile(attacker.grid_pos)
 		var tile_tar := tactical_grid.get_tile(target.grid_pos)
@@ -1753,7 +1819,12 @@ func _on_unit_clicked(unit_id: String) -> void:
 		if not await _present_action(attacker, target.grid_pos, atk_vfx, target):
 			return
 		var result := combat_resolver.resolve_attack(attacker, target, tile_att, tile_tar, atk_vfx, false, {}, _presentation_feedback_owner())
+		target = CombatFormula.outcome_recipient(target,result)
 		_present_action_outcomes([_presentation_record(target,result)])
+		if not is_instance_valid(target):
+			active_unit_has_acted = true
+			await _finish_player_action()
+			return
 		tactical_grid.clear_highlights()
 		active_command = ""
 		if result.get("missed", false):
@@ -1770,7 +1841,7 @@ func _on_unit_clicked(unit_id: String) -> void:
 		var tb_bonuses := RunBonusesUtil.for_current_run()
 		if not result.get("missed", false):
 			var dmg_dealt: int = result.get("hp_damage", 0) + result.get("temper_damage", 0)
-			_apply_tactical_boons(attacker, target, tb_bonuses, dmg_dealt)
+			_apply_tactical_boons(attacker, target, tb_bonuses, dmg_dealt, aimed_pos if result.has("recipient_ref") else Vector2i(-1,-1), aimed_unit if result.has("recipient_ref") else null)
 			# Kill checks for basic attacks (volatile + boon on-kill effects)
 			if target.hp <= 0:
 				_check_volatile_explosion(target)
@@ -1903,19 +1974,19 @@ func _move_preview(grid_pos: Vector2i) -> Dictionary:
 func _attack_preview_for_tile(grid_pos: Vector2i) -> Dictionary:
 	var attacker: Unit = _living_unit(active_unit_id)
 	var target := _unit_at_pos(grid_pos)
-	if not attacker or not target or target.team == attacker.team or grid_pos not in tactical_grid.attack_tiles:
+	if not attacker or attacker.has_status("iron_wall") or not target or target.team == attacker.team or grid_pos not in tactical_grid.attack_tiles:
 		return {}
 	var tile_att := tactical_grid.get_tile(attacker.grid_pos)
 	var tile_tar := tactical_grid.get_tile(target.grid_pos)
 	var fc := ForecastCalculator.attack(attacker, target, tile_att, tile_tar)
 	fc["actor_portrait"] = _portrait_path(attacker)
-	fc["target_portrait"] = _portrait_path(target)
+	fc["target_portrait"] = _portrait_path(units.get(str(fc.get("recipient_id",target.unit_id)),target))
 	return _with_run_bonus_context(_with_position_context(fc, attacker, target), attacker, target)
 
 
 func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dictionary:
 	var caster: Unit = _living_unit(active_unit_id)
-	if not caster or grid_pos not in tactical_grid.ability_tiles:
+	if not caster or caster.has_status("iron_wall") or grid_pos not in tactical_grid.ability_tiles:
 		return {}
 	var target := _unit_at_pos(grid_pos)
 	if ability.get("id", "") == "long_shot" and (not target or not _ability_target_in_range(caster, target, ability)):
@@ -1937,12 +2008,13 @@ func _ability_preview_for_tile(grid_pos: Vector2i, ability: Dictionary) -> Dicti
 			"hp_before": 0, "hp_after": 0, "max_hp": 1,
 			"status_preview": "", "jp_gain": 6, "is_heal": false, "is_buff": false,
 		}
+	if ability.get("id", "") == "cover_ally" and not caster.can_cover_ally(target): return {}
 	var target_type: String = ability.get("target_type", "enemy")
 	var valid := (target_type == "enemy" and target.team != caster.team) or 		(target_type != "enemy" and target.team == caster.team)
 	if not valid: return {}
 	var spell_fc := ForecastCalculator.spell(caster, target, ability, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos))
 	spell_fc["actor_portrait"] = _portrait_path(caster)
-	spell_fc["target_portrait"] = _portrait_path(target)
+	spell_fc["target_portrait"] = _portrait_path(units.get(str(spell_fc.get("recipient_id",target.unit_id)),target))
 	return _with_run_bonus_context(_with_position_context(spell_fc, caster, target), caster, target)
 
 
@@ -2052,12 +2124,12 @@ func _predict_attack_damage(attacker: Unit, target: Unit, tile_attacker: Diction
 func _predict_spell_damage(caster: Unit, target: Unit, ability: Dictionary) -> int:
 	var spell_type: String = CombatFormula.normalize_element(str(ability.get("spell_type", "fire")))
 	if spell_type == "physical":
-		var physical := CombatFormula.calculate_physical_attack(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100))})
+		var physical := CombatFormula.calculate_physical_attack(caster, target, tactical_grid.get_tile(caster.grid_pos), tactical_grid.get_tile(target.grid_pos), {"base_power": int(ability.get("base_power", 100)), "allow_cover":not _ability_has_area_effect(ability)})
 		return int(physical.get("hp_damage", 0))
 	var base_power: int = int(ability.get("base_power", 100))
 	var bonuses: Dictionary = RunBonusesUtil.for_current_run()
 	var el_mult: float = float(bonuses["elemental_mult"].get(spell_type, 1.0))
-	var formula := CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult})
+	var formula := CombatFormula.calculate_magical_attack(caster, target, spell_type, base_power, {"power_mult": el_mult, "allow_cover":not _ability_has_area_effect(ability)})
 	return int(formula.get("hp_damage", formula.get("incoming_damage", 0)))
 
 
@@ -2139,7 +2211,8 @@ func _process_terrain_hazards(unit: Unit) -> void:
 	match tile.get("terrain", ""):
 		"burning":
 			var dmg: int = max(1, int(unit.unit_data.base_stats.hp * 0.05))
-			var result := unit.receive_damage(dmg, "magical")
+			# Preserve terrain's existing Defend/Ether balance, bypass Iron Wall only.
+			var result := unit.receive_damage(dmg, "magical", false)
 			var dealt: int = result.get("hp_damage", 0)
 			log_message.emit("%s takes %d fire damage from burning ground!" % [unit.display_name, dealt])
 			var vfx_node := get_node_or_null("/root/VFX")
@@ -2180,7 +2253,7 @@ func _on_status_tick(unit_id: String, status_id: String, damage: int) -> void:
 ## Apply all tactical boon follow-up effects after a player attack resolves.
 ## Called only for player-side attacks; `damage_dealt` = hp_damage + temper_damage.
 func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
-		bonuses: Dictionary, damage_dealt: int) -> void:
+		bonuses: Dictionary, damage_dealt: int, covered_aim: Vector2i = Vector2i(-1,-1), original_aim: WeakRef = null) -> void:
 	if not is_instance_valid(attacker) or not is_instance_valid(primary_target):
 		return
 	var vfx := get_node_or_null("/root/VFX") as VFXManager
@@ -2255,11 +2328,12 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 		_ruinous_hit_counter += 1
 		if _ruinous_hit_counter >= rf_int:
 			_ruinous_hit_counter = 0
+			var field_pos := covered_aim if covered_aim.x >= 0 else primary_target.grid_pos
 			if tactical_grid.has_method("ignite_tile"):
-				tactical_grid.ignite_tile(primary_target.grid_pos)
-			log_message.emit("Ruinous Field! Ground ignites under %s!" % primary_target.display_name)
+				tactical_grid.ignite_tile(field_pos)
+			log_message.emit("Ruinous Field! Ground ignites at %d,%d!" % [field_pos.x,field_pos.y])
 			if vfx:
-				vfx.play_fire(primary_target.grid_pos)
+				vfx.play_fire(field_pos)
 
 	#  Knockback
 	var kb: float = bonuses.get("knockback_chance", 0.0)
@@ -2269,14 +2343,14 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 
 	#  Cleave
 	if bonuses.get("cleave", false) and is_instance_valid(primary_target):
-		for cpos: Vector2i in _get_cleave_tiles(attacker.grid_pos, primary_target.grid_pos):
+		for cpos: Vector2i in _get_cleave_tiles(attacker.grid_pos, covered_aim if covered_aim.x >= 0 else primary_target.grid_pos):
 			var ctgt := _unit_at_pos(cpos)
 			if not ctgt or ctgt.team == attacker.team or ctgt.hp <= 0:
 				continue
 			var cr := combat_resolver.resolve_attack(
 				attacker, ctgt,
 				tactical_grid.get_tile(attacker.grid_pos),
-				tactical_grid.get_tile(cpos), "slash", true)
+				tactical_grid.get_tile(cpos), "slash", true, {"allow_cover":false})
 			if not cr.get("missed", false):
 				log_message.emit("Cleave hits %s for %d!" % [ctgt.display_name, cr.get("hp_damage", 0)])
 				if ctgt.hp <= 0:
@@ -2287,13 +2361,13 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 
 	#  Piercing Line
 	if bonuses.get("piercing_line", false) and is_instance_valid(primary_target):
-		var ppos := _get_pierce_tile(attacker.grid_pos, primary_target.grid_pos)
+		var ppos := _get_pierce_tile(attacker.grid_pos, covered_aim if covered_aim.x >= 0 else primary_target.grid_pos)
 		var ptgt := _unit_at_pos(ppos)
 		if ptgt and ptgt.team != attacker.team and ptgt.hp > 0:
 			var pr := combat_resolver.resolve_attack(
 				attacker, ptgt,
 				tactical_grid.get_tile(attacker.grid_pos),
-				tactical_grid.get_tile(ppos), "slash", true)
+				tactical_grid.get_tile(ppos), "slash", true, {"allow_cover":false})
 			if not pr.get("missed", false):
 				log_message.emit("Pierce! Hits %s for %d!" % [ptgt.display_name, pr.get("hp_damage", 0)])
 				if ptgt.hp <= 0:
@@ -2304,17 +2378,21 @@ func _apply_tactical_boons(attacker: Unit, primary_target: Unit,
 
 	#  Echo Strike
 	var echo: float = bonuses.get("echo_strike_chance", 0.0)
-	if echo > 0.0 and is_instance_valid(primary_target) and primary_target.hp > 0:
+	# Each direct follow-up starts from the same aim, then independently selects
+	# one living protector. Do not chain Cover through the previous recipient.
+	var echo_aim: Unit = original_aim.get_ref() as Unit if original_aim else primary_target
+	if echo > 0.0 and is_instance_valid(echo_aim) and echo_aim.hp > 0:
 		if randf() < echo:
 			var er := combat_resolver.resolve_attack(
-				attacker, primary_target,
+				attacker, echo_aim,
 				tactical_grid.get_tile(attacker.grid_pos),
-				tactical_grid.get_tile(primary_target.grid_pos), "slash", true)
-			if not er.get("missed", false):
+				tactical_grid.get_tile(echo_aim.grid_pos), "slash", true)
+			var echo_target := CombatFormula.outcome_recipient(echo_aim,er)
+			if not er.get("missed", false) and is_instance_valid(echo_target):
 				log_message.emit("Echo Strike! Second hit: %d damage!" % er.get("hp_damage", 0))
-				if primary_target.hp <= 0:
-					_check_volatile_explosion(primary_target)
-					_check_boon_on_kill(attacker, primary_target)
+				if echo_target.hp <= 0:
+					_check_volatile_explosion(echo_target)
+					_check_boon_on_kill(attacker, echo_target)
 					if wc_pct > 0.0:
 						_wrath_crescendo_stacks = mini(_wrath_crescendo_stacks + 1, 10)
 
@@ -2541,6 +2619,8 @@ func _presentation_feedback_owner() -> StringName:
 	return &"zane_impact_v1" if not _action_presentation_context.is_empty() and int(_action_presentation_context.ticket) == action_lifecycle.ticket else &""
 
 func _presentation_record(target: Unit, outcome: Dictionary) -> Dictionary:
+	if outcome.has("recipient_ref"):
+		return {"target_id":outcome.recipient_id,"target_ref":outcome.recipient_ref,"grid_pos":outcome.recipient_grid_pos,"outcome":outcome.duplicate(true)}
 	return {"target_id":target.unit_id,"target_ref":weakref(target),"grid_pos":target.grid_pos,"outcome":outcome.duplicate(true)}
 
 func _present_action_outcomes(records: Array[Dictionary]) -> void:
