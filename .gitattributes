@@ -61,3 +61,9 @@ godot/assets/characters/portraits/zane-portrait-illustrated.png -filter -diff -m
 
 # Painted chapel runtime background, available in clean checkouts.
 godot/assets/environments/ruined-chapel/chapel-painted-background.png -filter -diff -merge -text
+
+# Approved fireball atlas must be available in clean browser/CI checkouts.
+godot/assets/vfx/fireball-sequence-v1.png -filter -diff -merge -text
+
+# Provisional review PNGs remain real ordinary Git blobs.
+godot/assets/characters/iso-v02/*.png -filter -diff -merge -text

@@ -222,40 +222,10 @@ func play_target_ping(grid_pos: Vector2i, color: Color) -> void:
 
 ## Fire / Fira / Firaga
 func play_fire(grid_pos: Vector2i) -> void:
-	var world := gp(grid_pos)
-	_screen_flash(world, Color(1.0, 0.55, 0.05, 0.65), 0.18)
-	var particles := CPUParticles2D.new()
-	particles.position        = world
-	particles.emitting        = true
-	particles.one_shot        = true
-	particles.explosiveness   = 0.85
-	particles.amount          = 40
-	particles.lifetime        = 0.7
-	particles.direction       = Vector2(0.0, -1.0)
-	particles.spread          = 160.0
-	particles.gravity         = Vector2(0.0, -60.0)
-	particles.initial_velocity_min = 55.0
-	particles.initial_velocity_max = 130.0
-	particles.scale_amount_min = 4.0
-	particles.scale_amount_max = 9.0
-	var grad := Gradient.new()
-	grad.set_color(0, Color(1.0, 0.95, 0.3, 1.0))
-	grad.set_color(1, Color(0.85, 0.1, 0.0, 0.0))
-	particles.color_ramp = grad
-	_spawn(particles)
-	# Ember smoke rings
-	for i in range(5):
-		var ring := ColorRect.new()
-		ring.size     = Vector2(12.0, 12.0)
-		ring.color    = Color(0.6, 0.25, 0.05, 0.6)
-		ring.position = world + Vector2(randf_range(-20.0, 20.0), randf_range(-10.0, 10.0))
-		_spawn(ring)
-		var tw := create_tween()
-		tw.set_parallel(true)
-		tw.tween_property(ring, "position:y", ring.position.y - randf_range(28.0, 48.0), 0.6)
-		tw.tween_property(ring, "modulate:a", 0.0, 0.6).set_delay(0.1)
-		tw.chain().tween_callback(ring.queue_free)
-	get_tree().create_timer(1.2).timeout.connect(particles.queue_free)
+	var sprite := preload("res://scripts/vfx/FireballSprite.gd").new()
+	sprite.configure(8, 8, 0.50, 84.0)
+	sprite.position = gp(grid_pos)
+	_spawn(sprite)
 
 
 ## Blizzard / Blizzara / Blizzaga

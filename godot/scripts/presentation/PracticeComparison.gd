@@ -15,6 +15,7 @@ var last_tick := 0
 var warmup_until := 0
 var focused := true
 var report_elapsed := 0.0
+var chapel_instructions: Label
 
 func _ready() -> void:
 	layer = 25
@@ -33,13 +34,19 @@ func _ready() -> void:
 		banner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		banner.add_theme_font_size_override("font_size",16)
 		box.add_child(banner)
+		if GameState.practice_session.get("illustrated_chapel", false):
+			chapel_instructions = banner
+			banner.visible = false
 	var reveal := Button.new()
 	reveal.text = "View & quality settings"
 	box.add_child(reveal)
 	var options := VBoxContainer.new()
 	options.visible = false
 	box.add_child(options)
-	reveal.pressed.connect(func() -> void: options.visible = not options.visible)
+	reveal.pressed.connect(func() -> void:
+		options.visible = not options.visible
+		if is_instance_valid(chapel_instructions):
+			chapel_instructions.visible = options.visible)
 	box = options
 	UISettings.shared().add_selector(box)
 	toggle = Button.new()
