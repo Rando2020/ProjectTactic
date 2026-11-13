@@ -1,0 +1,19 @@
+{
+  "asset_id": "haste-courtyard-application-candidate-20261110",
+  "status": "isolated-integration-candidate",
+  "approved": false,
+  "live_integrated": false,
+  "base_commit": "400f68f9272d69ada1fe090c73c32383cd59885f",
+  "source": "assets/source/haste-aura-candidate-2026-11-04/art/haste-application-aura-candidate.png",
+  "source_sha256": "3812f27c4f55e4217e22e31ea545896d68e28a8327ad0bd00aecc46e93f14235",
+  "source_size_px": [1774, 887],
+  "authored_frame_count": 1,
+  "pixel_edits": "None. Two Sprite2D draw regions reuse the original texture.",
+  "pivot_source_px": [887, 554],
+  "horizontal_split_y_px": 554,
+  "world_scale": 0.1,
+  "duration_seconds": 1.1,
+  "motion": "Alpha fade and 0.92 to 1.06 scale expansion; fixed scale in reduced motion.",
+  "scope": "Recipient application only. Existing status/MP/speed/CT rules preserved.",
+  "known_limits": ["Minimum range remains 1: another ally, not self.", "One static image with transform animation, not a new frame sequence.", "No live deployment or final art acceptance."]
+}
