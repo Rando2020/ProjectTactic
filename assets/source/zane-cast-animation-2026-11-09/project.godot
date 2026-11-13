@@ -1,0 +1,9 @@
+config_version=5
+[application]
+config/name="Zane cast and facing candidate review"
+run/main_scene="res://Review.tscn"
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=800
+[rendering]
+renderer/rendering_method="gl_compatibility"

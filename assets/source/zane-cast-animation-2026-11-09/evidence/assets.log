@@ -1,0 +1,5 @@
+PASS: eight genuine RGBA sources, four recovered hashes, unclipped visible bounds; source pixels untouched.
+cast-lift-se [190, 97, 1016, 1169] [0, 1]
+cast-windup-se [188, 101, 1016, 1168] [0, 1]
+cast-extend-se [186, 99, 1016, 1169] [1, 2]
+cast-release-se [188, 102, 1087, 1168] [0, 1]

@@ -1,0 +1,20 @@
+[gd_resource type="SpriteFrames" load_steps=6 format=3]
+
+[ext_resource type="Texture2D" path="res://images/se.png" id="1_idle"]
+[ext_resource type="Texture2D" path="res://images/cast-lift-se.png" id="2_lift"]
+[ext_resource type="Texture2D" path="res://images/cast-windup-se.png" id="3_windup"]
+[ext_resource type="Texture2D" path="res://images/cast-extend-se.png" id="4_extend"]
+[ext_resource type="Texture2D" path="res://images/cast-release-se.png" id="5_release"]
+
+[resource]
+animations = [{
+"frames": [{"duration": 1.0, "texture": ExtResource("1_idle")}],
+"loop": true,
+"name": &"idle-se",
+"speed": 1.0
+}, {
+"frames": [{"duration": 4.0, "texture": ExtResource("2_lift")}, {"duration": 6.0, "texture": ExtResource("3_windup")}, {"duration": 4.0, "texture": ExtResource("4_extend")}, {"duration": 12.0, "texture": ExtResource("5_release")}, {"duration": 4.0, "texture": ExtResource("4_extend")}, {"duration": 4.0, "texture": ExtResource("3_windup")}, {"duration": 4.0, "texture": ExtResource("2_lift")}],
+"loop": false,
+"name": &"cast-se",
+"speed": 50.0
+}]

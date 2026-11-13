@@ -1,0 +1,5 @@
+# This isolated candidate/review pack is self-contained in ordinary Git blobs.
+# Keep clean checkouts independent of the repository's incomplete legacy LFS store.
+*.png -filter -diff -merge -text
+*.apng -filter -diff -merge -text
+*.mp4 -filter -diff -merge -text
