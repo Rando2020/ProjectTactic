@@ -1,0 +1,6 @@
+{
+  "checks": 30,
+  "failures": 0,
+  "godot_version": "4.6.3-stable (official)",
+  "scope": "Four imported Texture2D resources, RGBA decode, dimensions, unmirrored Sprite2D foot-origin arithmetic. Not gameplay acceptance."
+}

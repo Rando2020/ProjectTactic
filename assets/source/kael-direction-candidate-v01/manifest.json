@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "character": "Kael swordsman candidate",
+  "production_ready": false,
+  "candidate_accepted": false,
+  "generator": "OpenAI built-in image_gen",
+  "date": "2026-11-09",
+  "reference_commit": "8d66158",
+  "reference_path": "demos/isometric-2v2/prototypes/isometric/assets/character-sets/painterly/originals/swordsman.png",
+  "target_body_height_px": 86,
+  "pivot_method": "Manual visual midpoint of projected boot soles. Head-to-foot-midpoint scaled to 86 px; not sword-dependent bounding box. Review calibration, not accepted production alignment.",
+  "directions": {
+    "se": {
+      "file": "images/kael-idle-se-candidate.png",
+      "canvas": [
+        1199,
+        1312
+      ],
+      "sha256": "cbcdf15a8256dab8e204e466ae2c6403568120daf30bcc6cd779af2513697b30",
+      "foot_pivot_px": [
+        590,
+        1248
+      ],
+      "head_top_px": 42,
+      "display_scale": 0.07131011608623548,
+      "centered_sprite_offset_px": [
+        9.5,
+        -592.0
+      ],
+      "flip_h": false,
+      "equipment": {
+        "sword_hand": "right",
+        "pauldron_shoulder": "left"
+      },
+      "status": "unapproved-generated-direction"
+    },
+    "sw": {
+      "file": "images/kael-idle-sw-candidate.png",
+      "canvas": [
+        1199,
+        1312
+      ],
+      "sha256": "6780ed6bdd9f076c88d14d765835f4ce0f0e1b3454780c7553f0db1f159d8516",
+      "foot_pivot_px": [
+        601,
+        1223
+      ],
+      "head_top_px": 38,
+      "display_scale": 0.07257383966244725,
+      "centered_sprite_offset_px": [
+        -1.5,
+        -567.0
+      ],
+      "flip_h": false,
+      "equipment": {
+        "sword_hand": "right",
+        "pauldron_shoulder": "left"
+      },
+      "status": "unapproved-generated-direction"
+    },
+    "ne": {
+      "file": "images/kael-idle-ne-candidate.png",
+      "canvas": [
+        1199,
+        1312
+      ],
+      "sha256": "75cab6f5ce022fef5b8f168b154ceb4265f7b58593578def6bd537fca871d2ac",
+      "foot_pivot_px": [
+        545,
+        1200
+      ],
+      "head_top_px": 32,
+      "display_scale": 0.07363013698630137,
+      "centered_sprite_offset_px": [
+        54.5,
+        -544.0
+      ],
+      "flip_h": false,
+      "equipment": {
+        "sword_hand": "right",
+        "pauldron_shoulder": "left"
+      },
+      "status": "unapproved-generated-direction"
+    },
+    "nw": {
+      "file": "images/kael-idle-nw-candidate.png",
+      "canvas": [
+        1199,
+        1312
+      ],
+      "sha256": "c07e3dfb72bf815149844022dd88de7604a45c6b8663ee408972ae275209a276",
+      "foot_pivot_px": [
+        538,
+        1229
+      ],
+      "head_top_px": 31,
+      "display_scale": 0.07178631051752922,
+      "centered_sprite_offset_px": [
+        61.5,
+        -573.0
+      ],
+      "flip_h": false,
+      "equipment": {
+        "sword_hand": "right",
+        "pauldron_shoulder": "left"
+      },
+      "status": "unapproved-generated-direction"
+    }
+  },
+  "known_limits": [
+    "No final character-art approval exists for this candidate.",
+    "Sparse alpha=1 specks at source boundaries are preserved. No masking, repainting, resampling, or mirroring was performed on sources.",
+    "Small embroidery placement, belt detail, scarf drape, and silhouette differences remain; NE coat emblem is not consistently on the same anatomical panel as front views.",
+    "Four discrete idle directions only, not walk/attack/cast/hurt/KO animation.",
+    "Generated front views are relatively frontal and require courtyard camera/readability acceptance.",
+    "No production mapping, gameplay scripts, saves, combat, deployment, or existing PNG was changed."
+  ]
+}
