@@ -1,0 +1,71 @@
+[
+  {
+    "file": "originals/enemy-hollow-stray-sw-cast-release-candidate-v02.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox_alpha_1": [
+      25,
+      33,
+      1236,
+      1254
+    ],
+    "bbox_alpha_16": [
+      310,
+      38,
+      1009,
+      1205
+    ],
+    "transparent_pixels": 1191402,
+    "opaque_pixels": 608,
+    "semi_transparent_pixels": 380506,
+    "edge_pixels_nonzero_alpha": 2,
+    "sha256": "05abc6ab9453ece74d578bdc7e05ca156751330bff7cd0f7432a365c5c17554f"
+  },
+  {
+    "file": "originals/enemy-hollow-stray-sw-cast-windup-candidate-v02.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox_alpha_1": [
+      0,
+      17,
+      1240,
+      1234
+    ],
+    "bbox_alpha_16": [
+      312,
+      21,
+      997,
+      1204
+    ],
+    "transparent_pixels": 1210755,
+    "opaque_pixels": 626,
+    "semi_transparent_pixels": 361135,
+    "edge_pixels_nonzero_alpha": 3,
+    "sha256": "94b22cd896caab08bd8ac1d9b16268965d9b91ba0ea98274852180a9ba4b8d7f"
+  },
+  {
+    "file": "originals/enemy-hollow-stray-sw-idle-candidate-v02.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox_alpha_1": [
+      0,
+      10,
+      1234,
+      1254
+    ],
+    "bbox_alpha_16": [
+      291,
+      25,
+      991,
+      1202
+    ],
+    "transparent_pixels": 1191048,
+    "opaque_pixels": 794,
+    "semi_transparent_pixels": 380674,
+    "edge_pixels_nonzero_alpha": 6,
+    "sha256": "09b7f988ec06729df06501a0191465a203e105a52f9dda8c6d503c3eebd0c361"
+  }
+]

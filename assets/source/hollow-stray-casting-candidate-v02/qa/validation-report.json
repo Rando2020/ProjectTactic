@@ -1,0 +1,38 @@
+[
+  {
+    "pose": "idle",
+    "visible_bounds_in_128_canvas": [
+      23.019442102,
+      4.4057481145,
+      94.025359252,
+      123.797125951
+    ],
+    "alpha_background": "pass",
+    "visible_margin": "pass",
+    "shared_pivot_contract": "pass"
+  },
+  {
+    "pose": "windup",
+    "visible_bounds_in_128_canvas": [
+      25.149619616499997,
+      4.000000016499996,
+      94.63398139899999,
+      124.0
+    ],
+    "alpha_background": "pass",
+    "visible_margin": "pass",
+    "shared_pivot_contract": "pass"
+  },
+  {
+    "pose": "release",
+    "visible_bounds_in_128_canvas": [
+      24.946745567500002,
+      5.724429432999997,
+      95.851225693,
+      124.1014370245
+    ],
+    "alpha_background": "pass",
+    "visible_margin": "pass",
+    "shared_pivot_contract": "pass"
+  }
+]

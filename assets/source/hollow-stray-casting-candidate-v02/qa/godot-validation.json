@@ -1,0 +1,20 @@
+[
+  {
+    "alpha_detected": "pass",
+    "png_decode": "pass",
+    "pose": "idle",
+    "texture_creation": "pass"
+  },
+  {
+    "alpha_detected": "pass",
+    "png_decode": "pass",
+    "pose": "windup",
+    "texture_creation": "pass"
+  },
+  {
+    "alpha_detected": "pass",
+    "png_decode": "pass",
+    "pose": "release",
+    "texture_creation": "pass"
+  }
+]
