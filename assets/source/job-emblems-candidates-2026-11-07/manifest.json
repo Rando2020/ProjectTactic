@@ -1,0 +1,762 @@
+{
+  "schema": "projecttactic-job-emblems-v1",
+  "date": "2026-11-07",
+  "repository": "Rando2020/ProjectTactic",
+  "verified_base": "c763f976b04c361ad687721a6e61e27c3b0826a1",
+  "generator": "built-in image_gen.imagegen",
+  "processing": "Original RGBA retained; crop to alpha >=8 visible bounds, Lanczos downscale, center on transparent canvas. Only negligible outer alpha speckles outside those bounds are excluded; no repainting, background masking, or gameplay change.",
+  "alpha_checks": "All exports have transparent edges and both alpha 0 and 255.",
+  "ui_contract": "Render live job labels/tooltips; use at >=32px; scalable frames/state/focus remain engine-owned.",
+  "assets": [
+    {
+      "job_id": "squire",
+      "existing_icon_path": "godot/assets/generated/icons/job-knight-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-squire-master-v01.png",
+          "size_bytes": 503362,
+          "sha256": "289709da8db819db19207649293e9963edd2595e02c118566f7080897d0bb6e1",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            392,
+            52,
+            861,
+            1219
+          ],
+          "transparent_fraction": 0.859595,
+          "opaque_fraction": 0.000328,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 1
+        },
+        {
+          "file": "exports/job-squire-128-v01.png",
+          "size_bytes": 8286,
+          "sha256": "d6fdcd4db195f4a38e49316beaaf330b6f2bd3d36dd1161d2502982232ebe78e",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            43,
+            13,
+            84,
+            115
+          ],
+          "transparent_fraction": 0.876343,
+          "opaque_fraction": 0.012085,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-squire-64-v01.png",
+          "size_bytes": 2986,
+          "sha256": "a051d8d1af3f49d3e34b39ca2512f48a3d72fe1358288d30d994e7b9d1eb4641",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            22,
+            6,
+            42,
+            57
+          ],
+          "transparent_fraction": 0.857666,
+          "opaque_fraction": 0.025635,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-squire-48-v01.png",
+          "size_bytes": 2070,
+          "sha256": "17193b9d8829d715b0b49150695b0abfead46ae387cac26e491d8d69f0d68755",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            16,
+            5,
+            31,
+            43
+          ],
+          "transparent_fraction": 0.848958,
+          "opaque_fraction": 0.032118,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-squire-32-v01.png",
+          "size_bytes": 1296,
+          "sha256": "f4213f1cc642c4a7c0d46b37a7d14d75b641286805a12c670d1555293d425078",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            11,
+            3,
+            21,
+            29
+          ],
+          "transparent_fraction": 0.8125,
+          "opaque_fraction": 0.038086,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    },
+    {
+      "job_id": "arcanist",
+      "existing_icon_path": "godot/assets/generated/icons/job-mage-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-arcanist-master-v01.png",
+          "size_bytes": 970302,
+          "sha256": "524e7661d2ac1cc3d40e8ed54f09d9fe0355351c798e24ba8ad271533124fd55",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            169,
+            73,
+            1083,
+            1172
+          ],
+          "transparent_fraction": 0.733063,
+          "opaque_fraction": 0.000429,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-arcanist-128-v01.png",
+          "size_bytes": 16674,
+          "sha256": "d9dc3b9c11d466a63a8f021f74c2b00d4fa2ea9964f7836f34b794f8552e1080",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            21,
+            13,
+            106,
+            115
+          ],
+          "transparent_fraction": 0.754944,
+          "opaque_fraction": 0.019409,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-arcanist-64-v01.png",
+          "size_bytes": 5546,
+          "sha256": "63759223490980d6b7b78d204746fbf986d64970e23e3df5445356d70242fadd",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            11,
+            6,
+            53,
+            57
+          ],
+          "transparent_fraction": 0.730713,
+          "opaque_fraction": 0.038574,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-arcanist-48-v01.png",
+          "size_bytes": 3636,
+          "sha256": "eadcd74cd475aa680757d1681a224a8a19c6cafad64aae2f263f600442f2ef8e",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            8,
+            5,
+            40,
+            43
+          ],
+          "transparent_fraction": 0.709201,
+          "opaque_fraction": 0.041667,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-arcanist-32-v01.png",
+          "size_bytes": 2148,
+          "sha256": "47f344744761bbac9dce808e9c203e8644a76434b1003b7381651506a5affbd2",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            5,
+            3,
+            27,
+            29
+          ],
+          "transparent_fraction": 0.666016,
+          "opaque_fraction": 0.042969,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    },
+    {
+      "job_id": "scout",
+      "existing_icon_path": "godot/assets/generated/icons/job-archer-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-scout-master-v01.png",
+          "size_bytes": 831268,
+          "sha256": "67255a9bd8afdd49f76341b770d691f2d37b93803631af1eaa73bba9dac2cdd7",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            125,
+            100,
+            1146,
+            1174
+          ],
+          "transparent_fraction": 0.784896,
+          "opaque_fraction": 0.000313,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 1
+        },
+        {
+          "file": "exports/job-scout-128-v01.png",
+          "size_bytes": 18477,
+          "sha256": "8ec4db223353e8c78b8756526909db34c8ceacd10b7f58c2b981078ba801f44a",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            15,
+            13,
+            112,
+            115
+          ],
+          "transparent_fraction": 0.781738,
+          "opaque_fraction": 0.025696,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-scout-64-v01.png",
+          "size_bytes": 6340,
+          "sha256": "ce172104de87d9b56bcc3af19387166d98b9c442c6504385ff5192180553e381",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            8,
+            6,
+            56,
+            57
+          ],
+          "transparent_fraction": 0.736572,
+          "opaque_fraction": 0.040039,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-scout-48-v01.png",
+          "size_bytes": 4061,
+          "sha256": "464632d861b27b3046ad28bf036400a5399b49ef25e7a7b33e82558c77ac14fc",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            6,
+            5,
+            42,
+            43
+          ],
+          "transparent_fraction": 0.713108,
+          "opaque_fraction": 0.042101,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-scout-32-v01.png",
+          "size_bytes": 2430,
+          "sha256": "b481186fac3d96b8a959557d9df928b6b600d2eb923ddb177a288ea6517d092a",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            3,
+            3,
+            28,
+            29
+          ],
+          "transparent_fraction": 0.658203,
+          "opaque_fraction": 0.043945,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    },
+    {
+      "job_id": "warder",
+      "existing_icon_path": "godot/assets/generated/icons/job-guardian-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-warder-master-v01.png",
+          "size_bytes": 1388808,
+          "sha256": "421f55f07b39e8d2218762acd88b31f39affb035770d9bb128a2a0247b4b6bd4",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            209,
+            80,
+            1045,
+            1194
+          ],
+          "transparent_fraction": 0.532335,
+          "opaque_fraction": 0.000224,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 1
+        },
+        {
+          "file": "exports/job-warder-128-v01.png",
+          "size_bytes": 17995,
+          "sha256": "f83cf6375599a6b79da6881ec66f3c213d3db81c5618fcfe6479b5294f117957",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            25,
+            13,
+            102,
+            115
+          ],
+          "transparent_fraction": 0.610291,
+          "opaque_fraction": 0.012939,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-warder-64-v01.png",
+          "size_bytes": 5787,
+          "sha256": "0e49aeb9d2e936dfa4c3f6b538a889a0dba71de87f6e15ebed9585d8e4298337",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            13,
+            6,
+            51,
+            57
+          ],
+          "transparent_fraction": 0.595703,
+          "opaque_fraction": 0.02417,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-warder-48-v01.png",
+          "size_bytes": 3636,
+          "sha256": "56406b8d5f5508c38e82630c87e1c55e4fb660f0cdd19b1a43c78697edf9f42e",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            9,
+            5,
+            38,
+            43
+          ],
+          "transparent_fraction": 0.586806,
+          "opaque_fraction": 0.035156,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-warder-32-v01.png",
+          "size_bytes": 2048,
+          "sha256": "38ce3dfebd9f0f4ea382d09a37a5b3edd76db7e347fe6223b412725558f7019f",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            6,
+            3,
+            26,
+            29
+          ],
+          "transparent_fraction": 0.553711,
+          "opaque_fraction": 0.048828,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    },
+    {
+      "job_id": "luminary",
+      "existing_icon_path": "godot/assets/generated/icons/job-cleric-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-luminary-master-v01.png",
+          "size_bytes": 906756,
+          "sha256": "dc858ea58ed6b45797d2a420e8487341e1a1661fce9b9a2e1052bbdfcc6e64a8",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            308,
+            105,
+            941,
+            1096
+          ],
+          "transparent_fraction": 0.715845,
+          "opaque_fraction": 0.000361,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 1
+        },
+        {
+          "file": "exports/job-luminary-128-v01.png",
+          "size_bytes": 15847,
+          "sha256": "c4770ca8d3486dfef1478c5e693f2666dc02cc10703417b48d49691e22aea350",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            31,
+            13,
+            96,
+            115
+          ],
+          "transparent_fraction": 0.690979,
+          "opaque_fraction": 0.015564,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-luminary-64-v01.png",
+          "size_bytes": 5135,
+          "sha256": "ad5ae953a5db4e2ff72e58951b75a2418f49f921e6004d76acea9fa9d0575f96",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            15,
+            6,
+            48,
+            57
+          ],
+          "transparent_fraction": 0.667725,
+          "opaque_fraction": 0.030762,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-luminary-48-v01.png",
+          "size_bytes": 3122,
+          "sha256": "708c6275b39116269c4c87281df8988fb8b95928b7c7445b5af1d36c9c8e553a",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            12,
+            5,
+            36,
+            43
+          ],
+          "transparent_fraction": 0.676215,
+          "opaque_fraction": 0.03559,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-luminary-32-v01.png",
+          "size_bytes": 1873,
+          "sha256": "27864a79a62b62489cfda19eabd3c7fcbe630fbcc00d783385431d7e01e58ed2",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            7,
+            3,
+            24,
+            29
+          ],
+          "transparent_fraction": 0.634766,
+          "opaque_fraction": 0.050781,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    },
+    {
+      "job_id": "shadow",
+      "existing_icon_path": "godot/assets/generated/icons/job-rogue-icon.png",
+      "status": "normalized_candidate",
+      "art_approval": "pending",
+      "runtime_status": "not_imported",
+      "role_source": "godot/scripts/data/JobTreeData.gd",
+      "files": [
+        {
+          "file": "originals/job-shadow-master-v01.png",
+          "size_bytes": 789549,
+          "sha256": "c98efd808f5dc1e5dadf2dda7c0c1b0c110837524227fadf0b6bb530c1f22857",
+          "dimensions": [
+            1254,
+            1254
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            186,
+            114,
+            1026,
+            1167
+          ],
+          "transparent_fraction": 0.7637,
+          "opaque_fraction": 0.000461,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 1
+        },
+        {
+          "file": "exports/job-shadow-128-v01.png",
+          "size_bytes": 15248,
+          "sha256": "2583f3c81d2d1dc570ad75c5e67ce4c997c19b387e21bcc81976bdfce98634cc",
+          "dimensions": [
+            128,
+            128
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            23,
+            13,
+            104,
+            115
+          ],
+          "transparent_fraction": 0.767395,
+          "opaque_fraction": 0.015381,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-shadow-64-v01.png",
+          "size_bytes": 5367,
+          "sha256": "f0c0043ed2e596f7aa039795cbd568cb7f9048c3fc312e64786aea81a9839d24",
+          "dimensions": [
+            64,
+            64
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            11,
+            6,
+            52,
+            57
+          ],
+          "transparent_fraction": 0.736572,
+          "opaque_fraction": 0.031494,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-shadow-48-v01.png",
+          "size_bytes": 3554,
+          "sha256": "dce130b5d778914d9a7c4cb642313b8e303f85265807aa0fff31ad128eaed30d",
+          "dimensions": [
+            48,
+            48
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            9,
+            5,
+            39,
+            43
+          ],
+          "transparent_fraction": 0.727865,
+          "opaque_fraction": 0.03559,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        },
+        {
+          "file": "exports/job-shadow-32-v01.png",
+          "size_bytes": 2155,
+          "sha256": "d289d32b2951b908cdc1811d0e7c7d034095676df427c232b8b6dbcfa2aa9b75",
+          "dimensions": [
+            32,
+            32
+          ],
+          "mode": "RGBA",
+          "alpha_bounds_ge8": [
+            5,
+            3,
+            26,
+            29
+          ],
+          "transparent_fraction": 0.672852,
+          "opaque_fraction": 0.05957,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "edge_alpha_max": 0
+        }
+      ]
+    }
+  ]
+}
